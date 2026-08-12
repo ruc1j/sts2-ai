@@ -231,6 +231,30 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
 
+    def test_low_hp_uses_offensive_selection_potion(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_index": 0, "potion_id": "POTION.POWER_POTION", "target_id": None},
+                {"type": "potion", "potion_index": 1, "potion_id": "POTION.FLEX_POTION", "target_id": None},
+                {"type": "potion", "potion_index": 2, "potion_id": "POTION.COLORLESS_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 12, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 143, "intents": [{"damage": 8, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.POWER_POTION")
+
+    def test_lethal_incoming_uses_attack_potion_when_no_defense_exists(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_index": 1, "potion_id": "POTION.COLORLESS_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 12, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 143, "intents": [{"damage": 20, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.COLORLESS_POTION")
+
     def test_explosive_ampoule_is_used_against_multiple_enemies_when_low(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.EXPLOSIVE_AMPOULE", "target_id": 1}],

@@ -216,8 +216,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
     defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
     recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
+    debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.SHACKLING_POTION"}
+    offensive = {
+        "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
+        "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
+        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION",
+    }
     if incoming >= hp:
-        return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER", "POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage) or use(recovery)
+        return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or use(recovery)
     hand = observation.get("hand") or ()
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
@@ -228,11 +234,11 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage) or use(recovery)
+        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp)
     if hp <= max_hp // 2:
-        return use(recovery)
+        return use(recovery) or use(offensive, enemy_hp)
     if incoming >= hp // 2:
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
+        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp)
     if max(enemy_hp.values(), default=0) >= 100:
         return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp)
     if not hand:
