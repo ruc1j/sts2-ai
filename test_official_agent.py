@@ -1,6 +1,6 @@
 import unittest
 
-from official_agent import CARD_TIERS, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop
+from official_agent import CARD_NAMES, CARD_TIERS, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -291,6 +291,42 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_reward_seeds_strike_axis_with_strike_heavy_deck(self) -> None:
+        # The starter deck already has 5 Strikes, so Perfected Strike hits ~16 immediately;
+        # it must beat a one-shot BLUDGEON so the boss-fight strike axis gets seeded.
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 5},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_reward_seeds_strength_axis_with_inflame(self) -> None:
+        # Inflame is now an axis seed: it must beat a one-shot BLUDGEON in a fresh deck.
+        observation = {
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.INFLAME"},
+                {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.INFLAME")
+
+    def test_reward_feeds_started_strength_axis(self) -> None:
+        # Once Inflame is in the deck, other Strength sources (Dominate) outrank same-tier cards.
+        observation = {
+            "player": {"deck": [{"id": "CARD.INFLAME"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.DOMINATE"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.DOMINATE")
 
     def test_rest_heals_when_hurt(self) -> None:
         observation = {
@@ -1033,6 +1069,58 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertTrue(pael <= RELIC_SCORES.keys())
         self.assertTrue(orobas <= RELIC_SCORES.keys())
         self.assertTrue(tezcatara <= RELIC_SCORES.keys())
+
+    def test_feed_is_modeled_for_rollout_and_lethal(self) -> None:
+        self.assertIn("CARD.FEED", CARD_NAMES)
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.FEED", "type": "Attack", "vars": [{"id": "Damage", "value": 10}]}],
+            "enemies": [{"combat_id": 1, "hp": 10, "block": 0, "powers": [], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.FEED", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.FEED")
+
+    def test_dominate_is_modeled_for_rollout(self) -> None:
+        # Dominate used to disable the rollout entirely because it was missing from CARD_NAMES;
+        # it must now be recognized so the search runs even while it sits in hand.
+        self.assertIn("CARD.DOMINATE", CARD_NAMES)
+
+    def test_boss_fight_cards_are_modeled_for_rollout(self) -> None:
+        # The Insatiable boss fight used Byrd Swoop / Pillage / Equilibrium; unmodeled cards in
+        # hand disabled the turn-1 rollout. All three must now be recognized by the simulator.
+        self.assertTrue({"CARD.BYRD_SWOOP", "CARD.PILLAGE", "CARD.EQUILIBRIUM"} <= set(CARD_NAMES))
+
+    def test_rollout_runs_with_one_unknown_card_in_hand(self) -> None:
+        # The rollout gate used to require ALL hand cards to be modeled (any unknown card
+        # disabled the search entirely); one unknown card must not abandon the rollout.
+        import json
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD"},
+                {"index": 1, "id": "CARD.UNKNOWN_CARD"},
+            ],
+            "draw_pile": [],
+            "discard_pile": [],
+            "exhaust_pile": [],
+            "turn": 1,
+            "enemies": [{"combat_id": 1, "id": "MONSTER.THE_OBSCURA", "hp": 20, "block": 0, "powers": [], "intents": [{"damage": 8, "repeats": 1}], "move": "PIERCING_GAZE_MOVE", "history": [], "slot": "obscura"}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        # The rollout must run (returning the Strike action with a search value) instead of
+        # silently falling back to the heuristic because CARD.UNKNOWN_CARD is in hand.
+        action = choose(observation, data, 200)
+        self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
+        self.assertIn("simulations", action)
 
     def test_card_tiers_include_the_required_axes(self) -> None:
         self.assertEqual(CARD_TIERS["CARD.PERFECTED_STRIKE"], "C")

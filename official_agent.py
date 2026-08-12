@@ -35,6 +35,11 @@ CARD_NAMES = {
     "CARD.BREAKTHROUGH": "Breakthrough",
     "CARD.WHIRLWIND": "Whirlwind",
     "CARD.BLOODLETTING": "Bloodletting",
+    "CARD.FEED": "Feed",
+    "CARD.DOMINATE": "Dominate",
+    "CARD.BYRD_SWOOP": "Byrd Swoop",
+    "CARD.PILLAGE": "Pillage",
+    "CARD.EQUILIBRIUM": "Equilibrium",
 }
 
 CARD_TIERS = {
@@ -56,11 +61,12 @@ CARD_TIERS = {
         "CARD.ASHEN_STRIKE", "CARD.DISMANTLE", "CARD.EVIL_EYE", "CARD.FORGOTTEN_RITUAL",
         "CARD.SPITE", "CARD.STOMP", "CARD.UNRELENTING", "CARD.WHIRLWIND", "CARD.BREAKTHROUGH",
         "CARD.CINDER", "CARD.IRON_WAVE", "CARD.TAUNT", "CARD.TWIN_STRIKE",
+        "CARD.INFLAME",  # Strength scales every attack: boss firepower (was C)
     }, "B"),
     **dict.fromkeys({
         "CARD.BRAND", "CARD.CASCADE", "CARD.DEMON_FORM", "CARD.HELLRAISER", "CARD.BULLY",
         "CARD.DRUM_OF_BATTLE", "CARD.FIGHT_ME", "CARD.HOWL_FROM_BEYOND", "CARD.INFERNAL_BLADE",
-        "CARD.INFLAME", "CARD.JUGGLING", "CARD.PILLAGE", "CARD.RAMPAGE", "CARD.RUPTURE",
+        "CARD.JUGGLING", "CARD.PILLAGE", "CARD.RAMPAGE", "CARD.RUPTURE",
         "CARD.STAMPEDE", "CARD.STONE_ARMOR", "CARD.VICIOUS", "CARD.ARMAMENTS", "CARD.BODY_SLAM",
         "CARD.HAVOC", "CARD.MOLTEN_FIST", "CARD.PERFECTED_STRIKE", "CARD.SETUP_STRIKE",
         "CARD.SWORD_BOOMERANG", "CARD.THUNDERCLAP", "CARD.TRUE_GRIT",
@@ -118,12 +124,16 @@ KNOWN_CARD_DAMAGE = {
     "CARD.UNRELENTING": 14,
     "CARD.GIANT_ROCK": 16,
     "CARD.BREAKTHROUGH": 9,
+    "CARD.FEED": 10,
+    "CARD.BYRD_SWOOP": 14,
+    "CARD.PILLAGE": 6,
 }
 KNOWN_CARD_BLOCK = {
     "CARD.DEFEND_IRONCLAD": 5,
     "CARD.SHRUG_IT_OFF": 8,
     "CARD.RELAX": 15,
     "CARD.IRON_WAVE": 5,
+    "CARD.EQUILIBRIUM": 13,
 }
 
 
@@ -252,8 +262,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return turn
     if potion := choose_potion(observation, potions):
         return potion
-    # rollouts cover the modeled starter and reward cards; unknown cards fall back to the heuristic below.
-    if enemy_data and simulations and all(card["card_id"] in CARD_NAMES for card in cards):
+    # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
+    # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
+    if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
         try:
             return rollout_choice(observation, actions, enemy_data, simulations)
         except (KeyError, ValueError, NotImplementedError, StopIteration):
@@ -429,7 +440,8 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
     elif axis == "exhaust":
         cards = [card for card in EXHAUST_CORE if card not in deck_ids]
     else:
-        first = ("CARD.PERFECTED_STRIKE", "CARD.RUPTURE", "CARD.CORRUPTION")
+        # Axis seeds: Perfected Strike (strike), Inflame (strength), Rupture (self-damage), Corruption (exhaust).
+        first = ("CARD.PERFECTED_STRIKE", "CARD.INFLAME", "CARD.RUPTURE", "CARD.CORRUPTION")
         cards = [card for card in first if available and card in available]
     if available is not None:
         cards = [card for card in cards if card in available]
@@ -574,6 +586,10 @@ def choose_map(observation: dict) -> dict:
 
 STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE"}
 
+# Strength sources that scale every attack into boss firepower; once one is in the deck the
+# others are prioritized so the axis keeps growing.
+STRENGTH_CARDS = {"CARD.INFLAME", "CARD.PRIMAL_FORCE", "CARD.DOMINATE", "CARD.CRUELTY"}
+
 # Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost
 # block is too awkward for the greedy rollout to use consistently). Never pick these.
 UNPLAYABLE_REWARDS = {"CARD.RELAX"}
@@ -599,9 +615,21 @@ def choose_card_reward(observation: dict) -> dict:
             if card_id in priority:
                 priority[card_id] -= 1
     strike_axis = _axis(deck_ids) == "strike"
+    deck_list = _deck_list(observation)
+    # Boss firepower: Perfected Strike (6 + 2 per Strike) already hits ~16 with the starter
+    # deck's 5 Strikes, so seed the strike axis early; a started strength axis (Inflame,
+    # Primal Force, Dominate) scales every attack and is worth feeding for boss-length fights.
+    strikes = sum(card in STRIKE_TAGGED_REWARDS or card == "CARD.STRIKE_IRONCLAD" for card in deck_list)
+    if strikes >= 5:
+        for card_id in STRIKE_TAGGED_REWARDS:
+            if card_id in priority:
+                priority[card_id] += 2
+    if STRENGTH_CARDS & deck_ids:
+        for card_id in STRENGTH_CARDS:
+            if card_id in priority:
+                priority[card_id] += 1
     # Keep the deck from becoming all-offense: once block cards are under a third of the deck,
     # defensive picks (Shrug It Off etc.) outrank same-tier offensive cards so Act 2 fights cost less HP.
-    deck_list = _deck_list(observation)
     block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck_list)
     defense_needed = len(deck_list) >= 10 and block_cards * 3 < len(deck_list)
     selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, 1 if strike_axis and action["card_id"] in STRIKE_TAGGED_REWARDS else 0))
