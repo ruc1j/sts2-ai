@@ -119,7 +119,7 @@ internal static class CombatBridge
         for (int i = 0; i < player.PotionSlots.Count; i++)
         {
             var potion = player.PotionSlots[i];
-            if (potion is null || potion.IsQueued || !potion.PassesCustomUsabilityCheck)
+            if (potion is null || potion.Usage.ToString() == "Automatic" || potion.IsQueued || !potion.PassesCustomUsabilityCheck)
                 continue;
             if (potion.IsValidTarget(null))
                 legal.Add(new { type = "potion", potion_index = i, potion_id = potion.Id.ToString(), target_id = (uint?)null });
@@ -151,6 +151,7 @@ internal static class CombatBridge
                 type = card.Type.ToString(),
                 rarity = card.Rarity.ToString(),
                 pool = card.Pool.Id.ToString(),
+                vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
                 target = card.TargetType.ToString(),
             }),
             draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => card.Id.ToString()),

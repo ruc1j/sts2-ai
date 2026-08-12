@@ -65,9 +65,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if observation.get("player", {}).get("block", 0) < incoming and defenses:
         return defenses[0]
     hand = {card["index"]: card for card in observation.get("hand", ())}
+    def score(action: dict) -> tuple[int, int]:
+        card = hand.get(action.get("hand_index"), {})
+        damage = max((var["value"] for var in card.get("vars", ()) if var["id"] in {"Damage", "CalculatedDamage"}), default=0)
+        return priority.get(action["card_id"], 0), int(damage) if card.get("type") == "Attack" else 0
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
-        return max(cards, key=lambda action: priority.get(action["card_id"], 3 if hand.get(action.get("hand_index"), {}).get("type") == "Attack" else 1))
+        return max(cards, key=lambda action: (priority.get(action["card_id"], 3 if hand.get(action.get("hand_index"), {}).get("type") == "Attack" else 1), score(action)[1]))
     return next(action for action in actions if action["type"] == "end_turn")
 
 
@@ -100,7 +104,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
-    healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL", "POTION.FAIRY_IN_A_BOTTLE"}
+    healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
     defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR"}
     if hp <= max_hp // 2:

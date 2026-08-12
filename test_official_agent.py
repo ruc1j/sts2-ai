@@ -115,6 +115,14 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
 
+    def test_does_not_manually_use_fairy(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.FAIRY_IN_A_BOTTLE", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 10, "max_hp": 80},
+            "enemies": [],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_uses_frantic_escape_before_other_cards(self) -> None:
         observation = {
             "enemies": [{"powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}]}],
