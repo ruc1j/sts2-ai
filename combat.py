@@ -8,10 +8,20 @@ import re
 from dataclasses import dataclass, replace
 
 
-STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "End turn"
+STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "End turn"
+CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting"
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
-CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1}
-CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8}
+CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, BREAKTHROUGH: 1, BLOODLETTING: 0}
+# WHIRLWIND has an X cost and is resolved separately.
+CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9}
+# Cards that require an enemy target because they deal damage.
+ATTACKS = {STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH, WHIRLWIND}
+# Self-targeting skills and powers that never need a target.
+UNTARGETED = {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING}
+SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1}
+EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE}
+# Cards tagged as Strike, used by Perfected Strike scaling.
+STRIKE_TAGGED = {STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE}
 
 
 @dataclass(frozen=True)
@@ -43,6 +53,7 @@ class Combat:
     player_powers: tuple[tuple[str, int], ...] = ()
     energy: int = 3
     turn: int = 1
+    exhaust_pile: tuple[str, ...] = ()
 
     @property
     def terminal(self) -> bool:
@@ -173,6 +184,9 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
             enemy = replace(enemy, powers=(("BackAttackLeftPower", 1), ("CrabRagePower", 1)))
         elif enemy.model == "MONSTER.ROCKET":
             enemy = replace(enemy, powers=(("BackAttackRightPower", 1), ("CrabRagePower", 1)))
+        elif enemy.model == "MONSTER.EXOSKELETON":
+            # Granted by Exoskeleton.AfterAddedToRoom in code (not exported in the state machine JSON).
+            enemy = replace(enemy, powers=enemy.powers + (("HardToKillPower", 9),))
         enemies.append(enemy)
     hand, draw, _ = _draw(STARTING_DECK, (), 5, rng)
     powers = (("SurroundedRight", 1),) if any(enemy.model == "MONSTER.ROCKET" for enemy in enemies) else ()
@@ -197,18 +211,40 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         return ()
     actions = []
     for card in dict.fromkeys(combat.hand):
+        if card == WHIRLWIND:
+            if combat.energy > 0:
+                actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
+            continue
         if card not in CARD_COST or CARD_COST[card] > combat.energy:
             continue
-        if card in {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE}:
+        if card in UNTARGETED:
             actions.append(card)
         else:
             actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     return tuple(actions) + (END_TURN,)
 
 
+def _enemy_attack_damage(enemy: Enemy, data: dict) -> int:
+    spec = _specs(data).get(enemy.model)
+    if not spec:
+        return 0
+    move = next((state for state in spec["states"] if state["id"] == enemy.move), None)
+    if not move:
+        return 0
+    attack = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
+    damage = int(attack.get("damage", 0)) + _power(enemy.powers, "StrengthPower")
+    if _power(enemy.powers, "WeakPower"):
+        damage = damage * 3 // 4
+    return max(0, damage * max(1, int(attack.get("repeats", 1))))
+
+
 def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
     if _power(enemy.powers, "SlipperyPower"):
         return replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1))
+    # HardToKill caps every hit at the power amount (Exoskeleton takes at most 9 per attack).
+    cap = _power(enemy.powers, "HardToKillPower")
+    if cap > 0:
+        damage = min(damage, cap)
     blocked = min(enemy.block, damage)
     return replace(enemy, block=enemy.block - blocked, hp=enemy.hp - damage + blocked)
 
@@ -248,6 +284,10 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
             elif effect["target"] == "targets":
                 player_powers = _add_power(player_powers, effect["model"], amount)
+            elif "TeammatesOf" in effect["target"]:
+                for mate_index, mate in enumerate(enemies):
+                    if mate_index != index and mate.alive:
+                        enemies[mate_index] = replace(mate, powers=_add_power(mate.powers, effect["model"], amount))
         elif command == "PowerCmd.Remove" and effect.get("target") == "base.Creature":
             enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], -_power(enemy.powers, effect["model"])))
         elif command == "CreatureCmd.GainBlock":
@@ -280,6 +320,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action == END_TURN:
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
+        enemies = list(combat.enemies)
+        for index, enemy in enumerate(enemies):
+            # IllusionPower minions (e.g. Parafright) revive at full health after the enemy phase.
+            if not enemy.alive and _power(enemy.powers, "IllusionPower"):
+                enemies[index] = replace(enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)))
+        combat = replace(combat, enemies=tuple(enemies))
         hand, draw, discard = _draw(combat.draw_pile, combat.discard_pile + combat.hand, 5, rng)
         return replace(combat, hand=hand, draw_pile=draw, discard_pile=discard, player_block=0, energy=3, turn=combat.turn + 1)
 
@@ -303,13 +349,53 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
         block = 8 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 8
         return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - 1, player_block=combat.player_block + block)
-    combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (card,), energy=combat.energy - CARD_COST[card])
-    if card == DEFEND:
+    spent = combat.energy if card == WHIRLWIND else CARD_COST[card]
+    whirlwind_damage = 5 * combat.energy if card == WHIRLWIND else 0
+    energy = combat.energy - spent + (2 if card == BLOODLETTING else 0)
+    player_hp = combat.player_hp - SELF_DAMAGE.get(card, 0)
+    player_powers = combat.player_powers
+    if card == INFLAME:
+        player_powers = _add_power(player_powers, "StrengthPower", 2)
+    if card == PRIMAL_FORCE:
+        hand = [GIANT_ROCK if card_name in ATTACKS else card_name for card_name in hand]
+    exhaust = card in EXHAUSTS
+    exhaust_before = combat.exhaust_pile
+    exhaust_pile = exhaust_before + ((card,) if exhaust else ())
+    combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (card,)), exhaust_pile=exhaust_pile, energy=energy, player_hp=player_hp, player_powers=player_powers)
+    if card in {DEFEND, IRON_WAVE}:
         block = 5 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 5
+        combat = replace(combat, player_block=combat.player_block + block)
+    if card == DEFEND:
+        return combat
+    if card == RELAX:
+        block = 15 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 15
         return replace(combat, player_block=combat.player_block + block)
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING}:
+        return combat
     enemies = list(combat.enemies)
+    if card in {BREAKTHROUGH, WHIRLWIND}:
+        damage = (9 if card == BREAKTHROUGH else whirlwind_damage) + _power(combat.player_powers, "StrengthPower")
+        if _power(combat.player_powers, "WeakPower"):
+            damage = damage * 3 // 4
+        for index, enemy in enumerate(enemies):
+            if not enemy.alive:
+                continue
+            scaled = damage * 3 // 2 if _power(enemy.powers, "VulnerablePower") else damage
+            enemies[index] = _damage_enemy(enemy, scaled)
+        return replace(combat, enemies=tuple(enemies))
+    if card == TREMBLE:
+        enemy = enemies[int(target)]
+        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 3))
+        return replace(combat, enemies=tuple(enemies))
     enemy = enemies[int(target)]
-    damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
+    if card == PERFECTED_STRIKE:
+        strikes = sum(1 for name in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile if name in STRIKE_TAGGED)
+        damage = 6 + 2 * strikes
+    elif card == ASHEN_STRIKE:
+        damage = 6 + 3 * len(exhaust_before)
+    else:
+        damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
+    damage += _power(combat.player_powers, "StrengthPower")
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
         damage *= 2
     if _power(combat.player_powers, "WeakPower"):
@@ -317,6 +403,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if _power(enemy.powers, "VulnerablePower"):
         damage = damage * 3 // 2
     enemies[int(target)] = _damage_enemy(enemy, damage)
+    if card == CINDER and hand:
+        sacrificed = hand.pop(rng.randrange(len(hand)))
+        combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
     player_powers = combat.player_powers
     if _power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedRight", -1), "SurroundedLeft", 1)
@@ -333,6 +422,46 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     return replace(combat, enemies=tuple(enemies), player_powers=player_powers)
 
 
+def _step_score(combat: Combat, state: Combat, data: dict) -> float:
+    """Score a single step: prevented damage + damage dealt - self-damage + effective block."""
+    incoming = sum(_enemy_attack_damage(enemy, data) for enemy in combat.enemies if enemy.alive)
+    exposed = max(0, incoming - combat.player_block)
+    prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive)
+    # Killing the primary enemy (the boss) wins the fight; credit its remaining HP so a
+    # boss kill outranks killing a reviving minion.
+    prevented += sum(max(0, before.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and before.primary and not after.alive)
+    # Cap damage at each enemy's remaining HP so overkill is not overvalued.
+    dealt = sum(max(0, before.hp) - max(0, after.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive)
+    dealt -= max(0, combat.player_hp - state.player_hp)  # penalize self-damage
+    # Stripping Slippery enables full damage on later hits; credit each strip so the
+    # policy keeps attacking Slippery bosses (e.g. VANTOM) instead of only blocking.
+    dealt += sum(max(0, _power(before.powers, "SlipperyPower") - _power(after.powers, "SlipperyPower")) for before, after in zip(combat.enemies, state.enemies) if before.alive)
+    blocked = state.player_block - combat.player_block
+    return prevented + dealt + min(blocked, exposed)
+
+
+def _greedy_action(combat: Combat, data: dict) -> str:
+    """Pick a card action by prevented damage + damage dealt; block counts against incoming."""
+    actions = legal_actions(combat)[:-1]  # exclude End turn
+    if not actions:
+        return END_TURN
+    best, best_score = None, -1.0
+    for action in actions:
+        state = step(combat, action, data, random.Random(0))
+        # Skip actions that kill the player unless they win the fight outright.
+        if state.player_hp <= 0 and any(enemy.alive for enemy in state.enemies):
+            continue
+        score = _step_score(combat, state, data)
+        card = action.partition("@")[0]
+        # Vulnerability applies (Bash/Tremble) strengthen later attacks by 50%; credit
+        # that so they are played before the attacks they boost.
+        if card in {BASH, TREMBLE}:
+            score += sum(CARD_DAMAGE.get(name, 0) // 2 for name in state.hand if name in ATTACKS and name != card and CARD_COST.get(name, 99) <= state.energy)
+        if score > best_score:
+            best, best_score = action, score
+    return best if best is not None else END_TURN
+
+
 def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -> list[tuple[str, float]]:
     rng = random.Random(seed)
     results = []
@@ -340,13 +469,15 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
         scores = []
         for _ in range(max(1, simulations // len(legal_actions(combat)))):
             state = step(combat, action, data, rng)
+            # Credit prevented damage: enemies dead after the first step were about to hit us.
+            prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive)
             for _ in range(60):
                 if state.terminal:
                     break
-                actions = legal_actions(state)
-                state = step(state, rng.choice(actions[:-1]) if actions[:-1] else END_TURN, data, rng)
+                state = step(state, _greedy_action(state, data), data, rng)
             won = not any(enemy.alive for enemy in state.enemies)
-            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + state.player_hp / 1000)
+            # Win/loss dominates; HP and prevented damage break ties so noisy rollouts still rank correctly.
+            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + state.player_hp / 100 + prevented / 100)
         results.append((action, sum(scores) / len(scores)))
     return sorted(results, key=lambda item: item[1], reverse=True)
 
