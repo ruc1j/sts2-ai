@@ -17,6 +17,8 @@ CARD_NAMES = {
     "CARD.BLUDGEON": "Bludgeon",
     "CARD.SHRUG_IT_OFF": "Shrug It Off",
     "CARD.BATTLE_TRANCE": "Battle Trance",
+    "CARD.BULLY": "Bully",
+    "CARD.DISMANTLE": "Dismantle",
     "CARD.SLIMED": "Slimed",
     "CARD.FRANTIC_ESCAPE": "Frantic Escape",
 }
@@ -54,7 +56,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if enemy_data and simulations and all(card["card_id"] in CARD_NAMES for card in cards):
         try:
             return rollout_choice(observation, actions, enemy_data, simulations)
-        except (KeyError, ValueError, NotImplementedError):
+        except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
     enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
     damage = {"CARD.STRIKE_IRONCLAD": 6, "CARD.BASH": 8}
@@ -137,6 +139,8 @@ def choose_card_reward(observation: dict) -> dict:
         "CARD.BLUDGEON": 10,
         "CARD.BATTLE_TRANCE": 8,
         "CARD.SHRUG_IT_OFF": 7,
+        "CARD.DISMANTLE": 7,
+        "CARD.BULLY": 6,
         "CARD.ANGER": 6,
     }
     selected = max(actions, key=lambda action: priority.get(action["card_id"], 0))

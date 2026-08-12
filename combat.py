@@ -8,10 +8,10 @@ import re
 from dataclasses import dataclass, replace
 
 
-STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Slimed", "Frantic Escape", "End turn"
+STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "End turn"
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
-CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, SLIMED: 1, FRANTIC_ESCAPE: 1}
-CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32}
+CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1}
+CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8}
 
 
 @dataclass(frozen=True)
@@ -309,7 +309,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, player_block=combat.player_block + block)
     enemies = list(combat.enemies)
     enemy = enemies[int(target)]
-    damage = CARD_DAMAGE[card]
+    damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
+    if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
+        damage *= 2
     if _power(combat.player_powers, "WeakPower"):
         damage = damage * 3 // 4
     if _power(enemy.powers, "VulnerablePower"):

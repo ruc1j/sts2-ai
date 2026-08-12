@@ -161,6 +161,15 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "card")
 
+    def test_reward_takes_modeled_bully(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BULLY"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BULLY")
+
 
 if __name__ == "__main__":
     unittest.main()

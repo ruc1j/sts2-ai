@@ -2,7 +2,7 @@ import json
 import random
 import unittest
 
-from combat import ANGER, BATTLE_TRANCE, DEFEND, FRANTIC_ESCAPE, SHRUG, SLIMED, Combat, END_TURN, Enemy, initial_combat, legal_actions, step
+from combat import ANGER, BATTLE_TRANCE, BULLY, DEFEND, DISMANTLE, FRANTIC_ESCAPE, SHRUG, SLIMED, Combat, END_TURN, Enemy, initial_combat, legal_actions, step
 
 
 class CombatTest(unittest.TestCase):
@@ -48,6 +48,12 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (ANGER,), (), (), (left,), player_powers=(("SurroundedRight", 1),))
         after = step(combat, "Anger@0", {}, random.Random(0))
         self.assertEqual(after.player_powers, (("SurroundedLeft", 1),))
+
+    def test_bully_and_dismantle_scale_with_vulnerable(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
+        bully = step(Combat(80, (BULLY,), (), (), (enemy,)), "Bully@0", {}, random.Random(0))
+        dismantle = step(Combat(80, (DISMANTLE,), (), (), (enemy,)), "Dismantle@0", {}, random.Random(0))
+        self.assertEqual((bully.enemies[0].hp, dismantle.enemies[0].hp), (28, 16))
 
     def test_slippery_reduces_an_attack_to_one_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), powers=(("SlipperyPower", 8),))
