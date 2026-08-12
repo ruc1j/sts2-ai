@@ -272,7 +272,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if hp <= max_hp // 2:
         return use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
-        return use(blocking | {"POTION.SHACKLING_POTION", "POTION.LUCKY_TONIC"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:

@@ -243,6 +243,14 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.LUCKY_TONIC")
 
+    def test_high_hp_half_incoming_saves_lucky_tonic(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.LUCKY_TONIC", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 48, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 143, "intents": [{"damage": 24, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_low_hp_uses_unknown_manual_potion_as_safe_fallback(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.UNKNOWN_MANUAL", "target_id": None}, {"type": "end_turn"}],
