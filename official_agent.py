@@ -355,6 +355,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         return max(candidates, key=lambda action: target_score.get(action.get("target_id"), 0) if target_score else 0, default=None)
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
+    block = _number(player.get("block", 0))
     incoming = sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ()))
     lucky = use({"POTION.LUCKY_TONIC"})
     if lucky and incoming > 0 and hp - incoming <= max_hp // 4:
@@ -363,7 +364,9 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if fire:
         return fire
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
-    blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
+    # Fortifier doubles the current block, so with no block it is wasted (sim19 used it at 0
+    # block and gained nothing); only count it once the player already has block this turn.
+    blocking = {"POTION.BLOCK_POTION"} | ({"POTION.FORTIFIER"} if block > 0 else set())
     defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
     recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
     debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.SHACKLING_POTION"}
@@ -381,7 +384,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2) or len(enemy_hp) >= 2
     if incoming >= hp:
-        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER"}) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     hand = observation.get("hand") or ()
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
@@ -398,8 +401,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if incoming >= hp // 2:
         return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
-        # Boss-length fights: spend offensive potions up front so the fight ends sooner and less HP is lost.
-        return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION", "POTION.COLORLESS_POTION", "POTION.ATTACK_POTION", "POTION.SKILL_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        # Boss-length fights: Shackling's Strength -7 applies for the whole fight, so use it up
+        # front (the boss verifies at 92-100% win rate with it), then spend offensive potions
+        # so the fight ends sooner and less HP is lost.
+        return use({"POTION.SHACKLING_POTION"}) or use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION", "POTION.COLORLESS_POTION", "POTION.ATTACK_POTION", "POTION.SKILL_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None

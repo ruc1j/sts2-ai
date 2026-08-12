@@ -511,6 +511,47 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.WEAK_POTION")
 
+    def test_uses_shackling_potion_first_in_boss_fight(self) -> None:
+        # Shackling's Strength -7 applies for the whole boss fight, so it must be spent before
+        # any offensive potion when the enemy is boss-length (HP >= 100).
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SHACKLING_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 321, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SHACKLING_POTION")
+
+    def test_uses_fortifier_when_block_exists(self) -> None:
+        # Fortifier doubles the current block, so with block already up it is a good pick
+        # against big incoming damage.
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.FORTIFIER", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 60, "max_hp": 80, "block": 8},
+            "enemies": [{"combat_id": 1, "hp": 40, "intents": [{"damage": 35, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.FORTIFIER")
+
+    def test_saves_fortifier_when_no_block(self) -> None:
+        # With zero block Fortifier gains nothing (it doubles current block), so it must be
+        # saved and a different defensive potion used instead.
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.FORTIFIER", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.WEAK_POTION", "target_id": 1},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 60, "max_hp": 80, "block": 0},
+            "enemies": [{"combat_id": 1, "hp": 40, "intents": [{"damage": 35, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.WEAK_POTION")
+
     def test_uses_entropic_brew_when_low(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.ENTROPIC_BREW", "target_id": None}],
