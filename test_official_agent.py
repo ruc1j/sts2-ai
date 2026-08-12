@@ -463,6 +463,87 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.HEMOKINESIS")
 
+    def test_lethal_prefers_killing_the_enemy_that_will_attack(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "hp": 5, "block": 0, "intents": [{"damage": 22, "repeats": 1}]},
+                {"combat_id": 2, "hp": 5, "block": 0, "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 1)
+
+    def test_lethal_prefers_weaker_enemy_when_both_attack(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "hp": 9, "block": 0, "intents": [{"damage": 10, "repeats": 1}]},
+                {"combat_id": 2, "hp": 3, "block": 0, "intents": [{"damage": 10, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
+    def test_focus_fire_prefers_weakest_enemy_when_nothing_is_lethal(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "hp": 50, "block": 0, "intents": []},
+                {"combat_id": 2, "hp": 20, "block": 0, "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
+    def test_lethal_ignores_slippery_enemy(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "hp": 5, "block": 0, "powers": [{"id": "POWER.SLIPPERY_POWER", "amount": 8}], "intents": []},
+                {"combat_id": 2, "hp": 5, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
+    def test_lethal_accounts_for_hard_to_kill_cap(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.GIANT_ROCK", "type": "Attack", "vars": [{"id": "Damage", "value": 16}]}],
+            "enemies": [
+                # 16 damage is capped at 9 by HardToKill, so this Exoskeleton is NOT lethal.
+                {"combat_id": 1, "hp": 12, "block": 0, "powers": [{"id": "POWER.HARD_TO_KILL_POWER", "amount": 9}], "intents": []},
+                {"combat_id": 2, "hp": 10, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.GIANT_ROCK", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.GIANT_ROCK", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
     def test_reward_takes_modeled_bully(self) -> None:
         observation = {
             "legal_actions": [

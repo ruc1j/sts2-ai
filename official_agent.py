@@ -21,6 +21,20 @@ CARD_NAMES = {
     "CARD.DISMANTLE": "Dismantle",
     "CARD.SLIMED": "Slimed",
     "CARD.FRANTIC_ESCAPE": "Frantic Escape",
+    "CARD.IRON_WAVE": "Iron Wave",
+    "CARD.CINDER": "Cinder",
+    "CARD.ASHEN_STRIKE": "Ashen Strike",
+    "CARD.HEMOKINESIS": "Hemokinesis",
+    "CARD.PERFECTED_STRIKE": "Perfected Strike",
+    "CARD.INFLAME": "Inflame",
+    "CARD.PRIMAL_FORCE": "Primal Force",
+    "CARD.UNRELENTING": "Unrelenting",
+    "CARD.GIANT_ROCK": "Giant Rock",
+    "CARD.RELAX": "Relax",
+    "CARD.TREMBLE": "Tremble",
+    "CARD.BREAKTHROUGH": "Breakthrough",
+    "CARD.WHIRLWIND": "Whirlwind",
+    "CARD.BLOODLETTING": "Bloodletting",
 }
 
 CARD_TIERS = {
@@ -78,11 +92,18 @@ POWER_NAMES = {
     "POWER.FRAIL": "FrailPower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
     "POWER.STRENGTH": "StrengthPower",
+    "POWER.STRENGTH_POWER": "StrengthPower",
     "POWER.VULNERABLE": "VulnerablePower",
+    "POWER.VULNERABLE_POWER": "VulnerablePower",
     "POWER.WEAK": "WeakPower",
+    "POWER.WEAK_POWER": "WeakPower",
+    "POWER.HARD_TO_KILL_POWER": "HardToKillPower",
+    "POWER.ARTIFACT_POWER": "ArtifactPower",
     "POWER.BACK_ATTACK_LEFT_POWER": "BackAttackLeftPower",
     "POWER.BACK_ATTACK_RIGHT_POWER": "BackAttackRightPower",
     "POWER.SURROUNDED_POWER": "SurroundedPower",
+    "POWER.ILLUSION_POWER": "IllusionPower",
+    "POWER.MINION_POWER": "MinionPower",
 }
 
 KNOWN_CARD_DAMAGE = {
@@ -91,10 +112,18 @@ KNOWN_CARD_DAMAGE = {
     "CARD.ANGER": 6,
     "CARD.BLUDGEON": 32,
     "CARD.DISMANTLE": 8,
+    "CARD.IRON_WAVE": 5,
+    "CARD.CINDER": 18,
+    "CARD.HEMOKINESIS": 15,
+    "CARD.UNRELENTING": 14,
+    "CARD.GIANT_ROCK": 16,
+    "CARD.BREAKTHROUGH": 9,
 }
 KNOWN_CARD_BLOCK = {
     "CARD.DEFEND_IRONCLAD": 5,
     "CARD.SHRUG_IT_OFF": 8,
+    "CARD.RELAX": 15,
+    "CARD.IRON_WAVE": 5,
 }
 
 
@@ -103,6 +132,12 @@ def _number(value: object, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _intent_incoming(enemy: dict) -> int:
+    # CombatBridge reports intent damage via GetSingleDamage, which already includes
+    # Strength/Weak/Vulnerable, so the observed damage is used as-is.
+    return sum(max(0, _number(intent.get("damage"))) * max(1, _number(intent.get("repeats"), 1)) for intent in enemy.get("intents") or ())
 
 
 def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
@@ -161,7 +196,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return turn
     if potion := choose_potion(observation, potions):
         return potion
-    # ponytail: rollouts cover starter cards and core combat powers; extend these mappings when reward-card search begins.
+    # rollouts cover the modeled starter and reward cards; unknown cards fall back to the heuristic below.
     if enemy_data and simulations and all(card["card_id"] in CARD_NAMES for card in cards):
         try:
             return rollout_choice(observation, actions, enemy_data, simulations)
@@ -169,14 +204,30 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             pass
     enemy_by_id = {enemy["combat_id"]: enemy for enemy in observation.get("enemies", ())}
     hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
+    enemy_incoming = {enemy["combat_id"]: _intent_incoming(enemy) for enemy in observation.get("enemies", ())}
+
+    def damage(action: dict) -> int:
+        enemy = enemy_by_id.get(action.get("target_id"))
+        if not enemy:
+            return 0
+        # Slippery enemies reduce every hit to 1 until the power is spent.
+        if any(power.get("id") == "POWER.SLIPPERY_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
+            return 1
+        value = _card_value(action, hand, "damage")
+        # HardToKill (e.g. Exoskeleton) caps every hit at the power amount.
+        caps = [_number(power.get("amount")) for power in enemy.get("powers", ()) if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]
+        return min(value, max(caps)) if caps else value
+
     lethal = [
         action for action in cards
         if action.get("target_id") in enemy_by_id
-        and _card_value(action, hand, "damage") - enemy_by_id[action["target_id"]].get("block", 0) >= enemy_by_id[action["target_id"]]["hp"]
+        and damage(action) - enemy_by_id[action["target_id"]].get("block", 0) >= enemy_by_id[action["target_id"]]["hp"]
     ]
     if lethal:
-        return next((action for action in lethal if not _is_self_damage(action, hand)), lethal[0])
-    incoming = _incoming(observation)
+        killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
+        # Finish off the enemy that is about to attack first, then the weakest one.
+        return max(killers, key=lambda action: (enemy_incoming.get(action["target_id"], 0), -enemy_by_id[action["target_id"]].get("hp", 0), _card_value(action, hand, "damage")))
+    incoming = sum(enemy_incoming.values())
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 0)
     summon_pending = any(
@@ -193,12 +244,18 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return max(defenses, key=lambda action: _card_value(action, hand, "block"))
-    def score(action: dict) -> tuple[int, int]:
-        card = hand.get(action.get("hand_index"), {})
-        return priority.get(action["card_id"], 0), _card_value(action, hand, "damage") if card.get("type") == "Attack" else 0
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
-        return max(cards, key=lambda action: (priority.get(action["card_id"], 3 if hand.get(action.get("hand_index"), {}).get("type") == "Attack" else 1), score(action)[1]))
+        def score(action: dict) -> tuple[int, int, int]:
+            card = hand.get(action.get("hand_index"), {})
+            attack = card.get("type") == "Attack" and action.get("target_id") in enemy_by_id
+            # Focus fire: among equal-priority attacks, prefer the weakest enemy.
+            return (
+                priority.get(action["card_id"], 3 if card.get("type") == "Attack" else 1),
+                damage(action) if attack else 0,
+                -enemy_by_id[action["target_id"]].get("hp", 0) if attack else 0,
+            )
+        return max(cards, key=score)
     return next(action for action in actions if action["type"] == "end_turn")
 
 
@@ -457,6 +514,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         player_powers=tuple(sorted(((f"Surrounded{power['facing']}" if power["id"] == "POWER.SURROUNDED_POWER" and power.get("facing") else POWER_NAMES.get(power["id"], power["id"])), power["amount"]) for power in observation["player"]["powers"])),
         energy=observation["player"]["energy"],
         turn=observation["turn"],
+        exhaust_pile=tuple(CARD_NAMES.get(card, card) for card in observation.get("exhaust_pile", ())),
     )
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
