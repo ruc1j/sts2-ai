@@ -25,11 +25,53 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_map_looks_ahead(self) -> None:
         observation = {
+            "player": {"hp": 80, "max_hp": 80},
             "map": {"points": [
                 {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
                 {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
                 {"col": 0, "row": 1, "type": "Boss", "children": []},
                 {"col": 1, "row": 1, "type": "Treasure", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_low_hp_prefers_nearest_reachable_rest(self) -> None:
+        observation = {
+            "player": {"hp": 20, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Treasure", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": []},
+                {"col": 1, "row": 1, "type": "Monster", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "RestSite", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 0)
+
+    def test_low_hp_avoids_elite_on_equally_short_rest_route(self) -> None:
+        observation = {
+            "player": {"hp": 40, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Elite", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": [{"col": 0, "row": 2}]},
+                {"col": 1, "row": 1, "type": "RestSite", "children": []},
+                {"col": 0, "row": 2, "type": "Treasure", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Treasure", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_low_hp_ignores_unreachable_rest_routes(self) -> None:
+        observation = {
+            "player": {"hp": 39, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Treasure", "children": []},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 1, "row": 1, "type": "RestSite", "children": []},
             ]},
             "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
         }

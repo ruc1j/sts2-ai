@@ -140,6 +140,28 @@ def choose_map(observation: dict) -> dict:
         memo[coord] = room_value.get(point["type"], 0) + (max(map(value, children)) if children else 0)
         return memo[coord]
 
+    player = observation.get("player", {})
+    if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 2 <= player["max_hp"]:
+        rest_paths: dict[tuple[int, int], tuple[int, int] | None] = {}
+
+        def rest_path(coord: tuple[int, int]) -> tuple[int, int] | None:
+            if coord in rest_paths:
+                return rest_paths[coord]
+            point = points[coord]
+            elites = point["type"] == "Elite"
+            if point["type"] == "RestSite":
+                rest_paths[coord] = (0, int(elites))
+                return rest_paths[coord]
+            children = (rest_path((child["col"], child["row"])) for child in point["children"])
+            reachable = [path for path in children if path is not None]
+            rest_paths[coord] = None if not reachable else min((distance + 1, elite_count + elites) for distance, elite_count in reachable)
+            return rest_paths[coord]
+
+        routes = [(action, rest_path((action["col"], action["row"]))) for action in observation["legal_actions"]]
+        reachable = [(action, route) for action, route in routes if route is not None]
+        if reachable:
+            return min(reachable, key=lambda choice: (*choice[1], -value((choice[0]["col"], choice[0]["row"]))))[0]
+
     return max(observation["legal_actions"], key=lambda action: value((action["col"], action["row"])))
 
 
