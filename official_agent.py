@@ -101,23 +101,29 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if not actions:
         return None
     enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
+    enemy_damage = {enemy["combat_id"]: sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for intent in enemy.get("intents") or ()) for enemy in observation.get("enemies", ())}
+    def use(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
+        candidates = [action for action in actions if action["potion_id"] in ids]
+        return max(candidates, key=lambda action: target_score.get(action.get("target_id"), 0) if target_score else 0, default=None)
     fire = next((action for action in actions if action["potion_id"] == "POTION.FIRE_POTION" and action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= 20), None)
     if fire:
         return fire
-    if max(enemy_hp.values(), default=0) >= 100:
-        strength = next((action for action in actions if action["potion_id"] == "POTION.STRENGTH_POTION"), None)
-        if strength:
-            return strength
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
-    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION"}
+    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
+    if incoming >= hp:
+        return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER", "POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
     if hp <= max_hp // 2:
-        return next((action for action in actions if action["potion_id"] in healing | defensive_buffs), None)
+        return use(healing | defensive_buffs | {"POTION.ENTROPIC_BREW"})
     if incoming >= hp // 2:
-        return next((action for action in actions if action["potion_id"] in blocking), None)
+        return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
+    if max(enemy_hp.values(), default=0) >= 100:
+        return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp)
+    if not observation.get("hand"):
+        return use({"POTION.SWIFT_POTION", "POTION.ENERGY_POTION"})
     return None
 
 
