@@ -123,6 +123,16 @@ def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
     return (KNOWN_CARD_DAMAGE if metric == "damage" else KNOWN_CARD_BLOCK).get(card_id, 0)
 
 
+def _is_self_damage(action: dict, hand: dict[int, dict]) -> bool:
+    card = hand.get(action.get("hand_index"), {})
+    if action.get("card_id") in UNCOMMITTED_SELF_DAMAGE or card.get("id") in UNCOMMITTED_SELF_DAMAGE:
+        return True
+    return any(
+        any(marker in str(variable.get("id", "")).lower().replace("_", "") for marker in ("selfdamage", "hploss", "healthloss"))
+        for variable in card.get("vars") or ()
+    )
+
+
 def _incoming(observation: dict) -> int:
     return sum(
         max(0, _number(intent.get("damage"))) * max(1, _number(intent.get("repeats"), 1))
@@ -165,10 +175,28 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         and _card_value(action, hand, "damage") - enemy_by_id[action["target_id"]].get("block", 0) >= enemy_by_id[action["target_id"]]["hp"]
     ]
     if lethal:
-        return lethal[0]
+        return next((action for action in lethal if not _is_self_damage(action, hand)), lethal[0])
     incoming = _incoming(observation)
+    player = observation.get("player", {})
+    hp, max_hp = player.get("hp", 0), player.get("max_hp", 0)
+    summon_pending = any(
+        "summon" in str(intent.get("type", "")).lower()
+        for enemy in observation.get("enemies", ())
+        for intent in enemy.get("intents") or ()
+    )
+    def attack_or_defense(action: dict) -> bool:
+        card = hand.get(action.get("hand_index"), {})
+        return (
+            card.get("type") == "Attack"
+            or _card_value(action, hand, "damage") > 0
+            or _card_value(action, hand, "block") > 0
+        )
+    if (hp <= max_hp // 2 or incoming > 0) and any(
+        not _is_self_damage(action, hand) and attack_or_defense(action) for action in cards
+    ):
+        cards = [action for action in cards if not _is_self_damage(action, hand)]
     defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
-    if observation.get("player", {}).get("block", 0) < incoming and defenses:
+    if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return max(defenses, key=lambda action: _card_value(action, hand, "block"))
     def score(action: dict) -> tuple[int, int]:
         card = hand.get(action.get("hand_index"), {})

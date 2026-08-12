@@ -389,6 +389,26 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.UNKNOWN_SKILL")
 
+    def test_low_hp_avoids_uncommitted_self_damage_when_attack_and_defend_are_legal(self) -> None:
+        observation = {
+            "player": {"hp": 28, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.BLOODLETTING", "type": "Skill", "vars": [{"id": "Damage", "value": 3}]},
+                {"index": 1, "id": "CARD.HEMOKINESIS", "type": "Attack", "vars": [{"id": "Damage", "value": 15}]},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 3, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 50, "intents": [{"type": "SingleAttackIntent", "damage": 12, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 3, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
+
     def test_reward_takes_modeled_bully(self) -> None:
         observation = {
             "legal_actions": [
