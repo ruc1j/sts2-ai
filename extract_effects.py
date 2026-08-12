@@ -75,7 +75,7 @@ def _arguments(value: str) -> list[str]:
 
 def effects(source: str, method: str) -> list[dict]:
     body = _method_body(source, method)
-    found: list[dict] = []
+    found: list[tuple[int, dict]] = []
     for command in COMMANDS:
         pattern = re.compile(re.escape(command) + r"(?:<(?P<model>[^>]+)>)?\s*\(")
         for match in pattern.finditer(body):
@@ -90,8 +90,8 @@ def effects(source: str, method: str) -> list[dict]:
                 effect.update(target=args[0], amount=args[1])
             elif command == "PowerCmd.Apply":
                 effect.update(target=args[1], amount=args[2])
-            found.append(effect)
-    return found
+            found.append((match.start(), effect))
+    return [effect for _, effect in sorted(found, key=lambda item: item[0])]
 
 
 def main() -> None:

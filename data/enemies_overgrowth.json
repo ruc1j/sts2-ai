@@ -17,7 +17,12 @@
         [
           {
             "monster": "MONSTER.BYGONE_EFFIGY",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 127,
+              "MaxInitialHp": 127,
+              "SlashDamage": 13
+            }
           }
         ]
       ]
@@ -37,7 +42,11 @@
         [
           {
             "monster": "MONSTER.BYRDONIS",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 81,
+              "MaxInitialHp": 84
+            }
           }
         ]
       ]
@@ -57,7 +66,23 @@
         [
           {
             "monster": "MONSTER.CEREMONIAL_BEAST",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 252,
+              "MaxInitialHp": 252,
+              "PlowAmount": 150,
+              "PlowDamage": 18,
+              "PlowStrength": 2,
+              "StompDamage": 15,
+              "CrushDamage": 17,
+              "CrushStrength": 3,
+              "ShouldDisappearFromDoom": false,
+              "ShouldFadeAfterDeath": false,
+              "IsStunnedByPlowRemoval": false,
+              "IsInSecondPhase": false,
+              "ShouldPlayRegularHurtAnim": true,
+              "InMidCharge": false
+            }
           }
         ]
       ]
@@ -77,7 +102,15 @@
         [
           {
             "monster": "MONSTER.CUBEX_CONSTRUCT",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 65,
+              "MaxInitialHp": 65,
+              "BlastDamage": 7,
+              "ExpelDamage": 5,
+              "IsBurrowed": false,
+              "IsCharging": false
+            }
           }
         ]
       ]
@@ -102,21 +135,44 @@
         [
           {
             "monster": "MONSTER.TWIG_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 28,
+              "HasPhobiaSpineSkin": true,
+              "ClumpDamage": 11
+            }
           },
           {
             "monster": "MONSTER.FLYCONID",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 47,
+              "MaxInitialHp": 49,
+              "SmashDamage": 11,
+              "SporeDamage": 8
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.LEAF_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 32,
+              "MaxInitialHp": 35,
+              "ClumpDamage": 8
+            }
           },
           {
             "monster": "MONSTER.FLYCONID",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 47,
+              "MaxInitialHp": 49,
+              "SmashDamage": 11,
+              "SporeDamage": 8
+            }
           }
         ]
       ]
@@ -137,7 +193,13 @@
         [
           {
             "monster": "MONSTER.FOGMOG",
-            "slot": "fogmog"
+            "slot": "fogmog",
+            "values": {
+              "MinInitialHp": 74,
+              "MaxInitialHp": 74,
+              "SwipeDamage": 8,
+              "HeadbuttDamage": 14
+            }
           }
         ]
       ]
@@ -159,7 +221,13 @@
         [
           {
             "monster": "MONSTER.FUZZY_WURM_CRAWLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 55,
+              "MaxInitialHp": 57,
+              "AcidGoopDamage": 4,
+              "IsPuffed": false
+            }
           }
         ]
       ]
@@ -179,15 +247,39 @@
         [
           {
             "monster": "MONSTER.INKLET",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 17,
+              "JabDamage": 3,
+              "WhirlwindDamage": 2,
+              "PiercingGazeDamage": 10,
+              "MiddleInklet": false
+            }
           },
           {
             "monster": "MONSTER.INKLET",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 17,
+              "JabDamage": 3,
+              "WhirlwindDamage": 2,
+              "PiercingGazeDamage": 10,
+              "MiddleInklet": true
+            }
           },
           {
             "monster": "MONSTER.INKLET",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 17,
+              "JabDamage": 3,
+              "WhirlwindDamage": 2,
+              "PiercingGazeDamage": 10,
+              "MiddleInklet": false
+            }
           }
         ]
       ]
@@ -207,7 +299,13 @@
         [
           {
             "monster": "MONSTER.MAWLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 72,
+              "MaxInitialHp": 72,
+              "RipAndTearDamage": 14,
+              "ClawDamage": 4
+            }
           }
         ]
       ]
@@ -227,11 +325,31 @@
         [
           {
             "monster": "MONSTER.NIBBIT",
-            "slot": "front"
+            "slot": "front",
+            "values": {
+              "MinInitialHp": 42,
+              "MaxInitialHp": 46,
+              "ButtDamage": 12,
+              "SliceBlock": 5,
+              "SliceDamage": 6,
+              "HissStrengthGain": 2,
+              "IsFront": true,
+              "IsAlone": false
+            }
           },
           {
             "monster": "MONSTER.NIBBIT",
-            "slot": "back"
+            "slot": "back",
+            "values": {
+              "MinInitialHp": 42,
+              "MaxInitialHp": 46,
+              "ButtDamage": 12,
+              "SliceBlock": 5,
+              "SliceDamage": 6,
+              "HissStrengthGain": 2,
+              "IsFront": false,
+              "IsAlone": false
+            }
           }
         ]
       ]
@@ -253,7 +371,17 @@
         [
           {
             "monster": "MONSTER.NIBBIT",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 42,
+              "MaxInitialHp": 46,
+              "ButtDamage": 12,
+              "SliceBlock": 5,
+              "SliceDamage": 6,
+              "HissStrengthGain": 2,
+              "IsFront": false,
+              "IsAlone": true
+            }
           }
         ]
       ]
@@ -277,11 +405,23 @@
         [
           {
             "monster": "MONSTER.SHRINKER_BEETLE",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 38,
+              "MaxInitialHp": 40,
+              "ChompDamage": 7,
+              "StompDamage": 13
+            }
           },
           {
             "monster": "MONSTER.FUZZY_WURM_CRAWLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 55,
+              "MaxInitialHp": 57,
+              "AcidGoopDamage": 4,
+              "IsPuffed": false
+            }
           }
         ]
       ]
@@ -302,7 +442,12 @@
         [
           {
             "monster": "MONSTER.PHROG_PARASITE",
-            "slot": "phrog"
+            "slot": "phrog",
+            "values": {
+              "MinInitialHp": 61,
+              "MaxInitialHp": 64,
+              "LashDamage": 4
+            }
           }
         ]
       ]
@@ -326,841 +471,1849 @@
         [
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           },
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           },
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           },
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           },
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           },
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           },
           {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           },
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           }
         ],
         [
           {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           },
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           },
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           },
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           },
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           },
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
           },
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           },
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           },
           {
             "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           }
         ],
         [
           {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
           },
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           },
           {
             "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          }
-        ],
-        [
-          {
-            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.AXE_RUBY_RAIDER",
-            "slot": null
-          },
-          {
-            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
           },
           {
             "monster": "MONSTER.TRACKER_RUBY_RAIDER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 33,
+              "BeatDamage": 7
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 21,
+              "FireDamage": 14,
+              "IsCrossbowReloaded": false
+            }
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 20,
+              "MaxInitialHp": 22,
+              "SwingDamage": 5,
+              "SwingBlock": 5,
+              "BigSwingDamage": 12
+            }
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 18,
+              "MaxInitialHp": 23
+            }
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "HoundsDamage": 1,
+              "HoundsRepeat": 8
+            }
           }
         ]
       ]
@@ -1182,7 +2335,13 @@
         [
           {
             "monster": "MONSTER.SHRINKER_BEETLE",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 38,
+              "MaxInitialHp": 40,
+              "ChompDamage": 7,
+              "StompDamage": 13
+            }
           }
         ]
       ]
@@ -1207,37 +2366,79 @@
         [
           {
             "monster": "MONSTER.TWIG_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 28,
+              "HasPhobiaSpineSkin": true,
+              "ClumpDamage": 11
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 32,
+              "MaxInitialHp": 35,
+              "ClumpDamage": 8
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TWIG_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 28,
+              "HasPhobiaSpineSkin": true,
+              "ClumpDamage": 11
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 32,
+              "MaxInitialHp": 35,
+              "ClumpDamage": 8
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           }
         ]
       ]
@@ -1262,57 +2463,119 @@
         [
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 32,
+              "MaxInitialHp": 35,
+              "ClumpDamage": 8
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 28,
+              "HasPhobiaSpineSkin": true,
+              "ClumpDamage": 11
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 32,
+              "MaxInitialHp": 35,
+              "ClumpDamage": 8
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 28,
+              "HasPhobiaSpineSkin": true,
+              "ClumpDamage": 11
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           }
         ]
       ]
@@ -1337,87 +2600,185 @@
         [
           {
             "monster": "MONSTER.TWIG_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 28,
+              "HasPhobiaSpineSkin": true,
+              "ClumpDamage": 11
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.SNAPPING_JAXFRUIT",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 31,
+              "MaxInitialHp": 33,
+              "EnergyDamage": 3
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.TWIG_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 7,
+              "MaxInitialHp": 11,
+              "TackleDamage": 4
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.LEAF_SLIME_S",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 11,
+              "MaxInitialHp": 15,
+              "TackleDamage": 3
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ],
         [
           {
             "monster": "MONSTER.LEAF_SLIME_M",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 32,
+              "MaxInitialHp": 35,
+              "ClumpDamage": 8
+            }
           },
           {
             "monster": "MONSTER.SLITHERING_STRANGLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 53,
+              "MaxInitialHp": 55,
+              "ThwackDamage": 7,
+              "LashDamage": 12
+            }
           }
         ]
       ]
@@ -1440,11 +2801,22 @@
         [
           {
             "monster": "MONSTER.SNAPPING_JAXFRUIT",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 31,
+              "MaxInitialHp": 33,
+              "EnergyDamage": 3
+            }
           },
           {
             "monster": "MONSTER.FLYCONID",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 47,
+              "MaxInitialHp": 49,
+              "SmashDamage": 11,
+              "SporeDamage": 8
+            }
           }
         ]
       ]
@@ -1465,15 +2837,40 @@
         [
           {
             "monster": "MONSTER.KIN_FOLLOWER",
-            "slot": "slot1"
+            "slot": "slot1",
+            "values": {
+              "MinInitialHp": 58,
+              "MaxInitialHp": 59,
+              "QuickSlashDamage": 5,
+              "BoomerangDamage": 2,
+              "DanceStrength": 2,
+              "StartsWithDance": true
+            }
           },
           {
             "monster": "MONSTER.KIN_FOLLOWER",
-            "slot": "slot2"
+            "slot": "slot2",
+            "values": {
+              "MinInitialHp": 58,
+              "MaxInitialHp": 59,
+              "QuickSlashDamage": 5,
+              "BoomerangDamage": 2,
+              "DanceStrength": 2,
+              "StartsWithDance": false
+            }
           },
           {
             "monster": "MONSTER.KIN_PRIEST",
-            "slot": "leaderSlot"
+            "slot": "leaderSlot",
+            "values": {
+              "MinInitialHp": 190,
+              "MaxInitialHp": 190,
+              "OrbOfFrailtyDamage": 8,
+              "OrbOfWeaknessDamage": 8,
+              "BeamDamage": 3,
+              "RitualStrength": 2,
+              "SpeechUsed": false
+            }
           }
         ]
       ]
@@ -1493,7 +2890,16 @@
         [
           {
             "monster": "MONSTER.VANTOM",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 173,
+              "SlipperyAmt": 8,
+              "MaxInitialHp": 173,
+              "InkBlotDamage": 7,
+              "InkyLanceDamage": 6,
+              "DismemberDamage": 26,
+              "ShouldDisappearFromDoom": false
+            }
           }
         ]
       ]
@@ -1513,7 +2919,14 @@
         [
           {
             "monster": "MONSTER.VINE_SHAMBLER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 61,
+              "MaxInitialHp": 61,
+              "GraspingVinesDamage": 8,
+              "SwipeDamage": 6,
+              "ChompDamage": 16
+            }
           }
         ]
       ]
@@ -4143,6 +5556,16 @@
           "next": "NASTY_BITE_MOVE",
           "effects": [
             {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "1",
+                "null"
+              ],
+              "model": "Infection"
+            },
+            {
               "command": "PowerCmd.Apply",
               "arguments": [
                 "new ThrowingPlayerChoiceContext()",
@@ -4154,16 +5577,6 @@
               "model": "StrengthPower",
               "target": "base.Creature",
               "amount": "2m"
-            },
-            {
-              "command": "CardPileCmd.AddToCombatAndPreview",
-              "arguments": [
-                "targets",
-                "PileType.Discard",
-                "1",
-                "null"
-              ],
-              "model": "Infection"
             }
           ]
         }

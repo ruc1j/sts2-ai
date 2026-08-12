@@ -100,9 +100,9 @@ $encounters = foreach ($encounter in @($actModel.AllEncounters) | Sort-Object { 
         $mutableEncounter = $encounter.ToMutable()
         $encounterRngField.SetValue($mutableEncounter, $rngConstructor.Invoke(@([uint32]$sample, 0)))
         $formation = @($generate.Invoke($mutableEncounter, @()) | ForEach-Object {
-            [ordered]@{ monster = $_.Item1.Id.ToString(); slot = $_.Item2 }
+            [ordered]@{ monster = $_.Item1.Id.ToString(); slot = $_.Item2; values = Get-ScalarProperties $_.Item1 }
         })
-        $signature = ($formation | ForEach-Object { "$($_.monster)@$($_.slot)" }) -join '|'
+        $signature = ($formation | ForEach-Object { "$($_.monster)@$($_.slot)@$($_.values | ConvertTo-Json -Compress)" }) -join '|'
         if (-not $formations.Contains($signature)) { $formations[$signature] = $formation }
     }
     [ordered]@{

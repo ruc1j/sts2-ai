@@ -19,15 +19,142 @@
         [
           {
             "monster": "MONSTER.CORPSE_SLUG",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 1
+            }
           },
           {
             "monster": "MONSTER.CORPSE_SLUG",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 2
+            }
           },
           {
             "monster": "MONSTER.CORPSE_SLUG",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 0
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 1
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 1
+            }
+          },
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 2
+            }
           }
         ]
       ]
@@ -49,11 +176,97 @@
         [
           {
             "monster": "MONSTER.CORPSE_SLUG",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 1
+            }
           },
           {
             "monster": "MONSTER.CORPSE_SLUG",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 2
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 0
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.CORPSE_SLUG",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 25,
+              "MaxInitialHp": 27,
+              "WhipSlapDamage": 3,
+              "WhipSlapRepeat": 2,
+              "GlompDamage": 8,
+              "GoopFrailAmt": 2,
+              "RavenousStr": 4,
+              "IsRavenous": false,
+              "StarterMoveIdx": 1
+            }
           }
         ]
       ]
@@ -74,11 +287,25 @@
         [
           {
             "monster": "MONSTER.CALCIFIED_CULTIST",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 38,
+              "MaxInitialHp": 41,
+              "DarkStrikeDamage": 9,
+              "IncantationAmount": 2,
+              "AttackSfxStrength": 0.0
+            }
           },
           {
             "monster": "MONSTER.DAMP_CULTIST",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 51,
+              "MaxInitialHp": 53,
+              "DarkStrikeDamage": 1,
+              "IncantationAmount": 5,
+              "AttackSfxStrength": 0.0
+            }
           }
         ]
       ]
@@ -98,7 +325,16 @@
         [
           {
             "monster": "MONSTER.FOSSIL_STALKER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "HasPhobiaSpineSkin": true,
+              "MinInitialHp": 51,
+              "MaxInitialHp": 53,
+              "TackleDamage": 9,
+              "LatchDamage": 12,
+              "LashDamage": 3,
+              "LashRepeat": 2
+            }
           }
         ]
       ]
@@ -120,7 +356,17 @@
         [
           {
             "monster": "MONSTER.GREMLIN_MERC",
-            "slot": "merc"
+            "slot": "merc",
+            "values": {
+              "MinInitialHp": 47,
+              "MaxInitialHp": 49,
+              "HasDeathSfx": false,
+              "GimmeDamage": 7,
+              "GimmeRepeat": 2,
+              "DoubleSmashDamage": 6,
+              "DoubleSmashRepeat": 2,
+              "HeheDamage": 8
+            }
           }
         ]
       ]
@@ -140,7 +386,16 @@
         [
           {
             "monster": "MONSTER.HAUNTED_SHIP",
-            "slot": null
+            "slot": null,
+            "values": {
+              "HasPhobiaSpineSkin": true,
+              "MinInitialHp": 63,
+              "MaxInitialHp": 63,
+              "HauntDazed": 5,
+              "SwipeDamage": 13,
+              "StompDamage": 4,
+              "StompRepeat": 3
+            }
           }
         ]
       ]
@@ -160,7 +415,18 @@
         [
           {
             "monster": "MONSTER.LAGAVULIN_MATRIARCH",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 222,
+              "MaxInitialHp": 222,
+              "SlashDamage": 19,
+              "Slash2Damage": 12,
+              "Slash2Block": 12,
+              "DisembowelDamage": 9,
+              "DisembowelRepeat": 2,
+              "IsAwake": false,
+              "IsShellAwake": false
+            }
           }
         ]
       ]
@@ -181,7 +447,16 @@
         [
           {
             "monster": "MONSTER.LIVING_FOG",
-            "slot": "livingFog"
+            "slot": "livingFog",
+            "values": {
+              "MinInitialHp": 80,
+              "MaxInitialHp": 80,
+              "AdvancedGasDamage": 8,
+              "BloatDamage": 5,
+              "SuperGasBlastDamage": 8,
+              "BloatAmount": 1,
+              "ShouldFadeAfterDeath": false
+            }
           }
         ]
       ]
@@ -201,19 +476,71 @@
         [
           {
             "monster": "MONSTER.PHANTASMAL_GARDENER",
-            "slot": "first"
+            "slot": "first",
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 31,
+              "BiteDamage": 5,
+              "LashDamage": 7,
+              "FlailDamage": 1,
+              "FlailRepeat": 3,
+              "EnlargeStr": 2,
+              "SkittishAmount": 6,
+              "EnlargeTriggers": 0,
+              "ShouldFadeAfterDeath": false,
+              "CurrentScale": 1.0
+            }
           },
           {
             "monster": "MONSTER.PHANTASMAL_GARDENER",
-            "slot": "second"
+            "slot": "second",
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 31,
+              "BiteDamage": 5,
+              "LashDamage": 7,
+              "FlailDamage": 1,
+              "FlailRepeat": 3,
+              "EnlargeStr": 2,
+              "SkittishAmount": 6,
+              "EnlargeTriggers": 0,
+              "ShouldFadeAfterDeath": false,
+              "CurrentScale": 1.0
+            }
           },
           {
             "monster": "MONSTER.PHANTASMAL_GARDENER",
-            "slot": "third"
+            "slot": "third",
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 31,
+              "BiteDamage": 5,
+              "LashDamage": 7,
+              "FlailDamage": 1,
+              "FlailRepeat": 3,
+              "EnlargeStr": 2,
+              "SkittishAmount": 6,
+              "EnlargeTriggers": 0,
+              "ShouldFadeAfterDeath": false,
+              "CurrentScale": 1.0
+            }
           },
           {
             "monster": "MONSTER.PHANTASMAL_GARDENER",
-            "slot": "fourth"
+            "slot": "fourth",
+            "values": {
+              "MinInitialHp": 26,
+              "MaxInitialHp": 31,
+              "BiteDamage": 5,
+              "LashDamage": 7,
+              "FlailDamage": 1,
+              "FlailRepeat": 3,
+              "EnlargeStr": 2,
+              "SkittishAmount": 6,
+              "EnlargeTriggers": 0,
+              "ShouldFadeAfterDeath": false,
+              "CurrentScale": 1.0
+            }
           }
         ]
       ]
@@ -233,7 +560,16 @@
         [
           {
             "monster": "MONSTER.PUNCH_CONSTRUCT",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 55,
+              "MaxInitialHp": 55,
+              "StrongPunchDamage": 14,
+              "FastPunchDamage": 5,
+              "FastPunchRepeat": 2,
+              "StartsWithFastPunch": false,
+              "StartingHpReduction": 0
+            }
           }
         ]
       ]
@@ -256,11 +592,27 @@
         [
           {
             "monster": "MONSTER.CALCIFIED_CULTIST",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 38,
+              "MaxInitialHp": 41,
+              "DarkStrikeDamage": 9,
+              "IncantationAmount": 2,
+              "AttackSfxStrength": 0.0
+            }
           },
           {
             "monster": "MONSTER.SEAPUNK",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 44,
+              "MaxInitialHp": 46,
+              "SeaKickDamage": 11,
+              "SpinningKickDamage": 2,
+              "SpinningKickRepeat": 4,
+              "BubbleBlock": 7,
+              "BubbleStr": 1
+            }
           }
         ]
       ]
@@ -282,7 +634,16 @@
         [
           {
             "monster": "MONSTER.SEAPUNK",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 44,
+              "MaxInitialHp": 46,
+              "SeaKickDamage": 11,
+              "SpinningKickDamage": 2,
+              "SpinningKickRepeat": 4,
+              "BubbleBlock": 7,
+              "BubbleStr": 1
+            }
           }
         ]
       ]
@@ -302,7 +663,12 @@
         [
           {
             "monster": "MONSTER.SEWER_CLAM",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 56,
+              "MaxInitialHp": 56,
+              "JetDamage": 10
+            }
           }
         ]
       ]
@@ -322,7 +688,17 @@
         [
           {
             "monster": "MONSTER.SKULKING_COLONY",
-            "slot": null
+            "slot": null,
+            "values": {
+              "HasPhobiaSpineSkin": true,
+              "MinInitialHp": 75,
+              "MaxInitialHp": 75,
+              "InertiaDamage": 9,
+              "ZoomDamage": 14,
+              "PiercingStabsDamage": 7,
+              "PiercingStabsRepeat": 2,
+              "InertiaStrengthGain": 2
+            }
           }
         ]
       ]
@@ -342,7 +718,14 @@
         [
           {
             "monster": "MONSTER.SLUDGE_SPINNER",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 37,
+              "MaxInitialHp": 39,
+              "OilSprayDamage": 8,
+              "SlamDamage": 11,
+              "RageDamage": 6
+            }
           }
         ]
       ]
@@ -362,7 +745,18 @@
         [
           {
             "monster": "MONSTER.SOUL_FYSH",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 211,
+              "MaxInitialHp": 211,
+              "DeGasDamage": 16,
+              "ScreamDamage": 13,
+              "GazeDamage": 7,
+              "BeckonMoveAmount": 2,
+              "GazeMoveAmount": 1,
+              "ScreamMoveAmount": 3,
+              "IsInvisible": false
+            }
           }
         ]
       ]
@@ -382,7 +776,15 @@
         [
           {
             "monster": "MONSTER.TERROR_EEL",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 140,
+              "MaxInitialHp": 140,
+              "ShriekAmount": 70,
+              "CrashDamage": 16,
+              "ThrashDamage": 3,
+              "ThrashRepeat": 3
+            }
           }
         ]
       ]
@@ -402,11 +804,29 @@
         [
           {
             "monster": "MONSTER.TOADPOLE",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "IsFront": true,
+              "SpikeSpitDamage": 3,
+              "SpikeSpitRepeat": 3,
+              "WhirlDamage": 7,
+              "SpikenAmount": 2
+            }
           },
           {
             "monster": "MONSTER.TOADPOLE",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 21,
+              "MaxInitialHp": 25,
+              "IsFront": false,
+              "SpikeSpitDamage": 3,
+              "SpikeSpitRepeat": 3,
+              "WhirlDamage": 7,
+              "SpikenAmount": 2
+            }
           }
         ]
       ]
@@ -426,15 +846,124 @@
         [
           {
             "monster": "MONSTER.TWO_TAILED_RAT",
-            "slot": "third"
+            "slot": "third",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 1,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
           },
           {
             "monster": "MONSTER.TWO_TAILED_RAT",
-            "slot": "fourth"
+            "slot": "fourth",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 2,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
           },
           {
             "monster": "MONSTER.TWO_TAILED_RAT",
-            "slot": "fifth"
+            "slot": "fifth",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 0,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TWO_TAILED_RAT",
+            "slot": "third",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 2,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
+          },
+          {
+            "monster": "MONSTER.TWO_TAILED_RAT",
+            "slot": "fourth",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 0,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
+          },
+          {
+            "monster": "MONSTER.TWO_TAILED_RAT",
+            "slot": "fifth",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 1,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TWO_TAILED_RAT",
+            "slot": "third",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 0,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
+          },
+          {
+            "monster": "MONSTER.TWO_TAILED_RAT",
+            "slot": "fourth",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 1,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
+          },
+          {
+            "monster": "MONSTER.TWO_TAILED_RAT",
+            "slot": "fifth",
+            "values": {
+              "MinInitialHp": 17,
+              "MaxInitialHp": 21,
+              "ScratchDamage": 8,
+              "DiseaseBiteDamage": 6,
+              "StarterMoveIndex": 2,
+              "TurnsUntilSummonable": 2,
+              "CallForBackupCount": 0
+            }
           }
         ]
       ]
@@ -454,7 +983,24 @@
         [
           {
             "monster": "MONSTER.WATERFALL_GIANT",
-            "slot": null
+            "slot": null,
+            "values": {
+              "MinInitialHp": 240,
+              "MaxInitialHp": 240,
+              "SiphonHeal": 10,
+              "PressurizeAmount": 15,
+              "StompDamage": 15,
+              "RamDamage": 10,
+              "PressureUpDamage": 13,
+              "BasePressureGunDamage": 20,
+              "PressureGunIncrease": 5,
+              "CurrentPressureGunDamage": 0,
+              "SteamEruptionDamage": 0,
+              "IsAboutToBlow": false,
+              "PressureBuildupIdx": 0,
+              "HasDeathSfx": false,
+              "ShouldFadeAfterDeath": true
+            }
           }
         ]
       ]
@@ -1345,19 +1891,19 @@
           "next": "SUPER_GAS_BLAST_MOVE",
           "effects": [
             {
-              "command": "DamageCmd.Attack",
-              "arguments": [
-                "BloatDamage"
-              ],
-              "amount": "BloatDamage"
-            },
-            {
               "command": "CreatureCmd.Add",
               "arguments": [
                 "base.CombatState",
                 "text"
               ],
               "model": "GasBomb"
+            },
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BloatDamage"
+              ],
+              "amount": "BloatDamage"
             }
           ]
         },
@@ -2386,13 +2932,6 @@
           "next": "WHIRL_MOVE",
           "effects": [
             {
-              "command": "DamageCmd.Attack",
-              "arguments": [
-                "SpikeSpitDamage"
-              ],
-              "amount": "SpikeSpitDamage"
-            },
-            {
               "command": "PowerCmd.Apply",
               "arguments": [
                 "new ThrowingPlayerChoiceContext()",
@@ -2404,6 +2943,13 @@
               "model": "ThornsPower",
               "target": "base.Creature",
               "amount": "-SpikenAmount"
+            },
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SpikeSpitDamage"
+              ],
+              "amount": "SpikeSpitDamage"
             }
           ]
         },
