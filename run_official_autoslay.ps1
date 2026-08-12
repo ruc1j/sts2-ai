@@ -3,7 +3,12 @@ param(
     [string]$GameDir = 'E:\SteamLibrary\steamapps\common\Slay the Spire 2',
     [int]$TimeoutSeconds = 300,
     [string]$LogFile = (Join-Path $PSScriptRoot 'data\official_autoslay.log'),
-    [string]$ResultFile = (Join-Path $PSScriptRoot 'data\official_act1_result.json')
+    [string]$ResultFile = (Join-Path $PSScriptRoot 'data\official_act1_result.json'),
+    [string]$AgentScript,
+    [int]$AgentMaxCombats = 1,
+    [switch]$StopAfterAgent,
+    [string]$AgentTrace = (Join-Path $PSScriptRoot 'data\official_agent_trace.jsonl'),
+    [int]$AgentSimulations = 1000
 )
 
 $ErrorActionPreference = 'Stop'
@@ -20,6 +25,7 @@ $isolatedAppData = Join-Path $env:TEMP ("sts2-ai-appdata-" + [guid]::NewGuid().T
 $sourceUserData = Join-Path $env:APPDATA 'SlayTheSpire2'
 $isolatedUserData = Join-Path $isolatedAppData 'SlayTheSpire2'
 $process = $null
+$agentProcess = $null
 try {
     New-Item -ItemType Directory -Path $installedMod -Force | Out-Null
     Copy-Item -LiteralPath $builtMod -Destination (Join-Path $installedMod 'Sts2Ai.dll')
@@ -55,6 +61,29 @@ try {
     $info.ArgumentList.Add("--log-file=$LogFile")
     $info.ArgumentList.Add('--stop-after-act=1')
     $info.ArgumentList.Add("--result-file=$ResultFile")
+    if ($AgentScript) {
+        $observation = Join-Path $isolatedAppData 'observation.json'
+        $action = Join-Path $isolatedAppData 'action.json'
+        Remove-Item -LiteralPath $AgentTrace -Force -ErrorAction SilentlyContinue
+        $agentInfo = [Diagnostics.ProcessStartInfo]::new()
+        $agentInfo.FileName = 'python'
+        $agentInfo.WorkingDirectory = $PSScriptRoot
+        $agentInfo.UseShellExecute = $false
+        $agentInfo.ArgumentList.Add($AgentScript)
+        $agentInfo.ArgumentList.Add($observation)
+        $agentInfo.ArgumentList.Add($action)
+        $agentInfo.ArgumentList.Add('--enemy-data')
+        $agentInfo.ArgumentList.Add((Join-Path $PSScriptRoot 'data\enemies_overgrowth.json'))
+        $agentInfo.ArgumentList.Add('--simulations')
+        $agentInfo.ArgumentList.Add($AgentSimulations.ToString())
+        $agentProcess = [Diagnostics.Process]::Start($agentInfo)
+        $info.ArgumentList.Add('--sts2ai-agent')
+        $info.ArgumentList.Add("--agent-max-combats=$AgentMaxCombats")
+        $info.ArgumentList.Add("--bridge-observation=$observation")
+        $info.ArgumentList.Add("--bridge-action=$action")
+        $info.ArgumentList.Add("--bridge-trace=$AgentTrace")
+        if ($StopAfterAgent) { $info.ArgumentList.Add('--stop-after-agent=1') }
+    }
     $process = [Diagnostics.Process]::Start($info)
     if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
         $process.Kill($true)
@@ -64,6 +93,7 @@ try {
     if ($process.ExitCode) { throw "official simulation failed with exit code $($process.ExitCode); log: $LogFile" }
 } finally {
     if ($process -and -not $process.HasExited) { $process.Kill($true); $process.WaitForExit() }
+    if ($agentProcess -and -not $agentProcess.HasExited) { $agentProcess.Kill($true); $agentProcess.WaitForExit() }
     $resolvedMods = [IO.Path]::GetFullPath($modRoot).TrimEnd('\') + '\'
     $resolvedInstalled = [IO.Path]::GetFullPath($installedMod)
     if ($resolvedInstalled.StartsWith($resolvedMods, [StringComparison]::OrdinalIgnoreCase) -and (Split-Path $resolvedInstalled -Leaf) -eq 'Sts2Ai') {

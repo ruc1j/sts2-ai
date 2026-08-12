@@ -5,11 +5,38 @@ using MegaCrit.Sts2.Core.Modding;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Platform.Steam;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Saves;
 using System.Text.Json;
+using System.Reflection;
 
 namespace Sts2Ai;
+
+[HarmonyPatch]
+internal static class DisableSteamCloudVoidWritesPatch
+{
+    private static IEnumerable<MethodBase> TargetMethods() => typeof(SteamRemoteSaveStore)
+        .GetMethods()
+        .Where(method => method.ReturnType == typeof(void) && method.Name is
+            "WriteFile" or "DeleteFile" or "RenameFile" or "DeleteDirectory" or "ForgetFile" or "BeginSaveBatch" or "EndSaveBatch" or "SetLastModifiedTime");
+
+    private static bool Prefix() => false;
+}
+
+[HarmonyPatch]
+internal static class DisableSteamCloudAsyncWritesPatch
+{
+    private static IEnumerable<MethodBase> TargetMethods() => typeof(SteamRemoteSaveStore)
+        .GetMethods()
+        .Where(method => method.ReturnType == typeof(Task) && method.Name == "WriteFileAsync");
+
+    private static bool Prefix(ref Task __result)
+    {
+        __result = Task.CompletedTask;
+        return false;
+    }
+}
 
 [ModInitializer(nameof(Initialize))]
 public static class Entry

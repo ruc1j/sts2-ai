@@ -1,0 +1,15 @@
+{"seq":0,"type":"card","hand_index":2,"card_id":"CARD.BASH","target_id":1,"simulations":1000,"search_value":1.072044}
+{"seq":1,"type":"card","hand_index":0,"card_id":"CARD.DEFEND_IRONCLAD","target_id":null,"simulations":1000,"search_value":1.0672912912912913}
+{"seq":2,"type":"end_turn","hand_index":null,"card_id":null,"target_id":null,"simulations":1000,"search_value":1.0672409999999999}
+{"seq":3,"type":"card","hand_index":1,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.067933933933934}
+{"seq":4,"type":"card","hand_index":2,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.069915915915916}
+{"seq":5,"type":"card","hand_index":2,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.0722522522522522}
+{"seq":6,"type":"end_turn","hand_index":null,"card_id":null,"target_id":null,"simulations":1000,"search_value":1.072395}
+{"seq":7,"type":"card","hand_index":3,"card_id":"CARD.DEFEND_IRONCLAD","target_id":null,"simulations":1000,"search_value":1.0797597597597597}
+{"seq":8,"type":"card","hand_index":0,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.0796996996996997}
+{"seq":9,"type":"card","hand_index":0,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.08}
+{"seq":10,"type":"end_turn","hand_index":null,"card_id":null,"target_id":null,"simulations":1000,"search_value":1.08}
+{"seq":11,"type":"card","hand_index":0,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.074}
+{"seq":12,"type":"card","hand_index":0,"card_id":"CARD.DEFEND_IRONCLAD","target_id":null,"simulations":1000,"search_value":1.074}
+{"seq":13,"type":"card","hand_index":0,"card_id":"CARD.STRIKE_IRONCLAD","target_id":1,"simulations":1000,"search_value":1.074}
+{"seq":14,"terminal":true}
