@@ -219,9 +219,7 @@ def choose_event(observation: dict) -> dict:
     actions = [action for action in observation.get("legal_actions", ()) if action.get("type") == "event_relic"]
     if not actions:
         raise ValueError("no event relic actions")
-    deck_ids = _deck_ids(observation)
-    block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck_ids)
-    block_starved = len(deck_ids) >= 10 and block_cards * 3 < len(deck_ids)
+    block_starved = _block_starved(_deck_list(observation))
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     low_hp = hp <= max_hp // 2
@@ -445,8 +443,10 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
     elif axis == "exhaust":
         cards = [card for card in EXHAUST_CORE if card not in deck_ids]
     else:
-        # Axis seeds: Perfected Strike (strike), Inflame (strength), Rupture (self-damage), Corruption (exhaust).
-        first = ("CARD.PERFECTED_STRIKE", "CARD.INFLAME", "CARD.RUPTURE", "CARD.CORRUPTION")
+        # Axis seeds: Inflame (strength) leads - boss-fight verification showed the strength
+        # axis deals the most damage - then Perfected Strike (strike), Rupture (self-damage),
+        # Corruption (exhaust).
+        first = ("CARD.INFLAME", "CARD.PERFECTED_STRIKE", "CARD.RUPTURE", "CARD.CORRUPTION")
         cards = [card for card in first if available and card in available]
     if available is not None:
         cards = [card for card in cards if card in available]
@@ -605,6 +605,24 @@ DEFENSE_PRIORITY = {
     "CARD.IRON_WAVE", "CARD.TRUE_GRIT",
 }
 
+# Blocks of 8+ that can actually hold off Act 2's 28-36 hits. Defend (5), Iron Wave (5) and
+# Second Wind (5) and True Grit (7) are barely better than Defend, so they do not count as
+# strong when judging whether a deck can survive without more defensive picks.
+STRONG_BLOCK_CARDS = {
+    "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
+    "CARD.BLOOD_WALL", "CARD.STONE_ARMOR",
+}
+
+
+def _block_starved(deck: list[str]) -> bool:
+    # True when the deck needs defensive picks: block cards make up under 40% of the deck, or
+    # the deck has fewer than 2 strong block cards (Shrug It Off, Flame Barrier, ...). Defend's
+    # 5 block alone cannot hold off Act 2's 28-36 attacks, so a deck with only Defends is still
+    # starved. sim19 died at exactly 1/3 block cards because the old 1/3 threshold never fired.
+    block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck)
+    strong_blocks = sum(card in STRONG_BLOCK_CARDS for card in deck)
+    return len(deck) >= 10 and (block_cards * 5 < len(deck) * 2 or strong_blocks < 2)
+
 
 def choose_card_reward(observation: dict) -> dict:
     actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward" and action["card_id"] not in UNPLAYABLE_REWARDS]
@@ -621,11 +639,13 @@ def choose_card_reward(observation: dict) -> dict:
                 priority[card_id] -= 1
     strike_axis = _axis(deck_ids) == "strike"
     deck_list = _deck_list(observation)
-    # Boss firepower: Perfected Strike (6 + 2 per Strike) already hits ~16 with the starter
-    # deck's 5 Strikes, so seed the strike axis early; a started strength axis (Inflame,
-    # Primal Force, Dominate) scales every attack and is worth feeding for boss-length fights.
+    # Perfected Strike (6 + 2 per Strike) hits ~16 with the starter deck's 5 Strikes, so a
+    # seed is worth taking, but every Strike-tagged card grows the deck and the boss-fight
+    # verification showed PS-heavy decks deal the least damage. Feed the strike axis only
+    # while it is lean (1-2 copies); afterwards the strength axis (Inflame etc.) outranks it.
     strikes = sum(card in STRIKE_TAGGED_REWARDS or card == "CARD.STRIKE_IRONCLAD" for card in deck_list)
-    if strikes >= 5:
+    perfected = sum(card == "CARD.PERFECTED_STRIKE" for card in deck_list)
+    if strikes >= 5 and perfected < 2:
         for card_id in STRIKE_TAGGED_REWARDS:
             if card_id in priority:
                 priority[card_id] += 2
@@ -633,11 +653,11 @@ def choose_card_reward(observation: dict) -> dict:
         for card_id in STRENGTH_CARDS:
             if card_id in priority:
                 priority[card_id] += 1
-    # Keep the deck from becoming all-offense: once block cards are under a third of the deck,
-    # defensive picks (Shrug It Off etc.) outrank same-tier offensive cards so Act 2 fights cost less HP.
-    block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck_list)
-    defense_needed = len(deck_list) >= 10 and block_cards * 3 < len(deck_list)
-    selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, 1 if strike_axis and action["card_id"] in STRIKE_TAGGED_REWARDS else 0))
+    # Keep the deck from becoming all-offense: once block cards are under 40% of the deck (or the
+    # deck relies on weak Defends with fewer than 2 strong block cards), defensive picks (Shrug It
+    # Off etc.) outrank same-tier offensive cards so Act 2 fights cost less HP.
+    defense_needed = _block_starved(deck_list)
+    selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, 1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0))
     if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
         return selected
     cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
