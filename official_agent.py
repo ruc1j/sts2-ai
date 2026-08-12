@@ -22,6 +22,58 @@ CARD_NAMES = {
     "CARD.SLIMED": "Slimed",
     "CARD.FRANTIC_ESCAPE": "Frantic Escape",
 }
+
+CARD_TIERS = {
+    **dict.fromkeys({
+        "CARD.CRIMSON_MANTLE", "CARD.DARK_EMBRACE", "CARD.DOMINATE", "CARD.FIEND_FIRE",
+        "CARD.IMPERVIOUS", "CARD.OFFERING", "CARD.PACTS_END", "CARD.PRIMAL_FORCE",
+        "CARD.UNMOVABLE", "CARD.BATTLE_TRANCE", "CARD.BLOODLETTING", "CARD.BURNING_PACT",
+        "CARD.COLOSSUS", "CARD.CRUELTY", "CARD.INFERNO", "CARD.UPPERCUT",
+        "CARD.POMMEL_STRIKE", "CARD.TREMBLE",
+    }, "S"),
+    **dict.fromkeys({
+        "CARD.CORRUPTION", "CARD.FEED", "CARD.PYRE", "CARD.STOKE", "CARD.BLUDGEON",
+        "CARD.EXPECT_A_FIGHT", "CARD.FEEL_NO_PAIN", "CARD.FLAME_BARRIER", "CARD.HEMOKINESIS",
+        "CARD.RAGE", "CARD.SECOND_WIND", "CARD.ANGER", "CARD.BLOOD_WALL", "CARD.HEADBUTT",
+        "CARD.SHRUG_IT_OFF",
+    }, "A"),
+    **dict.fromkeys({
+        "CARD.BREAK", "CARD.AGGRESSION", "CARD.TEAR_ASUNDER", "CARD.THRASH",
+        "CARD.ASHEN_STRIKE", "CARD.DISMANTLE", "CARD.EVIL_EYE", "CARD.FORGOTTEN_RITUAL",
+        "CARD.SPITE", "CARD.STOMP", "CARD.UNRELENTING", "CARD.WHIRLWIND", "CARD.BREAKTHROUGH",
+        "CARD.CINDER", "CARD.IRON_WAVE", "CARD.TAUNT", "CARD.TWIN_STRIKE",
+    }, "B"),
+    **dict.fromkeys({
+        "CARD.BRAND", "CARD.CASCADE", "CARD.DEMON_FORM", "CARD.HELLRAISER", "CARD.BULLY",
+        "CARD.DRUM_OF_BATTLE", "CARD.FIGHT_ME", "CARD.HOWL_FROM_BEYOND", "CARD.INFERNAL_BLADE",
+        "CARD.INFLAME", "CARD.JUGGLING", "CARD.PILLAGE", "CARD.RAMPAGE", "CARD.RUPTURE",
+        "CARD.STAMPEDE", "CARD.STONE_ARMOR", "CARD.VICIOUS", "CARD.ARMAMENTS", "CARD.BODY_SLAM",
+        "CARD.HAVOC", "CARD.MOLTEN_FIST", "CARD.PERFECTED_STRIKE", "CARD.SETUP_STRIKE",
+        "CARD.SWORD_BOOMERANG", "CARD.THUNDERCLAP", "CARD.TRUE_GRIT",
+    }, "C"),
+    **dict.fromkeys({
+        "CARD.BARRICADE", "CARD.CONFLAGRATION", "CARD.JUGGERNAUT", "CARD.MANGLE", "CARD.ONE_TWO_PUNCH",
+        "CARD.BASH", "CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD", "CARD.SLIMED", "CARD.FRANTIC_ESCAPE",
+        "CARD.NOT_YET", "CARD.MIDNIGHT", "CARD.TANK", "CARD.BLAZE", "CARD.DEMONIC_SHIELD", "CARD.OUTRAGE",
+        "CARD.BYRD_SWOOP",
+    }, "D"),
+}
+
+VULNERABLE_CORE = (
+    "CARD.TREMBLE", "CARD.TAUNT", "CARD.THUNDERCLAP", "CARD.UPPERCUT",
+    "CARD.MOLTEN_FIST", "CARD.BULLY", "CARD.DISMANTLE", "CARD.BREAK",
+)
+EXHAUST_CORE = (
+    "CARD.TRUE_GRIT", "CARD.BURNING_PACT", "CARD.CORRUPTION", "CARD.FEEL_NO_PAIN", "CARD.DARK_EMBRACE",
+)
+VULNERABLE_APPLY = VULNERABLE_CORE[:4]
+VULNERABLE_PAYOFF = VULNERABLE_CORE[4:]
+EXHAUST_ENABLERS = EXHAUST_CORE[:2]
+EXHAUST_PAYOFF = EXHAUST_CORE[2:]
+UNCOMMITTED_SELF_DAMAGE = {
+    "CARD.BLOODLETTING", "CARD.HEMOKINESIS", "CARD.BRAND", "CARD.BREAKTHROUGH",
+    "CARD.BLOOD_WALL", "CARD.INFERNO", "CARD.OFFERING",
+}
 POWER_NAMES = {
     "POWER.FRAIL": "FrailPower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
@@ -35,6 +87,8 @@ POWER_NAMES = {
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
+    if observation.get("phase") == "shop":
+        return choose_shop(observation)
     if observation.get("phase") == "map":
         return choose_map(observation)
     if observation.get("phase") == "card_reward":
@@ -114,8 +168,9 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
     defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
+    recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
     if incoming >= hp:
-        return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER", "POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
+        return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER", "POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage) or use(recovery)
     hand = observation.get("hand") or ()
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
@@ -126,9 +181,9 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
+        return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage) or use(recovery)
     if hp <= max_hp // 2:
-        return use(healing | defensive_buffs | {"POTION.ENTROPIC_BREW"})
+        return use(recovery)
     if incoming >= hp // 2:
         return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
     if max(enemy_hp.values(), default=0) >= 100:
@@ -136,6 +191,60 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if not hand:
         return use({"POTION.SWIFT_POTION"})
     return None
+
+
+def _deck_ids(observation: dict) -> set[str]:
+    player = observation.get("player", {})
+    deck = observation.get("deck") or observation.get("deck_cards") or player.get("deck") or player.get("deck_cards") or ()
+    return {card if isinstance(card, str) else card.get("id") or card.get("card_id") for card in deck}
+
+
+def _axis(deck_ids: set[str]) -> str | None:
+    if {"CARD.PERFECTED_STRIKE", "CARD.HELLRAISER"} & deck_ids:
+        return "strike"
+    if {"CARD.RUPTURE", "CARD.TEAR_ASUNDER"} & deck_ids:
+        return "self_damage"
+    has_apply = bool(set(VULNERABLE_APPLY) & deck_ids)
+    has_payoff = bool(set(VULNERABLE_PAYOFF) & deck_ids)
+    if has_payoff and ("CARD.BASH" in deck_ids or has_apply):
+        return "vulnerable"
+    if set(EXHAUST_ENABLERS) & deck_ids and set(EXHAUST_PAYOFF) & deck_ids:
+        return "exhaust"
+    return None
+
+
+def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dict[str, int]:
+    axis = _axis(deck_ids)
+    if axis == "strike":
+        cards = ["CARD.HELLRAISER"] if "CARD.PERFECTED_STRIKE" in deck_ids and "CARD.HELLRAISER" not in deck_ids else []
+    elif axis == "self_damage":
+        cards = [card for card in ("CARD.TEAR_ASUNDER", "CARD.OFFERING") if card not in deck_ids]
+    elif axis == "vulnerable":
+        cards = [card for card in VULNERABLE_CORE if card not in deck_ids]
+    elif axis == "exhaust":
+        cards = [card for card in EXHAUST_CORE if card not in deck_ids]
+    else:
+        first = ("CARD.PERFECTED_STRIKE", "CARD.RUPTURE", "CARD.CORRUPTION")
+        cards = [card for card in first if available and card in available]
+    if available is not None:
+        cards = [card for card in cards if card in available]
+    return {card: len(cards) - index for index, card in enumerate(cards)}
+
+
+def choose_shop(observation: dict) -> dict:
+    actions = observation.get("legal_actions", ())
+    deck_ids = _deck_ids(observation)
+    buys = [action for action in actions if action.get("type") == "buy_card"]
+    core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
+    required = [action for action in buys if (action.get("card_id") or action.get("id")) in core]
+    if required:
+        return max(required, key=lambda action: core[(action.get("card_id") or action.get("id"))])
+    removals = [action for action in actions if action.get("type") == "remove"]
+    remove_id = "CARD.DEFEND_IRONCLAD" if "CARD.PERFECTED_STRIKE" in deck_ids else "CARD.STRIKE_IRONCLAD"
+    preferred = next((action for action in removals if (action.get("card_id") or action.get("id")) == remove_id), None)
+    if preferred:
+        return preferred
+    return next((action for action in actions if action.get("type") == "skip"), actions[0] if actions else {"type": "skip"})
 
 
 def choose_map(observation: dict) -> dict:
@@ -208,16 +317,16 @@ def choose_map(observation: dict) -> dict:
 
 def choose_card_reward(observation: dict) -> dict:
     actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward"]
-    priority = {
-        "CARD.BLUDGEON": 10,
-        "CARD.BATTLE_TRANCE": 8,
-        "CARD.SHRUG_IT_OFF": 7,
-        "CARD.DISMANTLE": 7,
-        "CARD.BULLY": 6,
-        "CARD.ANGER": 6,
-    }
-    selected = max(actions, key=lambda action: priority.get(action["card_id"], 0))
-    if priority.get(selected["card_id"], 0):
+    tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
+    deck_ids = _deck_ids(observation)
+    core = _core_priority(deck_ids, {action["card_id"] for action in actions})
+    priority = {card_id: tier_score[tier] for card_id, tier in CARD_TIERS.items()}
+    if _axis(deck_ids) != "self_damage":
+        for card_id in UNCOMMITTED_SELF_DAMAGE:
+            if card_id in priority:
+                priority[card_id] -= 1
+    selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), priority.get(action["card_id"], 0)))
+    if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
         return selected
     return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
 

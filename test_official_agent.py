@@ -1,6 +1,6 @@
 import unittest
 
-from official_agent import choose, choose_card_reward, choose_map, choose_rest
+from official_agent import CARD_TIERS, choose, choose_card_reward, choose_map, choose_rest, choose_shop
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -211,6 +211,52 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
 
+    def test_low_hp_multiple_enemies_falls_back_to_dexterity(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None}],
+            "player": {"hp": 15, "max_hp": 80},
+            "hand": [],
+            "enemies": [
+                {"combat_id": 1, "hp": 30, "intents": []},
+                {"combat_id": 2, "hp": 30, "intents": []},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+
+    def test_low_hp_incoming_falls_back_to_regen(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None}],
+            "player": {"hp": 36, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 30, "intents": [{"damage": 20, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
+
+    def test_explosive_ampoule_is_used_against_multiple_enemies_when_low(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.EXPLOSIVE_AMPOULE", "target_id": 1}],
+            "player": {"hp": 20, "max_hp": 80},
+            "enemies": [
+                {"combat_id": 1, "hp": 28, "intents": []},
+                {"combat_id": 2, "hp": 34, "intents": []},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.EXPLOSIVE_AMPOULE")
+
+    def test_energy_potion_requires_a_payable_hand_card(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.ENERGY_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80},
+            "hand": [{"index": 0, "cost": 0}],
+            "enemies": [
+                {"combat_id": 1, "hp": 28, "intents": []},
+                {"combat_id": 2, "hp": 34, "intents": []},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_uses_strength_potion_against_high_health_enemy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None}],
@@ -279,6 +325,163 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BULLY")
+
+    def test_shop_buys_one_missing_required_card(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD"],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "buy_card", "card_id": "CARD.RUPTURE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_shop_removes_defend_after_perfected_strike(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD", "CARD.PERFECTED_STRIKE", "CARD.DEFEND_IRONCLAD"],
+            "legal_actions": [
+                {"type": "remove", "card_id": "CARD.STRIKE_IRONCLAD"},
+                {"type": "remove", "card_id": "CARD.DEFEND_IRONCLAD"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
+
+    def test_reward_prefers_tier_card_over_unknown_card(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_reward_core_beats_s_tier_card(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_reward_prefers_perfected_strike_over_vulnerable_core_when_unresolved(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.TREMBLE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_reward_switches_core_after_axis_is_owned(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.PERFECTED_STRIKE"}, {"id": "CARD.RUPTURE"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.HELLRAISER"},
+                {"type": "card_reward", "card_id": "CARD.TEAR_ASUNDER"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.HELLRAISER")
+
+    def test_shop_core_beats_s_tier_card_and_buys_once(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": [],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "buy_card", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_shop_strike_axis_does_not_buy_rupture(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.PERFECTED_STRIKE"],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.RUPTURE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["type"], "skip")
+
+    def test_unresolved_deck_uses_tiers_without_random_core(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TRUE_GRIT"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_uncommitted_self_damage_does_not_force_bloodletting(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLOODLETTING"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_self_damage_axis_prefers_follow_up(self) -> None:
+        observation = {
+            "player": {"deck": ["CARD.RUPTURE"]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TEAR_ASUNDER"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TEAR_ASUNDER")
+
+    def test_vulnerable_axis_prefers_missing_apply(self) -> None:
+        observation = {
+            "player": {"deck": ["CARD.BASH", "CARD.MOLTEN_FIST"]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TREMBLE"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TREMBLE")
+
+    def test_exhaust_axis_prefers_missing_payoff(self) -> None:
+        observation = {
+            "player": {"deck": ["CARD.TRUE_GRIT", "CARD.CORRUPTION"]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.DARK_EMBRACE"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.DARK_EMBRACE")
+
+    def test_card_tiers_include_the_required_axes(self) -> None:
+        self.assertEqual(CARD_TIERS["CARD.PERFECTED_STRIKE"], "C")
+        self.assertEqual(CARD_TIERS["CARD.RUPTURE"], "C")
+        self.assertEqual(CARD_TIERS["CARD.TREMBLE"], "S")
+        self.assertEqual(CARD_TIERS["CARD.CORRUPTION"], "A")
+
+    def test_card_tiers_cover_source_unranked_cards(self) -> None:
+        known = {"CARD.MIDNIGHT", "CARD.TANK", "CARD.BLAZE", "CARD.DEMONIC_SHIELD", "CARD.OUTRAGE"}
+        self.assertTrue(known <= CARD_TIERS.keys())
+        self.assertEqual({CARD_TIERS[card] for card in known}, {"D"})
 
 
 if __name__ == "__main__":
