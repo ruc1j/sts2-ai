@@ -1,2 +1,5 @@
 __pycache__/
 *.py[cod]
+official_mod/bin/
+official_mod/obj/
+data/official_autoslay.log
