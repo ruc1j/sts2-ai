@@ -104,12 +104,16 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     fire = next((action for action in actions if action["potion_id"] == "POTION.FIRE_POTION" and action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= 20), None)
     if fire:
         return fire
+    if max(enemy_hp.values(), default=0) >= 100:
+        strength = next((action for action in actions if action["potion_id"] == "POTION.STRENGTH_POTION"), None)
+        if strength:
+            return strength
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
-    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR"}
+    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION"}
     if hp <= max_hp // 2:
         return next((action for action in actions if action["potion_id"] in healing | defensive_buffs), None)
     if incoming >= hp // 2:

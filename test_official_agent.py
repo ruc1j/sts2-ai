@@ -125,6 +125,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
 
+    def test_uses_regen_potion_when_low(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None}],
+            "player": {"hp": 36, "max_hp": 80},
+            "enemies": [],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
+
+    def test_uses_strength_potion_against_high_health_enemy(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None}],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 123, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.STRENGTH_POTION")
+
     def test_does_not_manually_use_fairy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.FAIRY_IN_A_BOTTLE", "target_id": None}, {"type": "end_turn"}],

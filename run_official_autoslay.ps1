@@ -52,6 +52,8 @@ try {
     if (Test-Path -LiteralPath $sourceUserData) { Copy-Item -LiteralPath $sourceUserData -Destination $isolatedUserData -Recurse }
     Get-ChildItem -LiteralPath $isolatedUserData -Recurse -File -Filter settings.save -ErrorAction SilentlyContinue | ForEach-Object {
         $settings = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
+        if (-not ($settings.PSObject.Properties.Name -contains 'mod_settings') -or
+            -not ($settings.mod_settings.PSObject.Properties.Name -contains 'mods_enabled')) { return }
         $settings.mod_settings.mods_enabled = $true
         $mods = @()
         Get-ChildItem -LiteralPath $modRoot -Recurse -File -Filter '*.json' | ForEach-Object {
