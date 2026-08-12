@@ -1,6 +1,6 @@
 import unittest
 
-from official_agent import CARD_TIERS, choose, choose_card_reward, choose_map, choose_rest, choose_shop
+from official_agent import CARD_TIERS, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -805,6 +805,65 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TRUE_GRIT")
+
+    def test_event_never_picks_paels_horn(self) -> None:
+        observation = {
+            "phase": "event",
+            "player": {"hp": 80, "max_hp": 80},
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.PAELS_HORN"},
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.PAELS_FLESH"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
+
+    def test_event_prefers_energy_over_weaker_relic(self) -> None:
+        observation = {
+            "phase": "event",
+            "player": {"hp": 80, "max_hp": 80},
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.PAELS_EYE"},
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.PAELS_LEGION"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_LEGION")
+
+    def test_event_block_starved_prefers_block_pet(self) -> None:
+        observation = {
+            "phase": "event",
+            "player": {"hp": 80, "max_hp": 80},
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 12,
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.PAELS_FLESH"},
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.PAELS_LEGION"},
+            ],
+        }
+        # Block pet gets +2 for block-starved decks but still loses to +1 max energy.
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
+
+    def test_event_low_hp_boosts_energy_relics(self) -> None:
+        observation = {
+            "phase": "event",
+            "player": {"hp": 30, "max_hp": 80},
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.PAELS_FLESH"},
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.PAELS_HORN"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
+
+    def test_event_relic_scores_cover_all_ancients(self) -> None:
+        pael = {"RELIC.PAELS_CLAW", "RELIC.PAELS_TOOTH", "RELIC.PAELS_GROWTH", "RELIC.PAELS_LEGION",
+                "RELIC.PAELS_FLESH", "RELIC.PAELS_TEARS", "RELIC.PAELS_HORN", "RELIC.PAELS_WING",
+                "RELIC.PAELS_EYE", "RELIC.PAELS_BLOOD"}
+        orobas = {"RELIC.ELECTRIC_SHRYMP", "RELIC.GLASS_EYE", "RELIC.SAND_CASTLE", "RELIC.ALCHEMICAL_COFFER",
+                  "RELIC.DRIFTWOOD", "RELIC.RADIANT_PEARL", "RELIC.PRISMATIC_GEM"}
+        tezcatara = {"RELIC.NUTRITIOUS_SOUP", "RELIC.VERY_HOT_COCOA", "RELIC.YUMMY_COOKIE", "RELIC.BIIIG_HUG",
+                     "RELIC.STORYBOOK", "RELIC.TOASTY_MITTENS", "RELIC.GOLDEN_COMPASS", "RELIC.PUMPKIN_CANDLE",
+                     "RELIC.TOY_BOX", "RELIC.SEAL_OF_GOLD"}
+        self.assertTrue(pael <= RELIC_SCORES.keys())
+        self.assertTrue(orobas <= RELIC_SCORES.keys())
+        self.assertTrue(tezcatara <= RELIC_SCORES.keys())
 
     def test_card_tiers_include_the_required_axes(self) -> None:
         self.assertEqual(CARD_TIERS["CARD.PERFECTED_STRIKE"], "C")

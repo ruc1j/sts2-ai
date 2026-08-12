@@ -168,12 +168,66 @@ def _is_self_damage(action: dict, hand: dict[int, dict]) -> bool:
     )
 
 
-def _incoming(observation: dict) -> int:
-    return sum(
-        max(0, _number(intent.get("damage"))) * max(1, _number(intent.get("repeats"), 1))
-        for enemy in observation.get("enemies", ())
-        for intent in enemy.get("intents") or ()
-    )
+# Relic choices from Ancient events (e.g. PAEL at Act 2 start). Scores are tuned to the
+# Ironclad deck: energy, draw, upgrades, and block are worth more; relics that bloat the
+# deck with unplayable cards (PaelsHorn adds 2 Relax) are never taken.
+RELIC_SCORES = {
+    # PAEL
+    "RELIC.PAELS_FLESH": 9,  # +1 max energy
+    "RELIC.PAELS_BLOOD": 8,  # draw +1
+    "RELIC.PAELS_LEGION": 7,  # block pet every combat
+    "RELIC.PAELS_GROWTH": 6,  # Clone enchant on one card
+    "RELIC.PAELS_CLAW": 5,  # Goopy enchant on eligible cards
+    "RELIC.PAELS_TEARS": 5,  # energy refunds
+    "RELIC.PAELS_EYE": 4,  # exhaust synergy
+    "RELIC.PAELS_WING": 4,  # sacrifice card reward alternative
+    "RELIC.PAELS_TOOTH": 4,  # removes upgradable cards
+    "RELIC.PAELS_HORN": -10,  # adds 2 Relax to the deck: never take
+    # OROBAS
+    "RELIC.SAND_CASTLE": 8,  # upgrades 6 cards
+    "RELIC.PRISMATIC_GEM": 8,  # +1 max energy
+    "RELIC.GLASS_EYE": 7,  # choose 1 of 5 card rewards
+    "RELIC.ALCHEMICAL_COFFER": 6,  # potion slot + potions
+    "RELIC.RADIANT_PEARL": 5,  # turn-1 Luminesce
+    "RELIC.DRIFTWOOD": 5,  # reroll card rewards
+    "RELIC.ELECTRIC_SHRYMP": 5,  # Imbued enchant
+    # TEZCATARA
+    "RELIC.VERY_HOT_COCOA": 7,  # turn-1 energy burst
+    "RELIC.YUMMY_COOKIE": 7,  # upgrades cards
+    "RELIC.TOASTY_MITTENS": 7,  # draw + strength
+    "RELIC.PUMPKIN_CANDLE": 7,  # periodic +1 energy
+    "RELIC.GOLDEN_COMPASS": 6,  # golden path
+    "RELIC.NUTRITIOUS_SOUP": 5,  # enchant Strike cards
+    "RELIC.SEAL_OF_GOLD": 5,  # gold -> energy
+    "RELIC.STORYBOOK": 5,  # Brightest Flame
+    "RELIC.TOY_BOX": 5,  # periodic relics
+    "RELIC.BIIIG_HUG": 4,  # removes cards
+}
+
+
+def choose_event(observation: dict) -> dict:
+    actions = [action for action in observation.get("legal_actions", ()) if action.get("type") == "event_relic"]
+    if not actions:
+        raise ValueError("no event relic actions")
+    deck_ids = _deck_ids(observation)
+    block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck_ids)
+    block_starved = len(deck_ids) >= 10 and block_cards * 3 < len(deck_ids)
+    player = observation.get("player", {})
+    hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
+    low_hp = hp <= max_hp // 2
+
+    def score(action: dict) -> int:
+        relic = action.get("relic_id", "")
+        value = RELIC_SCORES.get(relic, 0)
+        # Block-starved decks value the block pet even more.
+        if block_starved and relic == "RELIC.PAELS_LEGION":
+            value += 2
+        # At low HP the turn-1 energy burst helps end fights faster.
+        if low_hp and relic in {"RELIC.VERY_HOT_COCOA", "RELIC.PAELS_FLESH"}:
+            value += 1
+        return value
+
+    return max(actions, key=score)
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
@@ -185,6 +239,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return choose_card_reward(observation)
     if observation.get("phase") == "rest":
         return choose_rest(observation)
+    if observation.get("phase") == "event":
+        return choose_event(observation)
     actions = observation["legal_actions"]
     cards = [action for action in actions if action["type"] == "card"]
     potions = [action for action in actions if action["type"] == "potion"]
