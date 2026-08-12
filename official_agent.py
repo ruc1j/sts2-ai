@@ -184,17 +184,12 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         for intent in enemy.get("intents") or ()
     )
-    def attack_or_defense(action: dict) -> bool:
-        card = hand.get(action.get("hand_index"), {})
-        return (
-            card.get("type") == "Attack"
-            or _card_value(action, hand, "damage") > 0
-            or _card_value(action, hand, "block") > 0
-        )
-    if (hp <= max_hp // 2 or incoming > 0) and any(
-        not _is_self_damage(action, hand) and attack_or_defense(action) for action in cards
-    ):
-        cards = [action for action in cards if not _is_self_damage(action, hand)]
+    if hp <= max_hp // 2 or incoming > 0:
+        safe_cards = [action for action in cards if not _is_self_damage(action, hand)]
+        if safe_cards:
+            cards = safe_cards
+        elif cards:
+            return next(action for action in actions if action["type"] == "end_turn")
     defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return max(defenses, key=lambda action: _card_value(action, hand, "block"))

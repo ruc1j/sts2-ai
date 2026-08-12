@@ -409,6 +409,52 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_low_hp_avoids_self_damage_for_a_safe_card_without_observed_damage_or_block(self) -> None:
+        observation = {
+            "player": {"hp": 28, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.BLOODLETTING", "type": "Skill", "vars": [{"id": "Damage", "value": 3}]},
+                {"index": 1, "id": "CARD.CINDER", "type": "Skill", "vars": []},
+                {"index": 2, "id": "CARD.INFLAME", "type": "Power", "vars": []},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 50, "intents": [{"type": "SingleAttackIntent", "damage": 12, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.CINDER", "hand_index": 1, "target_id": None},
+                {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 2, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.CINDER")
+
+    def test_low_hp_ends_turn_when_only_self_damage_cards_are_legal(self) -> None:
+        observation = {
+            "player": {"hp": 14, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.BLOODLETTING", "type": "Skill", "vars": [{"id": "Damage", "value": 3}]},
+                {"index": 1, "id": "CARD.HEMOKINESIS", "type": "Attack", "vars": [{"id": "Damage", "value": 15}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 50, "intents": [{"type": "SingleAttackIntent", "damage": 12, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_lethal_self_damage_remains_allowed_to_finish_enemy(self) -> None:
+        observation = {
+            "player": {"hp": 14, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.HEMOKINESIS", "type": "Attack", "vars": [{"id": "Damage", "value": 50}]}],
+            "enemies": [{"combat_id": 1, "hp": 20, "intents": [{"type": "SingleAttackIntent", "damage": 12, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.HEMOKINESIS")
+
     def test_reward_takes_modeled_bully(self) -> None:
         observation = {
             "legal_actions": [
