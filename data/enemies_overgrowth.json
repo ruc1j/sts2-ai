@@ -1,0 +1,4173 @@
+{
+  "game_version": "v0.107.1",
+  "act": "Overgrowth",
+  "encounters": [
+    {
+      "id": "ENCOUNTER.BYGONE_EFFIGY_ELITE",
+      "class": "BygoneEffigyElite",
+      "room_type": "Elite",
+      "weak": false,
+      "monsters": [
+        "MONSTER.BYGONE_EFFIGY"
+      ],
+      "tags": [],
+      "min_gold": 35,
+      "max_gold": 45,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.BYGONE_EFFIGY",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.BYRDONIS_ELITE",
+      "class": "ByrdonisElite",
+      "room_type": "Elite",
+      "weak": false,
+      "monsters": [
+        "MONSTER.BYRDONIS"
+      ],
+      "tags": [],
+      "min_gold": 35,
+      "max_gold": 45,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.BYRDONIS",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.CEREMONIAL_BEAST_BOSS",
+      "class": "CeremonialBeastBoss",
+      "room_type": "Boss",
+      "weak": false,
+      "monsters": [
+        "MONSTER.CEREMONIAL_BEAST"
+      ],
+      "tags": [],
+      "min_gold": 100,
+      "max_gold": 100,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.CEREMONIAL_BEAST",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.CUBEX_CONSTRUCT_NORMAL",
+      "class": "CubexConstructNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.CUBEX_CONSTRUCT"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.CUBEX_CONSTRUCT",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.FLYCONID_NORMAL",
+      "class": "FlyconidNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.FLYCONID",
+        "MONSTER.LEAF_SLIME_M",
+        "MONSTER.TWIG_SLIME_M"
+      ],
+      "tags": [
+        "Mushroom",
+        "Slimes"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.FLYCONID",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.LEAF_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.FLYCONID",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.FOGMOG_NORMAL",
+      "class": "FogmogNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.FOGMOG",
+        "MONSTER.EYE_WITH_TEETH"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.FOGMOG",
+            "slot": "fogmog"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.FUZZY_WURM_CRAWLER_WEAK",
+      "class": "FuzzyWurmCrawlerWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.FUZZY_WURM_CRAWLER"
+      ],
+      "tags": [
+        "Crawler"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.FUZZY_WURM_CRAWLER",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.INKLETS_NORMAL",
+      "class": "InkletsNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.INKLET"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.INKLET",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.INKLET",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.INKLET",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.MAWLER_NORMAL",
+      "class": "MawlerNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.MAWLER"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.MAWLER",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.NIBBITS_NORMAL",
+      "class": "NibbitsNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.NIBBIT"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.NIBBIT",
+            "slot": "front"
+          },
+          {
+            "monster": "MONSTER.NIBBIT",
+            "slot": "back"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.NIBBITS_WEAK",
+      "class": "NibbitsWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.NIBBIT"
+      ],
+      "tags": [
+        "Nibbit"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.NIBBIT",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.OVERGROWTH_CRAWLERS",
+      "class": "OvergrowthCrawlers",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.SHRINKER_BEETLE",
+        "MONSTER.FUZZY_WURM_CRAWLER"
+      ],
+      "tags": [
+        "Shrinker",
+        "Crawler"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SHRINKER_BEETLE",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.FUZZY_WURM_CRAWLER",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.PHROG_PARASITE_ELITE",
+      "class": "PhrogParasiteElite",
+      "room_type": "Elite",
+      "weak": false,
+      "monsters": [
+        "MONSTER.PHROG_PARASITE",
+        "MONSTER.WRIGGLER"
+      ],
+      "tags": [],
+      "min_gold": 35,
+      "max_gold": 45,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.PHROG_PARASITE",
+            "slot": "phrog"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.RUBY_RAIDERS_NORMAL",
+      "class": "RubyRaidersNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.AXE_RUBY_RAIDER",
+        "MONSTER.ASSASSIN_RUBY_RAIDER",
+        "MONSTER.BRUTE_RUBY_RAIDER",
+        "MONSTER.CROSSBOW_RUBY_RAIDER",
+        "MONSTER.TRACKER_RUBY_RAIDER"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.BRUTE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.CROSSBOW_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.AXE_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.ASSASSIN_RUBY_RAIDER",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TRACKER_RUBY_RAIDER",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SHRINKER_BEETLE_WEAK",
+      "class": "ShrinkerBeetleWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.SHRINKER_BEETLE"
+      ],
+      "tags": [
+        "Shrinker"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SHRINKER_BEETLE",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SLIMES_NORMAL",
+      "class": "SlimesNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.LEAF_SLIME_S",
+        "MONSTER.TWIG_SLIME_S",
+        "MONSTER.TWIG_SLIME_M",
+        "MONSTER.LEAF_SLIME_M"
+      ],
+      "tags": [
+        "Slimes"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SLIMES_WEAK",
+      "class": "SlimesWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.LEAF_SLIME_S",
+        "MONSTER.TWIG_SLIME_S",
+        "MONSTER.LEAF_SLIME_M",
+        "MONSTER.TWIG_SLIME_M"
+      ],
+      "tags": [
+        "Slimes"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SLITHERING_STRANGLER_NORMAL",
+      "class": "SlitheringStranglerNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.LEAF_SLIME_S",
+        "MONSTER.TWIG_SLIME_S",
+        "MONSTER.LEAF_SLIME_M",
+        "MONSTER.TWIG_SLIME_M",
+        "MONSTER.SNAPPING_JAXFRUIT",
+        "MONSTER.SLITHERING_STRANGLER"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.SNAPPING_JAXFRUIT",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.TWIG_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.LEAF_SLIME_S",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.LEAF_SLIME_M",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.SLITHERING_STRANGLER",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SNAPPING_JAXFRUIT_NORMAL",
+      "class": "SnappingJaxfruitNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.SNAPPING_JAXFRUIT",
+        "MONSTER.FLYCONID"
+      ],
+      "tags": [
+        "Mushroom"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SNAPPING_JAXFRUIT",
+            "slot": null
+          },
+          {
+            "monster": "MONSTER.FLYCONID",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.THE_KIN_BOSS",
+      "class": "TheKinBoss",
+      "room_type": "Boss",
+      "weak": false,
+      "monsters": [
+        "MONSTER.KIN_FOLLOWER",
+        "MONSTER.KIN_PRIEST"
+      ],
+      "tags": [],
+      "min_gold": 100,
+      "max_gold": 100,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.KIN_FOLLOWER",
+            "slot": "slot1"
+          },
+          {
+            "monster": "MONSTER.KIN_FOLLOWER",
+            "slot": "slot2"
+          },
+          {
+            "monster": "MONSTER.KIN_PRIEST",
+            "slot": "leaderSlot"
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.VANTOM_BOSS",
+      "class": "VantomBoss",
+      "room_type": "Boss",
+      "weak": false,
+      "monsters": [
+        "MONSTER.VANTOM"
+      ],
+      "tags": [],
+      "min_gold": 100,
+      "max_gold": 100,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.VANTOM",
+            "slot": null
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.VINE_SHAMBLER_NORMAL",
+      "class": "VineShamblerNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.VINE_SHAMBLER"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.VINE_SHAMBLER",
+            "slot": null
+          }
+        ]
+      ]
+    }
+  ],
+  "monsters": [
+    {
+      "id": "MONSTER.ASSASSIN_RUBY_RAIDER",
+      "class": "AssassinRubyRaider",
+      "values": {
+        "MinInitialHp": 18,
+        "MaxInitialHp": 23
+      },
+      "initial_state": "KILLSHOT_MOVE",
+      "states": [
+        {
+          "id": "KILLSHOT_MOVE",
+          "type": "MoveState",
+          "perform": "KillshotMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 10.0,
+              "repeats": 1
+            }
+          ],
+          "next": "KILLSHOT_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "KillshotDamage"
+              ],
+              "amount": "KillshotDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.AXE_RUBY_RAIDER",
+      "class": "AxeRubyRaider",
+      "values": {
+        "MinInitialHp": 20,
+        "MaxInitialHp": 22,
+        "SwingDamage": 5,
+        "SwingBlock": 5,
+        "BigSwingDamage": 12
+      },
+      "initial_state": "SWING_1",
+      "states": [
+        {
+          "id": "BIG_SWING",
+          "type": "MoveState",
+          "perform": "BigSwingMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 12.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SWING_1",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BigSwingDamage"
+              ],
+              "amount": "BigSwingDamage"
+            }
+          ]
+        },
+        {
+          "id": "SWING_1",
+          "type": "MoveState",
+          "perform": "SwingMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 5.0,
+              "repeats": 1
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "SWING_2",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SwingDamage"
+              ],
+              "amount": "SwingDamage"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "SwingBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "SwingBlock"
+            }
+          ]
+        },
+        {
+          "id": "SWING_2",
+          "type": "MoveState",
+          "perform": "SwingMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 5.0,
+              "repeats": 1
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "BIG_SWING",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SwingDamage"
+              ],
+              "amount": "SwingDamage"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "SwingBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "SwingBlock"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.BRUTE_RUBY_RAIDER",
+      "class": "BruteRubyRaider",
+      "values": {
+        "MinInitialHp": 30,
+        "MaxInitialHp": 33,
+        "BeatDamage": 7
+      },
+      "initial_state": "BEAT_MOVE",
+      "states": [
+        {
+          "id": "BEAT_MOVE",
+          "type": "MoveState",
+          "perform": "BeatMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            }
+          ],
+          "next": "ROAR_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BeatDamage"
+              ],
+              "amount": "BeatDamage"
+            }
+          ]
+        },
+        {
+          "id": "ROAR_MOVE",
+          "type": "MoveState",
+          "perform": "RoarMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "BEAT_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "3m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "3m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.BYGONE_EFFIGY",
+      "class": "BygoneEffigy",
+      "values": {
+        "MinInitialHp": 127,
+        "MaxInitialHp": 127,
+        "SlashDamage": 13
+      },
+      "initial_state": "SLEEP_MOVE",
+      "states": [
+        {
+          "id": "SLASHES_MOVE",
+          "type": "MoveState",
+          "perform": "SlashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 13.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SLASHES_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SlashDamage"
+              ],
+              "amount": "SlashDamage"
+            }
+          ]
+        },
+        {
+          "id": "SLEEP_MOVE",
+          "type": "MoveState",
+          "perform": "InitialSleepMove",
+          "intents": [
+            {
+              "type": "SleepIntent"
+            }
+          ],
+          "next": "WAKE_MOVE",
+          "effects": []
+        },
+        {
+          "id": "SLEEP_MOVE_2",
+          "type": "MoveState",
+          "perform": "SleepMove",
+          "intents": [
+            {
+              "type": "SleepIntent"
+            }
+          ],
+          "next": "SLASHES_MOVE",
+          "effects": []
+        },
+        {
+          "id": "WAKE_MOVE",
+          "type": "MoveState",
+          "perform": "WakeMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "SLASHES_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "10m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "10m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.BYRDONIS",
+      "class": "Byrdonis",
+      "values": {
+        "MinInitialHp": 81,
+        "MaxInitialHp": 84
+      },
+      "initial_state": "SWOOP_MOVE",
+      "states": [
+        {
+          "id": "PECK_MOVE",
+          "type": "MoveState",
+          "perform": "PeckMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 3.0,
+              "repeats": 3
+            }
+          ],
+          "next": "SWOOP_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "PeckDamage"
+              ],
+              "amount": "PeckDamage"
+            }
+          ]
+        },
+        {
+          "id": "SWOOP_MOVE",
+          "type": "MoveState",
+          "perform": "SwoopMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 17.0,
+              "repeats": 1
+            }
+          ],
+          "next": "PECK_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SwoopDamage"
+              ],
+              "amount": "SwoopDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.CEREMONIAL_BEAST",
+      "class": "CeremonialBeast",
+      "values": {
+        "MinInitialHp": 252,
+        "MaxInitialHp": 252,
+        "PlowAmount": 150,
+        "PlowDamage": 18,
+        "PlowStrength": 2,
+        "StompDamage": 15,
+        "CrushDamage": 17,
+        "CrushStrength": 3,
+        "ShouldDisappearFromDoom": false,
+        "ShouldFadeAfterDeath": false,
+        "IsStunnedByPlowRemoval": false,
+        "IsInSecondPhase": false,
+        "ShouldPlayRegularHurtAnim": true,
+        "InMidCharge": false
+      },
+      "initial_state": "STAMP_MOVE",
+      "states": [
+        {
+          "id": "BEAST_CRY_MOVE",
+          "type": "MoveState",
+          "perform": "BeastCryMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "STOMP_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "RingingPower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "CRUSH_MOVE",
+          "type": "MoveState",
+          "perform": "CrushMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 17.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "BEAST_CRY_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "CrushDamage"
+              ],
+              "amount": "CrushDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "CrushStrength",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "CrushStrength"
+            }
+          ]
+        },
+        {
+          "id": "PLOW_MOVE",
+          "type": "MoveState",
+          "perform": "PlowMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 18.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "PLOW_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "PlowDamage"
+              ],
+              "amount": "PlowDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "PlowStrength",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "PlowStrength"
+            }
+          ]
+        },
+        {
+          "id": "STAMP_MOVE",
+          "type": "MoveState",
+          "perform": "StampMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "PLOW_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "PlowAmount",
+                "base.Creature",
+                "null"
+              ],
+              "model": "PlowPower",
+              "target": "base.Creature",
+              "amount": "PlowAmount"
+            }
+          ]
+        },
+        {
+          "id": "STOMP_MOVE",
+          "type": "MoveState",
+          "perform": "StompMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 15.0,
+              "repeats": 1
+            }
+          ],
+          "next": "CRUSH_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "StompDamage"
+              ],
+              "amount": "StompDamage"
+            }
+          ]
+        },
+        {
+          "id": "STUN_MOVE",
+          "type": "MoveState",
+          "perform": "StunnedMove",
+          "intents": [
+            {
+              "type": "StunIntent"
+            }
+          ],
+          "next": "BEAST_CRY_MOVE",
+          "effects": []
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.CROSSBOW_RUBY_RAIDER",
+      "class": "CrossbowRubyRaider",
+      "values": {
+        "MinInitialHp": 18,
+        "MaxInitialHp": 21,
+        "FireDamage": 14,
+        "IsCrossbowReloaded": false
+      },
+      "initial_state": "RELOAD_MOVE",
+      "states": [
+        {
+          "id": "FIRE_MOVE",
+          "type": "MoveState",
+          "perform": "FireMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RELOAD_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "FireDamage"
+              ],
+              "amount": "FireDamage"
+            }
+          ]
+        },
+        {
+          "id": "RELOAD_MOVE",
+          "type": "MoveState",
+          "perform": "ReloadMove",
+          "intents": [
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "FIRE_MOVE",
+          "effects": [
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "3m",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "3m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.CUBEX_CONSTRUCT",
+      "class": "CubexConstruct",
+      "values": {
+        "MinInitialHp": 65,
+        "MaxInitialHp": 65,
+        "BlastDamage": 7,
+        "ExpelDamage": 5,
+        "IsBurrowed": false,
+        "IsCharging": false
+      },
+      "initial_state": "CHARGE_UP_MOVE",
+      "states": [
+        {
+          "id": "CHARGE_UP_MOVE",
+          "type": "MoveState",
+          "perform": "ChargeUpMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "REPEATER_BLAST_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "EXPEL_MOVE",
+          "type": "MoveState",
+          "perform": "ExpelBlastMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 5.0,
+              "repeats": 2
+            }
+          ],
+          "next": "REPEATER_BLAST_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ExpelDamage"
+              ],
+              "amount": "ExpelDamage"
+            }
+          ]
+        },
+        {
+          "id": "REPEATER_BLAST_MOVE",
+          "type": "MoveState",
+          "perform": "RepeaterBlastMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "REPEATER_BLAST_MOVE_2",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BlastDamage"
+              ],
+              "amount": "BlastDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "REPEATER_BLAST_MOVE_2",
+          "type": "MoveState",
+          "perform": "RepeaterBlastMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "EXPEL_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BlastDamage"
+              ],
+              "amount": "BlastDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.EYE_WITH_TEETH",
+      "class": "EyeWithTeeth",
+      "values": {
+        "MinInitialHp": 6,
+        "MaxInitialHp": 6,
+        "ShouldDisappearFromDoom": false
+      },
+      "initial_state": "DISTRACT_MOVE",
+      "states": [
+        {
+          "id": "DISTRACT_MOVE",
+          "type": "MoveState",
+          "perform": "DistractMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "DISTRACT_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "3",
+                "null"
+              ],
+              "model": "Dazed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.FLYCONID",
+      "class": "Flyconid",
+      "values": {
+        "MinInitialHp": 47,
+        "MaxInitialHp": 49,
+        "SmashDamage": 11,
+        "SporeDamage": 8
+      },
+      "initial_state": "INITIAL",
+      "states": [
+        {
+          "id": "FRAIL_SPORES_MOVE",
+          "type": "MoveState",
+          "perform": "FrailSporesMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SporeDamage"
+              ],
+              "amount": "SporeDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "INITIAL",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "FRAIL_SPORES_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 2,
+              "weight": 1.0
+            },
+            {
+              "state": "SMASH_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "VULNERABLE_SPORES_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 3,
+              "weight": 1.0
+            },
+            {
+              "state": "FRAIL_SPORES_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 2,
+              "weight": 1.0
+            },
+            {
+              "state": "SMASH_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "SMASH_MOVE",
+          "type": "MoveState",
+          "perform": "SmashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 11.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SmashDamage"
+              ],
+              "amount": "SmashDamage"
+            }
+          ]
+        },
+        {
+          "id": "VULNERABLE_SPORES_MOVE",
+          "type": "MoveState",
+          "perform": "VulnerableSporesMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "VulnerablePower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.FOGMOG",
+      "class": "Fogmog",
+      "values": {
+        "MinInitialHp": 74,
+        "MaxInitialHp": 74,
+        "SwipeDamage": 8,
+        "HeadbuttDamage": 14
+      },
+      "initial_state": "ILLUSION_MOVE",
+      "states": [
+        {
+          "id": "BRANCH",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "SWIPE_RANDOM_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 0.4
+            },
+            {
+              "state": "HEADBUTT_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 0.6
+            }
+          ]
+        },
+        {
+          "id": "HEADBUTT_MOVE",
+          "type": "MoveState",
+          "perform": "HeadbuttMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SWIPE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "HeadbuttDamage"
+              ],
+              "amount": "HeadbuttDamage"
+            }
+          ]
+        },
+        {
+          "id": "ILLUSION_MOVE",
+          "type": "MoveState",
+          "perform": "IllusionMove",
+          "intents": [
+            {
+              "type": "SummonIntent"
+            }
+          ],
+          "next": "SWIPE_MOVE",
+          "effects": [
+            {
+              "command": "CreatureCmd.Add",
+              "arguments": [
+                "base.CombatState",
+                "\"illusion\""
+              ],
+              "model": "EyeWithTeeth"
+            }
+          ]
+        },
+        {
+          "id": "SWIPE_MOVE",
+          "type": "MoveState",
+          "perform": "SwipeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "BRANCH",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SwipeDamage"
+              ],
+              "amount": "SwipeDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "SWIPE_RANDOM_MOVE",
+          "type": "MoveState",
+          "perform": "SwipeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "HEADBUTT_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SwipeDamage"
+              ],
+              "amount": "SwipeDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "1m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.FUZZY_WURM_CRAWLER",
+      "class": "FuzzyWurmCrawler",
+      "values": {
+        "MinInitialHp": 55,
+        "MaxInitialHp": 57,
+        "AcidGoopDamage": 4,
+        "IsPuffed": false
+      },
+      "initial_state": "FIRST_ACID_GOOP",
+      "states": [
+        {
+          "id": "ACID_GOOP",
+          "type": "MoveState",
+          "perform": "AcidGoop",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 4.0,
+              "repeats": 1
+            }
+          ],
+          "next": "FIRST_ACID_GOOP",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "AcidGoopDamage"
+              ],
+              "amount": "AcidGoopDamage"
+            }
+          ]
+        },
+        {
+          "id": "FIRST_ACID_GOOP",
+          "type": "MoveState",
+          "perform": "AcidGoop",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 4.0,
+              "repeats": 1
+            }
+          ],
+          "next": "INHALE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "AcidGoopDamage"
+              ],
+              "amount": "AcidGoopDamage"
+            }
+          ]
+        },
+        {
+          "id": "INHALE",
+          "type": "MoveState",
+          "perform": "Inhale",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "ACID_GOOP",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "7m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "7m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.INKLET",
+      "class": "Inklet",
+      "values": {
+        "MinInitialHp": 11,
+        "MaxInitialHp": 17,
+        "JabDamage": 3,
+        "WhirlwindDamage": 2,
+        "PiercingGazeDamage": 10,
+        "MiddleInklet": false
+      },
+      "initial_state": "JAB_MOVE",
+      "states": [
+        {
+          "id": "JAB_MOVE",
+          "type": "MoveState",
+          "perform": "JabMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 3.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "JabDamage"
+              ],
+              "amount": "JabDamage"
+            }
+          ]
+        },
+        {
+          "id": "PIERCING_GAZE_MOVE",
+          "type": "MoveState",
+          "perform": "PiercingGazeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 10.0,
+              "repeats": 1
+            }
+          ],
+          "next": "JAB_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "PiercingGazeDamage"
+              ],
+              "amount": "PiercingGazeDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "PIERCING_GAZE_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "WHIRLWIND_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "WHIRLWIND_MOVE",
+          "type": "MoveState",
+          "perform": "WhirlwindMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 2.0,
+              "repeats": 3
+            }
+          ],
+          "next": "JAB_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "WhirlwindDamage"
+              ],
+              "amount": "WhirlwindDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.KIN_FOLLOWER",
+      "class": "KinFollower",
+      "values": {
+        "MinInitialHp": 58,
+        "MaxInitialHp": 59,
+        "QuickSlashDamage": 5,
+        "BoomerangDamage": 2,
+        "DanceStrength": 2,
+        "StartsWithDance": false
+      },
+      "initial_state": "QUICK_SLASH_MOVE",
+      "states": [
+        {
+          "id": "BOOMERANG_MOVE",
+          "type": "MoveState",
+          "perform": "BoomerangMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 2.0,
+              "repeats": 2
+            }
+          ],
+          "next": "POWER_DANCE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BoomerangDamage"
+              ],
+              "amount": "BoomerangDamage"
+            }
+          ]
+        },
+        {
+          "id": "POWER_DANCE_MOVE",
+          "type": "MoveState",
+          "perform": "PowerDanceMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "QUICK_SLASH_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "DanceStrength",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "DanceStrength"
+            }
+          ]
+        },
+        {
+          "id": "QUICK_SLASH_MOVE",
+          "type": "MoveState",
+          "perform": "QuickSlashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 5.0,
+              "repeats": 1
+            }
+          ],
+          "next": "BOOMERANG_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "QuickSlashDamage"
+              ],
+              "amount": "QuickSlashDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.KIN_PRIEST",
+      "class": "KinPriest",
+      "values": {
+        "MinInitialHp": 190,
+        "MaxInitialHp": 190,
+        "OrbOfFrailtyDamage": 8,
+        "OrbOfWeaknessDamage": 8,
+        "BeamDamage": 3,
+        "RitualStrength": 2,
+        "SpeechUsed": false
+      },
+      "initial_state": "ORB_OF_FRAILTY_MOVE",
+      "states": [
+        {
+          "id": "BEAM_MOVE",
+          "type": "MoveState",
+          "perform": "BeamMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 3.0,
+              "repeats": 3
+            }
+          ],
+          "next": "RITUAL_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BeamDamage"
+              ],
+              "amount": "BeamDamage"
+            }
+          ]
+        },
+        {
+          "id": "ORB_OF_FRAILTY_MOVE",
+          "type": "MoveState",
+          "perform": "OrbOfFrailtyMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "ORB_OF_WEAKNESS_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "OrbOfFrailtyDamage"
+              ],
+              "amount": "OrbOfFrailtyDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "ORB_OF_WEAKNESS_MOVE",
+          "type": "MoveState",
+          "perform": "OrbOfWeaknessMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "BEAM_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "OrbOfWeaknessDamage"
+              ],
+              "amount": "OrbOfWeaknessDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "WeakPower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "RITUAL_MOVE",
+          "type": "MoveState",
+          "perform": "RitualMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "ORB_OF_FRAILTY_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "RitualStrength",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "RitualStrength"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.LEAF_SLIME_M",
+      "class": "LeafSlimeM",
+      "values": {
+        "MinInitialHp": 32,
+        "MaxInitialHp": 35,
+        "ClumpDamage": 8
+      },
+      "initial_state": "STICKY_SHOT",
+      "states": [
+        {
+          "id": "CLUMP_SHOT",
+          "type": "MoveState",
+          "perform": "ClumpShotMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            }
+          ],
+          "next": "STICKY_SHOT",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ClumpDamage"
+              ],
+              "amount": "ClumpDamage"
+            }
+          ]
+        },
+        {
+          "id": "STICKY_SHOT",
+          "type": "MoveState",
+          "perform": "StickyShotMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "CLUMP_SHOT",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "2",
+                "null"
+              ],
+              "model": "Slimed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.LEAF_SLIME_S",
+      "class": "LeafSlimeS",
+      "values": {
+        "MinInitialHp": 11,
+        "MaxInitialHp": 15,
+        "TackleDamage": 3
+      },
+      "initial_state": "RAND",
+      "states": [
+        {
+          "id": "GOOP_MOVE",
+          "type": "MoveState",
+          "perform": "GoopMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "1",
+                "null"
+              ],
+              "model": "Slimed"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "TACKLE_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "GOOP_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "TACKLE_MOVE",
+          "type": "MoveState",
+          "perform": "TackleMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 3.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "TackleDamage"
+              ],
+              "amount": "TackleDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.MAWLER",
+      "class": "Mawler",
+      "values": {
+        "MinInitialHp": 72,
+        "MaxInitialHp": 72,
+        "RipAndTearDamage": 14,
+        "ClawDamage": 4
+      },
+      "initial_state": "CLAW_MOVE",
+      "states": [
+        {
+          "id": "CLAW_MOVE",
+          "type": "MoveState",
+          "perform": "ClawMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 4.0,
+              "repeats": 2
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ClawDamage"
+              ],
+              "amount": "ClawDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "RIP_AND_TEAR_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "ROAR_MOVE",
+              "repeat": "UseOnlyOnce",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "CLAW_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "RIP_AND_TEAR_MOVE",
+          "type": "MoveState",
+          "perform": "RipAndTearMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "RipAndTearDamage"
+              ],
+              "amount": "RipAndTearDamage"
+            }
+          ]
+        },
+        {
+          "id": "ROAR_MOVE",
+          "type": "MoveState",
+          "perform": "RoarMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "3m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "VulnerablePower",
+              "target": "targets",
+              "amount": "3m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.NIBBIT",
+      "class": "Nibbit",
+      "values": {
+        "MinInitialHp": 42,
+        "MaxInitialHp": 46,
+        "ButtDamage": 12,
+        "SliceBlock": 5,
+        "SliceDamage": 6,
+        "HissStrengthGain": 2,
+        "IsFront": false,
+        "IsAlone": false
+      },
+      "initial_state": "INIT_MOVE",
+      "states": [
+        {
+          "id": "BUTT_MOVE",
+          "type": "MoveState",
+          "perform": "ButtMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 12.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SLICE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ButtDamage"
+              ],
+              "amount": "ButtDamage"
+            }
+          ]
+        },
+        {
+          "id": "HISS_MOVE",
+          "type": "MoveState",
+          "perform": "HissMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "BUTT_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "HissStrengthGain",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "HissStrengthGain"
+            }
+          ]
+        },
+        {
+          "id": "INIT_MOVE",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "HISS_MOVE",
+              "condition": "!((Nibbit)base.Creature.Monster).IsFront"
+            },
+            {
+              "state": "SLICE_MOVE",
+              "condition": "((Nibbit)base.Creature.Monster).IsFront"
+            }
+          ]
+        },
+        {
+          "id": "SLICE_MOVE",
+          "type": "MoveState",
+          "perform": "SliceMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 6.0,
+              "repeats": 1
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "HISS_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SliceDamage"
+              ],
+              "amount": "SliceDamage"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "SliceBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "SliceBlock"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.PHROG_PARASITE",
+      "class": "PhrogParasite",
+      "values": {
+        "MinInitialHp": 61,
+        "MaxInitialHp": 64,
+        "LashDamage": 4
+      },
+      "initial_state": "INFECT_MOVE",
+      "states": [
+        {
+          "id": "INFECT_MOVE",
+          "type": "MoveState",
+          "perform": "InfectMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "LASH_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "3",
+                "null"
+              ],
+              "model": "Infection"
+            }
+          ]
+        },
+        {
+          "id": "LASH_MOVE",
+          "type": "MoveState",
+          "perform": "LashMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 4.0,
+              "repeats": 4
+            }
+          ],
+          "next": "INFECT_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "LashDamage"
+              ],
+              "amount": "LashDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "INFECT_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "LASH_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SHRINKER_BEETLE",
+      "class": "ShrinkerBeetle",
+      "values": {
+        "MinInitialHp": 38,
+        "MaxInitialHp": 40,
+        "ChompDamage": 7,
+        "StompDamage": 13
+      },
+      "initial_state": "SHRINKER_MOVE",
+      "states": [
+        {
+          "id": "CHOMP_MOVE",
+          "type": "MoveState",
+          "perform": "ChompMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            }
+          ],
+          "next": "STOMP_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ChompDamage"
+              ],
+              "amount": "ChompDamage"
+            }
+          ]
+        },
+        {
+          "id": "SHRINKER_MOVE",
+          "type": "MoveState",
+          "perform": "ShrinkMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "CHOMP_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "-1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "ShrinkPower",
+              "target": "targets",
+              "amount": "-1m"
+            }
+          ]
+        },
+        {
+          "id": "STOMP_MOVE",
+          "type": "MoveState",
+          "perform": "StompMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 13.0,
+              "repeats": 1
+            }
+          ],
+          "next": "CHOMP_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "StompDamage"
+              ],
+              "amount": "StompDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SLITHERING_STRANGLER",
+      "class": "SlitheringStrangler",
+      "values": {
+        "MinInitialHp": 53,
+        "MaxInitialHp": 55,
+        "ThwackDamage": 7,
+        "LashDamage": 12
+      },
+      "initial_state": "CONSTRICT",
+      "states": [
+        {
+          "id": "CONSTRICT",
+          "type": "MoveState",
+          "perform": "ConstrictMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "rand",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "3m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "ConstrictPower",
+              "target": "targets",
+              "amount": "3m"
+            }
+          ]
+        },
+        {
+          "id": "LASH",
+          "type": "MoveState",
+          "perform": "LashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 12.0,
+              "repeats": 1
+            }
+          ],
+          "next": "CONSTRICT",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "LashDamage"
+              ],
+              "amount": "LashDamage"
+            }
+          ]
+        },
+        {
+          "id": "rand",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "THWACK",
+              "repeat": "CanRepeatForever",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "LASH",
+              "repeat": "CanRepeatForever",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "THWACK",
+          "type": "MoveState",
+          "perform": "ThwackMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "CONSTRICT",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ThwackDamage"
+              ],
+              "amount": "ThwackDamage"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "5m",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "5m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SNAPPING_JAXFRUIT",
+      "class": "SnappingJaxfruit",
+      "values": {
+        "MinInitialHp": 31,
+        "MaxInitialHp": 33,
+        "EnergyDamage": 3
+      },
+      "initial_state": "ENERGY_ORB_MOVE",
+      "states": [
+        {
+          "id": "ENERGY_ORB_MOVE",
+          "type": "MoveState",
+          "perform": "EnergyOrb",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 3.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "ENERGY_ORB_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "EnergyDamage"
+              ],
+              "amount": "EnergyDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.TRACKER_RUBY_RAIDER",
+      "class": "TrackerRubyRaider",
+      "values": {
+        "MinInitialHp": 21,
+        "MaxInitialHp": 25,
+        "HoundsDamage": 1,
+        "HoundsRepeat": 8
+      },
+      "initial_state": "TRACK_MOVE",
+      "states": [
+        {
+          "id": "HOUNDS_MOVE",
+          "type": "MoveState",
+          "perform": "HoundsMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 1.0,
+              "repeats": 8
+            }
+          ],
+          "next": "HOUNDS_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "HoundsDamage"
+              ],
+              "amount": "HoundsDamage"
+            }
+          ]
+        },
+        {
+          "id": "TRACK_MOVE",
+          "type": "MoveState",
+          "perform": "TrackMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "HOUNDS_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.TWIG_SLIME_M",
+      "class": "TwigSlimeM",
+      "values": {
+        "MinInitialHp": 26,
+        "MaxInitialHp": 28,
+        "HasPhobiaSpineSkin": true,
+        "ClumpDamage": 11
+      },
+      "initial_state": "STICKY_SHOT_MOVE",
+      "states": [
+        {
+          "id": "POKEY_POUNCE_MOVE",
+          "type": "MoveState",
+          "perform": "ClumpShotMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 11.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ClumpDamage"
+              ],
+              "amount": "ClumpDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "POKEY_POUNCE_MOVE",
+              "repeat": "CanRepeatXTimes",
+              "max_times": 2,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "STICKY_SHOT_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "STICKY_SHOT_MOVE",
+          "type": "MoveState",
+          "perform": "StickyShotMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "1",
+                "null"
+              ],
+              "model": "Slimed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.TWIG_SLIME_S",
+      "class": "TwigSlimeS",
+      "values": {
+        "MinInitialHp": 7,
+        "MaxInitialHp": 11,
+        "TackleDamage": 4
+      },
+      "initial_state": "TACKLE_MOVE",
+      "states": [
+        {
+          "id": "TACKLE_MOVE",
+          "type": "MoveState",
+          "perform": "TackleMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 4.0,
+              "repeats": 1
+            }
+          ],
+          "next": "TACKLE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "TackleDamage"
+              ],
+              "amount": "TackleDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.VANTOM",
+      "class": "Vantom",
+      "values": {
+        "MinInitialHp": 173,
+        "SlipperyAmt": 8,
+        "MaxInitialHp": 173,
+        "InkBlotDamage": 7,
+        "InkyLanceDamage": 6,
+        "DismemberDamage": 26,
+        "ShouldDisappearFromDoom": false
+      },
+      "initial_state": "INK_BLOT_MOVE",
+      "states": [
+        {
+          "id": "DISMEMBER_MOVE",
+          "type": "MoveState",
+          "perform": "DismemberMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 26.0,
+              "repeats": 1
+            },
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "PREPARE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "DismemberDamage"
+              ],
+              "amount": "DismemberDamage"
+            },
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "3",
+                "null"
+              ],
+              "model": "Wound"
+            }
+          ]
+        },
+        {
+          "id": "INK_BLOT_MOVE",
+          "type": "MoveState",
+          "perform": "InkBlotMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            }
+          ],
+          "next": "INKY_LANCE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "InkBlotDamage"
+              ],
+              "amount": "InkBlotDamage"
+            }
+          ]
+        },
+        {
+          "id": "INKY_LANCE_MOVE",
+          "type": "MoveState",
+          "perform": "InkyLanceMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 6.0,
+              "repeats": 2
+            }
+          ],
+          "next": "DISMEMBER_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "InkyLanceDamage"
+              ],
+              "amount": "InkyLanceDamage"
+            }
+          ]
+        },
+        {
+          "id": "PREPARE_MOVE",
+          "type": "MoveState",
+          "perform": "PrepareMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "INK_BLOT_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.VINE_SHAMBLER",
+      "class": "VineShambler",
+      "values": {
+        "MinInitialHp": 61,
+        "MaxInitialHp": 61,
+        "GraspingVinesDamage": 8,
+        "SwipeDamage": 6,
+        "ChompDamage": 16
+      },
+      "initial_state": "SWIPE_MOVE",
+      "states": [
+        {
+          "id": "CHOMP_MOVE",
+          "type": "MoveState",
+          "perform": "ChompMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 16.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SWIPE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ChompDamage"
+              ],
+              "amount": "ChompDamage"
+            }
+          ]
+        },
+        {
+          "id": "GRASPING_VINES_MOVE",
+          "type": "MoveState",
+          "perform": "GraspingVinesMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 8.0,
+              "repeats": 1
+            },
+            {
+              "type": "CardDebuffIntent"
+            }
+          ],
+          "next": "CHOMP_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "GraspingVinesDamage"
+              ],
+              "amount": "GraspingVinesDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "TangledPower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "SWIPE_MOVE",
+          "type": "MoveState",
+          "perform": "SwipeMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 6.0,
+              "repeats": 2
+            }
+          ],
+          "next": "GRASPING_VINES_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SwipeDamage"
+              ],
+              "amount": "SwipeDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.WRIGGLER",
+      "class": "Wriggler",
+      "values": {
+        "MinInitialHp": 17,
+        "MaxInitialHp": 21,
+        "BiteDamage": 6,
+        "StartStunned": false
+      },
+      "initial_state": "INIT_MOVE",
+      "states": [
+        {
+          "id": "INIT_MOVE",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "NASTY_BITE_MOVE",
+              "condition": "base.Creature.SlotName == \"wriggler1\""
+            },
+            {
+              "state": "WRIGGLE_MOVE",
+              "condition": "base.Creature.SlotName == \"wriggler2\""
+            },
+            {
+              "state": "NASTY_BITE_MOVE",
+              "condition": "base.Creature.SlotName == \"wriggler3\""
+            },
+            {
+              "state": "WRIGGLE_MOVE",
+              "condition": "base.Creature.SlotName == \"wriggler4\""
+            }
+          ]
+        },
+        {
+          "id": "NASTY_BITE_MOVE",
+          "type": "MoveState",
+          "perform": "BiteMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 6.0,
+              "repeats": 1
+            }
+          ],
+          "next": "WRIGGLE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BiteDamage"
+              ],
+              "amount": "BiteDamage"
+            }
+          ]
+        },
+        {
+          "id": "SPAWNED_MOVE",
+          "type": "MoveState",
+          "perform": "SpawnedMove",
+          "intents": [
+            {
+              "type": "StunIntent"
+            }
+          ],
+          "next": "INIT_MOVE",
+          "effects": []
+        },
+        {
+          "id": "WRIGGLE_MOVE",
+          "type": "MoveState",
+          "perform": "WriggleMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            },
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "NASTY_BITE_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            },
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "1",
+                "null"
+              ],
+              "model": "Infection"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
