@@ -1,5 +1,5 @@
 param(
-    [string]$Seed = 'FV2EVHXLCW',
+    [string]$Seed,
     [string]$GameDir = 'E:\SteamLibrary\steamapps\common\Slay the Spire 2',
     [int]$TimeoutSeconds = 300,
     [string]$LogFile = (Join-Path $PSScriptRoot 'data\official_autoslay.log'),
@@ -19,6 +19,10 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+if (-not $PSBoundParameters.ContainsKey('Seed')) {
+    $Seed = [guid]::NewGuid().ToString('N').Substring(0, 10).ToUpperInvariant()
+}
+Write-Output "Starting official autoslay with seed: $Seed"
 function Resolve-ProjectPath([string]$Path) {
     if ([IO.Path]::IsPathRooted($Path)) { return [IO.Path]::GetFullPath($Path) }
     return Join-Path $PSScriptRoot $Path
