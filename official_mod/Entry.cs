@@ -47,10 +47,12 @@ public static class Entry
 
     public static void Initialize()
     {
-        if (!CommandLineHelper.HasArg("sts2ai-autoslay"))
+        bool autoslay = CommandLineHelper.HasArg("sts2ai-autoslay");
+        if (!autoslay && !CommandLineHelper.HasArg("unlock-ironclad-epochs"))
             return;
 
-        new Harmony("sts2-ai.official").PatchAll();
+        if (autoslay)
+            new Harmony("sts2-ai.official").PatchAll();
         TaskHelper.RunSafely(StartWhenReady());
     }
 
@@ -60,12 +62,30 @@ public static class Entry
             await Task.Delay(100);
         if (CommandLineHelper.HasArg("unlock-ironclad-epochs"))
         {
-            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<Ironclad2Epoch>(), EpochState.Revealed);
-            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<Ironclad3Epoch>(), EpochState.Revealed);
-            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<Ironclad4Epoch>(), EpochState.Revealed);
-            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<Ironclad5Epoch>(), EpochState.Revealed);
-            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<Ironclad6Epoch>(), EpochState.Revealed);
-            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<Ironclad7Epoch>(), EpochState.Revealed);
+            string[] epochs = [
+                EpochModel.GetId<Ironclad2Epoch>(), EpochModel.GetId<Ironclad3Epoch>(), EpochModel.GetId<Ironclad4Epoch>(),
+                EpochModel.GetId<Ironclad5Epoch>(), EpochModel.GetId<Ironclad6Epoch>(), EpochModel.GetId<Ironclad7Epoch>()
+            ];
+            if (CommandLineHelper.HasArg("sts2ai-autoslay"))
+            {
+                foreach (string epoch in epochs)
+                    SaveManager.Instance.ObtainEpochOverride(epoch, EpochState.Revealed);
+            }
+            else
+            {
+                foreach (string epoch in epochs)
+                {
+                    SaveManager.Instance.ObtainEpoch(epoch);
+                    SaveManager.Instance.RevealEpoch(epoch, isDebug: true);
+                }
+                SaveManager.Instance.SaveProgressFile();
+            }
+        }
+        if (!CommandLineHelper.HasArg("sts2ai-autoslay"))
+        {
+            await Task.Delay(1000);
+            NGame.Instance?.GetTree().Quit(0);
+            return;
         }
         string seed = CommandLineHelper.GetValue("seed") ?? "FV2EVHXLCW";
         string? log = CommandLineHelper.GetValue("log-file");
