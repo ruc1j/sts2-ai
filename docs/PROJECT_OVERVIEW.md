@@ -56,10 +56,10 @@ pwsh -File .\run_official_autoslay.ps1 -Seed FV2EVHXLCW
 
 `official_agent.choose` は observation の `phase` に応じて `choose_shop`、`choose_map`、`choose_card_reward`、`choose_rest` を呼び分け、それ以外をcombatとして処理する。
 
-- combat: Sandpitの `Frantic Escape`、Crabの向き変更、potion、条件を満たす `combat.search`、即死攻撃、Defend、カード優先度の順。
+- combat: Sandpitの `Frantic Escape`、Crabの向き変更、potion、条件を満たす `combat.search`、即死攻撃、Defend、カード優先度の順。即死攻撃は攻撃してくる敵を優先し、同点の攻撃はHPの低い敵へ集中する。
 - `choose_shop`: デッキのaxis（strike、self-damage、vulnerable、exhaust）を判定し、未所持coreカードのlegal購入を優先する。axisがない場合の候補は `CARD.PERFECTED_STRIKE`、`CARD.RUPTURE`、`CARD.CORRUPTION` である。購入できなければ、strike axisでPerfected Strikeを含むデッキはDefendを、それ以外はStrikeをlegal削除し、最後はskipする。
 - `choose_card_reward`: `CARD_TIERS` の S/A/B/C/D を基準にしつつ、デッキaxisに対応するcoreカードを優先する。最高値が0なら `Skip` alternativeを返す。
-- `choose_map`: 通常HPでは将来経路のroom valueを最大化し、HP半分以下では到達可能なRestSite、経由Elite数、安全性、room valueの順で選ぶ。
+- `choose_map`: 通常HPでは将来経路のroom valueを最大化し、HPが最大値の2/3以下では到達可能なRestSite、経由Elite数、安全性、room valueの順で選ぶ。
 - `choose_rest`: HPが最大値の75%以上なら `HATCH`、負傷中なら `HEAL`、それ以外は `SMITH` を優先する。
 
 combatロールアウトは `CARD_NAMES` と `POWER_NAMES` に登録された要素を対象にし、未対応カードやシミュレータ例外時はヒューリスティックへ戻る。`official_agent.py` の `main` は観測ファイルを25ms間隔でpollし、seqが変わったときだけactionを書き込む。通常例外は指定されたerror logへ追記し、legalな `end_turn` があればfallbackに使う。

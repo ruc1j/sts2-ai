@@ -3,3 +3,13 @@ __pycache__/
 official_mod/bin/
 official_mod/obj/
 data/official_autoslay.log
+
+data/*_visible_trace.jsonl
+*_runner.log
+*_runner.err
+*_errors.log
+*_result.json
+data/map_*.json
+!data/enemies_*.json
+!data/map_*_overgrowth.json
+!data/map_*_underdocks.json
