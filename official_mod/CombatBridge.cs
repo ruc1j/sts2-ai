@@ -101,9 +101,11 @@ internal static class CombatBridge
             else if (action.Type == "potion" && action.PotionIndex is int potionIndex)
             {
                 var potion = player.GetPotionAtSlotIndex(potionIndex) ?? throw new InvalidOperationException($"empty potion slot: {potionIndex}");
-                if (action.PotionId != potion.Id.ToString() || potion.IsQueued)
+                if (action.PotionId != potion.Id.ToString() || potion.Usage.ToString() == "Automatic" || potion.IsQueued || !potion.PassesCustomUsabilityCheck)
                     throw new InvalidOperationException($"invalid potion action: {action.PotionId}");
                 Creature? target = action.TargetId is uint targetId ? combat.GetCreature(targetId) : null;
+                if (action.TargetId is null && potion.IsValidTarget(player.Creature))
+                    target = player.Creature;
                 if (!potion.IsValidTarget(target))
                     throw new InvalidOperationException($"illegal potion target: {potionIndex} -> {action.TargetId}");
                 potion.EnqueueManualUse(target);
@@ -143,7 +145,9 @@ internal static class CombatBridge
                 continue;
             if (potion.IsValidTarget(null))
                 legal.Add(new { type = "potion", potion_index = i, potion_id = potion.Id.ToString(), target_id = (uint?)null });
-            foreach (Creature target in combat.Creatures.Where(potion.IsValidTarget))
+            if (potion.IsValidTarget(player.Creature))
+                legal.Add(new { type = "potion", potion_index = i, potion_id = potion.Id.ToString(), target_id = (uint?)null });
+            foreach (Creature target in combat.Creatures.Where(target => target != player.Creature && potion.IsValidTarget(target)))
                 legal.Add(new { type = "potion", potion_index = i, potion_id = potion.Id.ToString(), target_id = target.CombatId });
         }
         legal.Add(new { type = "end_turn", hand_index = (int?)null, card_id = (string?)null, target_id = (uint?)null });
