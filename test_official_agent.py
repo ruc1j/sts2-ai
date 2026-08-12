@@ -269,6 +269,14 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_pre_hit_low_quarter_uses_lucky_tonic(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.LUCKY_TONIC", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 44, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 143, "intents": [{"damage": 33, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.LUCKY_TONIC")
+
     def test_low_hp_uses_unknown_manual_potion_as_safe_fallback(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.UNKNOWN_MANUAL", "target_id": None}, {"type": "end_turn"}],
@@ -334,6 +342,22 @@ class OfficialAgentTest(unittest.TestCase):
             "enemies": [{"combat_id": 7, "hp": 123, "intents": []}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.STRENGTH_POTION")
+
+    def test_uses_power_potion_proactively_against_high_health_enemy(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.POWER_POTION", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 173, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.POWER_POTION")
+
+    def test_uses_colorless_potion_proactively_against_high_health_enemy(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.COLORLESS_POTION", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 173, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.COLORLESS_POTION")
 
     def test_uses_weak_potion_against_lethal_enemy(self) -> None:
         observation = {
@@ -561,6 +585,43 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose(observation)["target_id"], 2)
+
+    def test_rest_heals_near_boss(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 14},
+            "player": {"hp": 64, "max_hp": 80},
+            "legal_actions": [{"option_id": "SMITH"}, {"option_id": "HEAL"}, {"option_id": "HATCH"}],
+        }
+        self.assertEqual(choose_rest(observation)["option_id"], "HEAL")
+
+    def test_rest_hatches_mid_act_when_healthy(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 5},
+            "player": {"hp": 64, "max_hp": 80},
+            "legal_actions": [{"option_id": "SMITH"}, {"option_id": "HEAL"}, {"option_id": "HATCH"}],
+        }
+        self.assertEqual(choose_rest(observation)["option_id"], "HATCH")
+
+    def test_focus_fire_does_not_change_card_priority(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.BASH", "type": "Attack", "vars": [{"id": "Damage", "value": 8}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 50, "block": 0, "intents": []},
+                {"combat_id": 2, "hp": 20, "block": 0, "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BASH", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.BASH", "hand_index": 0, "target_id": 2},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.BASH")
 
     def test_reward_takes_modeled_bully(self) -> None:
         observation = {
