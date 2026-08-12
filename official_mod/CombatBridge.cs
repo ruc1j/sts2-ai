@@ -2,13 +2,17 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
+using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
+using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Potions;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Random;
@@ -28,6 +32,22 @@ internal static class CombatRoomHandlerPatch
         if (!CommandLineHelper.HasArg("sts2ai-agent") || _handled++ >= int.Parse(CommandLineHelper.GetValue("agent-max-combats") ?? "1"))
             return true;
         __result = CombatBridge.Run(ct);
+        return false;
+    }
+}
+
+[HarmonyPatch(typeof(CardSelectCmd), nameof(CardSelectCmd.FromChooseACardScreen))]
+internal static class PotionChooseCardPatch
+{
+    private static bool Prefix(PlayerChoiceContext context, IReadOnlyList<CardModel> cards, bool canSkip, ref Task<CardModel?> __result)
+    {
+        if (!CommandLineHelper.HasArg("sts2ai-agent") || context.LastInvolvedModel is not (PowerPotion or ColorlessPotion or AttackPotion or SkillPotion))
+            return true;
+
+        CardModel? selected = context.LastInvolvedModel is PowerPotion
+            ? cards.FirstOrDefault(card => card.EnergyCost.GetAmountToSpend() <= (card.Owner.PlayerCombatState?.Energy ?? 0))
+            : cards.FirstOrDefault();
+        __result = Task.FromResult(selected ?? (canSkip ? null : cards.FirstOrDefault()));
         return false;
     }
 }
