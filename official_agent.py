@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import time
+import traceback
 
 from combat import Combat, Enemy, search
 
@@ -141,11 +142,6 @@ def choose_card_reward(observation: dict) -> dict:
     selected = max(actions, key=lambda action: priority.get(action["card_id"], 0))
     if priority.get(selected["card_id"], 0):
         return selected
-    cards = {card["id"]: card for card in observation.get("cards", ())}
-    attacks = [action for action in actions if cards.get(action["card_id"], {}).get("type") == "Attack"]
-    if attacks:
-        rarity = {"Rare": 3, "Uncommon": 2, "Common": 1}
-        return max(attacks, key=lambda action: (rarity.get(cards[action["card_id"]].get("rarity"), 0), -cards[action["card_id"]].get("cost", 99)))
     return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
 
 
@@ -213,6 +209,7 @@ def main() -> None:
     parser.add_argument("action")
     parser.add_argument("--enemy-data", nargs="+")
     parser.add_argument("--simulations", type=int, default=0)
+    parser.add_argument("--error-log")
     args = parser.parse_args()
     enemy_data = None
     if args.enemy_data:
@@ -230,6 +227,15 @@ def main() -> None:
                 last_seq = observation["seq"]
         except (OSError, json.JSONDecodeError):
             pass
+        except Exception:
+            if "observation" in locals() and not observation.get("terminal") and observation.get("seq") != last_seq:
+                if args.error_log:
+                    with open(args.error_log, "a", encoding="utf-8") as file:
+                        file.write(traceback.format_exc())
+                action = next((action for action in observation.get("legal_actions", ()) if action["type"] == "end_turn"), None)
+                if action:
+                    atomic_write(args.action, action | {"seq": observation["seq"]})
+                    last_seq = observation["seq"]
         time.sleep(0.025)
 
 

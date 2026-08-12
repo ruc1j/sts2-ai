@@ -68,15 +68,25 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
 
-    def test_reward_takes_unknown_attack(self) -> None:
+    def test_reward_skips_unknown_attack(self) -> None:
         observation = {
-            "cards": [{"id": "CARD.CINDER", "type": "Attack", "rarity": "Common", "cost": 2}],
+            "cards": [{"id": "CARD.UNKNOWN_ATTACK", "type": "Attack", "rarity": "Common", "cost": 2}],
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.CINDER"},
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN_ATTACK"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.CINDER")
+        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+
+    def test_reward_keeps_known_card_for_a_large_deck(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE"}] * 14},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
 
     def test_rest_heals_when_hurt(self) -> None:
         observation = {
@@ -141,6 +151,15 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 7}],
         }
         self.assertEqual(choose(observation)["target_id"], 7)
+
+    def test_unknown_card_does_not_crash_fallback(self) -> None:
+        observation = {
+            "player": {"block": 0},
+            "hand": [{"index": 0, "type": "Attack", "vars": []}],
+            "enemies": [{"combat_id": 1, "hp": 20, "intents": []}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.UNKNOWN", "hand_index": 0, "target_id": 1}, {"type": "end_turn"}],
+        }
+        self.assertEqual(choose(observation)["type"], "card")
 
 
 if __name__ == "__main__":

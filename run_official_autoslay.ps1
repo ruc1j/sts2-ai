@@ -11,6 +11,7 @@ param(
     [switch]$StopAfterAgent,
     [switch]$StopAfterReward,
     [string]$AgentTrace = (Join-Path $PSScriptRoot 'data\official_agent_trace.jsonl'),
+    [string]$AgentErrorLog = (Join-Path $PSScriptRoot 'data\official_agent_errors.log'),
     [string]$MapFile = (Join-Path $PSScriptRoot 'data\official_act1_map.json'),
     [int]$AgentSimulations = 1000,
     [switch]$Visible = $true,
@@ -26,6 +27,7 @@ function Resolve-ProjectPath([string]$Path) {
 $LogFile = Resolve-ProjectPath $LogFile
 $ResultFile = Resolve-ProjectPath $ResultFile
 $AgentTrace = Resolve-ProjectPath $AgentTrace
+$AgentErrorLog = Resolve-ProjectPath $AgentErrorLog
 $MapFile = Resolve-ProjectPath $MapFile
 $exe = Join-Path $GameDir 'SlayTheSpire2.exe'
 $modRoot = Join-Path $GameDir 'mods'
@@ -94,6 +96,8 @@ try {
         }
         $agentInfo.ArgumentList.Add('--simulations')
         $agentInfo.ArgumentList.Add($AgentSimulations.ToString())
+        $agentInfo.ArgumentList.Add('--error-log')
+        $agentInfo.ArgumentList.Add($AgentErrorLog)
         $agentProcess = [Diagnostics.Process]::Start($agentInfo)
         $info.ArgumentList.Add('--sts2ai-agent')
         $info.ArgumentList.Add("--agent-max-combats=$AgentMaxCombats")
