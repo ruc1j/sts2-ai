@@ -471,7 +471,8 @@ def choose_map(observation: dict) -> dict:
         return memo[coord]
 
     player = observation.get("player", {})
-    if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 2 <= player["max_hp"]:
+    # Route toward rest sites and avoid elites once HP drops below two thirds.
+    if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 3 <= player["max_hp"] * 2:
         rest_paths: dict[tuple[int, int], tuple[int, int] | None] = {}
         rest_visiting: set[tuple[int, int]] = set()
 
@@ -517,7 +518,60 @@ def choose_map(observation: dict) -> dict:
 
         return min(observation["legal_actions"], key=lambda action: (safety_path((action["col"], action["row"]))[0], -safety_path((action["col"], action["row"]))[1], -value((action["col"], action["row"]))))
 
-    return max(observation["legal_actions"], key=lambda action: value((action["col"], action["row"])))
+    legal_actions = observation["legal_actions"]
+    # The whole map is revealed at act start, so plan a rough route from the current point to
+    # the boss: minimize normal combat tiles first (the enemy pool escalates to a strong pool
+    # from the 4th normal combat), then maximize rest sites, avoid elites, and prefer treasures.
+    run = observation.get("run") or {}
+    current_raw = run.get("current")
+    current = (current_raw.get("col"), current_raw.get("row")) if isinstance(current_raw, dict) and current_raw else None
+    boss = next((coord for coord, point in points.items() if point["type"] == "Boss"), None)
+
+    def plan_paths(start: tuple[int, int]) -> list[list[tuple[int, int]]]:
+        found: list[list[tuple[int, int]]] = []
+        seen: set[tuple[int, int]] = set()
+
+        def dfs(coord: tuple[int, int], path: list[tuple[int, int]]) -> None:
+            if coord == boss:
+                found.append(path)
+                return
+            if coord in seen:
+                return
+            seen.add(coord)
+            for child in points[coord].get("children", ()):
+                dfs((child["col"], child["row"]), path + [(child["col"], child["row"])])
+            seen.remove(coord)
+
+        dfs(start, [start])
+        return found
+
+    def route_key(path: list[tuple[int, int]]) -> tuple[int, int, int, int, int, int]:
+        types = [points[coord]["type"] for coord in path]
+        return (
+            types.count("Monster"),
+            -types.count("RestSite"),
+            types.count("Elite"),
+            -types.count("Treasure"),
+            types.count("Unknown"),
+            -types.count("Shop"),
+        )
+
+    if boss is not None:
+        starts = [current] if current is not None else [(action["col"], action["row"]) for action in legal_actions]
+        candidates: list[list[tuple[int, int]]] = []
+        for start in starts:
+            if start in points:
+                candidates.extend(plan_paths(start))
+        if candidates:
+            best = min(candidates, key=route_key)
+            target = best[1] if current is not None and len(best) > 1 else best[0]
+            for action in legal_actions:
+                if action["col"] == target[0] and action["row"] == target[1]:
+                    return action
+
+    return max(legal_actions, key=lambda action: value((action["col"], action["row"])))
+
+
 STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE"}
 
 # Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost

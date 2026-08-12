@@ -23,7 +23,8 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
 
-    def test_map_looks_ahead(self) -> None:
+    def test_map_route_prefers_boss_reachable_path(self) -> None:
+        # The col-1 branch dead-ends at a Treasure, so the planner follows the col-0 branch to the boss.
         observation = {
             "player": {"hp": 80, "max_hp": 80},
             "map": {"points": [
@@ -34,7 +35,7 @@ class OfficialAgentTest(unittest.TestCase):
             ]},
             "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
         }
-        self.assertEqual(choose_map(observation)["col"], 1)
+        self.assertEqual(choose_map(observation)["col"], 0)
 
     def test_low_hp_prefers_nearest_reachable_rest(self) -> None:
         observation = {
@@ -49,6 +50,33 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
         }
         self.assertEqual(choose_map(observation)["col"], 0)
+
+    def test_two_thirds_hp_prefers_nearest_reachable_rest(self) -> None:
+        observation = {
+            "player": {"hp": 52, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Treasure", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": []},
+                {"col": 1, "row": 1, "type": "Monster", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "RestSite", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 0)
+
+    def test_two_thirds_hp_still_prefers_value_when_no_rest_is_reachable(self) -> None:
+        observation = {
+            "player": {"hp": 52, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Treasure", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "Boss", "children": []},
+                {"col": 1, "row": 1, "type": "Treasure", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
 
     def test_low_hp_avoids_elite_on_equally_short_rest_route(self) -> None:
         observation = {
@@ -112,6 +140,86 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
         }
         self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_map_route_minimizes_monster_tiles(self) -> None:
+        # Both branches end at the boss with one rest, but col-0 steps on 2 monsters vs col-1's 1.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "Monster", "children": [{"col": 0, "row": 2}]},
+                {"col": 1, "row": 1, "type": "RestSite", "children": [{"col": 1, "row": 2}]},
+                {"col": 0, "row": 2, "type": "RestSite", "children": [{"col": 0, "row": 3}]},
+                {"col": 1, "row": 2, "type": "Treasure", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_map_route_prefers_rests_at_equal_monsters(self) -> None:
+        # Equal monster counts: col-0 offers a rest site, col-1 only a treasure.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": [{"col": 0, "row": 2}]},
+                {"col": 1, "row": 1, "type": "Monster", "children": [{"col": 1, "row": 2}]},
+                {"col": 0, "row": 2, "type": "Monster", "children": [{"col": 0, "row": 3}]},
+                {"col": 1, "row": 2, "type": "Treasure", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 0)
+
+    def test_map_route_avoids_elites_at_equal_monsters(self) -> None:
+        # Equal monsters and rests: col-1 avoids the elite and keeps the treasure.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": [{"col": 0, "row": 2}]},
+                {"col": 1, "row": 1, "type": "RestSite", "children": [{"col": 1, "row": 2}]},
+                {"col": 0, "row": 2, "type": "Elite", "children": [{"col": 0, "row": 3}]},
+                {"col": 1, "row": 2, "type": "Treasure", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_map_route_plans_suffix_from_current_position(self) -> None:
+        # Current position is mid-map; the plan continues from there (0 monsters via col-1).
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "run": {"current": {"col": 1, "row": 1}},
+            "map": {"points": [
+                {"col": 1, "row": 1, "type": "RestSite", "children": [{"col": 0, "row": 2}, {"col": 1, "row": 2}]},
+                {"col": 0, "row": 2, "type": "Monster", "children": [{"col": 0, "row": 3}]},
+                {"col": 1, "row": 2, "type": "RestSite", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 2}, {"type": "map", "col": 1, "row": 2}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_map_route_falls_back_to_value_without_boss(self) -> None:
+        # No boss point on the map: the route planner is skipped and the value heuristic decides.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "Treasure", "children": []},
+                {"col": 1, "row": 1, "type": "Treasure", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 0)
 
     def test_reward_prefers_known_strong_card(self) -> None:
         observation = {
