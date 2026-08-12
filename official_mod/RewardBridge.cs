@@ -92,6 +92,7 @@ internal static class RewardBridge
                 rarity = result.Card.Rarity.ToString(),
                 cost = result.Card.EnergyCost.GetWithModifiers(CostModifiers.All),
                 upgrade = result.Card.CurrentUpgradeLevel,
+                pool = result.Card.Pool.Id.ToString(),
             }),
             legal_actions = cards.Select((result, index) => (object)new
                 {

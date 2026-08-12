@@ -2,7 +2,7 @@ import json
 import random
 import unittest
 
-from combat import ANGER, BATTLE_TRANCE, DEFEND, SHRUG, Combat, END_TURN, Enemy, initial_combat, legal_actions, step
+from combat import ANGER, BATTLE_TRANCE, DEFEND, FRANTIC_ESCAPE, SHRUG, SLIMED, Combat, END_TURN, Enemy, initial_combat, legal_actions, step
 
 
 class CombatTest(unittest.TestCase):
@@ -32,6 +32,22 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (BATTLE_TRANCE,), (DEFEND, DEFEND, DEFEND), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
         after = step(combat, BATTLE_TRANCE, {}, random.Random(0))
         self.assertEqual((after.energy, len(after.hand)), (3, 3))
+
+    def test_slimed_draws_then_exhausts(self) -> None:
+        combat = Combat(80, (SLIMED,), (DEFEND,), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
+        after = step(combat, SLIMED, {}, random.Random(0))
+        self.assertEqual((after.energy, after.hand, after.discard_pile), (2, (DEFEND,), ()))
+
+    def test_frantic_escape_extends_sandpit_countdown(self) -> None:
+        enemy = Enemy("MONSTER.THE_INSATIABLE", 321, "THRASH_MOVE", (), powers=(("SandpitPower", 3),))
+        after = step(Combat(80, (FRANTIC_ESCAPE,), (), (), (enemy,)), FRANTIC_ESCAPE, {}, random.Random(0))
+        self.assertEqual(after.enemies[0].powers, (("SandpitPower", 4),))
+
+    def test_crab_attack_turns_away_from_the_dangerous_claw(self) -> None:
+        left = Enemy("MONSTER.CRUSHER", 20, "MOVE", (), powers=(("BackAttackLeftPower", 1),))
+        combat = Combat(80, (ANGER,), (), (), (left,), player_powers=(("SurroundedRight", 1),))
+        after = step(combat, "Anger@0", {}, random.Random(0))
+        self.assertEqual(after.player_powers, (("SurroundedLeft", 1),))
 
     def test_slippery_reduces_an_attack_to_one_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), powers=(("SlipperyPower", 8),))

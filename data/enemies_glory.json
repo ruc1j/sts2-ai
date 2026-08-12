@@ -1,0 +1,3836 @@
+{
+  "game_version": "v0.107.1",
+  "act": "Glory",
+  "encounters": [
+    {
+      "id": "ENCOUNTER.AEONGLASS_BOSS",
+      "class": "AeonglassBoss",
+      "room_type": "Boss",
+      "weak": false,
+      "monsters": [
+        "MONSTER.AEONGLASS"
+      ],
+      "tags": [],
+      "min_gold": 100,
+      "max_gold": 100,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.AEONGLASS",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 512,
+              "MaxInitialHp": 512,
+              "EbbDamage": 26,
+              "EbbBlock": 33,
+              "EyeLasersDamage": 11,
+              "EyeLasersRepeat": 2,
+              "IncreasingIntensityBaseStrength": 3,
+              "WitherAmount": 1,
+              "AdditionalStrength": 0,
+              "WitherUpgradeCount": 0,
+              "IncreasingIntensityTotalStrength": 3
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.AXEBOTS_NORMAL",
+      "class": "AxebotsNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.AXEBOT"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.AXEBOT",
+            "slot": "front",
+            "values": {
+              "BootUpBlock": 10,
+              "OneTwoDamage": 9,
+              "BootUpStrGain": 3,
+              "HammerUppercutDamage": 12,
+              "MinInitialHp": 70,
+              "MaxInitialHp": 78,
+              "StockAmount": 2,
+              "ShouldPlaySpawnAnimation": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.CONSTRUCT_MENAGERIE_NORMAL",
+      "class": "ConstructMenagerieNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.PUNCH_CONSTRUCT",
+        "MONSTER.CUBEX_CONSTRUCT"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.PUNCH_CONSTRUCT",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 55,
+              "MaxInitialHp": 55,
+              "StrongPunchDamage": 14,
+              "FastPunchDamage": 5,
+              "FastPunchRepeat": 2,
+              "StartsWithFastPunch": false,
+              "StartingHpReduction": 0
+            }
+          },
+          {
+            "monster": "MONSTER.CUBEX_CONSTRUCT",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 65,
+              "MaxInitialHp": 65,
+              "BlastDamage": 7,
+              "ExpelDamage": 5,
+              "IsBurrowed": false,
+              "IsCharging": false
+            }
+          },
+          {
+            "monster": "MONSTER.CUBEX_CONSTRUCT",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 65,
+              "MaxInitialHp": 65,
+              "BlastDamage": 7,
+              "ExpelDamage": 5,
+              "IsBurrowed": false,
+              "IsCharging": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.DEVOTED_SCULPTOR_WEAK",
+      "class": "DevotedSculptorWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.DEVOTED_SCULPTOR"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.DEVOTED_SCULPTOR",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 162,
+              "MaxInitialHp": 162,
+              "SavageDamage": 12
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.FABRICATOR_NORMAL",
+      "class": "FabricatorNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.FABRICATOR",
+        "MONSTER.GUARDBOT",
+        "MONSTER.NOISEBOT",
+        "MONSTER.ZAPBOT",
+        "MONSTER.STABBOT"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.FABRICATOR",
+            "slot": "fabricator",
+            "values": {
+              "MinInitialHp": 150,
+              "MaxInitialHp": 150,
+              "FabricatingStrikeDamage": 18,
+              "DisintegrateDamage": 11,
+              "ShouldFadeAfterDeath": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.FROG_KNIGHT_NORMAL",
+      "class": "FrogKnightNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.FROG_KNIGHT"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.FROG_KNIGHT",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 191,
+              "MaxInitialHp": 191,
+              "StrikeDownEvilDamage": 21,
+              "TongueLashDamage": 13,
+              "BeetleChargeDamage": 35,
+              "PlatingAmount": 15,
+              "HasBeetleCharged": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.GLOBE_HEAD_NORMAL",
+      "class": "GlobeHeadNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.GLOBE_HEAD"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.GLOBE_HEAD",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 148,
+              "MaxInitialHp": 148,
+              "ThunderStrikeDamage": 6,
+              "ShockingSlapDamage": 13,
+              "GalvanicBurstDamage": 16
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.KNIGHTS_ELITE",
+      "class": "KnightsElite",
+      "room_type": "Elite",
+      "weak": false,
+      "monsters": [
+        "MONSTER.FLAIL_KNIGHT",
+        "MONSTER.SPECTRAL_KNIGHT",
+        "MONSTER.MAGI_KNIGHT"
+      ],
+      "tags": [
+        "Knights"
+      ],
+      "min_gold": 35,
+      "max_gold": 45,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.FLAIL_KNIGHT",
+            "slot": "first",
+            "values": {
+              "MinInitialHp": 101,
+              "MaxInitialHp": 101,
+              "FlailDamage": 9,
+              "RamDamage": 15
+            }
+          },
+          {
+            "monster": "MONSTER.SPECTRAL_KNIGHT",
+            "slot": "second",
+            "values": {
+              "MinInitialHp": 93,
+              "MaxInitialHp": 93,
+              "SoulSlashDamage": 15,
+              "SoulFlameDamage": 3
+            }
+          },
+          {
+            "monster": "MONSTER.MAGI_KNIGHT",
+            "slot": "third",
+            "values": {
+              "MinInitialHp": 82,
+              "MaxInitialHp": 82,
+              "PowerShieldDamage": 6,
+              "PowerShieldBlock": 5,
+              "SpearDamage": 10,
+              "BombDamage": 35
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.MECHA_KNIGHT_ELITE",
+      "class": "MechaKnightElite",
+      "room_type": "Elite",
+      "weak": false,
+      "monsters": [
+        "MONSTER.MECHA_KNIGHT"
+      ],
+      "tags": [],
+      "min_gold": 35,
+      "max_gold": 45,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.MECHA_KNIGHT",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 300,
+              "MaxInitialHp": 300,
+              "IsWoundUp": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.OWL_MAGISTRATE_NORMAL",
+      "class": "OwlMagistrateNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.OWL_MAGISTRATE"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.OWL_MAGISTRATE",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 231,
+              "MaxInitialHp": 231,
+              "VerdictDamage": 33,
+              "ScrutinyDamage": 16,
+              "PeckAssaultDamage": 4,
+              "IsFlying": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.QUEEN_BOSS",
+      "class": "QueenBoss",
+      "room_type": "Boss",
+      "weak": false,
+      "monsters": [
+        "MONSTER.QUEEN",
+        "MONSTER.TORCH_HEAD_AMALGAM"
+      ],
+      "tags": [],
+      "min_gold": 100,
+      "max_gold": 100,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.TORCH_HEAD_AMALGAM",
+            "slot": "amalgam",
+            "values": {
+              "MinInitialHp": 199,
+              "MaxInitialHp": 199,
+              "TackleDamage": 18,
+              "WeakTackleDamage": 14,
+              "SoulBeamDamage": 8
+            }
+          },
+          {
+            "monster": "MONSTER.QUEEN",
+            "slot": "queen",
+            "values": {
+              "MinInitialHp": 400,
+              "MaxInitialHp": 400,
+              "OffWithYourHeadDamage": 3,
+              "ExecutionDamage": 15,
+              "HasAmalgamDied": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SCROLLS_OF_BITING_NORMAL",
+      "class": "ScrollsOfBitingNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.SCROLL_OF_BITING"
+      ],
+      "tags": [
+        "Scrolls"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 1
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 1
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 1
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SCROLLS_OF_BITING_WEAK",
+      "class": "ScrollsOfBitingWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.SCROLL_OF_BITING"
+      ],
+      "tags": [
+        "Scrolls"
+      ],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 1
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 0
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 1
+            }
+          }
+        ],
+        [
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 0
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 1
+            }
+          },
+          {
+            "monster": "MONSTER.SCROLL_OF_BITING",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 30,
+              "MaxInitialHp": 37,
+              "ChompDamage": 14,
+              "ChewDamage": 5,
+              "HasDeathSfx": true,
+              "StarterMoveIdx": 2
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SLIMED_BERSERKER_NORMAL",
+      "class": "SlimedBerserkerNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.SLIMED_BERSERKER"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SLIMED_BERSERKER",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 261,
+              "MaxInitialHp": 261,
+              "HasDeathSfx": true,
+              "PummelingDamage": 4,
+              "SmotherDamage": 30
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.SOUL_NEXUS_ELITE",
+      "class": "SoulNexusElite",
+      "room_type": "Elite",
+      "weak": false,
+      "monsters": [
+        "MONSTER.SOUL_NEXUS"
+      ],
+      "tags": [],
+      "min_gold": 35,
+      "max_gold": 45,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.SOUL_NEXUS",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 234,
+              "MaxInitialHp": 234,
+              "SoulBurnDamage": 29,
+              "MaelstromDamage": 6,
+              "MaelstromRepeat": 4,
+              "DrainLifeDamage": 18,
+              "ShouldFadeAfterDeath": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.TEST_SUBJECT_BOSS",
+      "class": "TestSubjectBoss",
+      "room_type": "Boss",
+      "weak": false,
+      "monsters": [
+        "MONSTER.TEST_SUBJECT"
+      ],
+      "tags": [],
+      "min_gold": 100,
+      "max_gold": 100,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.TEST_SUBJECT",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 100,
+              "MaxInitialHp": 100,
+              "FirstFormHp": 100,
+              "SecondFormHp": 200,
+              "ThirdFormHp": 300,
+              "EnrageAmount": 2,
+              "BiteDamage": 20,
+              "SkullBashDamage": 14,
+              "MultiClawDamage": 10,
+              "BaseMultiClawCount": 3,
+              "Phase3LacerateDamage": 10,
+              "BigPounceDamage": 45,
+              "BurningGrowlBurnCount": 3,
+              "BurningGrowlStrengthGain": 2,
+              "Respawns": 0,
+              "ExtraMultiClawCount": 0,
+              "MultiClawTotalCount": 3,
+              "ShouldDisappearFromDoom": false
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.THE_LOST_AND_FORGOTTEN_NORMAL",
+      "class": "TheLostAndForgottenNormal",
+      "room_type": "Monster",
+      "weak": false,
+      "monsters": [
+        "MONSTER.THE_LOST",
+        "MONSTER.THE_FORGOTTEN"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.THE_LOST",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 93,
+              "MaxInitialHp": 93,
+              "EyeLasersDamage": 4,
+              "DebilitatingSmogStrengthStealAmount": 2
+            }
+          },
+          {
+            "monster": "MONSTER.THE_FORGOTTEN",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 106,
+              "MaxInitialHp": 106,
+              "DebilitatingSmogDexStealAmount": 2
+            }
+          }
+        ]
+      ]
+    },
+    {
+      "id": "ENCOUNTER.TURRET_OPERATOR_WEAK",
+      "class": "TurretOperatorWeak",
+      "room_type": "Monster",
+      "weak": true,
+      "monsters": [
+        "MONSTER.LIVING_SHIELD",
+        "MONSTER.TURRET_OPERATOR"
+      ],
+      "tags": [],
+      "min_gold": 10,
+      "max_gold": 20,
+      "formations": [
+        [
+          {
+            "monster": "MONSTER.LIVING_SHIELD",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 55,
+              "MaxInitialHp": 55,
+              "HasDeathSfx": false,
+              "ShieldSlamDamage": 6,
+              "SmashDamage": 16,
+              "EnrageStr": 3
+            }
+          },
+          {
+            "monster": "MONSTER.TURRET_OPERATOR",
+            "slot": null,
+            "values": {
+              "MinInitialHp": 41,
+              "MaxInitialHp": 41,
+              "FireDamage": 3
+            }
+          }
+        ]
+      ]
+    }
+  ],
+  "monsters": [
+    {
+      "id": "MONSTER.AEONGLASS",
+      "class": "Aeonglass",
+      "values": {
+        "MinInitialHp": 512,
+        "MaxInitialHp": 512,
+        "EbbDamage": 26,
+        "EbbBlock": 33,
+        "EyeLasersDamage": 11,
+        "EyeLasersRepeat": 2,
+        "IncreasingIntensityBaseStrength": 3,
+        "WitherAmount": 1,
+        "AdditionalStrength": 0,
+        "WitherUpgradeCount": 0,
+        "IncreasingIntensityTotalStrength": 3
+      },
+      "initial_state": "EBB_MOVE",
+      "states": [
+        {
+          "id": "EBB_MOVE",
+          "type": "MoveState",
+          "perform": "EbbMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 26.0,
+              "repeats": 1
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "EYE_LASERS_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "EbbDamage"
+              ],
+              "amount": "EbbDamage"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "EbbBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "EbbBlock"
+            }
+          ]
+        },
+        {
+          "id": "EYE_LASERS_MOVE",
+          "type": "MoveState",
+          "perform": "EyeLasersMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 11.0,
+              "repeats": 2
+            }
+          ],
+          "next": "INCREASING_INTENSITY_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "EyeLasersDamage"
+              ],
+              "amount": "EyeLasersDamage"
+            }
+          ]
+        },
+        {
+          "id": "INCREASING_INTENSITY_MOVE",
+          "type": "MoveState",
+          "perform": "IncreasingIntensityMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "EBB_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "WitherAmount",
+                "null"
+              ],
+              "model": "Wither"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "IncreasingIntensityTotalStrength",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "IncreasingIntensityTotalStrength"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.AXEBOT",
+      "class": "Axebot",
+      "values": {
+        "BootUpBlock": 10,
+        "OneTwoDamage": 9,
+        "BootUpStrGain": 3,
+        "HammerUppercutDamage": 12,
+        "MinInitialHp": 70,
+        "MaxInitialHp": 78,
+        "StockAmount": 2,
+        "ShouldPlaySpawnAnimation": false
+      },
+      "initial_state": "HAMMER_UPPERCUT_MOVE",
+      "states": [
+        {
+          "id": "BOOT_UP_MOVE",
+          "type": "MoveState",
+          "perform": "BootUpMove",
+          "intents": [
+            {
+              "type": "DefendIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "HAMMER_UPPERCUT_MOVE",
+          "effects": [
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "BootUpBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "BootUpBlock"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "BootUpStrGain * (2 - StockAmount)",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "BootUpStrGain * (2 - StockAmount)"
+            }
+          ]
+        },
+        {
+          "id": "HAMMER_UPPERCUT_MOVE",
+          "type": "MoveState",
+          "perform": "HammerUppercutMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 12.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "ONE_TWO_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "HammerUppercutDamage"
+              ],
+              "amount": "HammerUppercutDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "WeakPower",
+              "target": "targets",
+              "amount": "2m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "ONE_TWO_MOVE",
+          "type": "MoveState",
+          "perform": "OneTwoMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 9.0,
+              "repeats": 2
+            }
+          ],
+          "next": "HAMMER_UPPERCUT_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "OneTwoDamage"
+              ],
+              "amount": "OneTwoDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.CUBEX_CONSTRUCT",
+      "class": "CubexConstruct",
+      "values": {
+        "MinInitialHp": 65,
+        "MaxInitialHp": 65,
+        "BlastDamage": 7,
+        "ExpelDamage": 5,
+        "IsBurrowed": false,
+        "IsCharging": false
+      },
+      "initial_state": "CHARGE_UP_MOVE",
+      "states": [
+        {
+          "id": "CHARGE_UP_MOVE",
+          "type": "MoveState",
+          "perform": "ChargeUpMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "REPEATER_BLAST_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "EXPEL_MOVE",
+          "type": "MoveState",
+          "perform": "ExpelBlastMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 5.0,
+              "repeats": 2
+            }
+          ],
+          "next": "REPEATER_BLAST_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ExpelDamage"
+              ],
+              "amount": "ExpelDamage"
+            }
+          ]
+        },
+        {
+          "id": "REPEATER_BLAST_MOVE",
+          "type": "MoveState",
+          "perform": "RepeaterBlastMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "REPEATER_BLAST_MOVE_2",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BlastDamage"
+              ],
+              "amount": "BlastDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "REPEATER_BLAST_MOVE_2",
+          "type": "MoveState",
+          "perform": "RepeaterBlastMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 7.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "EXPEL_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BlastDamage"
+              ],
+              "amount": "BlastDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.DEVOTED_SCULPTOR",
+      "class": "DevotedSculptor",
+      "values": {
+        "MinInitialHp": 162,
+        "MaxInitialHp": 162,
+        "SavageDamage": 12
+      },
+      "initial_state": "FORBIDDEN_INCANTATION_MOVE",
+      "states": [
+        {
+          "id": "FORBIDDEN_INCANTATION_MOVE",
+          "type": "MoveState",
+          "perform": "ForbiddenIncantationMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "SAVAGE_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "_ritualGain",
+                "null",
+                "null"
+              ],
+              "model": "RitualPower",
+              "target": "base.Creature",
+              "amount": "_ritualGain"
+            }
+          ]
+        },
+        {
+          "id": "SAVAGE_MOVE",
+          "type": "MoveState",
+          "perform": "SavageMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 12.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SAVAGE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SavageDamage"
+              ],
+              "amount": "SavageDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.FABRICATOR",
+      "class": "Fabricator",
+      "values": {
+        "MinInitialHp": 150,
+        "MaxInitialHp": 150,
+        "FabricatingStrikeDamage": 18,
+        "DisintegrateDamage": 11,
+        "ShouldFadeAfterDeath": false
+      },
+      "initial_state": "fabricateBranch",
+      "states": [
+        {
+          "id": "DISINTEGRATE_MOVE",
+          "type": "MoveState",
+          "perform": "DisintegrateMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 11.0,
+              "repeats": 1
+            }
+          ],
+          "next": "fabricateBranch",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "DisintegrateDamage"
+              ],
+              "amount": "DisintegrateDamage"
+            }
+          ]
+        },
+        {
+          "id": "FABRICATE_MOVE",
+          "type": "MoveState",
+          "perform": "FabricateMove",
+          "intents": [
+            {
+              "type": "SummonIntent"
+            }
+          ],
+          "next": "fabricateBranch",
+          "effects": []
+        },
+        {
+          "id": "fabricateBranch",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "RAND",
+              "condition": "CanFabricate"
+            },
+            {
+              "state": "DISINTEGRATE_MOVE",
+              "condition": "!CanFabricate"
+            }
+          ]
+        },
+        {
+          "id": "FABRICATING_STRIKE_MOVE",
+          "type": "MoveState",
+          "perform": "FabricatingStrikeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 18.0,
+              "repeats": 1
+            },
+            {
+              "type": "SummonIntent"
+            }
+          ],
+          "next": "fabricateBranch",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "FabricatingStrikeDamage"
+              ],
+              "amount": "FabricatingStrikeDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "FABRICATE_MOVE",
+              "repeat": "CanRepeatForever",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "FABRICATING_STRIKE_MOVE",
+              "repeat": "CanRepeatForever",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.FLAIL_KNIGHT",
+      "class": "FlailKnight",
+      "values": {
+        "MinInitialHp": 101,
+        "MaxInitialHp": 101,
+        "FlailDamage": 9,
+        "RamDamage": 15
+      },
+      "initial_state": "RAM_MOVE",
+      "states": [
+        {
+          "id": "FLAIL_MOVE",
+          "type": "MoveState",
+          "perform": "FlailMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 9.0,
+              "repeats": 2
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "FlailDamage"
+              ],
+              "amount": "FlailDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAM_MOVE",
+          "type": "MoveState",
+          "perform": "RamMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 15.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "RamDamage"
+              ],
+              "amount": "RamDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "WAR_CHANT",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "FLAIL_MOVE",
+              "repeat": "CanRepeatXTimes",
+              "max_times": 2,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "RAM_MOVE",
+              "repeat": "CanRepeatXTimes",
+              "max_times": 2,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "WAR_CHANT",
+          "type": "MoveState",
+          "perform": "WarChantMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "3m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "3m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.FROG_KNIGHT",
+      "class": "FrogKnight",
+      "values": {
+        "MinInitialHp": 191,
+        "MaxInitialHp": 191,
+        "StrikeDownEvilDamage": 21,
+        "TongueLashDamage": 13,
+        "BeetleChargeDamage": 35,
+        "PlatingAmount": 15,
+        "HasBeetleCharged": false
+      },
+      "initial_state": "TONGUE_LASH",
+      "states": [
+        {
+          "id": "BEETLE_CHARGE",
+          "type": "MoveState",
+          "perform": "BeetleChargeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 35.0,
+              "repeats": 1
+            }
+          ],
+          "next": "TONGUE_LASH",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BeetleChargeDamage"
+              ],
+              "amount": "BeetleChargeDamage"
+            }
+          ]
+        },
+        {
+          "id": "FOR_THE_QUEEN",
+          "type": "MoveState",
+          "perform": "ForTheQueenMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "HALF_HEALTH",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "5m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "5m"
+            }
+          ]
+        },
+        {
+          "id": "HALF_HEALTH",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "TONGUE_LASH",
+              "condition": "HasBeetleCharged || base.Creature.CurrentHp >= base.Creature.MaxHp / 2"
+            },
+            {
+              "state": "BEETLE_CHARGE",
+              "condition": "!HasBeetleCharged && base.Creature.CurrentHp < base.Creature.MaxHp / 2"
+            }
+          ]
+        },
+        {
+          "id": "STRIKE_DOWN_EVIL",
+          "type": "MoveState",
+          "perform": "StrikeDownEvilMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 21.0,
+              "repeats": 1
+            }
+          ],
+          "next": "FOR_THE_QUEEN",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "StrikeDownEvilDamage"
+              ],
+              "amount": "StrikeDownEvilDamage"
+            }
+          ]
+        },
+        {
+          "id": "TONGUE_LASH",
+          "type": "MoveState",
+          "perform": "TongueLashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 13.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "STRIKE_DOWN_EVIL",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "TongueLashDamage"
+              ],
+              "amount": "TongueLashDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.GLOBE_HEAD",
+      "class": "GlobeHead",
+      "values": {
+        "MinInitialHp": 148,
+        "MaxInitialHp": 148,
+        "ThunderStrikeDamage": 6,
+        "ShockingSlapDamage": 13,
+        "GalvanicBurstDamage": 16
+      },
+      "initial_state": "SHOCKING_SLAP",
+      "states": [
+        {
+          "id": "GALVANIC_BURST",
+          "type": "MoveState",
+          "perform": "GalvanicBurstMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 16.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "SHOCKING_SLAP",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "GalvanicBurstDamage"
+              ],
+              "amount": "GalvanicBurstDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "SHOCKING_SLAP",
+          "type": "MoveState",
+          "perform": "ShockingSlap",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 13.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "THUNDER_STRIKE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ShockingSlapDamage"
+              ],
+              "amount": "ShockingSlapDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "THUNDER_STRIKE",
+          "type": "MoveState",
+          "perform": "ThunderStrike",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 6.0,
+              "repeats": 3
+            }
+          ],
+          "next": "GALVANIC_BURST",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ThunderStrikeDamage"
+              ],
+              "amount": "ThunderStrikeDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.GUARDBOT",
+      "class": "Guardbot",
+      "values": {
+        "MinInitialHp": 16,
+        "MaxInitialHp": 20
+      },
+      "initial_state": "GUARD_MOVE",
+      "states": [
+        {
+          "id": "GUARD_MOVE",
+          "type": "MoveState",
+          "perform": "GuardMove",
+          "intents": [
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "GUARD_MOVE",
+          "effects": [
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "item",
+                "15m",
+                "ValueProp.Unpowered",
+                "null"
+              ],
+              "target": "item",
+              "amount": "15m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.LIVING_SHIELD",
+      "class": "LivingShield",
+      "values": {
+        "MinInitialHp": 55,
+        "MaxInitialHp": 55,
+        "HasDeathSfx": false,
+        "ShieldSlamDamage": 6,
+        "SmashDamage": 16,
+        "EnrageStr": 3
+      },
+      "initial_state": "SHIELD_SLAM_MOVE",
+      "states": [
+        {
+          "id": "SHIELD_SLAM_BRANCH",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "SHIELD_SLAM_MOVE",
+              "condition": "GetAllyCount() > 0"
+            },
+            {
+              "state": "SMASH_MOVE",
+              "condition": "GetAllyCount() == 0"
+            }
+          ]
+        },
+        {
+          "id": "SHIELD_SLAM_MOVE",
+          "type": "MoveState",
+          "perform": "ShieldSlamMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 6.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SHIELD_SLAM_BRANCH",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ShieldSlamDamage"
+              ],
+              "amount": "ShieldSlamDamage"
+            }
+          ]
+        },
+        {
+          "id": "SMASH_MOVE",
+          "type": "MoveState",
+          "perform": "SmashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 16.0,
+              "repeats": 1
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "SMASH_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SmashDamage"
+              ],
+              "amount": "SmashDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "EnrageStr",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "EnrageStr"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.MAGI_KNIGHT",
+      "class": "MagiKnight",
+      "values": {
+        "MinInitialHp": 82,
+        "MaxInitialHp": 82,
+        "PowerShieldDamage": 6,
+        "PowerShieldBlock": 5,
+        "SpearDamage": 10,
+        "BombDamage": 35
+      },
+      "initial_state": "POWER_SHIELD_MOVE",
+      "states": [
+        {
+          "id": "DAMPEN_MOVE",
+          "type": "MoveState",
+          "perform": "DampenMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "RAM_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "dampenPower",
+                "target",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "target": "dampenPower",
+              "amount": "target"
+            }
+          ]
+        },
+        {
+          "id": "MAGIC_BOMB",
+          "type": "MoveState",
+          "perform": "MagicBombMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 35.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAM_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BombDamage"
+              ],
+              "amount": "BombDamage"
+            }
+          ]
+        },
+        {
+          "id": "POWER_SHIELD_MOVE",
+          "type": "MoveState",
+          "perform": "PowerShieldMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 6.0,
+              "repeats": 1
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "DAMPEN_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "PowerShieldDamage"
+              ],
+              "amount": "PowerShieldDamage"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "PowerShieldBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "PowerShieldBlock"
+            }
+          ]
+        },
+        {
+          "id": "PREP_MOVE",
+          "type": "MoveState",
+          "perform": "PrepMove",
+          "intents": [
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "MAGIC_BOMB",
+          "effects": [
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "PowerShieldBlock",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "PowerShieldBlock"
+            }
+          ]
+        },
+        {
+          "id": "RAM_MOVE",
+          "type": "MoveState",
+          "perform": "SpearMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 10.0,
+              "repeats": 1
+            }
+          ],
+          "next": "PREP_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SpearDamage"
+              ],
+              "amount": "SpearDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.MECHA_KNIGHT",
+      "class": "MechaKnight",
+      "values": {
+        "MinInitialHp": 300,
+        "MaxInitialHp": 300,
+        "IsWoundUp": false
+      },
+      "initial_state": "CHARGE_MOVE",
+      "states": [
+        {
+          "id": "CHARGE_MOVE",
+          "type": "MoveState",
+          "perform": "ChargeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 25.0,
+              "repeats": 1
+            }
+          ],
+          "next": "FLAMETHROWER_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ChargeDamage"
+              ],
+              "amount": "ChargeDamage"
+            }
+          ]
+        },
+        {
+          "id": "FLAMETHROWER_MOVE",
+          "type": "MoveState",
+          "perform": "FlamethrowerMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "WINDUP_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Hand",
+                "4",
+                "null"
+              ],
+              "model": "Burn"
+            }
+          ]
+        },
+        {
+          "id": "HEAVY_CLEAVE_MOVE",
+          "type": "MoveState",
+          "perform": "HeavyCleaveMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 35.0,
+              "repeats": 1
+            }
+          ],
+          "next": "FLAMETHROWER_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "HeavyCleaveDamage"
+              ],
+              "amount": "HeavyCleaveDamage"
+            }
+          ]
+        },
+        {
+          "id": "WINDUP_MOVE",
+          "type": "MoveState",
+          "perform": "WindupMove",
+          "intents": [
+            {
+              "type": "DefendIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "HEAVY_CLEAVE_MOVE",
+          "effects": [
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "15m",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "15m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "5m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "5m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.NOISEBOT",
+      "class": "Noisebot",
+      "values": {
+        "MinInitialHp": 18,
+        "MaxInitialHp": 23
+      },
+      "initial_state": "NOISE_MOVE",
+      "states": [
+        {
+          "id": "NOISE_MOVE",
+          "type": "MoveState",
+          "perform": "NoiseMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "NOISE_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddGeneratedCardToCombat",
+              "arguments": [
+                "card",
+                "PileType.Discard",
+                "null"
+              ]
+            },
+            {
+              "command": "CardPileCmd.AddGeneratedCardToCombat",
+              "arguments": [
+                "card2",
+                "PileType.Draw",
+                "null",
+                "CardPilePosition.Random"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.OWL_MAGISTRATE",
+      "class": "OwlMagistrate",
+      "values": {
+        "MinInitialHp": 231,
+        "MaxInitialHp": 231,
+        "VerdictDamage": 33,
+        "ScrutinyDamage": 16,
+        "PeckAssaultDamage": 4,
+        "IsFlying": false
+      },
+      "initial_state": "MAGISTRATE_SCRUTINY",
+      "states": [
+        {
+          "id": "JUDICIAL_FLIGHT",
+          "type": "MoveState",
+          "perform": "JudicialFlightMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "VERDICT",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "SoarPower",
+              "target": "base.Creature",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "MAGISTRATE_SCRUTINY",
+          "type": "MoveState",
+          "perform": "MagistrateScrutinyMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 16.0,
+              "repeats": 1
+            }
+          ],
+          "next": "PECK_ASSAULT",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ScrutinyDamage"
+              ],
+              "amount": "ScrutinyDamage"
+            }
+          ]
+        },
+        {
+          "id": "PECK_ASSAULT",
+          "type": "MoveState",
+          "perform": "PeckAssaultMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 4.0,
+              "repeats": 6
+            }
+          ],
+          "next": "JUDICIAL_FLIGHT",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "PeckAssaultDamage"
+              ],
+              "amount": "PeckAssaultDamage"
+            }
+          ]
+        },
+        {
+          "id": "VERDICT",
+          "type": "MoveState",
+          "perform": "VerdictMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 33.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "MAGISTRATE_SCRUTINY",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "VerdictDamage"
+              ],
+              "amount": "VerdictDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "4m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "VulnerablePower",
+              "target": "targets",
+              "amount": "4m"
+            },
+            {
+              "command": "PowerCmd.Remove",
+              "arguments": [
+                "base.Creature"
+              ],
+              "model": "SoarPower"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.PUNCH_CONSTRUCT",
+      "class": "PunchConstruct",
+      "values": {
+        "MinInitialHp": 55,
+        "MaxInitialHp": 55,
+        "StrongPunchDamage": 14,
+        "FastPunchDamage": 5,
+        "FastPunchRepeat": 2,
+        "StartsWithFastPunch": false,
+        "StartingHpReduction": 0
+      },
+      "initial_state": "READY_MOVE",
+      "states": [
+        {
+          "id": "FAST_PUNCH_MOVE",
+          "type": "MoveState",
+          "perform": "FastPunchMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 5.0,
+              "repeats": 2
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "STRONG_PUNCH_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "FastPunchDamage"
+              ],
+              "amount": "FastPunchDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "READY_MOVE",
+          "type": "MoveState",
+          "perform": "ReadyMove",
+          "intents": [
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "FAST_PUNCH_MOVE",
+          "effects": [
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "10m",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "10m"
+            }
+          ]
+        },
+        {
+          "id": "STRONG_PUNCH_MOVE",
+          "type": "MoveState",
+          "perform": "StrongPunchMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "READY_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "StrongPunchDamage"
+              ],
+              "amount": "StrongPunchDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.QUEEN",
+      "class": "Queen",
+      "values": {
+        "MinInitialHp": 400,
+        "MaxInitialHp": 400,
+        "OffWithYourHeadDamage": 3,
+        "ExecutionDamage": 15,
+        "HasAmalgamDied": false
+      },
+      "initial_state": "PUPPET_STRINGS_MOVE",
+      "states": [
+        {
+          "id": "BURN_BRIGHT_FOR_ME_BRANCH",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "BURN_BRIGHT_FOR_ME_MOVE",
+              "condition": "runtime"
+            },
+            {
+              "state": "OFF_WITH_YOUR_HEAD_MOVE",
+              "condition": "HasAmalgamDied"
+            }
+          ]
+        },
+        {
+          "id": "BURN_BRIGHT_FOR_ME_MOVE",
+          "type": "MoveState",
+          "perform": "BurnBrightForMeMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            },
+            {
+              "type": "DefendIntent"
+            }
+          ],
+          "next": "BURN_BRIGHT_FOR_ME_BRANCH",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "item",
+                "strengthAmount",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "item",
+              "amount": "strengthAmount"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "20m",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "20m"
+            }
+          ]
+        },
+        {
+          "id": "ENRAGE_MOVE",
+          "type": "MoveState",
+          "perform": "EnrageMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "OFF_WITH_YOUR_HEAD_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "EXECUTION_MOVE",
+          "type": "MoveState",
+          "perform": "ExecutionMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 15.0,
+              "repeats": 1
+            }
+          ],
+          "next": "ENRAGE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ExecutionDamage"
+              ],
+              "amount": "ExecutionDamage"
+            }
+          ]
+        },
+        {
+          "id": "OFF_WITH_YOUR_HEAD_MOVE",
+          "type": "MoveState",
+          "perform": "OffWithYourHeadMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 3.0,
+              "repeats": 5
+            }
+          ],
+          "next": "EXECUTION_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "OffWithYourHeadDamage"
+              ],
+              "amount": "OffWithYourHeadDamage"
+            }
+          ]
+        },
+        {
+          "id": "PUPPET_STRINGS_MOVE",
+          "type": "MoveState",
+          "perform": "PuppetStringsMove",
+          "intents": [
+            {
+              "type": "CardDebuffIntent"
+            }
+          ],
+          "next": "YOU_ARE_MINE_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "3m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "ChainsOfBindingPower",
+              "target": "targets",
+              "amount": "3m"
+            }
+          ]
+        },
+        {
+          "id": "YOU_ARE_MINE_MOVE",
+          "type": "MoveState",
+          "perform": "YoureMineMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "YOURE_MINE_NOW_BRANCH",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "99m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "99m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "99m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "WeakPower",
+              "target": "targets",
+              "amount": "99m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "99m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "VulnerablePower",
+              "target": "targets",
+              "amount": "99m"
+            }
+          ]
+        },
+        {
+          "id": "YOURE_MINE_NOW_BRANCH",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "BURN_BRIGHT_FOR_ME_MOVE",
+              "condition": "runtime"
+            },
+            {
+              "state": "OFF_WITH_YOUR_HEAD_MOVE",
+              "condition": "HasAmalgamDied"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SCROLL_OF_BITING",
+      "class": "ScrollOfBiting",
+      "values": {
+        "MinInitialHp": 30,
+        "MaxInitialHp": 37,
+        "ChompDamage": 14,
+        "ChewDamage": 5,
+        "HasDeathSfx": true,
+        "StarterMoveIdx": 0
+      },
+      "initial_state": "CHOMP",
+      "states": [
+        {
+          "id": "CHEW",
+          "type": "MoveState",
+          "perform": "ChewState",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 5.0,
+              "repeats": 2
+            }
+          ],
+          "next": "rand",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ChewDamage"
+              ],
+              "amount": "ChewDamage"
+            }
+          ]
+        },
+        {
+          "id": "CHOMP",
+          "type": "MoveState",
+          "perform": "ChompMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "MORE_TEETH",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ChompDamage"
+              ],
+              "amount": "ChompDamage"
+            }
+          ]
+        },
+        {
+          "id": "MORE_TEETH",
+          "type": "MoveState",
+          "perform": "MoreTeethMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "CHEW",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "rand",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "CHOMP",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "CHEW",
+              "repeat": "CanRepeatXTimes",
+              "max_times": 2,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SLIMED_BERSERKER",
+      "class": "SlimedBerserker",
+      "values": {
+        "MinInitialHp": 261,
+        "MaxInitialHp": 261,
+        "HasDeathSfx": true,
+        "PummelingDamage": 4,
+        "SmotherDamage": 30
+      },
+      "initial_state": "VOMIT_ICHOR_MOVE",
+      "states": [
+        {
+          "id": "FURIOUS_PUMMELING_MOVE",
+          "type": "MoveState",
+          "perform": "FuriousPummelingMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 4.0,
+              "repeats": 4
+            }
+          ],
+          "next": "LEECHING_HUG_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "PummelingDamage"
+              ],
+              "amount": "PummelingDamage"
+            }
+          ]
+        },
+        {
+          "id": "LEECHING_HUG_MOVE",
+          "type": "MoveState",
+          "perform": "LeechingHugMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "SMOTHER_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "3m",
+                "null",
+                "null"
+              ],
+              "model": "WeakPower",
+              "target": "targets",
+              "amount": "3m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "3m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "3m"
+            }
+          ]
+        },
+        {
+          "id": "SMOTHER_MOVE",
+          "type": "MoveState",
+          "perform": "SmotherMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 30.0,
+              "repeats": 1
+            }
+          ],
+          "next": "VOMIT_ICHOR_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SmotherDamage"
+              ],
+              "amount": "SmotherDamage"
+            }
+          ]
+        },
+        {
+          "id": "VOMIT_ICHOR_MOVE",
+          "type": "MoveState",
+          "perform": "VomitIchorMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            }
+          ],
+          "next": "FURIOUS_PUMMELING_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "10",
+                "null"
+              ],
+              "model": "Slimed"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SOUL_NEXUS",
+      "class": "SoulNexus",
+      "values": {
+        "MinInitialHp": 234,
+        "MaxInitialHp": 234,
+        "SoulBurnDamage": 29,
+        "MaelstromDamage": 6,
+        "MaelstromRepeat": 4,
+        "DrainLifeDamage": 18,
+        "ShouldFadeAfterDeath": false
+      },
+      "initial_state": "SOUL_BURN_MOVE",
+      "states": [
+        {
+          "id": "DRAIN_LIFE_MOVE",
+          "type": "MoveState",
+          "perform": "DrainLifeMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 18.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "DrainLifeDamage"
+              ],
+              "amount": "DrainLifeDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "VulnerablePower",
+              "target": "targets",
+              "amount": "2m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "WeakPower",
+              "target": "targets",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "MAELSTROM_MOVE",
+          "type": "MoveState",
+          "perform": "MaelstromMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 6.0,
+              "repeats": 4
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "MaelstromDamage"
+              ],
+              "amount": "MaelstromDamage"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "SOUL_BURN_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "MAELSTROM_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "DRAIN_LIFE_MOVE",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "SOUL_BURN_MOVE",
+          "type": "MoveState",
+          "perform": "SoulBurnMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 29.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SoulBurnDamage"
+              ],
+              "amount": "SoulBurnDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.SPECTRAL_KNIGHT",
+      "class": "SpectralKnight",
+      "values": {
+        "MinInitialHp": 93,
+        "MaxInitialHp": 93,
+        "SoulSlashDamage": 15,
+        "SoulFlameDamage": 3
+      },
+      "initial_state": "HEX",
+      "states": [
+        {
+          "id": "HEX",
+          "type": "MoveState",
+          "perform": "HexMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "SOUL_SLASH",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "target",
+                "2m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "HexPower",
+              "target": "target",
+              "amount": "2m"
+            }
+          ]
+        },
+        {
+          "id": "RAND",
+          "type": "RandomBranchState",
+          "branches": [
+            {
+              "state": "SOUL_SLASH",
+              "repeat": "CanRepeatXTimes",
+              "max_times": 2,
+              "cooldown": 0,
+              "weight": 1.0
+            },
+            {
+              "state": "SOUL_FLAME",
+              "repeat": "CannotRepeat",
+              "max_times": 0,
+              "cooldown": 0,
+              "weight": 1.0
+            }
+          ]
+        },
+        {
+          "id": "SOUL_FLAME",
+          "type": "MoveState",
+          "perform": "SoulFlameMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 3.0,
+              "repeats": 3
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SoulFlameDamage"
+              ],
+              "amount": "SoulFlameDamage"
+            }
+          ]
+        },
+        {
+          "id": "SOUL_SLASH",
+          "type": "MoveState",
+          "perform": "SoulSlashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 15.0,
+              "repeats": 1
+            }
+          ],
+          "next": "RAND",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SoulSlashDamage"
+              ],
+              "amount": "SoulSlashDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.STABBOT",
+      "class": "Stabbot",
+      "values": {
+        "MinInitialHp": 18,
+        "MaxInitialHp": 23,
+        "StabDamage": 11
+      },
+      "initial_state": "STAB_MOVE",
+      "states": [
+        {
+          "id": "STAB_MOVE",
+          "type": "MoveState",
+          "perform": "StabMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 11.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "STAB_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "StabDamage"
+              ],
+              "amount": "StabDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "FrailPower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.TEST_SUBJECT",
+      "class": "TestSubject",
+      "values": {
+        "MinInitialHp": 100,
+        "MaxInitialHp": 100,
+        "FirstFormHp": 100,
+        "SecondFormHp": 200,
+        "ThirdFormHp": 300,
+        "EnrageAmount": 2,
+        "BiteDamage": 20,
+        "SkullBashDamage": 14,
+        "MultiClawDamage": 10,
+        "BaseMultiClawCount": 3,
+        "Phase3LacerateDamage": 10,
+        "BigPounceDamage": 45,
+        "BurningGrowlBurnCount": 3,
+        "BurningGrowlStrengthGain": 2,
+        "Respawns": 0,
+        "ExtraMultiClawCount": 0,
+        "MultiClawTotalCount": 3,
+        "ShouldDisappearFromDoom": false
+      },
+      "initial_state": "BITE_MOVE",
+      "states": [
+        {
+          "id": "BIG_POUNCE",
+          "type": "MoveState",
+          "perform": "BigPounceMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 45.0,
+              "repeats": 1
+            }
+          ],
+          "next": "BURNING_GROWL_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BigPounceDamage"
+              ],
+              "amount": "BigPounceDamage"
+            }
+          ]
+        },
+        {
+          "id": "BITE_MOVE",
+          "type": "MoveState",
+          "perform": "BiteMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 20.0,
+              "repeats": 1
+            }
+          ],
+          "next": "SKULL_BASH_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "BiteDamage"
+              ],
+              "amount": "BiteDamage"
+            }
+          ]
+        },
+        {
+          "id": "BURNING_GROWL_MOVE",
+          "type": "MoveState",
+          "perform": "BurningGrowlMove",
+          "intents": [
+            {
+              "type": "StatusIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "PHASE3_LACERATE_MOVE",
+          "effects": [
+            {
+              "command": "CardPileCmd.AddToCombatAndPreview",
+              "arguments": [
+                "targets",
+                "PileType.Discard",
+                "BurningGrowlBurnCount",
+                "null"
+              ],
+              "model": "Burn"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "BurningGrowlStrengthGain",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "BurningGrowlStrengthGain"
+            }
+          ]
+        },
+        {
+          "id": "MULTI_CLAW_MOVE",
+          "type": "MoveState",
+          "perform": "MultiClawMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 10.0,
+              "repeats": 3
+            }
+          ],
+          "next": "MULTI_CLAW_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "MultiClawDamage"
+              ],
+              "amount": "MultiClawDamage"
+            }
+          ]
+        },
+        {
+          "id": "PHASE3_LACERATE_MOVE",
+          "type": "MoveState",
+          "perform": "Phase3LacerateMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 10.0,
+              "repeats": 3
+            }
+          ],
+          "next": "BIG_POUNCE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "Phase3LacerateDamage"
+              ],
+              "amount": "Phase3LacerateDamage"
+            }
+          ]
+        },
+        {
+          "id": "RESPAWN_MOVE",
+          "type": "MoveState",
+          "perform": "RespawnMove",
+          "intents": [
+            {
+              "type": "HealIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "REVIVE_BRANCH",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "PainfulStabsPower",
+              "target": "base.Creature",
+              "amount": "1m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "NemesisPower",
+              "target": "base.Creature",
+              "amount": "1m"
+            },
+            {
+              "command": "PowerCmd.Remove",
+              "arguments": [
+                "base.Creature"
+              ],
+              "model": "AdaptablePower"
+            },
+            {
+              "command": "PowerCmd.Remove",
+              "arguments": [
+                "base.Creature"
+              ],
+              "model": "PainfulStabsPower"
+            }
+          ]
+        },
+        {
+          "id": "REVIVE_BRANCH",
+          "type": "ConditionalBranchState",
+          "branches": [
+            {
+              "state": "MULTI_CLAW_MOVE",
+              "condition": "Respawns < 2"
+            },
+            {
+              "state": "PHASE3_LACERATE_MOVE",
+              "condition": "Respawns >= 2"
+            }
+          ]
+        },
+        {
+          "id": "SKULL_BASH_MOVE",
+          "type": "MoveState",
+          "perform": "SkullBashMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            },
+            {
+              "type": "DebuffIntent"
+            }
+          ],
+          "next": "BITE_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SkullBashDamage"
+              ],
+              "amount": "SkullBashDamage"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "VulnerablePower",
+              "target": "targets",
+              "amount": "1m"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.THE_FORGOTTEN",
+      "class": "TheForgotten",
+      "values": {
+        "MinInitialHp": 106,
+        "MaxInitialHp": 106,
+        "DebilitatingSmogDexStealAmount": 2
+      },
+      "initial_state": "MIASMA",
+      "states": [
+        {
+          "id": "DREAD",
+          "type": "MoveState",
+          "perform": "DreadMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "repeats": 1
+            }
+          ],
+          "next": "MIASMA",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "DreadDamage"
+              ],
+              "amount": "DreadDamage"
+            }
+          ]
+        },
+        {
+          "id": "MIASMA",
+          "type": "MoveState",
+          "perform": "MiasmaMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            },
+            {
+              "type": "DefendIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "DREAD",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "-DebilitatingSmogDexStealAmount",
+                "base.Creature",
+                "null"
+              ],
+              "model": "DexterityPower",
+              "target": "targets",
+              "amount": "-DebilitatingSmogDexStealAmount"
+            },
+            {
+              "command": "CreatureCmd.GainBlock",
+              "arguments": [
+                "base.Creature",
+                "8m",
+                "ValueProp.Move",
+                "null"
+              ],
+              "target": "base.Creature",
+              "amount": "8m"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "DebilitatingSmogDexStealAmount",
+                "base.Creature",
+                "null"
+              ],
+              "model": "DexterityPower",
+              "target": "base.Creature",
+              "amount": "DebilitatingSmogDexStealAmount"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.THE_LOST",
+      "class": "TheLost",
+      "values": {
+        "MinInitialHp": 93,
+        "MaxInitialHp": 93,
+        "EyeLasersDamage": 4,
+        "DebilitatingSmogStrengthStealAmount": 2
+      },
+      "initial_state": "DEBILITATING_SMOG",
+      "states": [
+        {
+          "id": "DEBILITATING_SMOG",
+          "type": "MoveState",
+          "perform": "DebilitatingSmogMove",
+          "intents": [
+            {
+              "type": "DebuffIntent"
+            },
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "EYE_LASERS",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "targets",
+                "-DebilitatingSmogStrengthStealAmount",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "targets",
+              "amount": "-DebilitatingSmogStrengthStealAmount"
+            },
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "DebilitatingSmogStrengthStealAmount",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "DebilitatingSmogStrengthStealAmount"
+            }
+          ]
+        },
+        {
+          "id": "EYE_LASERS",
+          "type": "MoveState",
+          "perform": "EyeLasersMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 4.0,
+              "repeats": 2
+            }
+          ],
+          "next": "DEBILITATING_SMOG",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "EyeLasersDamage"
+              ],
+              "amount": "EyeLasersDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.TORCH_HEAD_AMALGAM",
+      "class": "TorchHeadAmalgam",
+      "values": {
+        "MinInitialHp": 199,
+        "MaxInitialHp": 199,
+        "TackleDamage": 18,
+        "WeakTackleDamage": 14,
+        "SoulBeamDamage": 8
+      },
+      "initial_state": "TACKLE_MOVE",
+      "states": [
+        {
+          "id": "BEAM_MOVE",
+          "type": "MoveState",
+          "perform": "SoulBeamMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 8.0,
+              "repeats": 3
+            }
+          ],
+          "next": "TACKLE_3_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "SoulBeamDamage"
+              ],
+              "amount": "SoulBeamDamage"
+            }
+          ]
+        },
+        {
+          "id": "TACKLE_2_MOVE",
+          "type": "MoveState",
+          "perform": "TackleMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 18.0,
+              "repeats": 1
+            }
+          ],
+          "next": "BEAM_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "TackleDamage"
+              ],
+              "amount": "TackleDamage"
+            }
+          ]
+        },
+        {
+          "id": "TACKLE_3_MOVE",
+          "type": "MoveState",
+          "perform": "WeakTackleMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "TACKLE_4_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "WeakTackleDamage"
+              ],
+              "amount": "WeakTackleDamage"
+            }
+          ]
+        },
+        {
+          "id": "TACKLE_4_MOVE",
+          "type": "MoveState",
+          "perform": "WeakTackleMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "BEAM_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "WeakTackleDamage"
+              ],
+              "amount": "WeakTackleDamage"
+            }
+          ]
+        },
+        {
+          "id": "TACKLE_MOVE",
+          "type": "MoveState",
+          "perform": "TackleMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 18.0,
+              "repeats": 1
+            }
+          ],
+          "next": "TACKLE_2_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "TackleDamage"
+              ],
+              "amount": "TackleDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.TURRET_OPERATOR",
+      "class": "TurretOperator",
+      "values": {
+        "MinInitialHp": 41,
+        "MaxInitialHp": 41,
+        "FireDamage": 3
+      },
+      "initial_state": "UNLOAD_MOVE",
+      "states": [
+        {
+          "id": "RELOAD_MOVE",
+          "type": "MoveState",
+          "perform": "ReloadMove",
+          "intents": [
+            {
+              "type": "BuffIntent"
+            }
+          ],
+          "next": "UNLOAD_MOVE",
+          "effects": [
+            {
+              "command": "PowerCmd.Apply",
+              "arguments": [
+                "new ThrowingPlayerChoiceContext()",
+                "base.Creature",
+                "1m",
+                "base.Creature",
+                "null"
+              ],
+              "model": "StrengthPower",
+              "target": "base.Creature",
+              "amount": "1m"
+            }
+          ]
+        },
+        {
+          "id": "UNLOAD_MOVE",
+          "type": "MoveState",
+          "perform": "UnloadMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 3.0,
+              "repeats": 5
+            }
+          ],
+          "next": "UNLOAD_MOVE_2",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "FireDamage"
+              ],
+              "amount": "FireDamage"
+            }
+          ]
+        },
+        {
+          "id": "UNLOAD_MOVE_2",
+          "type": "MoveState",
+          "perform": "UnloadMove",
+          "intents": [
+            {
+              "type": "MultiAttackIntent",
+              "damage": 3.0,
+              "repeats": 5
+            }
+          ],
+          "next": "RELOAD_MOVE",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "FireDamage"
+              ],
+              "amount": "FireDamage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "MONSTER.ZAPBOT",
+      "class": "Zapbot",
+      "values": {
+        "MinInitialHp": 18,
+        "MaxInitialHp": 23,
+        "ZapDamage": 14
+      },
+      "initial_state": "ZAP",
+      "states": [
+        {
+          "id": "ZAP",
+          "type": "MoveState",
+          "perform": "ZapMove",
+          "intents": [
+            {
+              "type": "SingleAttackIntent",
+              "damage": 14.0,
+              "repeats": 1
+            }
+          ],
+          "next": "ZAP",
+          "effects": [
+            {
+              "command": "DamageCmd.Attack",
+              "arguments": [
+                "ZapDamage"
+              ],
+              "amount": "ZapDamage"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

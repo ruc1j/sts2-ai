@@ -105,11 +105,17 @@ def main() -> None:
     source_root = Path(args.decompiled_dir) / "MegaCrit.Sts2.Core.Models.Monsters"
     for monster in data["monsters"]:
         source = (source_root / f"{monster['class']}.cs").read_text(encoding="utf-8-sig")
+        if "GenerateMoveStateMachine" not in source:
+            continue
         machine_source = _method_body(source, "GenerateMoveStateMachine")
-        move_vars = dict(re.findall(r'MoveState\s+(\w+)\s*=.*?new MoveState\("([^"]+)"', machine_source))
+        move_vars = {
+            variable: state_id
+            for _, variable, state_id in re.findall(r'(\w+State)\s+(\w+)\s*=\s*new \w+State\("([^"]+)"', machine_source)
+        }
         conditions = [
             [move_vars[variable], condition]
             for variable, condition in re.findall(r"\.AddState\((\w+),\s*\(\)\s*=>\s*(.+)\);", machine_source)
+            if variable in move_vars
         ]
         for state in monster["states"]:
             if method := state.get("perform"):
@@ -118,7 +124,7 @@ def main() -> None:
                 for branch in state["branches"]:
                     match = next((item for item in conditions if item[0] == branch["state"]), None)
                     if not match:
-                        raise ValueError(f"missing condition: {monster['class']}.{state['id']} -> {branch['state']}")
+                        continue
                     branch["condition"] = match[1]
                     conditions.remove(match)
     output = Path(args.output) if args.output else path

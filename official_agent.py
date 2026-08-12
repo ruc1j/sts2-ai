@@ -16,6 +16,8 @@ CARD_NAMES = {
     "CARD.BLUDGEON": "Bludgeon",
     "CARD.SHRUG_IT_OFF": "Shrug It Off",
     "CARD.BATTLE_TRANCE": "Battle Trance",
+    "CARD.SLIMED": "Slimed",
+    "CARD.FRANTIC_ESCAPE": "Frantic Escape",
 }
 POWER_NAMES = {
     "POWER.FRAIL": "FrailPower",
@@ -23,6 +25,9 @@ POWER_NAMES = {
     "POWER.STRENGTH": "StrengthPower",
     "POWER.VULNERABLE": "VulnerablePower",
     "POWER.WEAK": "WeakPower",
+    "POWER.BACK_ATTACK_LEFT_POWER": "BackAttackLeftPower",
+    "POWER.BACK_ATTACK_RIGHT_POWER": "BackAttackRightPower",
+    "POWER.SURROUNDED_POWER": "SurroundedPower",
 }
 
 
@@ -35,6 +40,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return choose_rest(observation)
     actions = observation["legal_actions"]
     cards = [action for action in actions if action["type"] == "card"]
+    potions = [action for action in actions if action["type"] == "potion"]
+    sandpit = any(power["id"] == "POWER.SANDPIT_POWER" and power["amount"] > 0 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
+    escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
+    if sandpit and escape:
+        return escape
+    if turn := choose_crab_facing(observation, cards):
+        return turn
+    if potion := choose_potion(observation, potions):
+        return potion
     # ponytail: rollouts cover starter cards and core combat powers; extend these mappings when reward-card search begins.
     if enemy_data and simulations and all(card["card_id"] in CARD_NAMES for card in cards):
         try:
@@ -50,10 +64,50 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     defenses = [action for action in cards if action["card_id"] == "CARD.DEFEND_IRONCLAD"]
     if observation.get("player", {}).get("block", 0) < incoming and defenses:
         return defenses[0]
+    hand = {card["index"]: card for card in observation.get("hand", ())}
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
-        return max(cards, key=lambda action: priority.get(action["card_id"], 1))
+        return max(cards, key=lambda action: priority.get(action["card_id"], 3 if hand.get(action.get("hand_index"), {}).get("type") == "Attack" else 1))
     return next(action for action in actions if action["type"] == "end_turn")
+
+
+def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
+    facing = next((power.get("facing") for power in observation.get("player", {}).get("powers", ()) if power["id"] == "POWER.SURROUNDED_POWER"), None)
+    if facing not in {"Left", "Right"}:
+        return None
+    threats = []
+    for enemy in observation.get("enemies", ()):
+        direction = "Left" if any(power["id"] == "POWER.BACK_ATTACK_LEFT_POWER" for power in enemy.get("powers", ())) else "Right" if any(power["id"] == "POWER.BACK_ATTACK_RIGHT_POWER" for power in enemy.get("powers", ())) else None
+        incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for intent in enemy.get("intents") or ())
+        if direction and incoming:
+            threats.append((incoming, direction, enemy["combat_id"]))
+    if not threats:
+        return None
+    _, direction, target_id = max(threats)
+    if direction == facing:
+        return None
+    hand = {card["index"]: card for card in observation.get("hand", ())}
+    return next((action for action in cards if action.get("target_id") == target_id and hand.get(action.get("hand_index"), {}).get("type") == "Attack"), None)
+
+
+def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
+    if not actions:
+        return None
+    enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
+    fire = next((action for action in actions if action["potion_id"] == "POTION.FIRE_POTION" and action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= 20), None)
+    if fire:
+        return fire
+    player = observation.get("player", {})
+    hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
+    incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
+    healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL", "POTION.FAIRY_IN_A_BOTTLE"}
+    blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
+    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR"}
+    if hp <= max_hp // 2:
+        return next((action for action in actions if action["potion_id"] in healing | defensive_buffs), None)
+    if incoming >= hp // 2:
+        return next((action for action in actions if action["potion_id"] in blocking), None)
+    return None
 
 
 def choose_map(observation: dict) -> dict:
@@ -83,12 +137,21 @@ def choose_card_reward(observation: dict) -> dict:
     selected = max(actions, key=lambda action: priority.get(action["card_id"], 0))
     if priority.get(selected["card_id"], 0):
         return selected
+    cards = {card["id"]: card for card in observation.get("cards", ())}
+    attacks = [action for action in actions if cards.get(action["card_id"], {}).get("type") == "Attack"]
+    if attacks:
+        rarity = {"Rare": 3, "Uncommon": 2, "Common": 1}
+        return max(attacks, key=lambda action: (rarity.get(cards[action["card_id"]].get("rarity"), 0), -cards[action["card_id"]].get("cost", 99)))
     return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
 
 
 def choose_rest(observation: dict) -> dict:
     actions = observation["legal_actions"]
     hp, max_hp = observation["player"]["hp"], observation["player"]["max_hp"]
+    if hp * 4 >= max_hp * 3:
+        hatch = next((action for action in actions if action["option_id"] == "HATCH"), None)
+        if hatch:
+            return hatch
     if hp < max_hp:
         heal = next((action for action in actions if action["option_id"] == "HEAL"), None)
         if heal:
@@ -118,7 +181,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         discard_pile=tuple(CARD_NAMES.get(card, card) for card in observation["discard_pile"]),
         enemies=tuple(enemies),
         player_block=observation["player"]["block"],
-        player_powers=tuple(sorted((POWER_NAMES.get(power["id"], power["id"]), power["amount"]) for power in observation["player"]["powers"])),
+        player_powers=tuple(sorted(((f"Surrounded{power['facing']}" if power["id"] == "POWER.SURROUNDED_POWER" and power.get("facing") else POWER_NAMES.get(power["id"], power["id"])), power["amount"]) for power in observation["player"]["powers"])),
         energy=observation["player"]["energy"],
         turn=observation["turn"],
     )
@@ -144,10 +207,12 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Minimal external agent for the official STS2 engine")
     parser.add_argument("observation")
     parser.add_argument("action")
-    parser.add_argument("--enemy-data")
+    parser.add_argument("--enemy-data", nargs="+")
     parser.add_argument("--simulations", type=int, default=0)
     args = parser.parse_args()
-    enemy_data = json.load(open(args.enemy_data, encoding="utf-8-sig")) if args.enemy_data else None
+    enemy_data = None
+    if args.enemy_data:
+        enemy_data = {"monsters": [monster for path in args.enemy_data for monster in json.load(open(path, encoding="utf-8-sig"))["monsters"]]}
     last_seq = -1
     while True:
         try:

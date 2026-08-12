@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
     [string]$Seed,
-    [ValidateSet('Overgrowth', 'Underdocks')]
+    [ValidateSet('Overgrowth', 'Underdocks', 'Hive', 'Glory')]
     [string]$Act = 'Overgrowth',
     [string]$GameDir = 'E:\SteamLibrary\steamapps\common\Slay the Spire 2',
     [string]$Output

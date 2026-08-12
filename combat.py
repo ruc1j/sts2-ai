@@ -8,9 +8,9 @@ import re
 from dataclasses import dataclass, replace
 
 
-STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "End turn"
+STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Slimed", "Frantic Escape", "End turn"
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
-CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0}
+CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, SLIMED: 1, FRANTIC_ESCAPE: 1}
 CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32}
 
 
@@ -168,9 +168,15 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
             values=tuple(sorted(values.items())),
             slot=member.get("slot") or "",
         )
-        enemies.append(replace(enemy, move=_resolve_move(enemy, spec, rng)))
+        enemy = replace(enemy, move=_resolve_move(enemy, spec, rng))
+        if enemy.model == "MONSTER.CRUSHER":
+            enemy = replace(enemy, powers=(("BackAttackLeftPower", 1), ("CrabRagePower", 1)))
+        elif enemy.model == "MONSTER.ROCKET":
+            enemy = replace(enemy, powers=(("BackAttackRightPower", 1), ("CrabRagePower", 1)))
+        enemies.append(enemy)
     hand, draw, _ = _draw(STARTING_DECK, (), 5, rng)
-    return Combat(player_hp, hand, draw, (), tuple(enemies))
+    powers = (("SurroundedRight", 1),) if any(enemy.model == "MONSTER.ROCKET" for enemy in enemies) else ()
+    return Combat(player_hp, hand, draw, (), tuple(enemies), player_powers=powers)
 
 
 def _summon(model: str, data: dict, rng: random.Random) -> Enemy:
@@ -193,7 +199,7 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
     for card in dict.fromkeys(combat.hand):
         if card not in CARD_COST or CARD_COST[card] > combat.energy:
             continue
-        if card in {DEFEND, SHRUG, BATTLE_TRANCE}:
+        if card in {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE}:
             actions.append(card)
         else:
             actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
@@ -211,8 +217,13 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     enemy = replace(combat.enemies[index], block=0)
     if not enemy.alive:
         return combat
-    spec, move = _specs(data)[enemy.model], _state(_specs(data)[enemy.model], enemy.move)
+    spec, move_id, move = _specs(data)[enemy.model], enemy.move, _state(_specs(data)[enemy.model], enemy.move)
     values, player_hp, player_block = _dict(enemy.values), combat.player_hp, combat.player_block
+    sandpit = _power(enemy.powers, "SandpitPower")
+    if sandpit:
+        if sandpit == 1:
+            return replace(combat, player_hp=0)
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", -1))
     player_powers, discard, draw = combat.player_powers, combat.discard_pile, combat.draw_pile
     enemies = list(combat.enemies)
     attack_intent = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
@@ -220,6 +231,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         command = effect["command"]
         if command == "DamageCmd.Attack":
             damage = int(attack_intent["damage"]) + _power(enemy.powers, "StrengthPower")
+            if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (_power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")):
+                damage = damage * 3 // 2
             repeats = int(attack_intent.get("repeats", 1))
             if _power(enemy.powers, "WeakPower"):
                 damage = damage * 3 // 4
@@ -253,6 +266,10 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
     enemy = replace(enemy, history=enemy.history + (enemy.move,))
     enemy = replace(enemy, move=_resolve_move(enemy, spec, rng, move.get("next")))
+    if enemy.model == "MONSTER.THE_INSATIABLE" and move_id == "LIQUIFY_GROUND_MOVE":
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 4))
+        draw += (FRANTIC_ESCAPE,) * 3
+        discard += (FRANTIC_ESCAPE,) * 3
     enemies[index] = enemy
     return replace(combat, player_hp=player_hp, player_block=player_block, player_powers=player_powers, discard_pile=discard, draw_pile=draw, enemies=tuple(enemies))
 
@@ -272,6 +289,16 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == BATTLE_TRANCE:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 3, rng)
         return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,))
+    if card == SLIMED:
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
+        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard, energy=combat.energy - 1)
+    if card == FRANTIC_ESCAPE:
+        enemies = list(combat.enemies)
+        for index, enemy in enumerate(enemies):
+            if _power(enemy.powers, "SandpitPower"):
+                enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 1))
+                break
+        return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (card,), energy=combat.energy - 1, enemies=tuple(enemies))
     if card == SHRUG:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
         block = 8 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 8
@@ -288,11 +315,20 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if _power(enemy.powers, "VulnerablePower"):
         damage = damage * 3 // 2
     enemies[int(target)] = _damage_enemy(enemy, damage)
+    player_powers = combat.player_powers
+    if _power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower"):
+        player_powers = _add_power(_add_power(player_powers, "SurroundedRight", -1), "SurroundedLeft", 1)
+    elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):
+        player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
     if card == BASH:
         enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", 2))
     if card == ANGER:
         combat = replace(combat, discard_pile=combat.discard_pile + (ANGER,))
-    return replace(combat, enemies=tuple(enemies))
+    if enemy.alive and not enemies[int(target)].alive:
+        for index, partner in enumerate(enemies):
+            if partner.alive and _power(partner.powers, "CrabRagePower"):
+                enemies[index] = replace(partner, block=partner.block + 99, powers=_add_power(_add_power(partner.powers, "CrabRagePower", -1), "StrengthPower", 6))
+    return replace(combat, enemies=tuple(enemies), player_powers=player_powers)
 
 
 def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -> list[tuple[str, float]]:

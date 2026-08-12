@@ -68,6 +68,16 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
 
+    def test_reward_takes_unknown_attack(self) -> None:
+        observation = {
+            "cards": [{"id": "CARD.CINDER", "type": "Attack", "rarity": "Common", "cost": 2}],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.CINDER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.CINDER")
+
     def test_rest_heals_when_hurt(self) -> None:
         observation = {
             "player": {"hp": 37, "max_hp": 80},
@@ -81,6 +91,48 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"option_id": "SMITH"}, {"option_id": "HEAL"}],
         }
         self.assertEqual(choose_rest(observation)["option_id"], "HEAL")
+
+    def test_rest_hatches_egg_when_healthy(self) -> None:
+        observation = {
+            "player": {"hp": 65, "max_hp": 80},
+            "legal_actions": [{"option_id": "SMITH"}, {"option_id": "HEAL"}, {"option_id": "HATCH"}],
+        }
+        self.assertEqual(choose_rest(observation)["option_id"], "HATCH")
+
+    def test_uses_lethal_fire_potion(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.FIRE_POTION", "target_id": 7}],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 20, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["type"], "potion")
+
+    def test_uses_dexterity_potion_when_low(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None}],
+            "player": {"hp": 40, "max_hp": 80},
+            "enemies": [],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+
+    def test_uses_frantic_escape_before_other_cards(self) -> None:
+        observation = {
+            "enemies": [{"powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 1},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
+
+    def test_targets_crab_to_face_the_larger_attack(self) -> None:
+        observation = {
+            "player": {"powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
+            "hand": [{"index": 0, "type": "Attack"}],
+            "enemies": [{"combat_id": 7, "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}], "intents": [{"damage": 12, "repeats": 1}]}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 7}],
+        }
+        self.assertEqual(choose(observation)["target_id"], 7)
 
 
 if __name__ == "__main__":

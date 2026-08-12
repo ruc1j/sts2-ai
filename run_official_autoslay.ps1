@@ -4,6 +4,8 @@ param(
     [int]$TimeoutSeconds = 300,
     [string]$LogFile = (Join-Path $PSScriptRoot 'data\official_autoslay.log'),
     [string]$ResultFile = (Join-Path $PSScriptRoot 'data\official_act1_result.json'),
+    [ValidateRange(0, 3)]
+    [int]$StopAfterAct = 1,
     [string]$AgentScript,
     [int]$AgentMaxCombats = 1,
     [switch]$StopAfterAgent,
@@ -11,10 +13,20 @@ param(
     [string]$AgentTrace = (Join-Path $PSScriptRoot 'data\official_agent_trace.jsonl'),
     [string]$MapFile = (Join-Path $PSScriptRoot 'data\official_act1_map.json'),
     [int]$AgentSimulations = 1000,
-    [switch]$Visible
+    [switch]$Visible = $true,
+    [switch]$UnlockIroncladEpochs
 )
 
 $ErrorActionPreference = 'Stop'
+function Resolve-ProjectPath([string]$Path) {
+    if ([IO.Path]::IsPathRooted($Path)) { return [IO.Path]::GetFullPath($Path) }
+    return Join-Path $PSScriptRoot $Path
+}
+
+$LogFile = Resolve-ProjectPath $LogFile
+$ResultFile = Resolve-ProjectPath $ResultFile
+$AgentTrace = Resolve-ProjectPath $AgentTrace
+$MapFile = Resolve-ProjectPath $MapFile
 $exe = Join-Path $GameDir 'SlayTheSpire2.exe'
 $modRoot = Join-Path $GameDir 'mods'
 $installedMod = Join-Path $modRoot 'Sts2Ai'
@@ -62,8 +74,9 @@ try {
     $info.ArgumentList.Add('--sts2ai-autoslay')
     $info.ArgumentList.Add("--seed=$Seed")
     $info.ArgumentList.Add("--log-file=$LogFile")
-    $info.ArgumentList.Add('--stop-after-act=1')
+    if ($StopAfterAct) { $info.ArgumentList.Add("--stop-after-act=$StopAfterAct") }
     $info.ArgumentList.Add("--result-file=$ResultFile")
+    if ($UnlockIroncladEpochs) { $info.ArgumentList.Add('--unlock-ironclad-epochs') }
     if ($AgentScript) {
         $observation = Join-Path $isolatedAppData 'observation.json'
         $action = Join-Path $isolatedAppData 'action.json'
@@ -76,7 +89,9 @@ try {
         $agentInfo.ArgumentList.Add($observation)
         $agentInfo.ArgumentList.Add($action)
         $agentInfo.ArgumentList.Add('--enemy-data')
-        $agentInfo.ArgumentList.Add((Join-Path $PSScriptRoot 'data\enemies_overgrowth.json'))
+        @('enemies_overgrowth.json', 'enemies_hive.json', 'enemies_glory.json') | ForEach-Object {
+            $agentInfo.ArgumentList.Add((Join-Path $PSScriptRoot "data\$_"))
+        }
         $agentInfo.ArgumentList.Add('--simulations')
         $agentInfo.ArgumentList.Add($AgentSimulations.ToString())
         $agentProcess = [Diagnostics.Process]::Start($agentInfo)
