@@ -77,6 +77,42 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_map(observation)["col"], 1)
 
+    def test_low_hp_prefers_unknown_when_no_rest_is_reachable(self) -> None:
+        observation = {
+            "player": {"hp": 20, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Unknown", "children": []},
+                {"col": 0, "row": 1, "type": "Treasure", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_low_hp_uses_existing_value_when_all_routes_fight(self) -> None:
+        observation = {
+            "player": {"hp": 20, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Monster", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "Treasure", "children": []},
+                {"col": 1, "row": 1, "type": "Unknown", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 0)
+
+    def test_low_hp_map_cycle_is_safe(self) -> None:
+        observation = {
+            "player": {"hp": 20, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 0}]},
+                {"col": 1, "row": 0, "type": "Unknown", "children": [{"col": 1, "row": 0}]},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
     def test_reward_prefers_known_strong_card(self) -> None:
         observation = {
             "cards": [

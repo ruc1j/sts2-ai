@@ -116,14 +116,25 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
     if incoming >= hp:
         return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER", "POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
+    hand = observation.get("hand") or ()
+    if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
+        if len(enemy_hp) >= 2:
+            explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
+            if explosive:
+                return explosive
+        if any(card.get("cost", 1) > 0 for card in hand):
+            energy = use({"POTION.ENERGY_POTION"})
+            if energy:
+                return energy
+        return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
     if hp <= max_hp // 2:
         return use(healing | defensive_buffs | {"POTION.ENTROPIC_BREW"})
     if incoming >= hp // 2:
         return use(blocking | {"POTION.SHACKLING_POTION"}) or use({"POTION.WEAK_POTION"}, enemy_damage)
     if max(enemy_hp.values(), default=0) >= 100:
         return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp)
-    if not observation.get("hand"):
-        return use({"POTION.SWIFT_POTION", "POTION.ENERGY_POTION"})
+    if not hand:
+        return use({"POTION.SWIFT_POTION"})
     return None
 
 
@@ -131,36 +142,66 @@ def choose_map(observation: dict) -> dict:
     points = {(point["col"], point["row"]): point for point in observation["map"]["points"]}
     room_value = {"Ancient": 0, "Monster": 1, "Unknown": 1, "Shop": 1, "RestSite": 3, "Treasure": 3, "Elite": -5, "Boss": 0}
     memo: dict[tuple[int, int], int] = {}
+    visiting: set[tuple[int, int]] = set()
 
     def value(coord: tuple[int, int]) -> int:
         if coord in memo:
             return memo[coord]
+        if coord in visiting:
+            return 0
+        visiting.add(coord)
         point = points[coord]
         children = [(child["col"], child["row"]) for child in point["children"]]
         memo[coord] = room_value.get(point["type"], 0) + (max(map(value, children)) if children else 0)
+        visiting.remove(coord)
         return memo[coord]
 
     player = observation.get("player", {})
     if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 2 <= player["max_hp"]:
         rest_paths: dict[tuple[int, int], tuple[int, int] | None] = {}
+        rest_visiting: set[tuple[int, int]] = set()
 
         def rest_path(coord: tuple[int, int]) -> tuple[int, int] | None:
             if coord in rest_paths:
                 return rest_paths[coord]
+            if coord in rest_visiting:
+                return None
+            rest_visiting.add(coord)
             point = points[coord]
             elites = point["type"] == "Elite"
             if point["type"] == "RestSite":
                 rest_paths[coord] = (0, int(elites))
+                rest_visiting.remove(coord)
                 return rest_paths[coord]
             children = (rest_path((child["col"], child["row"])) for child in point["children"])
             reachable = [path for path in children if path is not None]
             rest_paths[coord] = None if not reachable else min((distance + 1, elite_count + elites) for distance, elite_count in reachable)
+            rest_visiting.remove(coord)
             return rest_paths[coord]
 
         routes = [(action, rest_path((action["col"], action["row"]))) for action in observation["legal_actions"]]
         reachable = [(action, route) for action, route in routes if route is not None]
         if reachable:
             return min(reachable, key=lambda choice: (*choice[1], -value((choice[0]["col"], choice[0]["row"]))))[0]
+
+        safety_paths: dict[tuple[int, int], tuple[int, int]] = {}
+        safety_visiting: set[tuple[int, int]] = set()
+
+        def safety_path(coord: tuple[int, int]) -> tuple[int, int] | None:
+            if coord in safety_paths:
+                return safety_paths[coord]
+            if coord in safety_visiting:
+                return None
+            safety_visiting.add(coord)
+            point = points[coord]
+            children = (safety_path((child["col"], child["row"])) for child in point["children"])
+            reachable = [path for path in children if path is not None]
+            fights = point["type"] in {"Monster", "Elite", "Boss"}
+            safety_paths[coord] = (int(fights), int(not fights)) if not reachable else min(((fight_count + fights, noncombat_count + (not fights)) for fight_count, noncombat_count in reachable), key=lambda path: (path[0], -path[1]))
+            safety_visiting.remove(coord)
+            return safety_paths[coord]
+
+        return min(observation["legal_actions"], key=lambda action: (safety_path((action["col"], action["row"]))[0], -safety_path((action["col"], action["row"]))[1], -value((action["col"], action["row"]))))
 
     return max(observation["legal_actions"], key=lambda action: value((action["col"], action["row"])))
 
