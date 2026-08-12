@@ -2,7 +2,7 @@ import json
 import random
 import unittest
 
-from combat import END_TURN, initial_combat, legal_actions, step
+from combat import ANGER, BATTLE_TRANCE, DEFEND, SHRUG, Combat, END_TURN, Enemy, initial_combat, legal_actions, step
 
 
 class CombatTest(unittest.TestCase):
@@ -17,6 +17,27 @@ class CombatTest(unittest.TestCase):
         self.assertTrue(any("@2" in action for action in legal_actions(combat)))
         after = step(combat, END_TURN, self.data, random.Random(0))
         self.assertEqual(after.turn, 2)
+
+    def test_anger_adds_copy_to_discard(self) -> None:
+        combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
+        after = step(combat, "Anger@0", {}, random.Random(0))
+        self.assertEqual(after.discard_pile, (ANGER, ANGER))
+
+    def test_shrug_blocks_and_draws(self) -> None:
+        combat = Combat(80, (SHRUG,), (DEFEND,), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
+        after = step(combat, SHRUG, {}, random.Random(0))
+        self.assertEqual((after.player_block, after.hand), (8, (DEFEND,)))
+
+    def test_battle_trance_draws_three(self) -> None:
+        combat = Combat(80, (BATTLE_TRANCE,), (DEFEND, DEFEND, DEFEND), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
+        after = step(combat, BATTLE_TRANCE, {}, random.Random(0))
+        self.assertEqual((after.energy, len(after.hand)), (3, 3))
+
+    def test_slippery_reduces_an_attack_to_one_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), powers=(("SlipperyPower", 8),))
+        combat = Combat(80, (ANGER,), (), (), (enemy,))
+        after = step(combat, "Anger@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].powers), (19, (("SlipperyPower", 7),)))
 
     def test_all_overgrowth_encounters_run(self) -> None:
         for encounter in self.data["encounters"]:

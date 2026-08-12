@@ -12,9 +12,14 @@ CARD_NAMES = {
     "CARD.STRIKE_IRONCLAD": "Strike",
     "CARD.DEFEND_IRONCLAD": "Defend",
     "CARD.BASH": "Bash",
+    "CARD.ANGER": "Anger",
+    "CARD.BLUDGEON": "Bludgeon",
+    "CARD.SHRUG_IT_OFF": "Shrug It Off",
+    "CARD.BATTLE_TRANCE": "Battle Trance",
 }
 POWER_NAMES = {
     "POWER.FRAIL": "FrailPower",
+    "POWER.SLIPPERY_POWER": "SlipperyPower",
     "POWER.STRENGTH": "StrengthPower",
     "POWER.VULNERABLE": "VulnerablePower",
     "POWER.WEAK": "WeakPower",
@@ -22,18 +27,73 @@ POWER_NAMES = {
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
+    if observation.get("phase") == "map":
+        return choose_map(observation)
+    if observation.get("phase") == "card_reward":
+        return choose_card_reward(observation)
+    if observation.get("phase") == "rest":
+        return choose_rest(observation)
     actions = observation["legal_actions"]
     cards = [action for action in actions if action["type"] == "card"]
     # ponytail: rollouts cover starter cards and core combat powers; extend these mappings when reward-card search begins.
-    if enemy_data and simulations and all(card["id"] in CARD_NAMES for card in observation["hand"]):
+    if enemy_data and simulations and all(card["card_id"] in CARD_NAMES for card in cards):
         try:
             return rollout_choice(observation, actions, enemy_data, simulations)
         except (KeyError, ValueError, NotImplementedError):
             pass
+    enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
+    damage = {"CARD.STRIKE_IRONCLAD": 6, "CARD.BASH": 8}
+    lethal = [action for action in cards if action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= damage.get(action["card_id"], 0)]
+    if lethal:
+        return lethal[0]
+    incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
+    defenses = [action for action in cards if action["card_id"] == "CARD.DEFEND_IRONCLAD"]
+    if observation.get("player", {}).get("block", 0) < incoming and defenses:
+        return defenses[0]
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
         return max(cards, key=lambda action: priority.get(action["card_id"], 1))
     return next(action for action in actions if action["type"] == "end_turn")
+
+
+def choose_map(observation: dict) -> dict:
+    points = {(point["col"], point["row"]): point for point in observation["map"]["points"]}
+    room_value = {"Ancient": 0, "Monster": 1, "Unknown": 1, "Shop": 1, "RestSite": 3, "Treasure": 3, "Elite": -5, "Boss": 0}
+    memo: dict[tuple[int, int], int] = {}
+
+    def value(coord: tuple[int, int]) -> int:
+        if coord in memo:
+            return memo[coord]
+        point = points[coord]
+        children = [(child["col"], child["row"]) for child in point["children"]]
+        memo[coord] = room_value.get(point["type"], 0) + (max(map(value, children)) if children else 0)
+        return memo[coord]
+
+    return max(observation["legal_actions"], key=lambda action: value((action["col"], action["row"])))
+
+
+def choose_card_reward(observation: dict) -> dict:
+    actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward"]
+    priority = {
+        "CARD.BLUDGEON": 10,
+        "CARD.BATTLE_TRANCE": 8,
+        "CARD.SHRUG_IT_OFF": 7,
+        "CARD.ANGER": 6,
+    }
+    selected = max(actions, key=lambda action: priority.get(action["card_id"], 0))
+    if priority.get(selected["card_id"], 0):
+        return selected
+    return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
+
+
+def choose_rest(observation: dict) -> dict:
+    actions = observation["legal_actions"]
+    hp, max_hp = observation["player"]["hp"], observation["player"]["max_hp"]
+    if hp < max_hp:
+        heal = next((action for action in actions if action["option_id"] == "HEAL"), None)
+        if heal:
+            return heal
+    return next((action for action in actions if action["option_id"] == "SMITH"), actions[0])
 
 
 def rollout_choice(observation: dict, actions: list[dict], data: dict, simulations: int) -> dict:

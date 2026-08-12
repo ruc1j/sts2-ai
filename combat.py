@@ -8,9 +8,10 @@ import re
 from dataclasses import dataclass, replace
 
 
-STRIKE, DEFEND, BASH, END_TURN = "Strike", "Defend", "Bash", "End turn"
+STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "End turn"
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
-CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2}
+CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0}
+CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32}
 
 
 @dataclass(frozen=True)
@@ -192,7 +193,7 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
     for card in dict.fromkeys(combat.hand):
         if card not in CARD_COST or CARD_COST[card] > combat.energy:
             continue
-        if card == DEFEND:
+        if card in {DEFEND, SHRUG, BATTLE_TRANCE}:
             actions.append(card)
         else:
             actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
@@ -200,6 +201,8 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
 
 
 def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
+    if _power(enemy.powers, "SlipperyPower"):
+        return replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1))
     blocked = min(enemy.block, damage)
     return replace(enemy, block=enemy.block - blocked, hp=enemy.hp - damage + blocked)
 
@@ -266,13 +269,20 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     card, _, target = action.partition("@")
     hand = list(combat.hand)
     hand.remove(card)
+    if card == BATTLE_TRANCE:
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 3, rng)
+        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,))
+    if card == SHRUG:
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
+        block = 8 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 8
+        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - 1, player_block=combat.player_block + block)
     combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (card,), energy=combat.energy - CARD_COST[card])
     if card == DEFEND:
         block = 5 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 5
         return replace(combat, player_block=combat.player_block + block)
     enemies = list(combat.enemies)
     enemy = enemies[int(target)]
-    damage = 6 if card == STRIKE else 8
+    damage = CARD_DAMAGE[card]
     if _power(combat.player_powers, "WeakPower"):
         damage = damage * 3 // 4
     if _power(enemy.powers, "VulnerablePower"):
@@ -280,6 +290,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     enemies[int(target)] = _damage_enemy(enemy, damage)
     if card == BASH:
         enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", 2))
+    if card == ANGER:
+        combat = replace(combat, discard_pile=combat.discard_pile + (ANGER,))
     return replace(combat, enemies=tuple(enemies))
 
 

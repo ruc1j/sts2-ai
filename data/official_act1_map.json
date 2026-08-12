@@ -1,0 +1,1241 @@
+{
+  "game_version": "v0.107.1",
+  "seed": "FV2EVHXLCW",
+  "act": "ACT.OVERGROWTH",
+  "rows": 17,
+  "columns": 7,
+  "points": [
+    {
+      "id": "3:0",
+      "col": 3,
+      "row": 0,
+      "type": "Monster",
+      "parents": [],
+      "children": [
+        {
+          "col": 1,
+          "row": 1
+        },
+        {
+          "col": 3,
+          "row": 1
+        },
+        {
+          "col": 4,
+          "row": 1
+        },
+        {
+          "col": 6,
+          "row": 1
+        }
+      ]
+    },
+    {
+      "id": "0:2",
+      "col": 0,
+      "row": 2,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 1,
+          "row": 1
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "id": "0:3",
+      "col": 0,
+      "row": 3,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 0,
+          "row": 2
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 4
+        }
+      ]
+    },
+    {
+      "id": "0:4",
+      "col": 0,
+      "row": 4,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 0,
+          "row": 3
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 5
+        }
+      ]
+    },
+    {
+      "id": "0:5",
+      "col": 0,
+      "row": 5,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 0,
+          "row": 4
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 6
+        }
+      ]
+    },
+    {
+      "id": "0:6",
+      "col": 0,
+      "row": 6,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 0,
+          "row": 5
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 7
+        }
+      ]
+    },
+    {
+      "id": "0:7",
+      "col": 0,
+      "row": 7,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 0,
+          "row": 6
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 8
+        }
+      ]
+    },
+    {
+      "id": "0:8",
+      "col": 0,
+      "row": 8,
+      "type": "Elite",
+      "parents": [
+        {
+          "col": 0,
+          "row": 7
+        }
+      ],
+      "children": [
+        {
+          "col": 1,
+          "row": 9
+        }
+      ]
+    },
+    {
+      "id": "0:10",
+      "col": 0,
+      "row": 10,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 1,
+          "row": 9
+        }
+      ],
+      "children": [
+        {
+          "col": 1,
+          "row": 11
+        },
+        {
+          "col": 0,
+          "row": 11
+        }
+      ]
+    },
+    {
+      "id": "0:11",
+      "col": 0,
+      "row": 11,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 0,
+          "row": 10
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 12
+        }
+      ]
+    },
+    {
+      "id": "0:12",
+      "col": 0,
+      "row": 12,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 0,
+          "row": 11
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 13
+        }
+      ]
+    },
+    {
+      "id": "0:13",
+      "col": 0,
+      "row": 13,
+      "type": "Elite",
+      "parents": [
+        {
+          "col": 0,
+          "row": 12
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 14
+        }
+      ]
+    },
+    {
+      "id": "0:14",
+      "col": 0,
+      "row": 14,
+      "type": "Shop",
+      "parents": [
+        {
+          "col": 0,
+          "row": 13
+        }
+      ],
+      "children": [
+        {
+          "col": 0,
+          "row": 15
+        }
+      ]
+    },
+    {
+      "id": "0:15",
+      "col": 0,
+      "row": 15,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 0,
+          "row": 14
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 16
+        }
+      ]
+    },
+    {
+      "id": "1:1",
+      "col": 1,
+      "row": 1,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 2
+        },
+        {
+          "col": 0,
+          "row": 2
+        }
+      ]
+    },
+    {
+      "id": "1:7",
+      "col": 1,
+      "row": 7,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 2,
+          "row": 6
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 8
+        },
+        {
+          "col": 1,
+          "row": 8
+        }
+      ]
+    },
+    {
+      "id": "1:8",
+      "col": 1,
+      "row": 8,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 1,
+          "row": 7
+        }
+      ],
+      "children": [
+        {
+          "col": 1,
+          "row": 9
+        }
+      ]
+    },
+    {
+      "id": "1:9",
+      "col": 1,
+      "row": 9,
+      "type": "Treasure",
+      "parents": [
+        {
+          "col": 0,
+          "row": 8
+        },
+        {
+          "col": 1,
+          "row": 8
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 10
+        },
+        {
+          "col": 0,
+          "row": 10
+        }
+      ]
+    },
+    {
+      "id": "1:11",
+      "col": 1,
+      "row": 11,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 0,
+          "row": 10
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 12
+        }
+      ]
+    },
+    {
+      "id": "2:2",
+      "col": 2,
+      "row": 2,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 1,
+          "row": 1
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "id": "2:3",
+      "col": 2,
+      "row": 3,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 2,
+          "row": 2
+        },
+        {
+          "col": 3,
+          "row": 2
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 4
+        }
+      ]
+    },
+    {
+      "id": "2:4",
+      "col": 2,
+      "row": 4,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 2,
+          "row": 3
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 5
+        }
+      ]
+    },
+    {
+      "id": "2:6",
+      "col": 2,
+      "row": 6,
+      "type": "Elite",
+      "parents": [
+        {
+          "col": 3,
+          "row": 5
+        }
+      ],
+      "children": [
+        {
+          "col": 1,
+          "row": 7
+        }
+      ]
+    },
+    {
+      "id": "2:8",
+      "col": 2,
+      "row": 8,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 1,
+          "row": 7
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 9
+        }
+      ]
+    },
+    {
+      "id": "2:9",
+      "col": 2,
+      "row": 9,
+      "type": "Treasure",
+      "parents": [
+        {
+          "col": 2,
+          "row": 8
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 10
+        }
+      ]
+    },
+    {
+      "id": "2:10",
+      "col": 2,
+      "row": 10,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 1,
+          "row": 9
+        },
+        {
+          "col": 2,
+          "row": 9
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 11
+        }
+      ]
+    },
+    {
+      "id": "2:12",
+      "col": 2,
+      "row": 12,
+      "type": "Elite",
+      "parents": [
+        {
+          "col": 1,
+          "row": 11
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 13
+        }
+      ]
+    },
+    {
+      "id": "2:13",
+      "col": 2,
+      "row": 13,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 2,
+          "row": 12
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 14
+        }
+      ]
+    },
+    {
+      "id": "2:14",
+      "col": 2,
+      "row": 14,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 2,
+          "row": 13
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 15
+        }
+      ]
+    },
+    {
+      "id": "3:1",
+      "col": 3,
+      "row": 1,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 2
+        }
+      ]
+    },
+    {
+      "id": "3:2",
+      "col": 3,
+      "row": 2,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 3,
+          "row": 1
+        }
+      ],
+      "children": [
+        {
+          "col": 2,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "id": "3:5",
+      "col": 3,
+      "row": 5,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 2,
+          "row": 4
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 6
+        },
+        {
+          "col": 2,
+          "row": 6
+        }
+      ]
+    },
+    {
+      "id": "3:6",
+      "col": 3,
+      "row": 6,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 3,
+          "row": 5
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 7
+        }
+      ]
+    },
+    {
+      "id": "3:7",
+      "col": 3,
+      "row": 7,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 3,
+          "row": 6
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 8
+        }
+      ]
+    },
+    {
+      "id": "3:11",
+      "col": 3,
+      "row": 11,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 2,
+          "row": 10
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 12
+        }
+      ]
+    },
+    {
+      "id": "3:12",
+      "col": 3,
+      "row": 12,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 3,
+          "row": 11
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 13
+        }
+      ]
+    },
+    {
+      "id": "3:14",
+      "col": 3,
+      "row": 14,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 4,
+          "row": 13
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 15
+        }
+      ]
+    },
+    {
+      "id": "3:15",
+      "col": 3,
+      "row": 15,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 3,
+          "row": 14
+        },
+        {
+          "col": 2,
+          "row": 14
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 16
+        }
+      ]
+    },
+    {
+      "id": "4:1",
+      "col": 4,
+      "row": 1,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 2
+        }
+      ]
+    },
+    {
+      "id": "4:2",
+      "col": 4,
+      "row": 2,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 4,
+          "row": 1
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "id": "4:3",
+      "col": 4,
+      "row": 3,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 4,
+          "row": 2
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 4
+        }
+      ]
+    },
+    {
+      "id": "4:4",
+      "col": 4,
+      "row": 4,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 4,
+          "row": 3
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 5
+        }
+      ]
+    },
+    {
+      "id": "4:8",
+      "col": 4,
+      "row": 8,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 3,
+          "row": 7
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 9
+        }
+      ]
+    },
+    {
+      "id": "4:9",
+      "col": 4,
+      "row": 9,
+      "type": "Treasure",
+      "parents": [
+        {
+          "col": 4,
+          "row": 8
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 10
+        }
+      ]
+    },
+    {
+      "id": "4:10",
+      "col": 4,
+      "row": 10,
+      "type": "Elite",
+      "parents": [
+        {
+          "col": 4,
+          "row": 9
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 11
+        }
+      ]
+    },
+    {
+      "id": "4:11",
+      "col": 4,
+      "row": 11,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 4,
+          "row": 10
+        }
+      ],
+      "children": [
+        {
+          "col": 4,
+          "row": 12
+        }
+      ]
+    },
+    {
+      "id": "4:12",
+      "col": 4,
+      "row": 12,
+      "type": "Shop",
+      "parents": [
+        {
+          "col": 4,
+          "row": 11
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 13
+        }
+      ]
+    },
+    {
+      "id": "4:13",
+      "col": 4,
+      "row": 13,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 3,
+          "row": 12
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 14
+        },
+        {
+          "col": 5,
+          "row": 14
+        }
+      ]
+    },
+    {
+      "id": "5:5",
+      "col": 5,
+      "row": 5,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 4,
+          "row": 4
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 6
+        }
+      ]
+    },
+    {
+      "id": "5:6",
+      "col": 5,
+      "row": 6,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 6,
+          "row": 5
+        },
+        {
+          "col": 5,
+          "row": 5
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 7
+        }
+      ]
+    },
+    {
+      "id": "5:13",
+      "col": 5,
+      "row": 13,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 4,
+          "row": 12
+        },
+        {
+          "col": 6,
+          "row": 12
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 14
+        }
+      ]
+    },
+    {
+      "id": "5:14",
+      "col": 5,
+      "row": 14,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 5,
+          "row": 13
+        },
+        {
+          "col": 4,
+          "row": 13
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 15
+        }
+      ]
+    },
+    {
+      "id": "5:15",
+      "col": 5,
+      "row": 15,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 5,
+          "row": 14
+        }
+      ],
+      "children": [
+        {
+          "col": 3,
+          "row": 16
+        }
+      ]
+    },
+    {
+      "id": "6:1",
+      "col": 6,
+      "row": 1,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 3,
+          "row": 0
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 2
+        }
+      ]
+    },
+    {
+      "id": "6:2",
+      "col": 6,
+      "row": 2,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 6,
+          "row": 1
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 3
+        }
+      ]
+    },
+    {
+      "id": "6:3",
+      "col": 6,
+      "row": 3,
+      "type": "Shop",
+      "parents": [
+        {
+          "col": 6,
+          "row": 2
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 4
+        }
+      ]
+    },
+    {
+      "id": "6:4",
+      "col": 6,
+      "row": 4,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 6,
+          "row": 3
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 5
+        }
+      ]
+    },
+    {
+      "id": "6:5",
+      "col": 6,
+      "row": 5,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 6,
+          "row": 4
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 6
+        }
+      ]
+    },
+    {
+      "id": "6:7",
+      "col": 6,
+      "row": 7,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 5,
+          "row": 6
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 8
+        }
+      ]
+    },
+    {
+      "id": "6:8",
+      "col": 6,
+      "row": 8,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 6,
+          "row": 7
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 9
+        }
+      ]
+    },
+    {
+      "id": "6:9",
+      "col": 6,
+      "row": 9,
+      "type": "Treasure",
+      "parents": [
+        {
+          "col": 6,
+          "row": 8
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 10
+        }
+      ]
+    },
+    {
+      "id": "6:10",
+      "col": 6,
+      "row": 10,
+      "type": "Monster",
+      "parents": [
+        {
+          "col": 6,
+          "row": 9
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 11
+        }
+      ]
+    },
+    {
+      "id": "6:11",
+      "col": 6,
+      "row": 11,
+      "type": "RestSite",
+      "parents": [
+        {
+          "col": 6,
+          "row": 10
+        }
+      ],
+      "children": [
+        {
+          "col": 6,
+          "row": 12
+        }
+      ]
+    },
+    {
+      "id": "6:12",
+      "col": 6,
+      "row": 12,
+      "type": "Unknown",
+      "parents": [
+        {
+          "col": 6,
+          "row": 11
+        }
+      ],
+      "children": [
+        {
+          "col": 5,
+          "row": 13
+        }
+      ]
+    },
+    {
+      "id": "3:16",
+      "col": 3,
+      "row": 16,
+      "type": "Boss",
+      "parents": [
+        {
+          "col": 0,
+          "row": 15
+        },
+        {
+          "col": 3,
+          "row": 15
+        },
+        {
+          "col": 5,
+          "row": 15
+        }
+      ],
+      "children": []
+    }
+  ]
+}

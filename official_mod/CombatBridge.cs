@@ -38,7 +38,7 @@ internal static class CombatBridge
         [property: JsonPropertyName("card_id")] string? CardId,
         [property: JsonPropertyName("target_id")] uint? TargetId,
         [property: JsonPropertyName("simulations")] int? Simulations,
-        [property: JsonPropertyName("search_value")] double? SearchValue);
+        [property: JsonPropertyName("search_value")] double? SearchValue) : IAgentAction;
 
     public static async Task Run(CancellationToken ct)
     {
@@ -47,7 +47,6 @@ internal static class CombatBridge
 
         var run = RunManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("run state unavailable");
         var player = LocalContext.GetMe(run) ?? throw new InvalidOperationException("local player unavailable");
-        int seq = 0;
         while (CombatManager.Instance.IsInProgress)
         {
             while (CombatManager.Instance.IsInProgress && player.PlayerCombatState?.Phase != PlayerTurnPhase.Play)
@@ -55,8 +54,10 @@ internal static class CombatBridge
             if (!CombatManager.Instance.IsInProgress)
                 break;
 
-            var action = await Exchange(run, player, seq++, ct);
-            Trace(new { seq = action.Seq, action.Type, hand_index = action.HandIndex, card_id = action.CardId, target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue });
+            int seq = AgentIo.NextSequence();
+            var action = await Exchange(run, player, seq, ct);
+            var combat = CombatManager.Instance.DebugOnlyGetState()!;
+            AgentIo.Trace(new { seq = action.Seq, phase = "combat", turn = player.PlayerCombatState!.TurnNumber, player_hp = player.Creature.CurrentHp, action.Type, hand_index = action.HandIndex, card_id = action.CardId, target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue, enemies = combat.Enemies.Select(enemy => new { id = enemy.ModelId.ToString(), hp = enemy.CurrentHp, powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }) }) });
             if (action.Type == "end_turn")
             {
                 RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new EndPlayerTurnAction(player, player.PlayerCombatState!.TurnNumber));
@@ -78,16 +79,18 @@ internal static class CombatBridge
             }
             await RunManager.Instance.ActionExecutor.FinishedExecutingActions();
         }
-        WriteJson(CommandLineHelper.GetValue("bridge-observation")!, new { seq, terminal = true });
-        Trace(new { seq, terminal = true });
+        AgentIo.Trace(new { seq = AgentIo.NextSequence(), phase = "combat_end", won = player.Creature.CurrentHp > 0, hp = player.Creature.CurrentHp });
         if (CommandLineHelper.GetValue("stop-after-agent") == "1")
+        {
+            int seq = AgentIo.NextSequence();
+            AgentIo.WriteObservation(new { seq, terminal = true });
+            AgentIo.Trace(new { seq, terminal = true });
             NGame.Instance?.GetTree().Quit(0);
+        }
     }
 
     private static async Task<AgentAction> Exchange(RunState run, MegaCrit.Sts2.Core.Entities.Players.Player player, int seq, CancellationToken ct)
     {
-        string observationPath = CommandLineHelper.GetValue("bridge-observation") ?? throw new InvalidOperationException("bridge-observation missing");
-        string actionPath = CommandLineHelper.GetValue("bridge-action") ?? throw new InvalidOperationException("bridge-action missing");
         var combat = CombatManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("combat state unavailable");
         var hand = player.PlayerCombatState!.Hand.Cards;
         var legal = new List<object>();
@@ -99,10 +102,11 @@ internal static class CombatBridge
                 legal.Add(new { type = "card", hand_index = i, card_id = hand[i].Id.ToString(), target_id = target.CombatId });
         }
         legal.Add(new { type = "end_turn", hand_index = (int?)null, card_id = (string?)null, target_id = (uint?)null });
-        WriteJson(observationPath, new
+        AgentIo.WriteObservation(new
         {
             seq,
             terminal = false,
+            phase = "combat",
             turn = player.PlayerCombatState.TurnNumber,
             run = new { act = run.CurrentActIndex, floor = run.ActFloor },
             player = new
@@ -139,16 +143,73 @@ internal static class CombatBridge
             }),
             legal_actions = legal,
         });
+        return await AgentIo.AwaitAction<AgentAction>(seq, ct);
+    }
 
+    private static object Intent(AbstractIntent intent, IReadOnlyList<Creature> targets, Creature owner)
+    {
+        if (intent is AttackIntent attack)
+            return new { type = intent.IntentType.ToString(), damage = attack.GetSingleDamage(targets, owner), repeats = attack.Repeats };
+        return new { type = intent.IntentType.ToString(), damage = 0, repeats = 0 };
+    }
+
+}
+
+internal interface IAgentAction
+{
+    int Seq { get; }
+}
+
+internal static class AgentIo
+{
+    private static int _sequence = -1;
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
+        WriteIndented = true,
+    };
+    private static readonly JsonSerializerOptions TraceOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower };
+
+    public static int NextSequence() => Interlocked.Increment(ref _sequence);
+
+    public static void WriteObservation(object value)
+    {
+        string path = CommandLineHelper.GetValue("bridge-observation") ?? throw new InvalidOperationException("bridge-observation missing");
+        WriteJson(path, value);
+    }
+
+    public static void WriteJson(string path, object value)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        string temp = path + ".tmp";
+        File.WriteAllText(temp, JsonSerializer.Serialize(value, JsonOptions));
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                File.Move(temp, path, true);
+                return;
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException && attempt < 200)
+            {
+                Thread.Sleep(5);
+            }
+        }
+    }
+
+    public static async Task<T> AwaitAction<T>(int seq, CancellationToken ct) where T : class, IAgentAction
+    {
+        string path = CommandLineHelper.GetValue("bridge-action") ?? throw new InvalidOperationException("bridge-action missing");
         DateTime deadline = DateTime.UtcNow.AddMinutes(2);
         while (DateTime.UtcNow < deadline)
         {
             ct.ThrowIfCancellationRequested();
-            if (File.Exists(actionPath))
+            if (File.Exists(path))
             {
                 try
                 {
-                    var action = JsonSerializer.Deserialize<AgentAction>(File.ReadAllText(actionPath), new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    var action = JsonSerializer.Deserialize<T>(File.ReadAllText(path), JsonOptions);
                     if (action?.Seq == seq)
                         return action;
                 }
@@ -160,26 +221,11 @@ internal static class CombatBridge
         throw new TimeoutException($"agent did not answer observation {seq}");
     }
 
-    private static object Intent(AbstractIntent intent, IReadOnlyList<Creature> targets, Creature owner)
-    {
-        if (intent is AttackIntent attack)
-            return new { type = intent.IntentType.ToString(), damage = attack.GetSingleDamage(targets, owner), repeats = attack.Repeats };
-        return new { type = intent.IntentType.ToString(), damage = 0, repeats = 0 };
-    }
-
-    private static void WriteJson(string path, object value)
-    {
-        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        string temp = path + ".tmp";
-        File.WriteAllText(temp, JsonSerializer.Serialize(value, new JsonSerializerOptions { WriteIndented = true, PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower }));
-        File.Move(temp, path, true);
-    }
-
-    private static void Trace(object value)
+    public static void Trace(object value)
     {
         string? path = CommandLineHelper.GetValue("bridge-trace");
         if (path is null)
             return;
-        File.AppendAllText(path, JsonSerializer.Serialize(value, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower }) + Environment.NewLine);
+        File.AppendAllText(path, JsonSerializer.Serialize(value, TraceOptions) + Environment.NewLine);
     }
 }

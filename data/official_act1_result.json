@@ -1,6 +1,7 @@
 {
   "game_version": "v0.107.1",
   "seed": "FV2EVHXLCW",
+  "requested_seed": "FV2EVHXLCW",
   "character": "CHARACTER.IRONCLAD",
   "act_1_complete": true,
   "route": [
@@ -9,22 +10,22 @@
     "Monster",
     "Monster",
     "Monster",
+    "Monster",
     "Unknown",
+    "RestSite",
+    "Unknown",
+    "Treasure",
     "Monster",
     "RestSite",
-    "Monster",
-    "Treasure",
     "Unknown",
-    "Unknown",
-    "Elite",
     "Monster",
     "Monster",
     "RestSite",
     "Boss"
   ],
-  "hp": 80,
-  "max_hp": 80,
-  "gold": 434,
+  "hp": 20,
+  "max_hp": 87,
+  "gold": 427,
   "deck": [
     "CARD.STRIKE_IRONCLAD",
     "CARD.STRIKE_IRONCLAD",
@@ -36,22 +37,14 @@
     "CARD.DEFEND_IRONCLAD",
     "CARD.DEFEND_IRONCLAD",
     "CARD.BASH",
-    "CARD.TREMBLE",
-    "CARD.SETUP_STRIKE",
     "CARD.BLUDGEON",
-    "CARD.SECOND_WIND",
     "CARD.ANGER",
-    "CARD.SHRUG_IT_OFF",
-    "CARD.FORGOTTEN_RITUAL",
-    "CARD.STONE_ARMOR",
-    "CARD.WHIRLWIND",
-    "CARD.TREMBLE",
-    "CARD.ANGER",
-    "CARD.IMPERVIOUS"
+    "CARD.BATTLE_TRANCE",
+    "CARD.BLUDGEON",
+    "CARD.SHRUG_IT_OFF"
   ],
   "relics": [
     "RELIC.BURNING_BLOOD",
-    "RELIC.ORNAMENTAL_FAN",
-    "RELIC.BELLOWS"
+    "RELIC.WAR_PAINT"
   ]
 }

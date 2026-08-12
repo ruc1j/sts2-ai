@@ -7,7 +7,9 @@ param(
     [string]$AgentScript,
     [int]$AgentMaxCombats = 1,
     [switch]$StopAfterAgent,
+    [switch]$StopAfterReward,
     [string]$AgentTrace = (Join-Path $PSScriptRoot 'data\official_agent_trace.jsonl'),
+    [string]$MapFile = (Join-Path $PSScriptRoot 'data\official_act1_map.json'),
     [int]$AgentSimulations = 1000
 )
 
@@ -82,7 +84,9 @@ try {
         $info.ArgumentList.Add("--bridge-observation=$observation")
         $info.ArgumentList.Add("--bridge-action=$action")
         $info.ArgumentList.Add("--bridge-trace=$AgentTrace")
+        $info.ArgumentList.Add("--bridge-map=$MapFile")
         if ($StopAfterAgent) { $info.ArgumentList.Add('--stop-after-agent=1') }
+        if ($StopAfterReward) { $info.ArgumentList.Add('--stop-after-reward=1') }
     }
     $process = [Diagnostics.Process]::Start($info)
     if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {

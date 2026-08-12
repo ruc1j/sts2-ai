@@ -74,7 +74,8 @@ public static class Entry
         var result = new
         {
             game_version = "v0.107.1",
-            seed,
+            seed = run.Rng.StringSeed,
+            requested_seed = seed,
             character = player.Character.Id.ToString(),
             act_1_complete = true,
             route = run.MapPointHistory[0].Select(point => point.MapPointType.ToString()).ToArray(),
@@ -93,5 +94,9 @@ public static class Entry
 [HarmonyPatch(typeof(NGame), nameof(NGame.StartNewSingleplayerRun))]
 internal static class IroncladPatch
 {
-    private static void Prefix(ref CharacterModel character) => character = ModelDb.Character<Ironclad>();
+    private static void Prefix(ref CharacterModel character, ref string seed)
+    {
+        character = ModelDb.Character<Ironclad>();
+        seed = CommandLineHelper.GetValue("seed") ?? seed;
+    }
 }
