@@ -146,15 +146,33 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
 
-    def test_reward_skips_unknown_attack(self) -> None:
+    def test_reward_skips_unknown_skill(self) -> None:
         observation = {
-            "cards": [{"id": "CARD.UNKNOWN_ATTACK", "type": "Attack", "rarity": "Common", "cost": 2}],
+            "cards": [{"id": "CARD.UNKNOWN_SKILL", "type": "Skill", "rarity": "Uncommon", "cost": 1}],
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.UNKNOWN_ATTACK"},
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN_SKILL"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
         self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+
+    def test_reward_uses_metadata_for_unknown_attack(self) -> None:
+        observation = {
+            "cards": [
+                {"id": "CARD.UNKNOWN_COMMON", "type": "Attack", "rarity": "Common", "cost": 0},
+                {"id": "CARD.UNKNOWN_RARE_EXPENSIVE", "type": "Attack", "rarity": "Rare", "cost": 2},
+                {"id": "CARD.UNKNOWN_RARE_CHEAP", "type": "Attack", "rarity": "Rare", "cost": 1},
+                {"id": "CARD.UNKNOWN_SKILL", "type": "Skill", "rarity": "Rare", "cost": 0},
+            ],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN_COMMON"},
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN_RARE_EXPENSIVE"},
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN_RARE_CHEAP"},
+                {"type": "card_reward", "card_id": "CARD.UNKNOWN_SKILL"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.UNKNOWN_RARE_CHEAP")
 
     def test_reward_keeps_known_card_for_a_large_deck(self) -> None:
         observation = {
@@ -609,6 +627,30 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
 
+    def test_reward_strike_axis_prefers_second_perfected_strike(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.PERFECTED_STRIKE"}, {"id": "CARD.STRIKE_IRONCLAD"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TRUE_GRIT"},
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.RUPTURE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_reward_without_strike_axis_keeps_first_tier_card(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.RUPTURE"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TRUE_GRIT"},
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.RUPTURE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TRUE_GRIT")
+
     def test_reward_switches_core_after_axis_is_owned(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.PERFECTED_STRIKE"}, {"id": "CARD.RUPTURE"}]},
@@ -698,6 +740,71 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.DARK_EMBRACE")
+
+    def test_reward_prefers_defense_when_deck_lacks_block(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
+    def test_reward_keeps_s_tier_offense_when_deck_is_balanced(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 6 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4 + [{"id": "CARD.ANGER"}] * 2},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_reward_defense_does_not_override_core(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_reward_never_takes_relax_when_alternatives_exist(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.RELAX"},
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
+
+    def test_reward_skips_when_only_relax_is_offered(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.RELAX"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+
+    def test_reward_defense_wins_tie_against_self_damage_offense(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLOODLETTING"},
+                {"type": "card_reward", "card_id": "CARD.TRUE_GRIT"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TRUE_GRIT")
 
     def test_card_tiers_include_the_required_axes(self) -> None:
         self.assertEqual(CARD_TIERS["CARD.PERFECTED_STRIKE"], "C")

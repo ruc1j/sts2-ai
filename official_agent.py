@@ -337,10 +337,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     return unknown_manual() if danger else None
 
 
-def _deck_ids(observation: dict) -> set[str]:
+def _deck_list(observation: dict) -> list[str]:
     player = observation.get("player", {})
     deck = observation.get("deck") or observation.get("deck_cards") or player.get("deck") or player.get("deck_cards") or ()
-    return {card if isinstance(card, str) else card.get("id") or card.get("card_id") for card in deck}
+    return [card if isinstance(card, str) else card.get("id") or card.get("card_id") for card in deck]
+
+
+def _deck_ids(observation: dict) -> set[str]:
+    return set(_deck_list(observation))
 
 
 def _axis(deck_ids: set[str]) -> str | None:
@@ -457,10 +461,24 @@ def choose_map(observation: dict) -> dict:
         return min(observation["legal_actions"], key=lambda action: (safety_path((action["col"], action["row"]))[0], -safety_path((action["col"], action["row"]))[1], -value((action["col"], action["row"]))))
 
     return max(observation["legal_actions"], key=lambda action: value((action["col"], action["row"])))
+STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE"}
+
+# Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost
+# block is too awkward for the greedy rollout to use consistently). Never pick these.
+UNPLAYABLE_REWARDS = {"CARD.RELAX"}
+
+DEFENSE_PRIORITY = {
+    "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
+    "CARD.BLOOD_WALL", "CARD.SECOND_WIND", "CARD.STONE_ARMOR",
+    "CARD.IRON_WAVE", "CARD.TRUE_GRIT",
+}
 
 
 def choose_card_reward(observation: dict) -> dict:
-    actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward"]
+    actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward" and action["card_id"] not in UNPLAYABLE_REWARDS]
+    if not actions:
+        # Every offered card is unplayable (e.g. only Relax was shown): take nothing.
+        return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
     deck_ids = _deck_ids(observation)
     core = _core_priority(deck_ids, {action["card_id"] for action in actions})
@@ -469,9 +487,20 @@ def choose_card_reward(observation: dict) -> dict:
         for card_id in UNCOMMITTED_SELF_DAMAGE:
             if card_id in priority:
                 priority[card_id] -= 1
-    selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), priority.get(action["card_id"], 0)))
+    strike_axis = _axis(deck_ids) == "strike"
+    # Keep the deck from becoming all-offense: once block cards are under a third of the deck,
+    # defensive picks (Shrug It Off etc.) outrank same-tier offensive cards so Act 2 fights cost less HP.
+    deck_list = _deck_list(observation)
+    block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck_list)
+    defense_needed = len(deck_list) >= 10 and block_cards * 3 < len(deck_list)
+    selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, 1 if strike_axis and action["card_id"] in STRIKE_TAGGED_REWARDS else 0))
     if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
         return selected
+    cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
+    attacks = [action for action in actions if cards.get(action["card_id"], {}).get("type") == "Attack"]
+    if attacks:
+        rarity = {"Rare": 3, "Uncommon": 2, "Common": 1}
+        return max(attacks, key=lambda action: (rarity.get(cards[action["card_id"]].get("rarity"), 0), -_number(cards[action["card_id"]].get("cost"), 99)))
     return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
 
 
