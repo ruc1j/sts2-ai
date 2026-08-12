@@ -206,15 +206,18 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     def use(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         candidates = [action for action in actions if action["potion_id"] in ids]
         return max(candidates, key=lambda action: target_score.get(action.get("target_id"), 0) if target_score else 0, default=None)
-    fire = next((action for action in actions if action["potion_id"] == "POTION.FIRE_POTION" and action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= 20), None)
-    if fire:
-        return fire
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
+    lucky = use({"POTION.LUCKY_TONIC"})
+    if lucky and hp <= max_hp // 2 and incoming >= max(1, hp // 2):
+        return lucky
+    fire = next((action for action in actions if action["potion_id"] == "POTION.FIRE_POTION" and action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= 20), None)
+    if fire:
+        return fire
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     blocking = {"POTION.BLOCK_POTION", "POTION.FORTIFIER"}
-    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
+    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE", "POTION.LUCKY_TONIC"}
     recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
     debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.SHACKLING_POTION"}
     offensive = {
@@ -222,8 +225,16 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
         "POTION.SKILL_POTION", "POTION.STRENGTH_POTION",
     }
+    known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION"}
+    def unknown_manual() -> dict | None:
+        for action in actions:
+            potion_id = str(action.get("potion_id", "")).upper()
+            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV")):
+                return action
+        return None
+    danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2) or len(enemy_hp) >= 2
     if incoming >= hp:
-        return use({"POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or use(recovery)
+        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION", "POTION.FORTIFIER"}) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     hand = observation.get("hand") or ()
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
@@ -234,16 +245,16 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp)
+        return use(blocking | {"POTION.SHACKLING_POTION", "POTION.LUCKY_TONIC"}) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
-        return use(recovery) or use(offensive, enemy_hp)
+        return use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp)
+        return use(blocking | {"POTION.SHACKLING_POTION", "POTION.LUCKY_TONIC"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
-        return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp)
+        return use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
-        return use({"POTION.SWIFT_POTION"})
-    return None
+        return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+    return unknown_manual() if danger else None
 
 
 def _deck_ids(observation: dict) -> set[str]:
