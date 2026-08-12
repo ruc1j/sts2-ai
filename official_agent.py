@@ -85,6 +85,51 @@ POWER_NAMES = {
     "POWER.SURROUNDED_POWER": "SurroundedPower",
 }
 
+KNOWN_CARD_DAMAGE = {
+    "CARD.STRIKE_IRONCLAD": 6,
+    "CARD.BASH": 8,
+    "CARD.ANGER": 6,
+    "CARD.BLUDGEON": 32,
+    "CARD.DISMANTLE": 8,
+}
+KNOWN_CARD_BLOCK = {
+    "CARD.DEFEND_IRONCLAD": 5,
+    "CARD.SHRUG_IT_OFF": 8,
+}
+
+
+def _number(value: object, default: int = 0) -> int:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
+    card_id = action.get("card_id")
+    card = hand.get(action.get("hand_index"), {})
+    values = []
+    calculated = []
+    for variable in card.get("vars") or ():
+        name = str(variable.get("id", "")).lower()
+        if metric not in name:
+            continue
+        value = _number(variable.get("value"))
+        (calculated if "calculated" in name else values).append(value)
+    if calculated:
+        return max(calculated)
+    if values:
+        return max(values)
+    return (KNOWN_CARD_DAMAGE if metric == "damage" else KNOWN_CARD_BLOCK).get(card_id, 0)
+
+
+def _incoming(observation: dict) -> int:
+    return sum(
+        max(0, _number(intent.get("damage"))) * max(1, _number(intent.get("repeats"), 1))
+        for enemy in observation.get("enemies", ())
+        for intent in enemy.get("intents") or ()
+    )
+
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
     if observation.get("phase") == "shop":
@@ -112,20 +157,22 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             return rollout_choice(observation, actions, enemy_data, simulations)
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
-    enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
-    damage = {"CARD.STRIKE_IRONCLAD": 6, "CARD.BASH": 8}
-    lethal = [action for action in cards if action.get("target_id") in enemy_hp and enemy_hp[action["target_id"]] <= damage.get(action["card_id"], 0)]
+    enemy_by_id = {enemy["combat_id"]: enemy for enemy in observation.get("enemies", ())}
+    hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
+    lethal = [
+        action for action in cards
+        if action.get("target_id") in enemy_by_id
+        and _card_value(action, hand, "damage") - enemy_by_id[action["target_id"]].get("block", 0) >= enemy_by_id[action["target_id"]]["hp"]
+    ]
     if lethal:
         return lethal[0]
-    incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ())
-    defenses = [action for action in cards if action["card_id"] == "CARD.DEFEND_IRONCLAD"]
+    incoming = _incoming(observation)
+    defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
     if observation.get("player", {}).get("block", 0) < incoming and defenses:
-        return defenses[0]
-    hand = {card["index"]: card for card in observation.get("hand", ())}
+        return max(defenses, key=lambda action: _card_value(action, hand, "block"))
     def score(action: dict) -> tuple[int, int]:
         card = hand.get(action.get("hand_index"), {})
-        damage = max((var["value"] for var in card.get("vars", ()) if var["id"] in {"Damage", "CalculatedDamage"}), default=0)
-        return priority.get(action["card_id"], 0), int(damage) if card.get("type") == "Attack" else 0
+        return priority.get(action["card_id"], 0), _card_value(action, hand, "damage") if card.get("type") == "Attack" else 0
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
         return max(cards, key=lambda action: (priority.get(action["card_id"], 3 if hand.get(action.get("hand_index"), {}).get("type") == "Attack" else 1), score(action)[1]))

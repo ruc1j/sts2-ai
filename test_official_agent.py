@@ -317,6 +317,34 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "card")
 
+    def test_fallback_uses_observed_damage_for_unknown_card(self) -> None:
+        observation = {
+            "player": {"block": 0},
+            "hand": [{"index": 0, "type": "Attack", "vars": [{"id": "Damage", "value": 20}]}],
+            "enemies": [{"combat_id": 1, "hp": 20, "block": 0, "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.UNKNOWN_ATTACK", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.UNKNOWN_ATTACK")
+
+    def test_fallback_uses_observed_block_for_unknown_card(self) -> None:
+        observation = {
+            "player": {"block": 0},
+            "hand": [
+                {"index": 0, "type": "Skill", "vars": [{"id": "Block", "value": 10}]},
+                {"index": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 20, "intents": [{"damage": 10, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.UNKNOWN_SKILL", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.UNKNOWN_SKILL")
+
     def test_reward_takes_modeled_bully(self) -> None:
         observation = {
             "legal_actions": [
