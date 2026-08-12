@@ -9,17 +9,18 @@ from dataclasses import dataclass, replace
 
 
 STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "End turn"
-CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting"
+CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING, FEED, DOMINATE = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting", "Feed", "Dominate"
+BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
-CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, BREAKTHROUGH: 1, BLOODLETTING: 0}
+CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2}
 # WHIRLWIND has an X cost and is resolved separately.
-CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9}
+CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9, FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6}
 # Cards that require an enemy target because they deal damage.
-ATTACKS = {STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH, WHIRLWIND}
+ATTACKS = {STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH, WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE}
 # Self-targeting skills and powers that never need a target.
-UNTARGETED = {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING}
+UNTARGETED = {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM}
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1}
-EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE}
+EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE}
 
@@ -95,7 +96,7 @@ def _amount(expression: str, values: dict) -> int:
 
 
 def _specs(data: dict) -> dict[str, dict]:
-    return {monster["id"]: monster for monster in data["monsters"]}
+    return {monster["id"]: monster for monster in data.get("monsters", [])}
 
 
 def _state(spec: dict, state_id: str) -> dict:
@@ -241,12 +242,20 @@ def _enemy_attack_damage(enemy: Enemy, data: dict) -> int:
 def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
     if _power(enemy.powers, "SlipperyPower"):
         return replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1))
+    # Flutter (e.g. Thieving Hopper) halves powered-attack damage and wears off per unblocked hit.
+    flutter = _power(enemy.powers, "FlutterPower")
+    if flutter:
+        damage //= 2
     # HardToKill caps every hit at the power amount (Exoskeleton takes at most 9 per attack).
     cap = _power(enemy.powers, "HardToKillPower")
     if cap > 0:
         damage = min(damage, cap)
     blocked = min(enemy.block, damage)
-    return replace(enemy, block=enemy.block - blocked, hp=enemy.hp - damage + blocked)
+    unblocked = damage - blocked
+    powers = enemy.powers
+    if flutter and unblocked > 0:
+        powers = _add_power(powers, "FlutterPower", -1)
+    return replace(enemy, block=enemy.block - blocked, hp=enemy.hp - unblocked, powers=powers)
 
 
 def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> Combat:
@@ -279,14 +288,23 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 player_block -= blocked
                 player_hp -= damage - blocked
         elif command == "PowerCmd.Apply":
-            amount = _amount(effect["amount"], values)
+            try:
+                amount = _amount(effect["amount"], values)
+            except (ValueError, KeyError):
+                # Unmodeled interactions (e.g. Thieving Hopper's swipe that steals a card)
+                # carry no numeric amount; skip them, they do not change HP.
+                continue
             if effect["target"] == "base.Creature":
                 enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
             elif effect["target"] == "targets":
                 player_powers = _add_power(player_powers, effect["model"], amount)
             elif "TeammatesOf" in effect["target"]:
+                # GetTeammatesOf = GetCreaturesOnSide(side): every creature on the same side,
+                # including the caster (e.g. Obscura's SAIL buffs itself as well as its minions).
                 for mate_index, mate in enumerate(enemies):
-                    if mate_index != index and mate.alive:
+                    if mate_index == index:
+                        enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
+                    elif mate.alive:
                         enemies[mate_index] = replace(mate, powers=_add_power(mate.powers, effect["model"], amount))
         elif command == "PowerCmd.Remove" and effect.get("target") == "base.Creature":
             enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], -_power(enemy.powers, effect["model"])))
@@ -298,7 +316,12 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             enemy = replace(enemy, escaped=True)
         elif command.startswith("CardPileCmd."):
             card = effect.get("model", "Status")
-            count = _amount(effect["arguments"][-2], values) if len(effect["arguments"]) > 2 else 1
+            try:
+                count = _amount(effect["arguments"][-2], values) if len(effect["arguments"]) > 2 else 1
+            except (ValueError, KeyError):
+                # Generated-card pile effects (e.g. Insatiable's Liquify, Soul Fysh's Beckon) carry
+                # no numeric amount; skip them - their combat impact is modeled separately.
+                continue
             discard += (card,) * count
         elif command == "CreatureCmd.Add":
             enemies.append(_summon(effect["model"], data, rng))
@@ -362,10 +385,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     exhaust_before = combat.exhaust_pile
     exhaust_pile = exhaust_before + ((card,) if exhaust else ())
     combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (card,)), exhaust_pile=exhaust_pile, energy=energy, player_hp=player_hp, player_powers=player_powers)
-    if card in {DEFEND, IRON_WAVE}:
-        block = 5 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 5
+    if card in {DEFEND, IRON_WAVE, EQUILIBRIUM}:
+        base = 13 if card == EQUILIBRIUM else 5
+        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
         combat = replace(combat, player_block=combat.player_block + block)
-    if card == DEFEND:
+    if card in {DEFEND, EQUILIBRIUM}:
         return combat
     if card == RELAX:
         block = 15 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 15
@@ -387,6 +411,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         enemy = enemies[int(target)]
         enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 3))
         return replace(combat, enemies=tuple(enemies))
+    if card == DOMINATE:
+        # Apply 1 Vulnerable, then gain Strength equal to the target's (post-apply) Vulnerable.
+        enemy = enemies[int(target)]
+        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 1))
+        gained = _power(enemies[int(target)].powers, "VulnerablePower")
+        return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     enemy = enemies[int(target)]
     if card == PERFECTED_STRIKE:
         strikes = sum(1 for name in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile if name in STRIKE_TAGGED)
@@ -415,6 +445,18 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", 2))
     if card == ANGER:
         combat = replace(combat, discard_pile=combat.discard_pile + (ANGER,))
+    if card == PILLAGE:
+        # Draw until a non-Attack card comes up (Pillage's do/while); each drawn card stays in hand.
+        drawn_hand = list(combat.hand)
+        draw_pile, discard_pile = combat.draw_pile, combat.discard_pile
+        while True:
+            if not (draw_pile or discard_pile):
+                break
+            one, draw_pile, discard_pile = _draw(draw_pile, discard_pile, 1, rng)
+            drawn_hand += one
+            if not one or one[0] not in ATTACKS:
+                break
+        combat = replace(combat, hand=tuple(drawn_hand), draw_pile=draw_pile, discard_pile=discard_pile)
     if enemy.alive and not enemies[int(target)].alive:
         for index, partner in enumerate(enemies):
             if partner.alive and _power(partner.powers, "CrabRagePower"):
@@ -426,18 +468,24 @@ def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     """Score a single step: prevented damage + damage dealt - self-damage + effective block."""
     incoming = sum(_enemy_attack_damage(enemy, data) for enemy in combat.enemies if enemy.alive)
     exposed = max(0, incoming - combat.player_block)
-    prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive)
+    prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive and not after.escaped)
     # Killing the primary enemy (the boss) wins the fight; credit its remaining HP so a
     # boss kill outranks killing a reviving minion.
-    prevented += sum(max(0, before.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and before.primary and not after.alive)
+    prevented += sum(max(0, before.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and before.primary and not after.alive and not after.escaped)
     # Cap damage at each enemy's remaining HP so overkill is not overvalued.
-    dealt = sum(max(0, before.hp) - max(0, after.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive)
+    dealt = sum(max(0, before.hp) - max(0, after.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.escaped)
     dealt -= max(0, combat.player_hp - state.player_hp)  # penalize self-damage
     # Stripping Slippery enables full damage on later hits; credit each strip so the
     # policy keeps attacking Slippery bosses (e.g. VANTOM) instead of only blocking.
     dealt += sum(max(0, _power(before.powers, "SlipperyPower") - _power(after.powers, "SlipperyPower")) for before, after in zip(combat.enemies, state.enemies) if before.alive)
     blocked = state.player_block - combat.player_block
-    return prevented + dealt + min(blocked, exposed)
+    # Sandpit upkeep (The Insatiable): sand drops by 1 every enemy turn and hitting 1 sinks the
+    # player instantly, so Frantic Escape is worth an incoming hit when the pit is about to give
+    # out (sand <= 3), but a no-op when sand is plentiful - attacking then would waste damage.
+    sandpit_before = max((_power(enemy.powers, "SandpitPower") for enemy in combat.enemies if enemy.alive), default=0)
+    sandpit_after = max((_power(enemy.powers, "SandpitPower") for enemy in state.enemies if enemy.alive), default=0)
+    upkeep = (sandpit_after - sandpit_before) * 15 if 0 < sandpit_after <= 3 else 0
+    return prevented + dealt + min(blocked, exposed) + upkeep
 
 
 def _greedy_action(combat: Combat, data: dict) -> str:
@@ -470,12 +518,13 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
         for _ in range(max(1, simulations // len(legal_actions(combat)))):
             state = step(combat, action, data, rng)
             # Credit prevented damage: enemies dead after the first step were about to hit us.
-            prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive)
+            prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive and not after.escaped)
             for _ in range(60):
                 if state.terminal:
                     break
                 state = step(state, _greedy_action(state, data), data, rng)
-            won = not any(enemy.alive for enemy in state.enemies)
+            # An enemy that fled (e.g. Thieving Hopper) ends the fight but is NOT a win.
+            won = not any(enemy.alive for enemy in state.enemies) and not any(enemy.escaped for enemy in state.enemies)
             # Win/loss dominates; HP and prevented damage break ties so noisy rollouts still rank correctly.
             scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + state.player_hp / 100 + prevented / 100)
         results.append((action, sum(scores) / len(scores)))
