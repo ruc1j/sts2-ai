@@ -18,6 +18,7 @@ MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Y
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
 RUPTURE = "Rupture"
 SECOND_WIND = "Second Wind"
+ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
 # Status cards some monster moves add straight to PileType.Hand (Myte's Toxic, Mecha Knight's
 # Burn): CardModel.HasTurnEndInHandEffect deals this much flat Unpowered damage if the card is
@@ -31,7 +32,7 @@ CARD_COST = {
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
-    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, SECOND_WIND: 1,
+    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -58,16 +59,16 @@ ATTACKS = {
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
-    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, SECOND_WIND,
+    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, SECOND_WIND, ENLIGHTENMENT,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT,
-    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND,
+    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1, OFFERING: 6}
-EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND}
+EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE}
 
@@ -126,6 +127,9 @@ class Combat:
     # Every card play, any type - drives SlowPower's damage-taken ramp (Bygone Effigy). Also
     # reset at the start of every player turn.
     cards_played_this_turn: int = 0
+    # Enlightenment.OnPlay: caps every hand card's cost at 1 for the rest of this turn (reduceOnly
+    # - never raises a cheaper card). Reset alongside the other per-turn counters.
+    enlightened_this_turn: bool = False
     # Whole-combat cumulative counters (Nunchaku/Tuning Fork) - never reset until the fight ends.
     attacks_played_combat: int = 0
     skills_played_combat: int = 0
@@ -648,7 +652,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(
             combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
-            attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0, damaged_this_turn=False,
+            attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0, damaged_this_turn=False, enlightened_this_turn=False,
         )
 
     card, _, target = action.partition("@")
@@ -722,7 +726,14 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 2, rng)
         hand = hand + list(drawn)
         combat = replace(combat, draw_pile=draw, discard_pile=discard)
-    spent = combat.energy if card == WHIRLWIND else CARD_COST[card]
+    # Enlightenment.OnPlay (reduceOnly): once played, every card costs at most 1 for the rest of
+    # the turn. WHIRLWIND's X cost is exempt - it isn't a fixed cost to reduce.
+    if card == WHIRLWIND:
+        spent = combat.energy
+    elif combat.enlightened_this_turn:
+        spent = min(CARD_COST[card], 1)
+    else:
+        spent = CARD_COST[card]
     whirlwind_damage = 5 * combat.energy if card == WHIRLWIND else 0
     energy = combat.energy - spent + (2 if card in {BLOODLETTING, BELIEVE_IN_YOU, PRODUCTION, OFFERING} else 0)
     player_hp = combat.player_hp - SELF_DAMAGE.get(card, 0)
@@ -749,7 +760,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     exhaust = card in EXHAUSTS
     exhaust_before = combat.exhaust_pile
     exhaust_pile = exhaust_before + ((card,) if exhaust else ())
-    combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (card,)), exhaust_pile=exhaust_pile, energy=energy, player_hp=player_hp, player_powers=player_powers)
+    enlightened = combat.enlightened_this_turn or card == ENLIGHTENMENT
+    combat = replace(
+        combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (card,)), exhaust_pile=exhaust_pile,
+        energy=energy, player_hp=player_hp, player_powers=player_powers, enlightened_this_turn=enlightened,
+    )
     if card in CARD_BLOCK:
         base = CARD_BLOCK[card]
         block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
@@ -766,7 +781,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         remaining = tuple(name for name in combat.hand if name in ATTACKS)
         block = 5 * len(non_attacks)
         return replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks, player_block=combat.player_block + block)
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE}:
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:

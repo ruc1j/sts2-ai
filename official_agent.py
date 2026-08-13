@@ -69,6 +69,7 @@ CARD_NAMES = {
     "CARD.FINESSE": "Finesse",
     "CARD.RUPTURE": "Rupture",
     "CARD.SECOND_WIND": "Second Wind",
+    "CARD.ENLIGHTENMENT": "Enlightenment",
 }
 
 CARD_TIERS = {
