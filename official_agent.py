@@ -250,6 +250,26 @@ RELIC_SCORES = {
     "RELIC.BIIIG_HUG": 4,  # removes cards
 }
 
+# Only buy shop relics whose value is known for this agent's modeled Ironclad effects. Unknown
+# relics stay out of the shop policy until their effect is implemented and evaluated.
+SHOP_RELIC_SCORES = {
+    "RELIC.CLOAK_CLASP": 9,
+    "RELIC.KUNAI": 8,
+    "RELIC.SHURIKEN": 8,
+    "RELIC.CENTENNIAL_PUZZLE": 8,
+    "RELIC.ART_OF_WAR": 7,
+    "RELIC.CAPTAINS_WHEEL": 7,
+    "RELIC.HORN_CLEAT": 7,
+    "RELIC.MERCURY_HOURGLASS": 7,
+    "RELIC.HAPPY_FLOWER": 7,
+    "RELIC.ORNAMENTAL_FAN": 6,
+    "RELIC.KUSARIGAMA": 6,
+    "RELIC.SCREAMING_FLAGON": 6,
+    "RELIC.SPARKLING_ROUGE": 6,
+    "RELIC.DEMON_TONGUE": 6,
+    "RELIC.PENDULUM": 6,
+}
+
 
 def choose_event(observation: dict) -> dict:
     actions = [action for action in observation.get("legal_actions", ()) if action.get("type") == "event_relic"]
@@ -519,11 +539,39 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
 def choose_shop(observation: dict) -> dict:
     actions = observation.get("legal_actions", ())
     deck_ids = _deck_ids(observation)
+    deck_list = _deck_list(observation)
     buys = [action for action in actions if action.get("type") == "buy_card"]
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
-    required = [action for action in buys if (action.get("card_id") or action.get("id")) in core]
-    if required:
-        return max(required, key=lambda action: core[(action.get("card_id") or action.get("id"))])
+    tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
+
+    def card_key(action: dict) -> tuple[int, int, int, int]:
+        card_id = action.get("card_id") or action.get("id")
+        if card_id in core:
+            return (4, core[card_id], tier_score.get(CARD_TIERS.get(card_id, "D"), 0), 0)
+        tier = CARD_TIERS.get(card_id)
+        if tier not in {"S", "A"}:
+            return (0, 0, 0, 0)
+        # A strong block is more valuable when the deck still lacks a real Act 2 answer.
+        defense_bonus = 1 if _block_starved(deck_list) and card_id in STRONG_BLOCK_CARDS else 0
+        return (2, tier_score[tier], defense_bonus, 0)
+
+    # A high-value known relic beats a non-core card, but an axis-defining card still wins.
+    relics = [action for action in actions if action.get("type") == "buy_relic"]
+    best_relic = max(
+        relics,
+        key=lambda action: SHOP_RELIC_SCORES.get(action.get("relic_id") or action.get("id"), -1),
+        default=None,
+    )
+    relic_score = SHOP_RELIC_SCORES.get(
+        (best_relic or {}).get("relic_id") or (best_relic or {}).get("id"), -1
+    )
+    best_card = max(buys, key=card_key, default=None)
+    if best_card and card_key(best_card)[0] == 4:
+        return best_card
+    if best_relic is not None and relic_score >= 6:
+        return best_relic
+    if best_card and card_key(best_card)[0] == 2:
+        return best_card
     removals = [action for action in actions if action.get("type") == "remove"]
     remove_id = "CARD.DEFEND_IRONCLAD" if "CARD.PERFECTED_STRIKE" in deck_ids else "CARD.STRIKE_IRONCLAD"
     preferred = next((action for action in removals if (action.get("card_id") or action.get("id")) == remove_id), None)

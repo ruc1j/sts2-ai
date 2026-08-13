@@ -42,6 +42,26 @@ class ShopPolicyTest(unittest.TestCase):
         )
         self.assertEqual(choose_shop(observation)["type"], "skip")
 
+    def test_buys_known_relic_over_non_core_card(self):
+        relic = {"type": "buy_relic", "relic_index": 0, "slot_index": 3, "relic_id": "RELIC.KUNAI"}
+        observation = shop_observation(
+            deck=["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            cards=[{"index": 0, "slot_index": 1, "id": "CARD.BATTLE_TRANCE", "type": "Skill", "rarity": "Uncommon", "cost": 75, "affordable": True}],
+            relics=[{"index": 0, "slot_index": 3, "id": "RELIC.KUNAI", "cost": 150, "affordable": True}],
+            legal_actions=[{"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.BATTLE_TRANCE"}, relic, {"type": "skip"}],
+        )
+        self.assertEqual(choose_shop(observation), relic)
+
+    def test_buys_premium_card_when_no_known_relic(self):
+        card = {"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.BATTLE_TRANCE"}
+        observation = shop_observation(
+            deck=["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            cards=[{"index": 0, "slot_index": 1, "id": "CARD.BATTLE_TRANCE", "type": "Skill", "rarity": "Uncommon", "cost": 75, "affordable": True}],
+            relics=[{"index": 0, "slot_index": 3, "id": "RELIC.UNKNOWN", "cost": 100, "affordable": True}],
+            legal_actions=[card, {"type": "buy_relic", "relic_index": 0, "slot_index": 3, "relic_id": "RELIC.UNKNOWN"}, {"type": "skip"}],
+        )
+        self.assertEqual(choose_shop(observation), card)
+
     def test_removal_does_not_delete_strikes_in_strike_axis(self):
         remove_defend = {"type": "remove", "slot_index": 7, "card_index": 2, "card_id": "CARD.DEFEND_IRONCLAD"}
         observation = shop_observation(
