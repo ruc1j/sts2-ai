@@ -751,6 +751,28 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 7)
 
+    def test_uses_defensive_potion_before_crab_facing_when_incoming_is_dangerous(self) -> None:
+        observation = {
+            "player": {
+                "hp": 60,
+                "max_hp": 80,
+                "powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}],
+            },
+            "hand": [{"index": 0, "type": "Attack"}],
+            "enemies": [{
+                "combat_id": 7,
+                "hp": 120,
+                "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}],
+                "intents": [{"damage": 35, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 7},
+                {"type": "potion", "potion_id": "POTION.BLOCK_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.BLOCK_POTION")
+
     def test_unknown_card_does_not_crash_fallback(self) -> None:
         observation = {
             "player": {"block": 0},

@@ -413,10 +413,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     if sandpit_critical and escape:
         return escape
-    if turn := choose_crab_facing(observation, cards):
-        return turn
     if potion := choose_potion(observation, potions):
         return potion
+    if turn := choose_crab_facing(observation, cards):
+        return turn
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
