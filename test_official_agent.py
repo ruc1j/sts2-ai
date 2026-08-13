@@ -1,5 +1,6 @@
 import json
 import unittest
+from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, POWER_NAMES, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 
@@ -885,6 +886,24 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_rollout_cannot_override_low_hp_self_damage_guard(self) -> None:
+        observation = {
+            "player": {"hp": 28, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.BLOODLETTING", "type": "Skill", "vars": [{"id": "Damage", "value": 3}]},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 50, "intents": [{"damage": 12, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.DEFEND_IRONCLAD")
 
     def test_lethal_self_damage_remains_allowed_to_finish_enemy(self) -> None:
         observation = {

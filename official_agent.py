@@ -417,13 +417,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return potion
     if turn := choose_crab_facing(observation, cards):
         return turn
-    # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
-    # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
-    if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
-        try:
-            return rollout_choice(observation, actions, enemy_data, simulations)
-        except (KeyError, ValueError, NotImplementedError, StopIteration):
-            pass
     enemy_by_id = {enemy["combat_id"]: enemy for enemy in observation.get("enemies", ())}
     hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
     enemy_incoming = {enemy["combat_id"]: _intent_incoming(enemy) for enemy in observation.get("enemies", ())}
@@ -440,10 +433,29 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         caps = [_number(power.get("amount")) for power in enemy.get("powers", ()) if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]
         return min(value, max(caps)) if caps else value
 
+    def is_lethal(action: dict) -> bool:
+        enemy = enemy_by_id.get(action.get("target_id"))
+        return bool(enemy and damage(action) - enemy.get("block", 0) >= enemy["hp"])
+
+    # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
+    # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
+    if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
+        try:
+            selected = rollout_choice(observation, actions, enemy_data, simulations)
+            player = observation.get("player", {})
+            hp, max_hp = player.get("hp", 0), player.get("max_hp", player.get("hp", 0))
+            incoming = sum(enemy_incoming.values())
+            # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
+            # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
+            # dangerous; that is not a safe real-game choice unless it kills the target now.
+            if not (_is_self_damage(selected, hand) and (hp <= max_hp // 2 or incoming > 0) and not is_lethal(selected)):
+                return selected
+        except (KeyError, ValueError, NotImplementedError, StopIteration):
+            pass
+
     lethal = [
         action for action in cards
-        if action.get("target_id") in enemy_by_id
-        and damage(action) - enemy_by_id[action["target_id"]].get("block", 0) >= enemy_by_id[action["target_id"]]["hp"]
+        if is_lethal(action)
     ]
     if lethal:
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
