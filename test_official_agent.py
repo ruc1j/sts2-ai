@@ -11,6 +11,9 @@ class OfficialAgentTest(unittest.TestCase):
     def test_maps_ceremonial_beast_ringing_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.RINGING_POWER"], "RingingPower")
 
+    def test_maps_insatiable_sandpit_power_for_rollouts(self) -> None:
+        self.assertEqual(POWER_NAMES["POWER.SANDPIT_POWER"], "SandpitPower")
+
     def test_prefers_bash(self) -> None:
         actions = [
             {"type": "end_turn"},
