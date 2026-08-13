@@ -948,6 +948,10 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             move=observed["move"],
             values=tuple(sorted(spec["values"].items())),
             slot=observed["slot"] or "",
+            primary=not any(
+                power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0
+                for power in observed.get("powers", ())
+            ),
             block=observed["block"],
             powers=tuple(sorted((POWER_NAMES.get(power["id"], power["id"]), power["amount"]) for power in observed["powers"])),
             history=tuple(observed["history"] or ()),

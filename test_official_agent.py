@@ -1492,6 +1492,37 @@ class OfficialAgentTest(unittest.TestCase):
         action = rollout_choice(observation, observation["legal_actions"], data, 200)
         self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
 
+    def test_rollout_marks_minion_enemies_secondary(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "minion"},
+                {"combat_id": 2, "id": "MONSTER.DUMMY", "hp": 20, "block": 0, "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss"},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["combat"] = state
+            return [("End turn", 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertFalse(captured["combat"].enemies[0].primary)
+        self.assertTrue(captured["combat"].enemies[1].primary)
+
     def test_rollout_sanitizes_a_synthetic_bridge_reported_move(self) -> None:
         # IllusionPower.AfterDeath (Parafright) SetMoveImmediate()s a "REVIVE_MOVE" built at
         # runtime that never appears in the exported state machine JSON. If the bridge polls the
