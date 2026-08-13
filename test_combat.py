@@ -25,6 +25,12 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, self.data, random.Random(0))
         self.assertEqual(after.turn, 2)
 
+    def test_end_turn_restores_max_energy_not_hardcoded_three(self) -> None:
+        combat = initial_combat(self.data, "ENCOUNTER.SLIMES_WEAK", random.Random(0))
+        combat = replace(combat, energy=1, max_energy=4)
+        after = step(combat, END_TURN, self.data, random.Random(0))
+        self.assertEqual(after.energy, 4)
+
     def test_anger_adds_copy_to_discard(self) -> None:
         combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
         after = step(combat, "Anger@0", {}, random.Random(0))

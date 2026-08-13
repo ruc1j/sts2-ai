@@ -773,6 +773,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         player_block=observation["player"]["block"],
         player_powers=tuple(sorted(((f"Surrounded{power['facing']}" if power["id"] == "POWER.SURROUNDED_POWER" and power.get("facing") else POWER_NAMES.get(power["id"], power["id"])), power["amount"]) for power in observation["player"]["powers"])),
         energy=observation["player"]["energy"],
+        max_energy=observation["player"].get("max_energy", 3),
         turn=observation["turn"],
         exhaust_pile=tuple(CARD_NAMES.get(card, card) for card in observation.get("exhaust_pile", ())),
     )

@@ -98,6 +98,7 @@ class Combat:
     player_block: int = 0
     player_powers: tuple[tuple[str, int], ...] = ()
     energy: int = 3
+    max_energy: int = 3
     turn: int = 1
     exhaust_pile: tuple[str, ...] = ()
     played_this_turn: bool = False
@@ -537,7 +538,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = combat.player_powers
         player_powers = _add_power(player_powers, "TaintedPower", -_power(player_powers, "TaintedPower"))
         player_powers = _add_power(player_powers, "FlameBarrierPower", -_power(player_powers, "FlameBarrierPower"))
-        return replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=0, energy=3, turn=combat.turn + 1, player_powers=player_powers)
+        return replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=0, energy=combat.max_energy, turn=combat.turn + 1, player_powers=player_powers)
 
     card, _, target = action.partition("@")
     hand = list(combat.hand)
