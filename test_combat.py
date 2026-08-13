@@ -6,7 +6,7 @@ from dataclasses import replace
 from combat import (
     ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BREAK, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
-    IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
+    IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
@@ -461,6 +461,22 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, data, random.Random(0))
         self.assertEqual(combat.player_hp, 80 - 2 * 5 - 13)  # 2x Toxic (5 each) + Myte's next BiteMove (13)
         self.assertEqual(combat.hand.count(TOXIC), 0)  # discarded at turn end, not redrawn out of a real deck
+
+    def test_wriggler_wriggle_move_adds_infection_to_discard_pile(self) -> None:
+        with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.WRIGGLER", 20, "WRIGGLE_MOVE", ())
+        combat = step(Combat(80, (), STARTING_DECK, (), (enemy,)), END_TURN, data, random.Random(0))
+        self.assertEqual(combat.discard_pile.count(INFECTION), 1)  # CardPileCmd.AddToCombatAndPreview -> PileType.Discard
+        self.assertEqual(_power(combat.enemies[0].powers, "StrengthPower"), 2)  # WriggleMove's own StrengthPower buff
+
+    def test_infection_card_deals_damage_only_once_drawn_into_hand_at_turn_end(self) -> None:
+        # draw_pile padded with Strikes so the post-end-turn redraw doesn't need to reshuffle the
+        # just-discarded Infection straight back into hand, keeping this turn's effect isolated.
+        combat = Combat(80, (INFECTION,), (STRIKE,) * 10, (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),))
+        combat = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
+        self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
 
     def test_decimillipede_last_segment_stays_dead_and_ends_combat(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:

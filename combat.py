@@ -13,17 +13,18 @@ CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRE
 BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
 BREAK, HOWL_FROM_BEYOND, IMPERVIOUS, RAMPAGE, TAUNT, THUNDERCLAP = "Break", "Howl From Beyond", "Impervious", "Rampage", "Taunt", "Thunderclap"
 BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, ULTIMATE_STRIKE = "Bolas", "Dramatic Entrance", "Fisticuffs", "Lift", "Thrumming Hatchet", "Ultimate Defend", "Ultimate Strike"
-TOXIC, BURN, DAZED, FLAME_BARRIER = "Toxic", "Burn", "Dazed", "Flame Barrier"
+TOXIC, BURN, DAZED, FLAME_BARRIER, INFECTION = "Toxic", "Burn", "Dazed", "Flame Barrier", "Infection"
 MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Yet", "Offering", "Pacts End", "Pommel Strike"
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
 RUPTURE = "Rupture"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
-# Status cards some monster moves add straight to PileType.Hand (Myte's Toxic, Mecha Knight's
-# Burn): CardModel.HasTurnEndInHandEffect deals this much flat Unpowered damage if the card is
-# still in hand when the player ends their turn (see step()'s END_TURN handling).
-HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2}
+# Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
+# the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
+# Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
+# PileType.Discard by Wriggler's WRIGGLE_MOVE and only bites once it's drawn into a later hand.
+HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1,
