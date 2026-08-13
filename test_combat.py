@@ -142,6 +142,21 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.player_hp, 78)
 
+    def test_slow_power_ramps_damage_with_cards_played_this_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("SlowPower", 1),))
+        combat = Combat(80, (DEFEND, DEFEND, CINDER), (), (), (enemy,), energy=5)
+        combat = step(combat, DEFEND, {}, random.Random(0))
+        combat = step(combat, DEFEND, {}, random.Random(0))
+        # Two cards already played this turn: 18 base damage * (10 + 2) / 10 = 21.
+        combat = step(combat, "Cinder@0", {}, random.Random(0))
+        self.assertEqual(combat.enemies[0].hp, 100 - 21)
+
+    def test_slow_power_does_not_boost_the_first_card_of_the_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("SlowPower", 1),))
+        combat = Combat(80, (CINDER,), (), (), (enemy,))
+        combat = step(combat, "Cinder@0", {}, random.Random(0))
+        self.assertEqual(combat.enemies[0].hp, 100 - 18)
+
     def test_anger_adds_copy_to_discard(self) -> None:
         combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
         after = step(combat, "Anger@0", {}, random.Random(0))

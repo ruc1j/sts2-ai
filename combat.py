@@ -121,6 +121,9 @@ class Combat:
     # to 0 at the start of every player turn, unlike the *_combat counters below.
     attacks_played_this_turn: int = 0
     skills_played_this_turn: int = 0
+    # Every card play, any type - drives SlowPower's damage-taken ramp (Bygone Effigy). Also
+    # reset at the start of every player turn.
+    cards_played_this_turn: int = 0
     # Whole-combat cumulative counters (Nunchaku/Tuning Fork) - never reset until the fight ends.
     attacks_played_combat: int = 0
     skills_played_combat: int = 0
@@ -634,7 +637,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(
             combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
-            attacks_played_this_turn=0, skills_played_this_turn=0, damaged_this_turn=False,
+            attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0, damaged_this_turn=False,
         )
 
     card, _, target = action.partition("@")
@@ -656,6 +659,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     skills_this_turn = combat.skills_played_this_turn + (1 if card in SKILLS else 0)
     attacks_combat = combat.attacks_played_combat + (1 if card in ATTACKS else 0)
     skills_combat = combat.skills_played_combat + (1 if card in SKILLS else 0)
+    cards_this_turn = combat.cards_played_this_turn + 1
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
     if card in ATTACKS:
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
@@ -680,7 +684,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat, played_this_turn=True, player_powers=combo_powers, enemies=tuple(combo_enemies),
         player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
         attacks_played_this_turn=attacks_this_turn, skills_played_this_turn=skills_this_turn,
-        attacks_played_combat=attacks_combat, skills_played_combat=skills_combat,
+        attacks_played_combat=attacks_combat, skills_played_combat=skills_combat, cards_played_this_turn=cards_this_turn,
     )
     if card == BATTLE_TRANCE:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 3, rng)
@@ -755,6 +759,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if not enemy.alive:
                 continue
             scaled = damage * 3 // 2 if _power(enemy.powers, "VulnerablePower") else damage
+            # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage
+            # taken per card played earlier this turn (combat.cards_played_this_turn already
+            # counts the card resolving right now, hence the -1).
+            if _power(enemy.powers, "SlowPower"):
+                scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[index] = _damage_enemy(enemy, scaled)
         if card == THUNDERCLAP:
             for index, enemy in enumerate(enemies):
@@ -810,6 +819,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = damage * 7 // 10
     if _power(enemy.powers, "VulnerablePower"):
         damage = damage * 3 // 2
+    # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage taken per
+    # card played earlier this turn (combat.cards_played_this_turn already counts the card
+    # resolving right now, hence the -1).
+    if _power(enemy.powers, "SlowPower"):
+        damage = damage * (10 + combat.cards_played_this_turn - 1) // 10
     enemies[int(target)] = _damage_enemy(enemy, damage)
     if card == MOLTEN_FIST and enemies[int(target)].alive:
         vulnerable = _power(enemy.powers, "VulnerablePower")
