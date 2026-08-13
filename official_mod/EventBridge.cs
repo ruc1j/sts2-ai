@@ -37,6 +37,13 @@ internal static class EventRoomHandlerPatch
             AgentIo.Trace(new { phase = "event", event_id = egg.Event.Id.Entry, option = "TAKE_BYRDONIS_EGG" });
             await UiHelper.Click(egg);
         }
+        var tablet = UiHelper.FindAll<NEventOptionButton>(room).FirstOrDefault(button =>
+            button.Event.Id.Entry == "TABLET_OF_TRUTH" && button.Option.TextKey.EndsWith(".SMASH") && !button.Option.IsLocked);
+        if (tablet is not null)
+        {
+            AgentIo.Trace(new { phase = "event", event_id = tablet.Event.Id.Entry, option = "SMASH" });
+            await UiHelper.Click(tablet);
+        }
         await DelegateRelicChoices(room, ct);
         _bypass = true;
         try
