@@ -626,7 +626,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # Effigy that don't attack on an early turn). Only spend it once an attack is actually
         # incoming this decision, so the -7 lands on a turn that would otherwise deal damage.
         shackling = use({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
-        return shackling or use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION", "POTION.COLORLESS_POTION", "POTION.ATTACK_POTION", "POTION.SKILL_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        return shackling or use(offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None
