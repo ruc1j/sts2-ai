@@ -4,10 +4,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Sts2Ai</AssemblyName>
+    <!-- Sts2GameDir must point at the folder that directly contains this subfolder
+         (on macOS that's inside the .app bundle's Contents/Resources, not $GameDir itself).
+         Only arm64 macOS is autodetected; pass -p:Sts2DataDir=data_sts2_macos_x86_64 for Intel Macs. -->
+    <Sts2DataDir Condition="'$(Sts2DataDir)' == '' AND '$(OS)' == 'Windows_NT'">data_sts2_windows_x86_64</Sts2DataDir>
+    <Sts2DataDir Condition="'$(Sts2DataDir)' == '' AND '$(OS)' != 'Windows_NT'">data_sts2_macos_arm64</Sts2DataDir>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="sts2" HintPath="$(Sts2GameDir)\data_sts2_windows_x86_64\sts2.dll" Private="false" />
-    <Reference Include="0Harmony" HintPath="$(Sts2GameDir)\data_sts2_windows_x86_64\0Harmony.dll" Private="false" />
-    <Reference Include="GodotSharp" HintPath="$(Sts2GameDir)\data_sts2_windows_x86_64\GodotSharp.dll" Private="false" />
+    <Reference Include="sts2" HintPath="$(Sts2GameDir)/$(Sts2DataDir)/sts2.dll" Private="false" />
+    <Reference Include="0Harmony" HintPath="$(Sts2GameDir)/$(Sts2DataDir)/0Harmony.dll" Private="false" />
+    <Reference Include="GodotSharp" HintPath="$(Sts2GameDir)/$(Sts2DataDir)/GodotSharp.dll" Private="false" />
   </ItemGroup>
 </Project>
