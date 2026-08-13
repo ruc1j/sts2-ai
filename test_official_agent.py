@@ -22,6 +22,10 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(POWER_NAMES["POWER.FEEL_NO_PAIN_POWER"], "FeelNoPainPower")
         self.assertTrue({"CARD.STONE_ARMOR", "CARD.FEEL_NO_PAIN"} <= set(CARD_NAMES))
 
+    def test_maps_knowledge_demon_powers_for_rollouts(self) -> None:
+        self.assertEqual(POWER_NAMES["POWER.DISINTEGRATION_POWER"], "DisintegrationPower")
+        self.assertEqual(POWER_NAMES["POWER.MIND_ROT_POWER"], "MindRotPower")
+
     def test_prefers_bash(self) -> None:
         actions = [
             {"type": "end_turn"},

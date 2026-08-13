@@ -48,6 +48,13 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, self.data, random.Random(0))
         self.assertEqual(after.energy, 4)
 
+    def test_knowledge_demon_powers_are_applied_to_rollouts(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ())
+        combat = Combat(20, (), (STRIKE,) * 5, (), (enemy,), player_powers=(("DisintegrationPower", 5), ("MindRotPower", 1)))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 15)
+        self.assertEqual(len(after.hand), 4)
+
     def test_kunai_grants_dexterity_every_third_attack_this_turn(self) -> None:
         combat = Combat(80, (STRIKE, STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_KUNAI,))
         for _ in range(3):

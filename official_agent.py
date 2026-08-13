@@ -74,6 +74,8 @@ CARD_NAMES = {
     "CARD.RUPTURE": "Rupture",
     "CARD.SECOND_WIND": "Second Wind",
     "CARD.ENLIGHTENMENT": "Enlightenment",
+    "CARD.DISINTEGRATION": "Disintegration",
+    "CARD.MIND_ROT": "Mind Rot",
 }
 
 CARD_TIERS = {
@@ -157,6 +159,8 @@ POWER_NAMES = {
     "POWER.REPTILE_TRINKET_POWER": "ReptileTrinketPower",
     "POWER.PLATING_POWER": "PlatingPower",
     "POWER.FEEL_NO_PAIN_POWER": "FeelNoPainPower",
+    "POWER.DISINTEGRATION_POWER": "DisintegrationPower",
+    "POWER.MIND_ROT_POWER": "MindRotPower",
 }
 
 KNOWN_CARD_DAMAGE = {

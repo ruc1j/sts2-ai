@@ -787,6 +787,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         if plating:
             combat = replace(combat, player_block=combat.player_block + plating)
         combat = _apply_player_damage(combat, hand_damage)
+        # Knowledge Demon's DisintegrationPower deals flat damage at the end of the player's
+        # turn; the live bridge exposes it as a player power, so include it in rollouts.
+        combat = _apply_player_damage(combat, _power(combat.player_powers, "DisintegrationPower"))
         if screaming_flagon:
             combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20) if enemy.alive else enemy for enemy in combat.enemies))
         # ConstrictPower.AfterSideTurnEnd (Slithering Strangler): CreatureCmd.Damage for the
@@ -875,7 +878,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             player_powers = _add_power(player_powers, "PlatingPower", -1)
         if RELIC_POCKETWATCH in relics and new_turn > 1 and combat.cards_played_this_turn <= 3:
             extra_draw += 3
-        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5 + extra_draw, rng)
+        draw_count = max(0, 5 + extra_draw - _power(player_powers, "MindRotPower"))
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, draw_count, rng)
         retained_block = min(combat.player_block, 10) if RELIC_STURDY_CLAMP in relics else 0
         return replace(
             combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
