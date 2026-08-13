@@ -1,10 +1,13 @@
 import json
 import unittest
 
-from official_agent import CARD_NAMES, CARD_TIERS, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, POWER_NAMES, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 
 
 class OfficialAgentTest(unittest.TestCase):
+    def test_maps_ceremonial_beast_plow_power_for_rollouts(self) -> None:
+        self.assertEqual(POWER_NAMES["POWER.PLOW_POWER"], "PlowPower")
+
     def test_prefers_bash(self) -> None:
         actions = [
             {"type": "end_turn"},
