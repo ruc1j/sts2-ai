@@ -85,6 +85,7 @@ internal static class MapBridge
                 current = run.CurrentMapCoord is MapCoord coord ? new { col = coord.col, row = coord.row } : null,
                 visited = run.VisitedMapCoords.Select(point => new { col = point.col, row = point.row }),
             },
+            player = new { hp = player.Creature.CurrentHp, max_hp = player.Creature.MaxHp },
             map,
             legal_actions = legal.Select(point => new { type = "map", col = point.coord.col, row = point.coord.row, point_type = point.PointType.ToString() }),
         });
