@@ -715,10 +715,10 @@ def choose_map(observation: dict) -> dict:
     # had no choice but to walk through. Raising the trigger point buys an earlier, healthier
     # margin before the unavoidable fights on the way to whatever rest site is actually reachable.
     if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 4 <= player["max_hp"] * 3:
-        rest_paths: dict[tuple[int, int], tuple[int, int] | None] = {}
+        rest_paths: dict[tuple[int, int], tuple[int, int, int] | None] = {}
         rest_visiting: set[tuple[int, int]] = set()
 
-        def rest_path(coord: tuple[int, int]) -> tuple[int, int] | None:
+        def rest_path(coord: tuple[int, int]) -> tuple[int, int, int] | None:
             if coord in rest_paths:
                 return rest_paths[coord]
             if coord in rest_visiting:
@@ -727,12 +727,16 @@ def choose_map(observation: dict) -> dict:
             point = points[coord]
             elites = point["type"] == "Elite"
             if point["type"] == "RestSite":
-                rest_paths[coord] = (0, int(elites))
+                rest_paths[coord] = (0, 0, int(elites))
                 rest_visiting.remove(coord)
                 return rest_paths[coord]
             children = (rest_path((child["col"], child["row"])) for child in point["children"])
             reachable = [path for path in children if path is not None]
-            rest_paths[coord] = None if not reachable else min((distance + 1, elite_count + elites) for distance, elite_count in reachable)
+            fights = int(point["type"] in {"Monster", "Elite", "Boss"})
+            rest_paths[coord] = None if not reachable else min(
+                (fight_count + fights, distance + 1, elite_count + elites)
+                for fight_count, distance, elite_count in reachable
+            )
             rest_visiting.remove(coord)
             return rest_paths[coord]
 

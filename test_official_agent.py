@@ -94,6 +94,21 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_map(observation)["col"], 0)
 
+    def test_low_hp_prefers_fewer_fights_over_a_nearer_rest(self) -> None:
+        # A direct Monster followed by a rest is worse than taking a non-combat node first
+        # when the player is already low enough for the safety route.
+        observation = {
+            "player": {"hp": 20, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Unknown", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": []},
+                {"col": 1, "row": 1, "type": "RestSite", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
     def test_just_above_three_quarters_hp_uses_normal_routing(self) -> None:
         # One HP above the new cutoff (61/80): rest-priority routing must not engage yet.
         observation = {
