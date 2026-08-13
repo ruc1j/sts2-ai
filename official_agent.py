@@ -69,6 +69,8 @@ CARD_NAMES = {
     "CARD.BODY_SLAM": "Body Slam",
     "CARD.BELIEVE_IN_YOU": "Believe in You",
     "CARD.FINESSE": "Finesse",
+    "CARD.STONE_ARMOR": "Stone Armor",
+    "CARD.FEEL_NO_PAIN": "Feel No Pain",
     "CARD.RUPTURE": "Rupture",
     "CARD.SECOND_WIND": "Second Wind",
     "CARD.ENLIGHTENMENT": "Enlightenment",
@@ -153,6 +155,8 @@ POWER_NAMES = {
     "POWER.CONSTRICT_POWER": "ConstrictPower",
     "POWER.FLAME_BARRIER_POWER": "FlameBarrierPower",
     "POWER.REPTILE_TRINKET_POWER": "ReptileTrinketPower",
+    "POWER.PLATING_POWER": "PlatingPower",
+    "POWER.FEEL_NO_PAIN_POWER": "FeelNoPainPower",
 }
 
 KNOWN_CARD_DAMAGE = {

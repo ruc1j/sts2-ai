@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _summon,
 )
@@ -685,6 +685,23 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
         after = step(Combat(80, (RELAX,), (), (), (enemy,)), RELAX, {}, random.Random(0))
         self.assertEqual((after.player_block, after.exhaust_pile, after.discard_pile), (15, (RELAX,), ()))
+
+    def test_stone_armor_grants_decaying_end_turn_block(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", ())
+        combat = Combat(80, (STONE_ARMOR,), (), (), (enemy,), energy=1)
+        combat = step(combat, STONE_ARMOR, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "PlatingPower"), 4)
+        combat = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((combat.player_hp, _power(combat.player_powers, "PlatingPower")), (74, 3))
+        combat = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((combat.player_hp, _power(combat.player_powers, "PlatingPower")), (67, 2))
+
+    def test_feel_no_pain_blocks_each_exhausted_card(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (FEEL_NO_PAIN, TREMBLE), (), (), (enemy,), energy=2)
+        combat = step(combat, FEEL_NO_PAIN, DUMMY_DATA, random.Random(0))
+        combat = step(combat, f"{TREMBLE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((_power(combat.player_powers, "FeelNoPainPower"), combat.player_block), (3, 3))
 
     def test_tremble_applies_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())

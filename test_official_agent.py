@@ -17,6 +17,11 @@ class OfficialAgentTest(unittest.TestCase):
     def test_maps_insatiable_sandpit_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.SANDPIT_POWER"], "SandpitPower")
 
+    def test_maps_stone_armor_and_feel_no_pain_for_rollouts(self) -> None:
+        self.assertEqual(POWER_NAMES["POWER.PLATING_POWER"], "PlatingPower")
+        self.assertEqual(POWER_NAMES["POWER.FEEL_NO_PAIN_POWER"], "FeelNoPainPower")
+        self.assertTrue({"CARD.STONE_ARMOR", "CARD.FEEL_NO_PAIN"} <= set(CARD_NAMES))
+
     def test_prefers_bash(self) -> None:
         actions = [
             {"type": "end_turn"},

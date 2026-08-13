@@ -9,7 +9,7 @@ from dataclasses import dataclass, replace
 
 
 STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "End turn"
-CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING, FEED, DOMINATE = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting", "Feed", "Dominate"
+CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING, FEED, DOMINATE, STONE_ARMOR, FEEL_NO_PAIN = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting", "Feed", "Dominate", "Stone Armor", "Feel No Pain"
 BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
 BREAK, HOWL_FROM_BEYOND, IMPERVIOUS, RAMPAGE, TAUNT, THUNDERCLAP = "Break", "Howl From Beyond", "Impervious", "Rampage", "Taunt", "Thunderclap"
 BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, ULTIMATE_STRIKE = "Bolas", "Dramatic Entrance", "Fisticuffs", "Lift", "Thrumming Hatchet", "Ultimate Defend", "Ultimate Strike"
@@ -33,7 +33,7 @@ CARD_COST = {
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
-    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
+    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -59,11 +59,11 @@ ATTACKS = {
 }
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {INFLAME, RUPTURE}
+POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
-    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, SECOND_WIND, ENLIGHTENMENT,
+    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -251,7 +251,7 @@ def _apply_player_damage(combat: Combat, amount: int) -> Combat:
 
 
 def _after_exhaust(combat: Combat, cards: tuple[str, ...], rng: random.Random) -> Combat:
-    """Resolve the recurring exhaust relic hooks for one or more exhausted cards."""
+    """Resolve recurring exhaust hooks for one or more exhausted cards."""
     if not cards:
         return combat
     relics = combat.player_relics
@@ -271,9 +271,10 @@ def _after_exhaust(combat: Combat, cards: tuple[str, ...], rng: random.Random) -
     if RELIC_CHARONS_ASHES in relics:
         for _ in cards:
             enemies = [_damage_enemy(enemy, 3) if enemy.alive else enemy for enemy in enemies]
+    block = _power(combat.player_powers, "FeelNoPainPower") * len(cards)
     return replace(
         combat, hand=tuple(hand), draw_pile=draw, discard_pile=discard, enemies=tuple(enemies),
-        joss_paper_count=joss_count, burning_sticks_used=burning_used,
+        player_block=combat.player_block + block, joss_paper_count=joss_count, burning_sticks_used=burning_used,
     )
 
 
@@ -782,6 +783,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             combat, player_block=combat.player_block + cloak_clasp_block,
             discard_pile=combat.discard_pile + combat.hand, hand=(),
         )
+        plating = _power(combat.player_powers, "PlatingPower")
+        if plating:
+            combat = replace(combat, player_block=combat.player_block + plating)
         combat = _apply_player_damage(combat, hand_damage)
         if screaming_flagon:
             combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20) if enemy.alive else enemy for enemy in combat.enemies))
@@ -867,6 +871,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if clay:
                 extra_block += clay
                 player_powers = _add_power(player_powers, "SelfFormingClayPower", -clay)
+        if _power(player_powers, "PlatingPower") and new_turn > 1:
+            player_powers = _add_power(player_powers, "PlatingPower", -1)
         if RELIC_POCKETWATCH in relics and new_turn > 1 and combat.cards_played_this_turn <= 3:
             extra_draw += 3
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5 + extra_draw, rng)
@@ -1049,6 +1055,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             block *= 2
         combat = replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks, player_block=combat.player_block + block)
         return _after_exhaust(combat, non_attacks, rng)
+    if card == STONE_ARMOR:
+        return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
+    if card == FEEL_NO_PAIN:
+        return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
     if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT}:
         return combat
     enemies = list(combat.enemies)
