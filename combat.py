@@ -14,6 +14,9 @@ BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
 BREAK, HOWL_FROM_BEYOND, IMPERVIOUS, RAMPAGE, TAUNT, THUNDERCLAP = "Break", "Howl From Beyond", "Impervious", "Rampage", "Taunt", "Thunderclap"
 BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, ULTIMATE_STRIKE = "Bolas", "Dramatic Entrance", "Fisticuffs", "Lift", "Thrumming Hatchet", "Ultimate Defend", "Ultimate Strike"
 TOXIC, BURN, DAZED, FLAME_BARRIER = "Toxic", "Burn", "Dazed", "Flame Barrier"
+MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Yet", "Offering", "Pacts End", "Pommel Strike"
+DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
+MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
 # Status cards some monster moves add straight to PileType.Hand (Myte's Toxic, Mecha Knight's
 # Burn): CardModel.HasTurnEndInHandEffect deals this much flat Unpowered damage if the card is
 # still in hand when the player ends their turn (see step()'s END_TURN handling).
@@ -25,31 +28,44 @@ CARD_COST = {
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
+    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
+    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
     FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
+    MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
-ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4}
+ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
-CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11}
+CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5}
-# Cards that require an enemy target because they deal damage.
+# Flat card draw with no other effect - a Skill that just replaces itself with more options.
+CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE: 1, OFFERING: 3}
+# Cards that require an enemy target because they deal damage (AllEnemies/RandomEnemy attacks
+# still take an index here even though the actual targeting ignores it - see WHIRLWIND).
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END,
 }
 # Self-targeting skills and powers that never need a target.
-UNTARGETED = {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND}
+UNTARGETED = {
+    DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
+    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE,
+}
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
-SKILLS = {DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT}
-SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1}
-EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE}
+SKILLS = {
+    DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT,
+    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE,
+}
+SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1, OFFERING: 6}
+EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE}
 
@@ -405,6 +421,12 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 blocked = min(player_block, damage)
                 player_block -= blocked
                 player_hp -= damage - blocked
+            # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
+            # once per attack (approximated the same way as the symmetric enemy-side ThornsPower,
+            # not per individual repeat hit).
+            flame_barrier = _power(player_powers, "FlameBarrierPower")
+            if flame_barrier:
+                enemy = _damage_enemy(enemy, flame_barrier)
         elif command == "PowerCmd.Apply":
             try:
                 amount = _amount(effect["amount"], values)
@@ -510,8 +532,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 enemies[index] = replace(enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)))
         combat = replace(combat, enemies=tuple(enemies))
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5, rng)
-        # TaintedPower.AfterSideTurnEnd removes itself once the enemy side's turn ends.
-        player_powers = _add_power(combat.player_powers, "TaintedPower", -_power(combat.player_powers, "TaintedPower"))
+        # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
+        # themselves once the enemy side's turn ends.
+        player_powers = combat.player_powers
+        player_powers = _add_power(player_powers, "TaintedPower", -_power(player_powers, "TaintedPower"))
+        player_powers = _add_power(player_powers, "FlameBarrierPower", -_power(player_powers, "FlameBarrierPower"))
         return replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=0, energy=3, turn=combat.turn + 1, player_powers=player_powers)
 
     card, _, target = action.partition("@")
@@ -542,13 +567,28 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
         block = 8 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 8
         return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - 1, player_block=combat.player_block + block)
+    if card in CARD_DRAW:
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, CARD_DRAW[card], rng)
+        hand = hand + list(drawn)
+        combat = replace(combat, draw_pile=draw, discard_pile=discard)
+    if card == IMPATIENCE and not any(card_name in ATTACKS for card_name in hand):
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 2, rng)
+        hand = hand + list(drawn)
+        combat = replace(combat, draw_pile=draw, discard_pile=discard)
     spent = combat.energy if card == WHIRLWIND else CARD_COST[card]
     whirlwind_damage = 5 * combat.energy if card == WHIRLWIND else 0
-    energy = combat.energy - spent + (2 if card == BLOODLETTING else 0)
+    energy = combat.energy - spent + (2 if card in {BLOODLETTING, BELIEVE_IN_YOU, PRODUCTION, OFFERING} else 0)
     player_hp = combat.player_hp - SELF_DAMAGE.get(card, 0)
+    if card == NOT_YET:
+        # No max-HP tracking in this model (Combat has no companion max_hp field), so the heal is
+        # uncapped - a small, safe-direction gap since it can only ever make the sim think the
+        # player has slightly more HP margin than they truly do.
+        player_hp += 10
     player_powers = combat.player_powers
     if card == INFLAME:
         player_powers = _add_power(player_powers, "StrengthPower", 2)
+    if card == FLAME_BARRIER:
+        player_powers = _add_power(player_powers, "FlameBarrierPower", 4)
     if card == PRIMAL_FORCE:
         hand = [GIANT_ROCK if card_name in ATTACKS else card_name for card_name in hand]
     exhaust = card in EXHAUSTS
@@ -559,12 +599,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         base = CARD_BLOCK[card]
         block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
         combat = replace(combat, player_block=combat.player_block + block)
-    if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND}:
+    if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE}:
         return combat
     if card == RELAX:
         block = 15 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 15
         return replace(combat, player_block=combat.player_block + block)
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING}:
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
@@ -623,6 +663,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = 6 + 2 * strikes
     elif card == ASHEN_STRIKE:
         damage = 6 + 3 * len(exhaust_before)
+    elif card == MIND_BLAST:
+        damage = len(combat.draw_pile)
+    elif card == BODY_SLAM:
+        damage = combat.player_block
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
     damage += _power(combat.player_powers, "StrengthPower")
@@ -635,6 +679,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if _power(enemy.powers, "VulnerablePower"):
         damage = damage * 3 // 2
     enemies[int(target)] = _damage_enemy(enemy, damage)
+    if card == MOLTEN_FIST and enemies[int(target)].alive:
+        vulnerable = _power(enemy.powers, "VulnerablePower")
+        if vulnerable:
+            enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable))
     if card == CINDER and hand:
         sacrificed = hand.pop(rng.randrange(len(hand)))
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
@@ -699,7 +747,14 @@ def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     sandpit_before = max((_power(enemy.powers, "SandpitPower") for enemy in combat.enemies if enemy.alive), default=0)
     sandpit_after = max((_power(enemy.powers, "SandpitPower") for enemy in state.enemies if enemy.alive), default=0)
     upkeep = (sandpit_after - sandpit_before) * 15 if 0 < sandpit_after <= 3 else 0
-    return prevented + dealt + min(blocked, exposed) + upkeep
+    # Cards that only draw (Battle Trance, Drum of Battle, ...) score 0 on every other term, so
+    # without this they get played dead last - after energy is already spent on whatever scored
+    # positive, wasting the extra options they were supposed to unlock this same turn. The bonus
+    # is well below a single point of real damage/block so it only breaks ties among zero-score
+    # plays, never outranks an actual attack or block. Guarded to real card plays (state.turn ==
+    # combat.turn) since this is also called for End turn's own immediate score in search().
+    drawn = len(state.hand) - (len(combat.hand) - 1) if state.turn == combat.turn else 0
+    return prevented + dealt + min(blocked, exposed) + upkeep + 0.3 * max(0, drawn)
 
 
 def _greedy_action(combat: Combat, data: dict) -> str:

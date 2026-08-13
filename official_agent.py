@@ -53,6 +53,20 @@ CARD_NAMES = {
     "CARD.THRUMMING_HATCHET": "Thrumming Hatchet",
     "CARD.ULTIMATE_DEFEND": "Ultimate Defend",
     "CARD.ULTIMATE_STRIKE": "Ultimate Strike",
+    "CARD.FLAME_BARRIER": "Flame Barrier",
+    "CARD.MOLTEN_FIST": "Molten Fist",
+    "CARD.NOT_YET": "Not Yet",
+    "CARD.OFFERING": "Offering",
+    "CARD.PACTS_END": "Pacts End",
+    "CARD.POMMEL_STRIKE": "Pommel Strike",
+    "CARD.DRUM_OF_BATTLE": "Drum of Battle",
+    "CARD.MASTER_OF_STRATEGY": "Master of Strategy",
+    "CARD.PRODUCTION": "Production",
+    "CARD.IMPATIENCE": "Impatience",
+    "CARD.MIND_BLAST": "Mind Blast",
+    "CARD.BODY_SLAM": "Body Slam",
+    "CARD.BELIEVE_IN_YOU": "Believe in You",
+    "CARD.FINESSE": "Finesse",
 }
 
 CARD_TIERS = {

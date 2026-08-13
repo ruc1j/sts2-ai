@@ -4,10 +4,11 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BLOODLETTING, BOLAS, BREAK, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DAZED, DEFEND, DISMANTLE, DOMINATE,
-    EQUILIBRIUM, FEED, FISTICUFFS, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, PERFECTED_STRIKE, PILLAGE, PRIMAL_FORCE,
-    RELAX, SHRUG, SLIMED, STARTING_DECK, STRIKE, TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power,
-    initial_combat, legal_actions, search, step, _summon,
+    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BREAK, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DAZED, DEFEND,
+    DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
+    IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
+    PRIMAL_FORCE, PRODUCTION, RELAX, SHRUG, SLIMED, STARTING_DECK, STRIKE, TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN,
+    Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step, _summon,
 )
 
 
@@ -194,6 +195,70 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, data, random.Random(0))
         self.assertEqual(combat.player_hp, 80 - (15 + 4 - 8))  # JabDamage + TaintedPower, minus Shrug's block
         self.assertEqual(_power(combat.player_powers, "TaintedPower"), 0)  # AfterSideTurnEnd clears it
+
+    def test_flame_barrier_grants_block_and_reflects_the_next_enemy_hit(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.MYTE", 65, "BITE_MOVE", ())
+        combat = step(Combat(80, (FLAME_BARRIER,), (), (), (enemy,), energy=2), FLAME_BARRIER, data, random.Random(0))
+        self.assertEqual((combat.player_block, _power(combat.player_powers, "FlameBarrierPower")), (12, 4))
+        combat = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual((combat.player_hp, combat.enemies[0].hp), (79, 61))  # Bite 13-12 block, reflect 4 back
+        self.assertEqual(_power(combat.player_powers, "FlameBarrierPower"), 0)  # cleared after the enemy's turn
+
+    def test_molten_fist_deals_damage_and_doubles_existing_vulnerable(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", (), powers=(("VulnerablePower", 2),))
+        after = step(Combat(80, (MOLTEN_FIST,), (), (), (enemy,)), f"{MOLTEN_FIST}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "VulnerablePower")), (85, 4))  # 100-15(10*1.5 vuln), Vulnerable 2+2
+
+    def test_not_yet_heals_and_exhausts(self) -> None:
+        after = step(Combat(70, (NOT_YET,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=2), NOT_YET, {}, random.Random(0))
+        self.assertEqual((after.player_hp, after.exhaust_pile), (80, (NOT_YET,)))
+
+    def test_offering_self_damages_gains_energy_and_draws(self) -> None:
+        after = step(Combat(80, (OFFERING,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), OFFERING, {}, random.Random(0))
+        self.assertEqual((after.player_hp, after.energy, len(after.hand)), (74, 3, 3))
+
+    def test_pacts_end_hits_every_enemy(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 100, "MOVE", ()), Enemy("MONSTER.DUMMY", 100, "MOVE", ()))
+        after = step(Combat(80, (PACTS_END,), (), (), enemies, energy=1), f"{PACTS_END}@0", {}, random.Random(0))
+        self.assertTrue(all(enemy.hp == 83 for enemy in after.enemies))
+
+    def test_pommel_strike_deals_damage_and_draws(self) -> None:
+        after = step(Combat(80, (POMMEL_STRIKE,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{POMMEL_STRIKE}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, len(after.hand)), (91, 1))
+
+    def test_mind_blast_damage_scales_with_draw_pile_size(self) -> None:
+        after = step(Combat(80, (MIND_BLAST,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{MIND_BLAST}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 100 - len(STARTING_DECK))
+
+    def test_body_slam_damage_scales_with_player_block(self) -> None:
+        after = step(Combat(80, (BODY_SLAM,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, player_block=13), f"{BODY_SLAM}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 87)
+
+    def test_believe_in_you_grants_energy(self) -> None:
+        after = step(Combat(80, (BELIEVE_IN_YOU,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BELIEVE_IN_YOU, {}, random.Random(0))
+        self.assertEqual(after.energy, 3)
+
+    def test_finesse_grants_block_and_draws(self) -> None:
+        after = step(Combat(80, (FINESSE,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), FINESSE, {}, random.Random(0))
+        self.assertEqual((after.player_block, len(after.hand)), (4, 1))
+
+    def test_impatience_draws_only_when_hand_has_no_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        without_attack = step(Combat(80, (IMPATIENCE,), STARTING_DECK, (), (enemy,), energy=1), IMPATIENCE, {}, random.Random(0))
+        self.assertEqual(len(without_attack.hand), 2)
+        with_attack = step(Combat(80, (IMPATIENCE, STRIKE), STARTING_DECK, (), (enemy,), energy=1), IMPATIENCE, {}, random.Random(0))
+        self.assertEqual(len(with_attack.hand), 1)
+
+    def test_drum_of_battle_master_of_strategy_and_production(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        drum = step(Combat(80, (DRUM_OF_BATTLE,), STARTING_DECK, (), (enemy,), energy=1), DRUM_OF_BATTLE, {}, random.Random(0))
+        self.assertEqual(len(drum.hand), 2)
+        strategy = step(Combat(80, (MASTER_OF_STRATEGY,), STARTING_DECK, (), (enemy,), energy=1), MASTER_OF_STRATEGY, {}, random.Random(0))
+        self.assertEqual((len(strategy.hand), strategy.exhaust_pile), (3, (MASTER_OF_STRATEGY,)))
+        production = step(Combat(80, (PRODUCTION,), (), (), (enemy,), energy=1), PRODUCTION, {}, random.Random(0))
+        self.assertEqual(production.energy, 3)
 
     def test_ringing_power_restricts_to_one_card_per_turn(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
