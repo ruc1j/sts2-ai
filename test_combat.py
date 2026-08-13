@@ -132,6 +132,16 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(len(after.hand), 8)
         self.assertTrue(after.centennial_puzzle_used)
 
+    def test_constrict_power_damages_the_player_at_their_own_turn_end(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_powers=(("ConstrictPower", 6),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 74)
+
+    def test_constrict_power_damage_is_blocked_by_existing_block(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_block=4, player_powers=(("ConstrictPower", 6),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 78)
+
     def test_anger_adds_copy_to_discard(self) -> None:
         combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
         after = step(combat, "Anger@0", {}, random.Random(0))

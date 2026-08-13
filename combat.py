@@ -582,6 +582,15 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         )
         if screaming_flagon:
             combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20) if enemy.alive else enemy for enemy in combat.enemies))
+        # ConstrictPower.AfterSideTurnEnd (Slithering Strangler): CreatureCmd.Damage for the
+        # current stack amount every time the player's own turn ends - a block-respecting DOT
+        # that stacks +3 every CONSTRICT cast and never decays on its own. Previously stored via
+        # the generic PowerCmd.Apply handling in _enemy_turn with no damage ever applied, which
+        # silently turned an escalating per-turn bleed into a free, permanently inert power.
+        constrict = _power(combat.player_powers, "ConstrictPower")
+        if constrict:
+            blocked = min(combat.player_block, constrict)
+            combat = replace(combat, player_hp=combat.player_hp - (constrict - blocked), player_block=combat.player_block - blocked)
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
         enemies = list(combat.enemies)
