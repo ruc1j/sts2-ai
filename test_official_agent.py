@@ -735,6 +735,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_uses_energy_potion_when_lethal_incoming_has_payable_hand_card(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0},
+                {"type": "potion", "potion_id": "POTION.ENERGY_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 7, "max_hp": 80},
+            "hand": [{"index": 0, "cost": 1}],
+            "enemies": [
+                {"combat_id": 1, "hp": 48, "intents": [{"damage": 8, "repeats": 1}]},
+                {"combat_id": 2, "hp": 42, "intents": [{"damage": 8, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.ENERGY_POTION")
+
     def test_uses_strength_potion_against_high_health_enemy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None}],

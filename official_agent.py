@@ -600,9 +600,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
                 return action
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
-    if incoming >= hp:
-        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     hand = observation.get("hand") or ()
+    if incoming >= hp:
+        energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
+        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
