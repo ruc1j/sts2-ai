@@ -682,6 +682,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.POWER_POTION")
 
+    def test_shaped_rock_targets_the_highest_hp_enemy(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.POTION_SHAPED_ROCK", "target_id": 1},
+                {"type": "potion", "potion_id": "POTION.POTION_SHAPED_ROCK", "target_id": 2},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 30, "max_hp": 80},
+            "hand": [],
+            "enemies": [
+                {"combat_id": 1, "hp": 44, "intents": [{"damage": 7, "repeats": 1}]},
+                {"combat_id": 2, "hp": 168, "intents": [{"damage": 8, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
     def test_lethal_incoming_uses_attack_potion_when_no_defense_exists(self) -> None:
         observation = {
             "legal_actions": [

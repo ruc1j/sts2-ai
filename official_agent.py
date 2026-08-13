@@ -582,7 +582,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     offensive = {
         "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
-        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION",
+        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION", "POTION.POTION_SHAPED_ROCK",
     }
     known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION"}
     def unknown_manual() -> dict | None:
