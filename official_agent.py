@@ -282,7 +282,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if observation.get("phase") == "event":
         return choose_event(observation)
     actions = observation["legal_actions"]
-    cards = [action for action in actions if action["type"] == "card"]
+    # TheGambitPower (decompiled): 50 block for 0 cost, but the very next unblocked hit taken
+    # while it's active - this turn or any later turn, it has no self-expiry - kills the player
+    # outright regardless of remaining HP. combat.py already excludes this card from the
+    # simulator (unmodeled power), but the heuristic tail's "highest block card" fallback below
+    # doesn't know that and used to auto-play it as an amazing defensive option every time,
+    # turning the very next chip of unblocked damage into an instant death (VANTOM, 87 HP -> 0
+    # in one hit with no attack anywhere near that size). Never auto-play it.
+    cards = [action for action in actions if action["type"] == "card" and action["card_id"] != "CARD.THE_GAMBIT"]
     potions = [action for action in actions if action["type"] == "potion"]
     sandpit = any(power["id"] == "POWER.SANDPIT_POWER" and power["amount"] > 0 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)

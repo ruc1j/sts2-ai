@@ -486,6 +486,26 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_never_auto_plays_the_gambit_despite_its_huge_block(self) -> None:
+        # TheGambitPower (decompiled): the next unblocked hit taken while it's active kills the
+        # player outright regardless of HP, no self-expiry. The "highest block card" defensive
+        # fallback used to grab this over Defend every time since 50 block dwarfs everything
+        # else - it must never be chosen automatically.
+        observation = {
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.THE_GAMBIT", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "hand": [
+                {"index": 0, "id": "CARD.THE_GAMBIT", "type": "Skill", "block": 50},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "block": 5},
+            ],
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "enemies": [{"combat_id": 1, "hp": 100, "block": 0, "intents": [{"damage": 7, "repeats": 1}], "powers": []}],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
+
     def test_low_hp_uses_offensive_selection_potion(self) -> None:
         observation = {
             "legal_actions": [
