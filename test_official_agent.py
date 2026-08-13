@@ -1,6 +1,7 @@
+import json
 import unittest
 
-from official_agent import CARD_NAMES, CARD_TIERS, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop
+from official_agent import CARD_NAMES, CARD_TIERS, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -391,6 +392,15 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
 
+    def test_uses_speed_potion_when_low(self) -> None:
+        # Speed Potion grants Dexterity, same effect as Dexterity Potion (SpeedPotion.cs).
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None}],
+            "player": {"hp": 40, "max_hp": 80},
+            "enemies": [],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SPEED_POTION")
+
     def test_uses_regen_potion_when_low(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None}],
@@ -550,6 +560,25 @@ class OfficialAgentTest(unittest.TestCase):
             "enemies": [{"combat_id": 1, "hp": 321, "intents": []}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SHACKLING_POTION")
+
+    def test_saves_shackling_potion_from_a_dangerous_regular_swarm(self) -> None:
+        # sim13: Shackling got spent reactively on a low-HP Wriggler swarm (danger triggered by
+        # enemy count/incoming, not boss length) and was gone by the time the actual boss (HP
+        # >=100) needed it. Low-HP multi-enemy danger must not reach into Shackling.
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SHACKLING_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.BLOCK_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80, "block": 0},
+            "enemies": [
+                {"combat_id": 1, "hp": 18, "intents": [{"damage": 6, "repeats": 1}]},
+                {"combat_id": 2, "hp": 19, "intents": [{"damage": 6, "repeats": 1}]},
+                {"combat_id": 3, "hp": 20, "intents": [{"damage": 6, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.BLOCK_POTION")
 
     def test_uses_fortifier_when_block_exists(self) -> None:
         # Fortifier doubles the current block, so with block already up it is a good pick
@@ -1228,6 +1257,30 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation, data, 200)
         self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
         self.assertIn("simulations", action)
+
+    def test_rollout_ignores_relic_summoned_player_pets(self) -> None:
+        # Pael's Legion and Byrdpip are relic-summoned player pets (not real enemies, no
+        # data/enemies_*.json entry) that used to crash rollout_choice's spec lookup for the
+        # whole fight whenever the player owned that relic.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.THE_OBSCURA", "hp": 20, "block": 0, "powers": [], "intents": [{"damage": 8, "repeats": 1}], "move": "PIERCING_GAZE_MOVE", "history": [], "slot": "obscura"},
+                {"combat_id": 2, "id": "MONSTER.PAELS_LEGION", "hp": 9999, "block": 0, "powers": [], "intents": [], "move": "NOTHING_MOVE", "history": [], "slot": ""},
+                {"combat_id": 3, "id": "MONSTER.BYRDPIP", "hp": 9999, "block": 0, "powers": [], "intents": [], "move": "NOTHING_MOVE", "history": [], "slot": ""},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        action = rollout_choice(observation, observation["legal_actions"], data, 200)
+        self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
 
     def test_card_tiers_include_the_required_axes(self) -> None:
         self.assertEqual(CARD_TIERS["CARD.PERFECTED_STRIKE"], "C")

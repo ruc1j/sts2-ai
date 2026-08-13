@@ -11,14 +11,43 @@ from dataclasses import dataclass, replace
 STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "End turn"
 CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING, FEED, DOMINATE = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting", "Feed", "Dominate"
 BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
+BREAK, HOWL_FROM_BEYOND, IMPERVIOUS, RAMPAGE, TAUNT, THUNDERCLAP = "Break", "Howl From Beyond", "Impervious", "Rampage", "Taunt", "Thunderclap"
+BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, ULTIMATE_STRIKE = "Bolas", "Dramatic Entrance", "Fisticuffs", "Lift", "Thrumming Hatchet", "Ultimate Defend", "Ultimate Strike"
+TOXIC, BURN, DAZED, FLAME_BARRIER = "Toxic", "Burn", "Dazed", "Flame Barrier"
+# Status cards some monster moves add straight to PileType.Hand (Myte's Toxic, Mecha Knight's
+# Burn): CardModel.HasTurnEndInHandEffect deals this much flat Unpowered damage if the card is
+# still in hand when the player ends their turn (see step()'s END_TURN handling).
+HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
-CARD_COST = {STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2}
+CARD_COST = {
+    STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1,
+    CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1,
+    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2,
+    BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
+    BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
+}
 # WHIRLWIND has an X cost and is resolved separately.
-CARD_DAMAGE = {STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9, FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6}
+CARD_DAMAGE = {
+    STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6,
+    BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
+}
+# Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
+ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4}
+# Flat block granted by skills with no other effect (Frail halves it, same as Defend).
+CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11}
+# Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
+CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5}
 # Cards that require an enemy target because they deal damage.
-ATTACKS = {STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH, WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE}
+ATTACKS = {
+    STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
+    WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
+}
 # Self-targeting skills and powers that never need a target.
-UNTARGETED = {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM}
+UNTARGETED = {DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND}
+# CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
+# call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
+SKILLS = {DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT}
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE}
 # Cards tagged as Strike, used by Perfected Strike scaling.
@@ -55,6 +84,7 @@ class Combat:
     energy: int = 3
     turn: int = 1
     exhaust_pile: tuple[str, ...] = ()
+    played_this_turn: bool = False
 
     @property
     def terminal(self) -> bool:
@@ -90,6 +120,9 @@ def _amount(expression: str, values: dict) -> int:
         if isinstance(node, ast.BinOp) and isinstance(node.op, (ast.Add, ast.Sub, ast.Mult)):
             left, right = calculate(node.left), calculate(node.right)
             return left + right if isinstance(node.op, ast.Add) else left - right if isinstance(node.op, ast.Sub) else left * right
+        if isinstance(node, ast.Attribute) and node.attr == "Count":
+            # e.g. base.Creature.CombatState.Players.Count: this project only plays solo.
+            return 1
         raise ValueError(f"unsupported amount: {expression}")
 
     return int(calculate(ast.parse(expression, mode="eval").body))
@@ -114,6 +147,16 @@ def _condition(expression: str, enemy: Enemy) -> bool:
         result = bool(values["IsFront"])
     elif ".IsAlone" in expression:
         result = bool(values["IsAlone"])
+    elif "_curseOfKnowledgeCounter" in expression:
+        # Knowledge Demon's private turn counter (not in the exported state machine); tracked
+        # as a synthetic power, bumped in _enemy_turn when CURSE_OF_KNOWLEDGE_MOVE executes.
+        match = re.search(r"(<|>=)\s*(\d+)", expression)
+        threshold, counter = int(match.group(2)), _power(enemy.powers, "CurseOfKnowledgeCounter")
+        result = counter < threshold if match.group(1) == "<" else counter >= threshold
+    elif expression.lstrip("!") in values:
+        # A bare formation-level flag (like IsFront/IsAlone but without the "base.Creature."
+        # prefix), e.g. Bowlbug Rock's POST_HEADBUTT branch on IsOffBalance.
+        result = bool(values[expression.lstrip("!")])
     else:
         raise NotImplementedError(f"condition: {expression}")
     return not result if expression.lstrip().startswith("!") else result
@@ -188,6 +231,30 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
         elif enemy.model == "MONSTER.EXOSKELETON":
             # Granted by Exoskeleton.AfterAddedToRoom in code (not exported in the state machine JSON).
             enemy = replace(enemy, powers=enemy.powers + (("HardToKillPower", 9),))
+        elif enemy.model in {"MONSTER.KIN_FOLLOWER", "MONSTER.TORCH_HEAD_AMALGAM"}:
+            # AfterAddedToRoom unconditionally grants MinionPower (OwnerIsSecondaryEnemy), not
+            # exported in the state machine JSON. CombatManager only requires primary enemies
+            # dead to end the fight, so these two do not need to be killed (The Kin's Priest and
+            # the Queen's own HP are the real win condition).
+            enemy = replace(enemy, primary=False)
+        elif enemy.model == "MONSTER.SLUMBERING_BEETLE":
+            # AfterAddedToRoom grants SlumberPower(3) (not exported); SNORE_NEXT's HasPower<>
+            # check already resolves generically once this is present. PlatingPower(15), a
+            # per-turn block regen while asleep, is not modeled - a smaller, defensive-only gap.
+            enemy = replace(enemy, powers=enemy.powers + (("SlumberPower", 3),))
+        elif enemy.model in {"MONSTER.PARAFRIGHT", "MONSTER.EYE_WITH_TEETH"}:
+            # AfterAddedToRoom grants IllusionPower(1) (not exported); step()'s END_TURN handling
+            # already revives IllusionPower holders at max HP, but nothing ever granted the power
+            # to trigger it - this fixes that (dead code path until now).
+            enemy = replace(enemy, powers=enemy.powers + (("IllusionPower", 1),))
+        elif enemy.model == "MONSTER.INFESTED_PRISM":
+            # AfterAddedToRoom grants VitalSparkPower(VitalSparkAmount) (not exported); see
+            # step() and _enemy_turn for the Tainted-card -> player TaintedPower chain it drives.
+            enemy = replace(enemy, powers=enemy.powers + (("VitalSparkPower", int(values.get("VitalSparkAmount", 0))),))
+        elif enemy.model == "MONSTER.ENTOMANCER":
+            # AfterAddedToRoom grants PersonalHivePower(1) (not exported); see step()/_enemy_turn
+            # for the Dazed-into-draw-pile chain and PHEROMONE_SPIT_MOVE's growth cap.
+            enemy = replace(enemy, powers=enemy.powers + (("PersonalHivePower", 1),))
         enemies.append(enemy)
     hand, draw, _ = _draw(STARTING_DECK, (), 5, rng)
     powers = (("SurroundedRight", 1),) if any(enemy.model == "MONSTER.ROCKET" for enemy in enemies) else ()
@@ -204,12 +271,34 @@ def _summon(model: str, data: dict, rng: random.Random) -> Enemy:
         values=tuple(sorted(values.items())),
         primary=False,
     )
+    if enemy.model in {"MONSTER.PARAFRIGHT", "MONSTER.EYE_WITH_TEETH"}:
+        enemy = replace(enemy, powers=enemy.powers + (("IllusionPower", 1),))
     return replace(enemy, move=_resolve_move(enemy, spec, rng))
+
+
+def _spawn_wrigglers(data: dict, rng: random.Random) -> tuple[Enemy, ...]:
+    # PhrogParasite.AfterAddedToRoom grants InfestedPower(4) to itself (not exported); its
+    # AfterDeath spawns 4 Wrigglers into slots wriggler1-4, each starting at SPAWNED_MOVE
+    # (stunned - no attack this turn) before falling into the slot-based INIT_MOVE branch.
+    # InfestedPower.ShouldStopCombatFromEnding forces the fight to continue past the Parasite's
+    # death, so unlike a MinionPower add these Wrigglers are primary - they are the real fight now.
+    spec = next(spec for spec in data["monsters"] if spec["class"] == "Wriggler")
+    values = spec["values"]
+    return tuple(
+        Enemy(model=spec["id"], hp=rng.randint(values["MinInitialHp"], values["MaxInitialHp"]), move="SPAWNED_MOVE",
+              values=tuple(sorted(values.items())), slot=f"wriggler{index + 1}")
+        for index in range(4)
+    )
 
 
 def legal_actions(combat: Combat) -> tuple[str, ...]:
     if combat.terminal:
         return ()
+    if combat.played_this_turn and _power(combat.player_powers, "RingingPower"):
+        # RingingPower.ShouldPlay (Ceremonial Beast's BEAST_CRY_MOVE): every card in the deck is
+        # afflicted with Ringing, and a Ringing card can't be played once any card has already
+        # been played this turn - so the whole rest of the turn collapses to End turn only.
+        return (END_TURN,)
     actions = []
     for card in dict.fromkeys(combat.hand):
         if card == WHIRLWIND:
@@ -255,13 +344,34 @@ def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
     powers = enemy.powers
     if flutter and unblocked > 0:
         powers = _add_power(powers, "FlutterPower", -1)
-    return replace(enemy, block=enemy.block - blocked, hp=enemy.hp - unblocked, powers=powers)
+    hp = enemy.hp - unblocked
+    # Plow (Ceremonial Beast): PlowPower.AfterDamageReceived fires on every unblocked hit while
+    # charging and is a no-op until HP drops to the Plow amount (150); the hit that crosses that
+    # line strips the Strength stacked up during the charge and stuns it into the calmer
+    # Crush/Stomp follow-up pattern (a one-shot trigger - the power removes itself after firing).
+    plow = _power(powers, "PlowPower")
+    if plow and unblocked > 0 and hp <= plow:
+        powers = _add_power(powers, "StrengthPower", -_power(powers, "StrengthPower"))
+        powers = _add_power(powers, "PlowPower", -plow)
+        return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers, move="STUN_MOVE")
+    return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers)
+
+
+def _decimillipede_teammates_dead(enemies: tuple[Enemy, ...], index: int) -> bool:
+    return not any(
+        other.alive for i, other in enumerate(enemies)
+        if i != index and other.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
+    )
 
 
 def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> Combat:
     enemy = replace(combat.enemies[index], block=0)
     if not enemy.alive:
-        return combat
+        # Decimillipede segments don't actually leave combat on death (unless every other
+        # segment is already dead too) - they were tagged DEAD_MOVE at the moment of death and
+        # keep progressing through their state machine (DEAD_MOVE -> REATTACH_MOVE) to revive.
+        if not (enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and enemy.move in ("DEAD_MOVE", "REATTACH_MOVE")):
+            return combat
     spec, move_id, move = _specs(data)[enemy.model], enemy.move, _state(_specs(data)[enemy.model], enemy.move)
     values, player_hp, player_block = _dict(enemy.values), combat.player_hp, combat.player_block
     sandpit = _power(enemy.powers, "SandpitPower")
@@ -269,13 +379,21 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         if sandpit == 1:
             return replace(combat, player_hp=0)
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", -1))
-    player_powers, discard, draw = combat.player_powers, combat.discard_pile, combat.draw_pile
+    player_powers, discard, draw, hand = combat.player_powers, combat.discard_pile, combat.draw_pile, list(combat.hand)
     enemies = list(combat.enemies)
     attack_intent = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
-    for effect in move.get("effects", ()):
+    # PHEROMONE_SPIT_MOVE's real effect is an if/else in SpitMove's method body (grow
+    # PersonalHivePower+Strength while PersonalHivePower < 3, else Strength alone) that the
+    # static exporter can't see - it just dumps every PowerCmd.Apply call in the method
+    # textually, so the generic effects loop below is skipped for this move and replaced with
+    # the correct branch after move-resolution (see the ENTOMANCER special case further down).
+    entomancer_spit = enemy.model == "MONSTER.ENTOMANCER" and move_id == "PHEROMONE_SPIT_MOVE"
+    for effect in (() if entomancer_spit else move.get("effects", ())):
         command = effect["command"]
         if command == "DamageCmd.Attack":
-            damage = int(attack_intent["damage"]) + _power(enemy.powers, "StrengthPower")
+            # TaintedPower.ModifyDamageAdditive: flat bonus to every powered attack against the
+            # player while it's up (see step()'s SKILLS handling for how it's granted/cleared).
+            damage = int(attack_intent["damage"]) + _power(enemy.powers, "StrengthPower") + _power(player_powers, "TaintedPower")
             if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (_power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")):
                 damage = damage * 3 // 2
             repeats = int(attack_intent.get("repeats", 1))
@@ -322,25 +440,67 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 # Generated-card pile effects (e.g. Insatiable's Liquify, Soul Fysh's Beckon) carry
                 # no numeric amount; skip them - their combat impact is modeled separately.
                 continue
-            discard += (card,) * count
+            if len(effect["arguments"]) > 1 and effect["arguments"][1] == "PileType.Hand":
+                # Added straight to hand mid-enemy-turn (Myte's Toxic, Mecha Knight's Burn), not
+                # to a pile the player draws from later - see HAND_INJECTED_STATUS.
+                hand += [card] * count
+            else:
+                discard += (card,) * count
         elif command == "CreatureCmd.Add":
             enemies.append(_summon(effect["model"], data, rng))
         elif command in {"CreatureCmd.Kill", "CreatureCmd.SetMaxAndCurrentHp"}:
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
+    if move_id == "SNORE_MOVE":
+        # SlumberPower.AfterSideTurnEnd decrements once per enemy turn and forces an immediate
+        # wake-up (not a "next move" transition) once it reaches 0, so this must land before the
+        # next-move resolution below (SlumberingBeetle also decrements it on taking unblocked
+        # damage, not modeled - a safe, conservative wake-up estimate).
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "SlumberPower", -1))
     enemy = replace(enemy, history=enemy.history + (enemy.move,))
     enemy = replace(enemy, move=_resolve_move(enemy, spec, rng, move.get("next")))
     if enemy.model == "MONSTER.THE_INSATIABLE" and move_id == "LIQUIFY_GROUND_MOVE":
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 4))
         draw += (FRANTIC_ESCAPE,) * 3
         discard += (FRANTIC_ESCAPE,) * 3
+    if enemy.model == "MONSTER.KNOWLEDGE_DEMON" and move_id == "CURSE_OF_KNOWLEDGE_MOVE":
+        # Private turn counter (CurseOfKnowledge.cs), not in the exported state machine; read
+        # back by _condition's CurseOfKnowledgeBranch handling above.
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "CurseOfKnowledgeCounter", 1))
+    if entomancer_spit:
+        # SpitMove: while PersonalHivePower < 3, grow it (+1) and Strength (+1); once capped,
+        # +2 Strength alone. The exported effects list all three PowerCmd.Apply calls
+        # unconditionally, which would triple Strength growth (+3/cast forever).
+        if _power(enemy.powers, "PersonalHivePower") < 3:
+            enemy = replace(enemy, powers=_add_power(_add_power(enemy.powers, "PersonalHivePower", 1), "StrengthPower", 1))
+        else:
+            enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 2))
+    if enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and move_id == "REATTACH_MOVE":
+        # ReattachPower.DoReattach heals base.Amount (25) back onto the segment on its own next
+        # turn after dying; not in the exported effects since it's a custom power method, not a
+        # generic Cmd. DEAD_MOVE and REATTACH_MOVE are both no-op turns, so the segment sits out
+        # two of its own turns before resuming attacks.
+        enemy = replace(enemy, hp=enemy.hp + 25)
+    if enemy.model == "MONSTER.BYRDONIS":
+        # TerritorialPower.AfterSideTurnEnd (not exported): +1 Strength unconditionally every
+        # turn, regardless of which move was performed.
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1))
     enemies[index] = enemy
-    return replace(combat, player_hp=player_hp, player_block=player_block, player_powers=player_powers, discard_pile=discard, draw_pile=draw, enemies=tuple(enemies))
+    return replace(combat, player_hp=player_hp, player_block=player_block, player_powers=player_powers, discard_pile=discard, draw_pile=draw, hand=tuple(hand), enemies=tuple(enemies))
 
 
 def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
     if action == END_TURN:
+        # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
+        # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
+        combat = replace(combat, player_powers=_add_power(combat.player_powers, "RingingPower", -_power(combat.player_powers, "RingingPower")), played_this_turn=False)
+        # HasTurnEndInHandEffect (Toxic, Burn): flat Unpowered damage for each copy still in
+        # hand when the player's turn ends, then the hand is cleared to discard as normal - a
+        # monster move can inject fresh copies straight into the (now empty) hand during its own
+        # turn below, and those survive to be drawn alongside next turn's hand.
+        hand_damage = sum(HAND_INJECTED_STATUS.get(card, 0) for card in combat.hand)
+        combat = replace(combat, player_hp=combat.player_hp - hand_damage, discard_pile=combat.discard_pile + combat.hand, hand=())
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
         enemies = list(combat.enemies)
@@ -349,12 +509,22 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if not enemy.alive and _power(enemy.powers, "IllusionPower"):
                 enemies[index] = replace(enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)))
         combat = replace(combat, enemies=tuple(enemies))
-        hand, draw, discard = _draw(combat.draw_pile, combat.discard_pile + combat.hand, 5, rng)
-        return replace(combat, hand=hand, draw_pile=draw, discard_pile=discard, player_block=0, energy=3, turn=combat.turn + 1)
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5, rng)
+        # TaintedPower.AfterSideTurnEnd removes itself once the enemy side's turn ends.
+        player_powers = _add_power(combat.player_powers, "TaintedPower", -_power(combat.player_powers, "TaintedPower"))
+        return replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=0, energy=3, turn=combat.turn + 1, player_powers=player_powers)
 
     card, _, target = action.partition("@")
     hand = list(combat.hand)
+    if card in SKILLS:
+        vital_spark = sum(_power(enemy.powers, "VitalSparkPower") for enemy in combat.enemies if enemy.alive)
+        if vital_spark:
+            # VitalSparkPower (Infested Prism's PULSATE_MOVE) taints every Skill card in the
+            # deck; playing one grants TaintedPower equal to the current stack, which adds flat
+            # damage to powered attacks against the player until the enemy's turn ends.
+            combat = replace(combat, player_powers=_add_power(combat.player_powers, "TaintedPower", vital_spark))
     hand.remove(card)
+    combat = replace(combat, played_this_turn=True)
     if card == BATTLE_TRANCE:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 3, rng)
         return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,))
@@ -385,11 +555,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     exhaust_before = combat.exhaust_pile
     exhaust_pile = exhaust_before + ((card,) if exhaust else ())
     combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (card,)), exhaust_pile=exhaust_pile, energy=energy, player_hp=player_hp, player_powers=player_powers)
-    if card in {DEFEND, IRON_WAVE, EQUILIBRIUM}:
-        base = 13 if card == EQUILIBRIUM else 5
+    if card in CARD_BLOCK:
+        base = CARD_BLOCK[card]
         block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
         combat = replace(combat, player_block=combat.player_block + block)
-    if card in {DEFEND, EQUILIBRIUM}:
+    if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND}:
         return combat
     if card == RELAX:
         block = 15 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 15
@@ -397,16 +567,46 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING}:
         return combat
     enemies = list(combat.enemies)
-    if card in {BREAKTHROUGH, WHIRLWIND}:
-        damage = (9 if card == BREAKTHROUGH else whirlwind_damage) + _power(combat.player_powers, "StrengthPower")
+    if card == TAUNT:
+        block = 7 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 7
+        enemy = enemies[int(target)]
+        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 1))
+        return replace(combat, player_block=combat.player_block + block, enemies=tuple(enemies))
+    if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
+        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower")
         if _power(combat.player_powers, "WeakPower"):
             damage = damage * 3 // 4
+        if _power(combat.player_powers, "ShrinkPower"):
+            damage = damage * 7 // 10
+        before = list(enemies)
         for index, enemy in enumerate(enemies):
             if not enemy.alive:
                 continue
             scaled = damage * 3 // 2 if _power(enemy.powers, "VulnerablePower") else damage
             enemies[index] = _damage_enemy(enemy, scaled)
-        return replace(combat, enemies=tuple(enemies))
+        if card == THUNDERCLAP:
+            for index, enemy in enumerate(enemies):
+                if enemy.alive:
+                    enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 1))
+        for before_index, (before_enemy, after_enemy) in enumerate(zip(before, enemies)):
+            if before_enemy.model == "MONSTER.PHROG_PARASITE" and before_enemy.alive and not after_enemy.alive:
+                enemies += _spawn_wrigglers(data, rng)
+            elif (
+                before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
+                and before_enemy.alive and not after_enemy.alive
+                and not _decimillipede_teammates_dead(before, before_index)
+            ):
+                # ReattachPower.AfterDeath: SetMoveImmediate(DeadState) instead of leaving
+                # combat - see _enemy_turn for the DEAD_MOVE -> REATTACH_MOVE revival.
+                enemies[before_index] = replace(after_enemy, move="DEAD_MOVE")
+        # ThornsPower.BeforeDamageReceived: every powered attack against a Thorns-holding enemy
+        # reflects the stack's amount back at the attacker, before block, once per enemy hit.
+        reflected = sum(_power(enemy.powers, "ThornsPower") for enemy in before if enemy.alive)
+        # PersonalHivePower.AfterDamageReceived (Entomancer): every powered attack against a
+        # holder inserts Amount Dazed cards into the draw pile at a random position - since
+        # _draw() already pops randomly from draw_pile, appending is equivalent.
+        hive = sum(_power(enemy.powers, "PersonalHivePower") for enemy in before if enemy.alive)
+        return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
         enemy = enemies[int(target)]
         enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 3))
@@ -430,6 +630,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage *= 2
     if _power(combat.player_powers, "WeakPower"):
         damage = damage * 3 // 4
+    if _power(combat.player_powers, "ShrinkPower"):
+        damage = damage * 7 // 10
     if _power(enemy.powers, "VulnerablePower"):
         damage = damage * 3 // 2
     enemies[int(target)] = _damage_enemy(enemy, damage)
@@ -441,8 +643,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = _add_power(_add_power(player_powers, "SurroundedRight", -1), "SurroundedLeft", 1)
     elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
-    if card == BASH:
-        enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", 2))
+    if card in CARD_VULNERABLE_TARGET:
+        enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", CARD_VULNERABLE_TARGET[card]))
     if card == ANGER:
         combat = replace(combat, discard_pile=combat.discard_pile + (ANGER,))
     if card == PILLAGE:
@@ -461,7 +663,19 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         for index, partner in enumerate(enemies):
             if partner.alive and _power(partner.powers, "CrabRagePower"):
                 enemies[index] = replace(partner, block=partner.block + 99, powers=_add_power(_add_power(partner.powers, "CrabRagePower", -1), "StrengthPower", 6))
-    return replace(combat, enemies=tuple(enemies), player_powers=player_powers)
+        if enemy.model == "MONSTER.PHROG_PARASITE":
+            enemies += _spawn_wrigglers(data, rng)
+        elif enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(enemies, int(target)):
+            # ReattachPower.AfterDeath: SetMoveImmediate(DeadState) instead of leaving combat -
+            # see _enemy_turn for the DEAD_MOVE -> REATTACH_MOVE revival.
+            enemies[int(target)] = replace(enemies[int(target)], move="DEAD_MOVE")
+    # ThornsPower.BeforeDamageReceived (e.g. Spiny Toad's PROTRUDING_SPIKES_MOVE): reflects the
+    # stack's amount back at the attacker, before block, on every powered attack against it.
+    reflected = _power(enemy.powers, "ThornsPower")
+    # PersonalHivePower.AfterDamageReceived (Entomancer): every powered attack against a holder
+    # inserts Amount Dazed cards into the draw pile at a random position.
+    hive = _power(enemy.powers, "PersonalHivePower")
+    return replace(combat, enemies=tuple(enemies), player_powers=player_powers, player_hp=combat.player_hp - reflected, draw_pile=combat.draw_pile + (DAZED,) * hive)
 
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:
@@ -517,16 +731,20 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
         scores = []
         for _ in range(max(1, simulations // len(legal_actions(combat)))):
             state = step(combat, action, data, rng)
-            # Credit prevented damage: enemies dead after the first step were about to hit us.
-            prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive and not after.escaped)
+            # Credit this move's own effect (damage dealt, kills, block against incoming) the
+            # same way _greedy_action scores every later turn - otherwise a genuinely useful
+            # first move (e.g. Defend into a real attack) can lose to noise from 60 turns of
+            # rollout whose outcome is dominated by draw/enemy RNG, not by this one decision
+            # (observed: VANTOM's Slippery opening scored "End turn" above "Defend").
+            immediate = _step_score(combat, state, data) / 100
             for _ in range(60):
                 if state.terminal:
                     break
                 state = step(state, _greedy_action(state, data), data, rng)
             # An enemy that fled (e.g. Thieving Hopper) ends the fight but is NOT a win.
             won = not any(enemy.alive for enemy in state.enemies) and not any(enemy.escaped for enemy in state.enemies)
-            # Win/loss dominates; HP and prevented damage break ties so noisy rollouts still rank correctly.
-            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + state.player_hp / 100 + prevented / 100)
+            # Win/loss dominates; HP and the immediate-move score break ties so noisy rollouts still rank correctly.
+            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + state.player_hp / 100 + immediate)
         results.append((action, sum(scores) / len(scores)))
     return sorted(results, key=lambda item: item[1], reverse=True)
 

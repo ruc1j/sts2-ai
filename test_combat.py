@@ -1,11 +1,13 @@
 import json
 import random
 import unittest
+from dataclasses import replace
 
 from combat import (
-    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BLOODLETTING, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DEFEND, DISMANTLE, DOMINATE,
-    EQUILIBRIUM, FEED, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, INFLAME, IRON_WAVE, PERFECTED_STRIKE, PILLAGE, PRIMAL_FORCE, RELAX,
-    SHRUG, SLIMED, STRIKE, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, initial_combat, legal_actions, search, step,
+    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BLOODLETTING, BOLAS, BREAK, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DAZED, DEFEND, DISMANTLE, DOMINATE,
+    EQUILIBRIUM, FEED, FISTICUFFS, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, PERFECTED_STRIKE, PILLAGE, PRIMAL_FORCE,
+    RELAX, SHRUG, SLIMED, STARTING_DECK, STRIKE, TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power,
+    initial_combat, legal_actions, search, step, _summon,
 )
 
 
@@ -66,6 +68,41 @@ class CombatTest(unittest.TestCase):
         dismantle = step(Combat(80, (DISMANTLE,), (), (), (enemy,)), "Dismantle@0", {}, random.Random(0))
         self.assertEqual((bully.enemies[0].hp, dismantle.enemies[0].hp), (28, 16))
 
+    def test_break_deals_damage_and_applies_vulnerable(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        after = step(Combat(80, (BREAK,), (), (), (enemy,)), f"{BREAK}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, dict(after.enemies[0].powers)), (20, {"VulnerablePower": 5}))
+
+    def test_taunt_gains_block_and_applies_vulnerable_without_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        after = step(Combat(80, (TAUNT,), (), (), (enemy,)), f"{TAUNT}@0", {}, random.Random(0))
+        self.assertEqual((after.player_block, after.enemies[0].hp, dict(after.enemies[0].powers)), (7, 40, {"VulnerablePower": 1}))
+
+    def test_thunderclap_hits_and_weakens_every_enemy(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 40, "MOVE", ()), Enemy("MONSTER.DUMMY2", 40, "MOVE", ()))
+        after = step(Combat(80, (THUNDERCLAP,), (), (), enemies), f"{THUNDERCLAP}@0", {}, random.Random(0))
+        self.assertEqual([(e.hp, dict(e.powers)) for e in after.enemies], [(36, {"VulnerablePower": 1}), (36, {"VulnerablePower": 1})])
+
+    def test_impervious_and_lift_grant_block_untargeted(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        self.assertEqual(step(Combat(80, (IMPERVIOUS,), (), (), (enemy,)), IMPERVIOUS, {}, random.Random(0)).player_block, 30)
+        self.assertEqual(step(Combat(80, (LIFT,), (), (), (enemy,)), LIFT, {}, random.Random(0)).player_block, 11)
+
+    def test_flat_damage_cards_deal_their_listed_damage(self) -> None:
+        for card, damage in ((BOLAS, 3), (FISTICUFFS, 7)):
+            enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+            after = step(Combat(80, (card,), (), (), (enemy,)), f"{card}@0", {}, random.Random(0))
+            self.assertEqual(100 - after.enemies[0].hp, damage)
+
+    def test_shrink_power_reduces_player_damage(self) -> None:
+        # Shrinker Beetle's SHRINKER_MOVE applies ShrinkPower to the player (ShrinkPower.cs:
+        # ModifyDamageMultiplicative cuts the *owner's* powered-attack damage by 30%, not
+        # damage taken - a permanent self-debuff, not a defensive enemy power).
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        combat = Combat(80, (STRIKE,), (), (), (enemy,), player_powers=(("ShrinkPower", -1),))
+        after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 36)  # 6 damage * 0.7 = 4 (int division)
+
     def test_slippery_reduces_an_attack_to_one_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), powers=(("SlipperyPower", 8),))
         combat = Combat(80, (ANGER,), (), (), (enemy,))
@@ -78,6 +115,18 @@ class CombatTest(unittest.TestCase):
         after = step(combat, f"{GIANT_ROCK}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 21)  # 16 damage is capped at 9 per hit
 
+    def test_plow_power_strips_strength_and_stuns_below_threshold(self) -> None:
+        enemy = Enemy("MONSTER.CEREMONIAL_BEAST", 160, "PLOW_MOVE", (), powers=(("PlowPower", 150), ("StrengthPower", 6)))
+        combat = Combat(80, (GIANT_ROCK,), (), (), (enemy,))
+        after = step(combat, f"{GIANT_ROCK}@0", {}, random.Random(0))  # 16 damage: 160 -> 144, crosses the 150 threshold
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].move, dict(after.enemies[0].powers)), (144, "STUN_MOVE", {}))
+
+    def test_plow_power_is_inert_above_threshold(self) -> None:
+        enemy = Enemy("MONSTER.CEREMONIAL_BEAST", 252, "PLOW_MOVE", (), powers=(("PlowPower", 150), ("StrengthPower", 2)))
+        combat = Combat(80, (GIANT_ROCK,), (), (), (enemy,))
+        after = step(combat, f"{GIANT_ROCK}@0", {}, random.Random(0))  # 16 damage: 252 -> 236, still above 150
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].move, dict(after.enemies[0].powers)), (236, "PLOW_MOVE", {"PlowPower": 150, "StrengthPower": 2}))
+
     def test_exoskeleton_starts_with_hard_to_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
@@ -85,6 +134,135 @@ class CombatTest(unittest.TestCase):
         self.assertTrue(combat.enemies)
         for enemy in combat.enemies:
             self.assertEqual(dict(enemy.powers).get("HardToKillPower"), 9)
+
+    def test_byrdonis_gains_strength_every_turn(self) -> None:
+        with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        rng = random.Random(0)
+        combat = initial_combat(data, "ENCOUNTER.BYRDONIS_ELITE", rng)
+        for _ in range(2):
+            combat = step(combat, END_TURN, data, rng)
+        byrdonis = next(e for e in combat.enemies if e.model == "MONSTER.BYRDONIS")
+        self.assertGreaterEqual(_power(byrdonis.powers, "StrengthPower"), 2)
+
+    def test_slumbering_beetle_wakes_after_three_turns_asleep(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        rng = random.Random(0)
+        combat = initial_combat(data, "ENCOUNTER.SLUMBERING_BEETLE_NORMAL", rng)
+        beetle = next(e for e in combat.enemies if e.model == "MONSTER.SLUMBERING_BEETLE")
+        self.assertEqual(dict(beetle.powers).get("SlumberPower"), 3)
+        self.assertEqual(beetle.move, "SNORE_MOVE")
+        for _ in range(3):
+            combat = step(combat, END_TURN, data, rng)
+        beetle = next(e for e in combat.enemies if e.model == "MONSTER.SLUMBERING_BEETLE")
+        self.assertEqual(beetle.move, "ROLL_OUT_MOVE")
+
+    def test_phrog_parasite_death_spawns_four_wrigglers_and_continues(self) -> None:
+        with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.PHROG_PARASITE", 5, "INFECT_MOVE", ())
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", data, random.Random(0))
+        self.assertFalse(after.terminal)  # InfestedPower.ShouldStopCombatFromEnding: not a win yet
+        self.assertEqual([e.model for e in after.enemies].count("MONSTER.WRIGGLER"), 4)
+        self.assertTrue(all(e.primary and e.move == "SPAWNED_MOVE" for e in after.enemies if e.model == "MONSTER.WRIGGLER"))
+
+    def test_decimillipede_segment_revives_after_dying_while_a_teammate_lives(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        front = Enemy("MONSTER.DECIMILLIPEDE_SEGMENT_FRONT", 6, "WRITHE_MOVE", ())
+        middle = Enemy("MONSTER.DECIMILLIPEDE_SEGMENT_MIDDLE", 40, "WRITHE_MOVE", ())
+        rng = random.Random(0)
+        combat = step(Combat(80, (STRIKE,), (), (), (front, middle)), f"{STRIKE}@0", data, rng)
+        self.assertEqual(combat.enemies[0].move, "DEAD_MOVE")
+        self.assertFalse(combat.enemies[0].alive)
+        self.assertFalse(combat.terminal)  # ReattachPower: not a real death while Middle lives
+        combat = step(combat, END_TURN, data, rng)  # DEAD_MOVE turn: no-op
+        self.assertEqual(combat.enemies[0].move, "REATTACH_MOVE")
+        self.assertFalse(combat.enemies[0].alive)
+        combat = step(combat, END_TURN, data, rng)  # REATTACH_MOVE turn: heals back to life
+        self.assertEqual(combat.enemies[0].hp, 25)
+        self.assertTrue(combat.enemies[0].alive)
+
+    def test_infested_prism_vital_spark_taints_skill_cards_into_bonus_damage(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.INFESTED_PRISM", 161, "JAB_MOVE", (), powers=(("VitalSparkPower", 4),))
+        combat = step(Combat(80, (SHRUG,), (), (), (enemy,)), SHRUG, data, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "TaintedPower"), 4)  # AfterCardPlayed on the Tainted Shrug It Off
+        combat = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual(combat.player_hp, 80 - (15 + 4 - 8))  # JabDamage + TaintedPower, minus Shrug's block
+        self.assertEqual(_power(combat.player_powers, "TaintedPower"), 0)  # AfterSideTurnEnd clears it
+
+    def test_ringing_power_restricts_to_one_card_per_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (STRIKE, DEFEND), (), (), (enemy,), player_powers=(("RingingPower", 1),))
+        self.assertIn(f"{STRIKE}@0", legal_actions(combat))  # nothing played yet this turn
+        after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual(legal_actions(after), (END_TURN,))  # Ringing: only one card per turn
+
+    def test_ringing_power_clears_after_the_players_turn_ends(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.SPINY_TOAD", 100, "TONGUE_LASH_MOVE", ())
+        combat = Combat(80, (STRIKE,), STARTING_DECK, (), (enemy,), player_powers=(("RingingPower", 1),))
+        after = step(combat, f"{STRIKE}@0", data, random.Random(0))
+        self.assertEqual(legal_actions(after), (END_TURN,))
+        after = step(after, END_TURN, data, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "RingingPower"), 0)
+        self.assertTrue(any(action != END_TURN for action in legal_actions(after)))
+
+    def test_thorns_power_reflects_damage_on_single_target_attack(self) -> None:
+        enemy = Enemy("MONSTER.SPINY_TOAD", 100, "MOVE", (), powers=(("ThornsPower", 5),))
+        after = step(Combat(80, (STRIKE,), (), (), (enemy,)), f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual((after.player_hp, after.enemies[0].hp), (75, 94))  # 80-5 reflected, 100-6 Strike damage
+
+    def test_thorns_power_reflects_damage_once_per_enemy_on_whirlwind(self) -> None:
+        thorny = Enemy("MONSTER.SPINY_TOAD", 100, "MOVE", (), powers=(("ThornsPower", 5),))
+        plain = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (WHIRLWIND,), (), (), (thorny, plain), energy=2)
+        after = step(combat, f"{WHIRLWIND}@0", {}, random.Random(0))
+        self.assertEqual(after.player_hp, 75)  # only the Thorns-holding target reflects
+
+    def test_entomancer_pheromone_spit_caps_personal_hive_and_slows_strength(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.ENTOMANCER", 200, "PHEROMONE_SPIT_MOVE", (), powers=(("PersonalHivePower", 1),))
+        combat = Combat(80, (), (), (), (enemy,))
+        rng = random.Random(0)
+        for _ in range(4):
+            combat = step(combat, END_TURN, data, rng)
+            combat = replace(combat, enemies=(replace(combat.enemies[0], move="PHEROMONE_SPIT_MOVE"),))
+        enemy = combat.enemies[0]
+        self.assertEqual(_power(enemy.powers, "PersonalHivePower"), 3)  # 1 -> 2 -> 3, then capped
+        self.assertEqual(_power(enemy.powers, "StrengthPower"), 6)  # +1, +1, then +2, +2 once capped (not +3 x4)
+
+    def test_entomancer_personal_hive_inserts_dazed_into_draw_pile_on_hit(self) -> None:
+        enemy = Enemy("MONSTER.ENTOMANCER", 200, "BEES_MOVE", (), powers=(("PersonalHivePower", 2),))
+        after = step(Combat(80, (STRIKE,), (), (), (enemy,)), f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual(after.draw_pile.count(DAZED), 2)
+
+    def test_myte_toxic_move_injects_hand_cards_that_burn_hp_next_turn_end(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        enemy = Enemy("MONSTER.MYTE", 65, "TOXIC_MOVE", ())
+        combat = step(Combat(80, (), STARTING_DECK, (), (enemy,)), END_TURN, data, random.Random(0))
+        self.assertEqual(combat.hand.count(TOXIC), 2)  # CardPileCmd.AddToCombatAndPreview -> PileType.Hand
+        self.assertEqual(combat.player_hp, 80)  # StatusIntent only, no damage yet
+        combat = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual(combat.player_hp, 80 - 2 * 5 - 13)  # 2x Toxic (5 each) + Myte's next BiteMove (13)
+        self.assertEqual(combat.hand.count(TOXIC), 0)  # discarded at turn end, not redrawn out of a real deck
+
+    def test_decimillipede_last_segment_stays_dead_and_ends_combat(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        front = Enemy("MONSTER.DECIMILLIPEDE_SEGMENT_FRONT", 6, "WRITHE_MOVE", ())
+        middle = Enemy("MONSTER.DECIMILLIPEDE_SEGMENT_MIDDLE", -3, "DEAD_MOVE", ())
+        combat = step(Combat(80, (STRIKE,), (), (), (front, middle)), f"{STRIKE}@0", data, random.Random(0))
+        self.assertFalse(combat.enemies[0].alive)
+        self.assertNotEqual(combat.enemies[0].move, "DEAD_MOVE")  # ShouldOwnerDeathTriggerFatal: no revival
+        self.assertTrue(combat.terminal)
 
     def test_all_overgrowth_encounters_run(self) -> None:
         for encounter in self.data["encounters"]:
@@ -338,6 +516,22 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (DOMINATE,), (), (), (Enemy("MONSTER.DUMMY", 40, "MOVE", ()),))
         self.assertIn(f"{DOMINATE}@0", legal_actions(combat))
 
+    def test_parafright_revives_at_max_hp_after_dying(self) -> None:
+        # Parafright.AfterAddedToRoom grants IllusionPower(1) (not exported); step()'s END_TURN
+        # handling has always known how to revive IllusionPower holders, but nothing ever
+        # granted them the power - this was dead code until _summon/initial_combat granted it.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        parafright = _summon("Parafright", data, random.Random(0))
+        self.assertEqual(_power(parafright.powers, "IllusionPower"), 1)
+        boss = Enemy("MONSTER.THE_OBSCURA", 999, "PIERCING_GAZE_MOVE", (("MinInitialHp", 999), ("MaxInitialHp", 999)))
+        combat = Combat(80, (STRIKE,), (), (), (replace(parafright, hp=1), boss))
+        after = step(combat, f"{STRIKE}@0", data, random.Random(0))
+        self.assertFalse(after.enemies[0].alive)
+        revived = step(after, END_TURN, data, random.Random(0))
+        self.assertEqual(revived.enemies[0].hp, parafright.hp)
+        self.assertTrue(revived.enemies[0].alive)
+
     def test_hive_boss_encounter_simulates(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
@@ -398,6 +592,20 @@ class CombatTest(unittest.TestCase):
             if combat.terminal:
                 break
             combat = step(combat, rng.choice(legal_actions(combat)), hive, rng)
+
+    def test_knowledge_demon_boss_survives_curse_of_knowledge_branch(self) -> None:
+        # PONDER_MOVE.next is a ConditionalBranchState keyed off a private turn counter
+        # (see _condition's CurseOfKnowledgeBranch handling); reached by turn ~4, so 60 turns
+        # of always-end-turn play exercises it repeatedly without ever raising.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        rng = random.Random(0)
+        combat = initial_combat(hive, "ENCOUNTER.KNOWLEDGE_DEMON_BOSS", rng, player_hp=9999)
+        for _ in range(60):
+            if combat.terminal:
+                break
+            combat = step(combat, END_TURN, hive, rng)
+        self.assertGreaterEqual(_power(combat.enemies[0].powers, "CurseOfKnowledgeCounter"), 3)
 
 
 if __name__ == "__main__":

@@ -101,3 +101,7 @@ regenerating JSON and teaching `_enemy_turn` a command — not writing an enemy 
   run's outcome generally) before launching the next one — check the trace/log for a genuinely new
   monster mechanic or agent misplay, not just "known matchup, retry". Fix what you find, verify with
   a test, commit, then run again. Don't blind-retry without this step in between.
+- As part of that analysis, check the trace for cards the deck picked up but never played a single
+  time that run — a strong signal the card isn't modeled in `combat.py` (silently excluded from
+  `legal_actions`, invisible to `search()`) rather than just a bad pick. Flame Barrier was found
+  this way: rated highly for reward picks but entirely unplayable in combat.

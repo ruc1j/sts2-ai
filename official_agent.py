@@ -40,6 +40,19 @@ CARD_NAMES = {
     "CARD.BYRD_SWOOP": "Byrd Swoop",
     "CARD.PILLAGE": "Pillage",
     "CARD.EQUILIBRIUM": "Equilibrium",
+    "CARD.BREAK": "Break",
+    "CARD.HOWL_FROM_BEYOND": "Howl From Beyond",
+    "CARD.IMPERVIOUS": "Impervious",
+    "CARD.RAMPAGE": "Rampage",
+    "CARD.TAUNT": "Taunt",
+    "CARD.THUNDERCLAP": "Thunderclap",
+    "CARD.BOLAS": "Bolas",
+    "CARD.DRAMATIC_ENTRANCE": "Dramatic Entrance",
+    "CARD.FISTICUFFS": "Fisticuffs",
+    "CARD.LIFT": "Lift",
+    "CARD.THRUMMING_HATCHET": "Thrumming Hatchet",
+    "CARD.ULTIMATE_DEFEND": "Ultimate Defend",
+    "CARD.ULTIMATE_STRIKE": "Ultimate Strike",
 }
 
 CARD_TIERS = {
@@ -309,15 +322,19 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return max(defenses, key=lambda action: _card_value(action, hand, "block"))
+    # MinionPower enemies (e.g. The Kin's Followers) do not need to die to win the fight -
+    # CombatManager only checks primary enemies - so they should not distract focus fire.
+    minion_ids = {enemy["combat_id"] for enemy in observation.get("enemies", ()) if any(power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))}
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
-        def score(action: dict) -> tuple[int, int, int]:
+        def score(action: dict) -> tuple[int, int, int, int]:
             card = hand.get(action.get("hand_index"), {})
             attack = card.get("type") == "Attack" and action.get("target_id") in enemy_by_id
-            # Focus fire: among equal-priority attacks, prefer the weakest enemy.
+            # Focus fire: among equal-priority attacks, prefer non-minion enemies, then the weakest.
             return (
                 priority.get(action["card_id"], 3 if card.get("type") == "Attack" else 1),
                 damage(action) if attack else 0,
+                (action.get("target_id") not in minion_ids) if attack else 0,
                 -enemy_by_id[action["target_id"]].get("hp", 0) if attack else 0,
             )
         return max(cards, key=score)
@@ -365,15 +382,20 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     # Fortifier doubles the current block, so with no block it is wasted (sim19 used it at 0
     # block and gained nothing); only count it once the player already has block this turn.
     blocking = {"POTION.BLOCK_POTION"} | ({"POTION.FORTIFIER"} if block > 0 else set())
-    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
+    # Speed Potion just grants Dexterity via SpeedPotionPower - same effect as Dexterity Potion.
+    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.SPEED_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
     recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
-    debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.SHACKLING_POTION"}
+    # Shackling is deliberately excluded from `debuffs` below: its -7 Strength lasts the whole
+    # fight, so it is reserved for the >=100 HP boss-length branch further down rather than
+    # spent reactively on any dangerous *regular* fight (e.g. a Wriggler swarm) - sim13 burned
+    # Shackling on a normal encounter and had nothing left for the boss that actually needed it.
+    debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION"}
     offensive = {
         "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
         "POTION.SKILL_POTION", "POTION.STRENGTH_POTION",
     }
-    known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC"}
+    known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION"}
     def unknown_manual() -> dict | None:
         for action in actions:
             potion_id = str(action.get("potion_id", "")).upper()
@@ -393,11 +415,11 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
         return use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
-        return use(blocking | {"POTION.SHACKLING_POTION"}) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         # Boss-length fights: Shackling's Strength -7 applies for the whole fight, so use it up
         # front (the boss verifies at 92-100% win rate with it), then spend offensive potions
@@ -691,6 +713,12 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
     specs = {monster["id"]: monster for monster in data["monsters"]}
     enemies = []
     for observed in observation["enemies"]:
+        # Pael's Legion and Byrdpip are relic-summoned player pets (9999 HP, no health bar,
+        # NOTHING_MOVE forever), not real combat targets; neither has an entry in the exported
+        # monster data and would otherwise crash every rollout in any fight where the player
+        # owns that relic.
+        if observed["id"] in {"MONSTER.PAELS_LEGION", "MONSTER.BYRDPIP"}:
+            continue
         spec = specs[observed["id"]]
         enemies.append(Enemy(
             model=observed["id"],
