@@ -1045,6 +1045,12 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         player_relics=tuple(observation["player"].get("relics", ())),
         player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
         player_potions=tuple(potion["id"] for potion in observation.get("potions", ()) if potion),
+        # The bridge exposes Lizard Tail but not its one-shot-used flag; below half HP, assume
+        # it has already fired so rollouts never count on a second resurrection.
+        lizard_tail_used=(
+            "RELIC.LIZARD_TAIL" in observation["player"].get("relics", ())
+            and observation["player"]["hp"] < observation["player"].get("max_hp", observation["player"]["hp"]) // 2
+        ),
         belt_buckle_applied=(
             "RELIC.BELT_BUCKLE" in observation["player"].get("relics", ())
             and not any(observation.get("potions", ()))
