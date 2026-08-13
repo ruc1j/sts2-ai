@@ -481,7 +481,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not (_is_self_damage(selected, hand) and (hp <= max_hp // 2 or incoming > 0) and not is_lethal(selected)):
+            if not (_is_self_damage(selected, hand) and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
                 return selected
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
@@ -502,7 +502,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         for intent in enemy.get("intents") or ()
     )
-    if hp <= max_hp // 2 or incoming > 0:
+    if hp <= max_hp // 2 or incoming >= max(1, hp // 2):
         safe_cards = [action for action in cards if not _is_self_damage(action, hand)]
         if safe_cards:
             cards = safe_cards

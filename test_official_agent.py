@@ -1025,6 +1025,20 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.rollout_choice", return_value=rolled):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_rollout_allows_self_damage_when_incoming_is_not_dangerous(self) -> None:
+        observation = {
+            "player": {"hp": 50, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.BLOODLETTING", "type": "Skill", "vars": [{"id": "Damage", "value": 3}]}],
+            "enemies": [{"combat_id": 1, "hp": 190, "intents": [{"damage": 9, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.BLOODLETTING")
+
     def test_lethal_self_damage_remains_allowed_to_finish_enemy(self) -> None:
         observation = {
             "player": {"hp": 14, "max_hp": 80, "block": 0},
