@@ -893,6 +893,9 @@ def choose_card_reward(observation: dict) -> dict:
     deck_ids = _deck_ids(observation)
     core = _core_priority(deck_ids, {action["card_id"] for action in actions})
     priority = {card_id: tier_score[tier] for card_id, tier in CARD_TIERS.items()}
+    player = observation.get("player", {})
+    if player.get("hp", 0) <= player.get("max_hp", 1) // 2 and "CARD.FEED" in priority:
+        priority["CARD.FEED"] += 1
     if _axis(deck_ids) != "self_damage":
         for card_id in UNCOMMITTED_SELF_DAMAGE:
             if card_id in priority:

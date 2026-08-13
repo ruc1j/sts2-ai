@@ -1125,6 +1125,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BULLY")
 
+    def test_reward_prefers_feed_when_low_hp(self) -> None:
+        observation = {
+            "player": {"hp": 27, "max_hp": 80},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.EXPECT_A_FIGHT"},
+                {"type": "card_reward", "card_id": "CARD.FEED"},
+                {"type": "card_reward", "card_id": "CARD.TRUE_GRIT"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FEED")
+
     def test_shop_buys_one_missing_required_card(self) -> None:
         observation = {
             "phase": "shop",
