@@ -565,11 +565,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             # FOUL_POTION deals 12 damage to every creature INCLUDING the player - against a
             # high-HP boss this is a bad trade (a live run burned two full-HP casts, -24 HP, for
             # a negligible 24/408 dent), and "danger" here triggers on 2+ enemies alone, so it
-            # can fire at full HP with nothing actually wrong yet.
+            # can fire at full HP with nothing actually wrong yet. Unknown potions are only
+            # considered below when HP or incoming damage is already dangerous.
             if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV", "SNECKO", "FOUL")):
                 return action
         return None
-    danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2) or len(enemy_hp) >= 2
+    danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
     if incoming >= hp:
         return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     hand = observation.get("hand") or ()

@@ -590,6 +590,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_full_hp_multi_enemy_fight_skips_unknown_potions(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.OROBIC_ACID", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.LIQUID_MEMORIES", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [
+                {"combat_id": 1, "hp": 20, "intents": []},
+                {"combat_id": 2, "hp": 20, "intents": []},
+                {"combat_id": 3, "hp": 20, "intents": []},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_never_auto_plays_the_gambit_despite_its_huge_block(self) -> None:
         # TheGambitPower (decompiled): the next unblocked hit taken while it's active kills the
         # player outright regardless of HP, no self-expiry. The "highest block card" defensive
