@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_BEATING_REMNANT, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _summon,
 )
@@ -75,6 +75,19 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_BELT_BUCKLE,))
         after = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "DexterityPower"), 2)
+
+    def test_bellows_upgrades_only_the_initial_hand(self) -> None:
+        combat = Combat(80, (STRIKE,), (DEFEND,), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_BELLOWS,))
+        combat = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.upgraded_cards, (STRIKE,))
+
+    def test_reptile_trinket_power_adds_damage_until_turn_end(self) -> None:
+        combat = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_REPTILE_TRINKET,), player_powers=(("ReptileTrinketPower", 3),))
+        after = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 41)
+        next_turn = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(next_turn.player_powers, "ReptileTrinketPower"), 0)
 
     def test_lizard_tail_prevents_lethal_damage_and_self_forming_clay_stacks(self) -> None:
         attack_data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
