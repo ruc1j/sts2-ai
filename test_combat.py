@@ -7,9 +7,21 @@ from combat import (
     ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BREAK, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
-    PRIMAL_FORCE, PRODUCTION, RELAX, SHRUG, SLIMED, STARTING_DECK, STRIKE, TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN,
-    Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step, _summon,
+    PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
+    RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, SHRUG, SLIMED, STARTING_DECK, STRIKE,
+    TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    _summon,
 )
+
+# A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
+# ScreamingFlagon, etc.) from needing real exported enemy data.
+DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}]}]}
+# Same, but attacks for 10 each turn - used to test relics that trigger on the player taking
+# unblocked damage (DemonTongue, CentennialPuzzle) or block relics (CloakClasp).
+ATTACKING_DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+    "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "SingleAttackIntent", "damage": 10.0, "repeats": 1}], "next": "HIT_MOVE",
+    "effects": [{"command": "DamageCmd.Attack", "arguments": ["Damage"], "amount": 10}],
+}]}]}
 
 
 class CombatTest(unittest.TestCase):
@@ -30,6 +42,95 @@ class CombatTest(unittest.TestCase):
         combat = replace(combat, energy=1, max_energy=4)
         after = step(combat, END_TURN, self.data, random.Random(0))
         self.assertEqual(after.energy, 4)
+
+    def test_kunai_grants_dexterity_every_third_attack_this_turn(self) -> None:
+        combat = Combat(80, (STRIKE, STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_KUNAI,))
+        for _ in range(3):
+            combat = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "DexterityPower"), 1)
+
+    def test_kunai_does_not_trigger_on_the_second_attack(self) -> None:
+        combat = Combat(80, (STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_KUNAI,))
+        for _ in range(2):
+            combat = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "DexterityPower"), 0)
+
+    def test_nunchaku_grants_energy_on_the_tenth_attack_of_the_combat(self) -> None:
+        # ANGER costs 0 energy, so the Nunchaku energy gain isn't masked by the card's own cost.
+        combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_NUNCHAKU,), attacks_played_combat=9)
+        after = step(combat, "Anger@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.attacks_played_combat, after.energy), (10, 4))
+
+    def test_kusarigama_deals_bonus_damage_on_the_third_attack(self) -> None:
+        combat = Combat(80, (STRIKE, STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_KUSARIGAMA,))
+        for _ in range(3):
+            combat = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(combat.enemies[0].hp, 50 - 6 * 3 - 6)
+
+    def test_candelabra_grants_energy_entering_turn_two_only(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_CANDELABRA,))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.turn, after.energy), (2, 5))
+        after2 = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after2.turn, after2.energy), (3, 3))
+
+    def test_captains_wheel_grants_block_entering_turn_three(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_CAPTAINS_WHEEL,), turn=2)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.turn, after.player_block), (3, 18))
+
+    def test_art_of_war_grants_energy_if_no_attack_played_last_turn(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_ART_OF_WAR,), turn=2, attacks_played_this_turn=0)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 4)
+
+    def test_art_of_war_withholds_energy_if_an_attack_was_played_last_turn(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_ART_OF_WAR,), turn=2, attacks_played_this_turn=1)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 3)
+
+    def test_brimstone_buffs_strength_for_player_and_enemies_every_turn(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_BRIMSTONE,))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 2)
+        self.assertEqual(_power(after.enemies[0].powers, "StrengthPower"), 1)
+
+    def test_mercury_hourglass_damages_all_enemies_every_turn(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_MERCURY_HOURGLASS,))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 47)
+
+    def test_screaming_flagon_damages_all_enemies_when_hand_is_empty(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_SCREAMING_FLAGON,))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 30)
+
+    def test_screaming_flagon_does_not_trigger_with_cards_in_hand(self) -> None:
+        combat = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_SCREAMING_FLAGON,))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 50)
+
+    def test_cloak_clasp_blocks_the_incoming_attack_with_cards_in_hand(self) -> None:
+        combat = Combat(80, (STRIKE, DEFEND, BASH), (), (), (Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),), player_relics=(RELIC_CLOAK_CLASP,))
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        # 3 cards in hand -> 3 block against a 10-damage hit, so only 7 gets through.
+        self.assertEqual(after.player_hp, 73)
+
+    def test_demon_tongue_heals_once_on_the_first_hit_of_the_turn(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),), player_relics=(RELIC_DEMON_TONGUE,))
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        # Takes 10 unblocked damage, then heals the same amount back: net HP unchanged. The
+        # once-per-turn flag itself is expected back at False - BeforeSideTurnStart clears it
+        # for the new turn step() has just transitioned into.
+        self.assertEqual(after.player_hp, 80)
+        self.assertFalse(after.damaged_this_turn)
+
+    def test_centennial_puzzle_draws_three_once_per_combat(self) -> None:
+        combat = Combat(80, (), (DEFEND,) * 10, (), (Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),), player_relics=(RELIC_CENTENNIAL_PUZZLE,))
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        # 5 normal end-of-turn cards + 3 from Centennial Puzzle.
+        self.assertEqual(len(after.hand), 8)
+        self.assertTrue(after.centennial_puzzle_used)
 
     def test_anger_adds_copy_to_discard(self) -> None:
         combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))

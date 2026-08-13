@@ -69,6 +69,20 @@ EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MAS
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE}
 
+# Relics with an automatic in-combat effect the search() rollout needs to see to project future
+# turns correctly (verified against each relic's decompiled OnPlay-equivalent hook body). Relics
+# with only a one-time combat-start or turn<=1 effect are deliberately excluded here - the very
+# first observation of a fight already reflects them (HP/block/energy/powers are read live from
+# the game), and search() never re-simulates turn 1 once combat is already past it.
+RELIC_BRIMSTONE, RELIC_MERCURY_HOURGLASS, RELIC_ART_OF_WAR = "RELIC.BRIMSTONE", "RELIC.MERCURY_HOURGLASS", "RELIC.ART_OF_WAR"
+RELIC_SCREAMING_FLAGON, RELIC_CLOAK_CLASP = "RELIC.SCREAMING_FLAGON", "RELIC.CLOAK_CLASP"
+RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_HORN_CLEAT = "RELIC.CANDELABRA", "RELIC.CAPTAINS_WHEEL", "RELIC.HORN_CLEAT"
+RELIC_SPARKLING_ROUGE, RELIC_STONE_CALENDAR = "RELIC.SPARKLING_ROUGE", "RELIC.STONE_CALENDAR"
+RELIC_HAPPY_FLOWER, RELIC_PENDULUM = "RELIC.HAPPY_FLOWER", "RELIC.PENDULUM"
+RELIC_KUNAI, RELIC_SHURIKEN, RELIC_ORNAMENTAL_FAN, RELIC_KUSARIGAMA = "RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.ORNAMENTAL_FAN", "RELIC.KUSARIGAMA"
+RELIC_LETTER_OPENER, RELIC_NUNCHAKU, RELIC_TUNING_FORK = "RELIC.LETTER_OPENER", "RELIC.NUNCHAKU", "RELIC.TUNING_FORK"
+RELIC_DEMON_TONGUE, RELIC_CENTENNIAL_PUZZLE = "RELIC.DEMON_TONGUE", "RELIC.CENTENNIAL_PUZZLE"
+
 
 @dataclass(frozen=True)
 class Enemy:
@@ -102,6 +116,20 @@ class Combat:
     turn: int = 1
     exhaust_pile: tuple[str, ...] = ()
     played_this_turn: bool = False
+    player_relics: tuple[str, ...] = ()
+    # Per-turn combo counters (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener) - reset
+    # to 0 at the start of every player turn, unlike the *_combat counters below.
+    attacks_played_this_turn: int = 0
+    skills_played_this_turn: int = 0
+    # Whole-combat cumulative counters (Nunchaku/Tuning Fork) - never reset until the fight ends.
+    attacks_played_combat: int = 0
+    skills_played_combat: int = 0
+    # DemonTongue.AfterDamageReceived: only the first unblocked hit each turn heals; reset
+    # alongside the per-turn combo counters.
+    damaged_this_turn: bool = False
+    # CentennialPuzzle.AfterDamageReceived: only the first unblocked hit of the whole combat
+    # draws cards; never reset.
+    centennial_puzzle_used: bool = False
 
     @property
     def terminal(self) -> bool:
@@ -398,6 +426,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", -1))
     player_powers, discard, draw, hand = combat.player_powers, combat.discard_pile, combat.draw_pile, list(combat.hand)
     enemies = list(combat.enemies)
+    total_unblocked = 0
     attack_intent = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
     # PHEROMONE_SPIT_MOVE's real effect is an if/else in SpitMove's method body (grow
     # PersonalHivePower+Strength while PersonalHivePower < 3, else Strength alone) that the
@@ -422,6 +451,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 blocked = min(player_block, damage)
                 player_block -= blocked
                 player_hp -= damage - blocked
+                total_unblocked += damage - blocked
             # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
             # once per attack (approximated the same way as the symmetric enemy-side ThornsPower,
             # not per individual repeat hit).
@@ -508,7 +538,24 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         # turn, regardless of which move was performed.
         enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1))
     enemies[index] = enemy
-    return replace(combat, player_hp=player_hp, player_block=player_block, player_powers=player_powers, discard_pile=discard, draw_pile=draw, hand=tuple(hand), enemies=tuple(enemies))
+    # DemonTongue/CentennialPuzzle.AfterDamageReceived: only approximated for enemy-attack damage
+    # (not self-damage cards like Hemokinesis/Bloodletting), matching this file's existing
+    # approximation style for damage-received hooks (see FlameBarrierPower above).
+    damaged_this_turn, centennial_puzzle_used = combat.damaged_this_turn, combat.centennial_puzzle_used
+    relics = combat.player_relics
+    if total_unblocked > 0:
+        if RELIC_DEMON_TONGUE in relics and not damaged_this_turn:
+            player_hp += total_unblocked
+            damaged_this_turn = True
+        if RELIC_CENTENNIAL_PUZZLE in relics and not centennial_puzzle_used:
+            drawn, draw, discard = _draw(draw, discard, 3, rng)
+            hand = hand + list(drawn)
+            centennial_puzzle_used = True
+    return replace(
+        combat, player_hp=player_hp, player_block=player_block, player_powers=player_powers, discard_pile=discard,
+        draw_pile=draw, hand=tuple(hand), enemies=tuple(enemies), damaged_this_turn=damaged_this_turn,
+        centennial_puzzle_used=centennial_puzzle_used,
+    )
 
 
 def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
@@ -523,7 +570,18 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # monster move can inject fresh copies straight into the (now empty) hand during its own
         # turn below, and those survive to be drawn alongside next turn's hand.
         hand_damage = sum(HAND_INJECTED_STATUS.get(card, 0) for card in combat.hand)
-        combat = replace(combat, player_hp=combat.player_hp - hand_damage, discard_pile=combat.discard_pile + combat.hand, hand=())
+        relics = combat.player_relics
+        # CloakClasp.BeforeSideTurnEnd: block equal to 1 per card still in hand, granted before
+        # the hand is cleared to discard (and before the enemy turn below, so it can help block).
+        cloak_clasp_block = len(combat.hand) if RELIC_CLOAK_CLASP in relics else 0
+        # ScreamingFlagon.BeforeSideTurnEnd: 20 damage to every enemy if the hand ended up empty.
+        screaming_flagon = RELIC_SCREAMING_FLAGON in relics and not combat.hand
+        combat = replace(
+            combat, player_hp=combat.player_hp - hand_damage, player_block=combat.player_block + cloak_clasp_block,
+            discard_pile=combat.discard_pile + combat.hand, hand=(),
+        )
+        if screaming_flagon:
+            combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20) if enemy.alive else enemy for enemy in combat.enemies))
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
         enemies = list(combat.enemies)
@@ -532,13 +590,43 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if not enemy.alive and _power(enemy.powers, "IllusionPower"):
                 enemies[index] = replace(enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)))
         combat = replace(combat, enemies=tuple(enemies))
-        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5, rng)
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
         # themselves once the enemy side's turn ends.
         player_powers = combat.player_powers
         player_powers = _add_power(player_powers, "TaintedPower", -_power(player_powers, "TaintedPower"))
         player_powers = _add_power(player_powers, "FlameBarrierPower", -_power(player_powers, "FlameBarrierPower"))
-        return replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=0, energy=combat.max_energy, turn=combat.turn + 1, player_powers=player_powers)
+        # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
+        # upcoming turn). new_turn is the turn number the player is about to begin.
+        new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
+        if RELIC_BRIMSTONE in relics:
+            player_powers = _add_power(player_powers, "StrengthPower", 2)
+            enemies = [replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1)) if enemy.alive else enemy for enemy in enemies]
+        if RELIC_MERCURY_HOURGLASS in relics:
+            enemies = [_damage_enemy(enemy, 3) if enemy.alive else enemy for enemy in enemies]
+        if RELIC_STONE_CALENDAR in relics and new_turn == 7:
+            enemies = [_damage_enemy(enemy, 52) if enemy.alive else enemy for enemy in enemies]
+        # ArtOfWar.AfterEnergyReset: +1 energy if no attack was played on the turn that just
+        # ended (never fires transitioning into turn 2 - there is no "previous turn" to check).
+        if RELIC_ART_OF_WAR in relics and combat.turn > 1 and combat.attacks_played_this_turn == 0:
+            extra_energy += 1
+        if RELIC_CANDELABRA in relics and new_turn == 2:
+            extra_energy += 2
+        if RELIC_HAPPY_FLOWER in relics and new_turn % 3 == 0:
+            extra_energy += 1
+        if RELIC_PENDULUM in relics and new_turn % 3 == 0:
+            extra_draw += 1
+        if RELIC_CAPTAINS_WHEEL in relics and new_turn == 3:
+            extra_block += 18
+        if RELIC_HORN_CLEAT in relics and new_turn == 2:
+            extra_block += 14
+        if RELIC_SPARKLING_ROUGE in relics and new_turn == 3:
+            player_powers = _add_power(_add_power(player_powers, "StrengthPower", 1), "DexterityPower", 1)
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5 + extra_draw, rng)
+        return replace(
+            combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=extra_block,
+            energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
+            attacks_played_this_turn=0, skills_played_this_turn=0, damaged_this_turn=False,
+        )
 
     card, _, target = action.partition("@")
     hand = list(combat.hand)
@@ -550,7 +638,41 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             # damage to powered attacks against the player until the enemy's turn ends.
             combat = replace(combat, player_powers=_add_power(combat.player_powers, "TaintedPower", vital_spark))
     hand.remove(card)
-    combat = replace(combat, played_this_turn=True)
+    # Card-play-counting relics (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener/
+    # Nunchaku/Tuning Fork): all fire off a plain "every Nth attack/skill played" counter, either
+    # reset each turn (the four "every 3rd attack" relics, Letter Opener's "every 3rd skill") or
+    # cumulative for the whole fight (Nunchaku, Tuning Fork - both "every 10th").
+    relics = combat.player_relics
+    attacks_this_turn = combat.attacks_played_this_turn + (1 if card in ATTACKS else 0)
+    skills_this_turn = combat.skills_played_this_turn + (1 if card in SKILLS else 0)
+    attacks_combat = combat.attacks_played_combat + (1 if card in ATTACKS else 0)
+    skills_combat = combat.skills_played_combat + (1 if card in SKILLS else 0)
+    combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
+    if card in ATTACKS:
+        if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
+            combo_powers = _add_power(combo_powers, "DexterityPower", 1)
+        if RELIC_SHURIKEN in relics and attacks_this_turn % 3 == 0:
+            combo_powers = _add_power(combo_powers, "StrengthPower", 1)
+        if RELIC_ORNAMENTAL_FAN in relics and attacks_this_turn % 3 == 0:
+            combo_block += 4
+        if RELIC_KUSARIGAMA in relics and attacks_this_turn % 3 == 0:
+            alive = [i for i, enemy in enumerate(combo_enemies) if enemy.alive]
+            if alive:
+                hit = rng.choice(alive)
+                combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6)
+        if RELIC_NUNCHAKU in relics and attacks_combat % 10 == 0:
+            combo_energy += 1
+    if card in SKILLS:
+        if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0:
+            combo_enemies = [_damage_enemy(enemy, 5) if enemy.alive else enemy for enemy in combo_enemies]
+        if RELIC_TUNING_FORK in relics and skills_combat % 10 == 0:
+            combo_block += 7
+    combat = replace(
+        combat, played_this_turn=True, player_powers=combo_powers, enemies=tuple(combo_enemies),
+        player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
+        attacks_played_this_turn=attacks_this_turn, skills_played_this_turn=skills_this_turn,
+        attacks_played_combat=attacks_combat, skills_played_combat=skills_combat,
+    )
     if card == BATTLE_TRANCE:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 3, rng)
         return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,))

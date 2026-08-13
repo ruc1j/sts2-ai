@@ -776,6 +776,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         max_energy=observation["player"].get("max_energy", 3),
         turn=observation["turn"],
         exhaust_pile=tuple(CARD_NAMES.get(card, card) for card in observation.get("exhaust_pile", ())),
+        player_relics=tuple(observation["player"].get("relics", ())),
     )
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
