@@ -570,7 +570,8 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if hp <= max_hp // 2:
         return use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
-        return use(blocking) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
+        return use(blocking) or use(debuffs, enemy_damage) or energy or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
