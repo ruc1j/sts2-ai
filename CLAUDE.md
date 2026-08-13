@@ -94,7 +94,8 @@ regenerating JSON and teaching `_enemy_turn` a command — not writing an enemy 
 - After a game update: rebuild the mod, re-export enemy/map JSON, run the Python suite, then a minimal
   official run, then check trace/result. The bridges bind to internal game APIs and will silently
   mis-observe rather than fail loudly.
-- Docs are Japanese, code and comments are English. Keep that split.
+- Docs are Japanese, code and comments are English. Keep that split. Commit messages are Japanese
+  (user preference, overrides the code/comments convention above).
 - After each verified fix (tests passing), commit it before moving to the next one — small commits
   per fix, not one giant batch at the end of a session.
 - After every official run (`run_official_autoslay.ps1`), analyze the cause of the loss (or the
