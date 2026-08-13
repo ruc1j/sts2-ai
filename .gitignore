@@ -3,6 +3,8 @@ __pycache__/
 official_mod/bin/
 official_mod/obj/
 data/official_autoslay.log
+.claude/
+.codex/
 
 data/*_visible_trace.jsonl
 *_runner.log
@@ -13,3 +15,10 @@ data/map_*.json
 !data/enemies_*.json
 !data/map_*_overgrowth.json
 !data/map_*_underdocks.json
+
+# ad-hoc official-run artifacts (game log / agent trace / map dump) that don't
+# use the run_simN.ps1 naming convention above but are the same kind of
+# regenerable experiment output, not something to commit.
+data/*.log
+data/*_trace.jsonl
+data/*_map.json
