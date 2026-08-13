@@ -22,6 +22,11 @@ ATTACKING_DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
     "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "SingleAttackIntent", "damage": 10.0, "repeats": 1}], "next": "HIT_MOVE",
     "effects": [{"command": "DamageCmd.Attack", "arguments": ["Damage"], "amount": 10}],
 }]}]}
+# A move with a real attack intent but no "effects" key at all (the Decimillipede segment export
+# gap) - used to verify the synthetic DamageCmd.Attack fallback in _enemy_turn.
+EFFECTLESS_ATTACK_DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+    "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "MultiAttackIntent", "damage": 5.0, "repeats": 2}], "next": "HIT_MOVE",
+}]}]}
 
 
 class CombatTest(unittest.TestCase):
@@ -156,6 +161,12 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (CINDER,), (), (), (enemy,))
         combat = step(combat, "Cinder@0", {}, random.Random(0))
         self.assertEqual(combat.enemies[0].hp, 100 - 18)
+
+    def test_attack_intent_without_effects_list_still_deals_damage(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),))
+        after = step(combat, END_TURN, EFFECTLESS_ATTACK_DUMMY_DATA, random.Random(0))
+        # MultiAttackIntent damage=5 repeats=2, with no effects list to drive the generic loop.
+        self.assertEqual(after.player_hp, 70)
 
     def test_anger_adds_copy_to_discard(self) -> None:
         combat = Combat(80, (ANGER,), (), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))

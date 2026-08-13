@@ -438,7 +438,16 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     # textually, so the generic effects loop below is skipped for this move and replaced with
     # the correct branch after move-resolution (see the ENTOMANCER special case further down).
     entomancer_spit = enemy.model == "MONSTER.ENTOMANCER" and move_id == "PHEROMONE_SPIT_MOVE"
-    for effect in (() if entomancer_spit else move.get("effects", ())):
+    effects = move.get("effects", ())
+    if not effects and "damage" in attack_intent:
+        # Some monsters (e.g. the Decimillipede segments) export a real SingleAttackIntent/
+        # MultiAttackIntent but an entirely empty effects list - the static exporter found no
+        # DamageCmd.Attack call in the move's decompiled body. Left as-is, these attacks were
+        # completely silent in the simulator (zero damage every hit), making the enemy look
+        # harmless and search_value stay falsely positive through an otherwise lethal fight.
+        # Fall back to a synthetic DamageCmd.Attack so the intent's own damage still lands.
+        effects = ({"command": "DamageCmd.Attack"},)
+    for effect in (() if entomancer_spit else effects):
         command = effect["command"]
         if command == "DamageCmd.Attack":
             # TaintedPower.ModifyDamageAdditive: flat bonus to every powered attack against the
