@@ -143,6 +143,7 @@ POWER_NAMES = {
     "POWER.ILLUSION_POWER": "IllusionPower",
     "POWER.MINION_POWER": "MinionPower",
     "POWER.PLOW_POWER": "PlowPower",
+    "POWER.RINGING_POWER": "RingingPower",
 }
 
 KNOWN_CARD_DAMAGE = {
