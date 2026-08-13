@@ -767,6 +767,15 @@ class CombatTest(unittest.TestCase):
         # the pure-damage Bash against the scaling boss.
         self.assertEqual(best, f"{IRON_WAVE}@0")
 
+    def test_search_treats_primary_kill_as_win_without_killing_minions(self) -> None:
+        boss = Enemy("MONSTER.DUMMY", 1, "IDLE_MOVE", (), primary=True)
+        minion = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", (), primary=False)
+        # Keep the played Strike out of the first rollout cycle so killing the boss immediately
+        # is the only winning line; the old all-enemies win check preferred hitting the minion.
+        combat = Combat(80, (STRIKE,), (DEFEND,) * 10, (DEFEND,) * 10, (boss, minion))
+        best, _ = search(combat, DUMMY_DATA, 300, 0)[0]
+        self.assertEqual(best, f"{STRIKE}@0")
+
     def test_greedy_action_prefers_killing_the_attacking_minion(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
