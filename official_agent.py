@@ -438,10 +438,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if incoming >= hp // 2:
         return use(blocking) or use(debuffs, enemy_damage) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
-        # Boss-length fights: Shackling's Strength -7 applies for the whole fight, so use it up
-        # front (the boss verifies at 92-100% win rate with it), then spend offensive potions
-        # so the fight ends sooner and less HP is lost.
-        return use({"POTION.SHACKLING_POTION"}) or use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION", "POTION.COLORLESS_POTION", "POTION.ATTACK_POTION", "POTION.SKILL_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
+        # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
+        # side-turn ends - it only blunts the enemy's very next turn, not the whole fight (a
+        # prior assumption here was wrong and wasted the potion on sleeping bosses like Bygone
+        # Effigy that don't attack on an early turn). Only spend it once an attack is actually
+        # incoming this decision, so the -7 lands on a turn that would otherwise deal damage.
+        shackling = use({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
+        return shackling or use({"POTION.STRENGTH_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION", "POTION.COLORLESS_POTION", "POTION.ATTACK_POTION", "POTION.SKILL_POTION", "POTION.DUPLICATOR", "POTION.DISTILLED_CHAOS", "POTION.EXPLOSIVE_AMPOULE"}) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None

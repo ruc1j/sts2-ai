@@ -556,8 +556,9 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(choose(observation)["potion_id"], "POTION.WEAK_POTION")
 
     def test_uses_shackling_potion_first_in_boss_fight(self) -> None:
-        # Shackling's Strength -7 applies for the whole boss fight, so it must be spent before
-        # any offensive potion when the enemy is boss-length (HP >= 100).
+        # ShacklingPotionPower subclasses TemporaryStrengthPower, whose AfterSideTurnEnd removes
+        # the -7 Strength once the enemy's own turn ends - it only blunts the enemy's very next
+        # attack, so it should fire once an attack is actually incoming, ahead of offensive potions.
         observation = {
             "legal_actions": [
                 {"type": "potion", "potion_id": "POTION.SHACKLING_POTION", "target_id": None},
@@ -565,9 +566,24 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
             "player": {"hp": 80, "max_hp": 80},
-            "enemies": [{"combat_id": 1, "hp": 321, "intents": []}],
+            "enemies": [{"combat_id": 1, "hp": 321, "intents": [{"damage": 20, "repeats": 1}]}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SHACKLING_POTION")
+
+    def test_withholds_shackling_potion_while_boss_is_not_attacking(self) -> None:
+        # Bygone Effigy's opening turns (SLEEP_MOVE/WAKE_MOVE) deal no damage; spending Shackling
+        # here would waste it entirely since it expires before any attack lands (regression: a
+        # live run burned it on turn 1 against a sleeping boss for zero effect).
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SHACKLING_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 127, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.STRENGTH_POTION")
 
     def test_saves_shackling_potion_from_a_dangerous_regular_swarm(self) -> None:
         # sim13: Shackling got spent reactively on a low-HP Wriggler swarm (danger triggered by
