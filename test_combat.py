@@ -8,9 +8,9 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
+    RELIC_BEATING_REMNANT, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _summon,
+    _apply_player_damage, _summon,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -59,6 +59,50 @@ class CombatTest(unittest.TestCase):
         for _ in range(2):
             combat = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(combat.player_powers, "DexterityPower"), 0)
+
+    def test_tungsten_and_beating_remnant_apply_in_same_order_for_all_hp_loss(self) -> None:
+        relics = (RELIC_TUNGSTEN_ROD, RELIC_BEATING_REMNANT)
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=relics, damage_received_this_turn=19)
+        self.assertEqual(_apply_player_damage(combat, 5).player_hp, 79)
+        attack_data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "SingleAttackIntent", "damage": 5.0, "repeats": 1}], "next": "HIT_MOVE",
+            "effects": [{"command": "DamageCmd.Attack", "arguments": ["Damage"], "amount": 5}],
+        }]}]}
+        after = step(replace(combat, damage_received_this_turn=19, enemies=(Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),)), END_TURN, attack_data, random.Random(0))
+        self.assertEqual(after.player_hp, 79)
+
+    def test_belt_buckle_grants_dexterity_when_potion_slots_are_empty(self) -> None:
+        combat = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_BELT_BUCKLE,))
+        after = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "DexterityPower"), 2)
+
+    def test_lizard_tail_prevents_lethal_damage_and_self_forming_clay_stacks(self) -> None:
+        attack_data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "SingleAttackIntent", "damage": 100.0, "repeats": 1}], "next": "HIT_MOVE",
+            "effects": [{"command": "DamageCmd.Attack", "arguments": ["Damage"], "amount": 100}],
+        }]}]}
+        tail = step(Combat(20, (), (), (), (Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),), player_relics=(RELIC_LIZARD_TAIL,)), END_TURN, attack_data, random.Random(0))
+        self.assertEqual(tail.player_hp, 40)
+        clay = step(Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "HIT_MOVE", ()),), player_relics=(RELIC_SELF_FORMING_CLAY,)), END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(clay.player_block, 3)
+
+    def test_pen_nib_doubles_tenth_attack(self) -> None:
+        combat = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_PEN_NIB,), attacks_played_combat=9)
+        after = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 38)
+
+    def test_vambrace_doubles_first_block_card(self) -> None:
+        combat = Combat(80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_VAMBRACE,))
+        self.assertEqual(step(combat, DEFEND, DUMMY_DATA, random.Random(0)).player_block, 10)
+
+    def test_ruined_helmet_doubles_first_received_strength(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+            "id": "BUFF_MOVE", "type": "MoveState", "intents": [], "next": "BUFF_MOVE",
+            "effects": [{"command": "PowerCmd.Apply", "target": "targets", "model": "StrengthPower", "amount": 2}],
+        }]}]}
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "BUFF_MOVE", ()),), player_relics=(RELIC_RUINED_HELMET,))
+        after = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 4)
 
     def test_nunchaku_grants_energy_on_the_tenth_attack_of_the_combat(self) -> None:
         # ANGER costs 0 energy, so the Nunchaku energy gain isn't masked by the card's own cost.

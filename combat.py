@@ -57,6 +57,9 @@ ATTACKS = {
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END,
 }
+# CardType.Power cards represented by this compact Ironclad model.  The live bridge already
+# applies any other power's effect; these are the power cards the rollout currently knows by name.
+POWERS = {INFLAME, RUPTURE}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
@@ -86,6 +89,18 @@ RELIC_HAPPY_FLOWER, RELIC_PENDULUM = "RELIC.HAPPY_FLOWER", "RELIC.PENDULUM"
 RELIC_KUNAI, RELIC_SHURIKEN, RELIC_ORNAMENTAL_FAN, RELIC_KUSARIGAMA = "RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.ORNAMENTAL_FAN", "RELIC.KUSARIGAMA"
 RELIC_LETTER_OPENER, RELIC_NUNCHAKU, RELIC_TUNING_FORK = "RELIC.LETTER_OPENER", "RELIC.NUNCHAKU", "RELIC.TUNING_FORK"
 RELIC_DEMON_TONGUE, RELIC_CENTENNIAL_PUZZLE = "RELIC.DEMON_TONGUE", "RELIC.CENTENNIAL_PUZZLE"
+RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE = "RELIC.BEATING_REMNANT", "RELIC.BELLOWS", "RELIC.BELT_BUCKLE"
+RELIC_BOOK_OF_FIVE_RINGS, RELIC_BURNING_STICKS, RELIC_CHANDELIER = "RELIC.BOOK_OF_FIVE_RINGS", "RELIC.BURNING_STICKS", "RELIC.CHANDELIER"
+RELIC_CHARONS_ASHES, RELIC_CHEMICAL_X, RELIC_GAME_PIECE = "RELIC.CHARONS_ASHES", "RELIC.CHEMICAL_X", "RELIC.GAME_PIECE"
+RELIC_INTIMIDATING_HELMET, RELIC_JOSS_PAPER, RELIC_LAVA_LAMP = "RELIC.INTIMIDATING_HELMET", "RELIC.JOSS_PAPER", "RELIC.LAVA_LAMP"
+RELIC_LIZARD_TAIL, RELIC_LUCKY_FYSH, RELIC_MEAT_ON_THE_BONE = "RELIC.LIZARD_TAIL", "RELIC.LUCKY_FYSH", "RELIC.MEAT_ON_THE_BONE"
+RELIC_MUMMIFIED_HAND, RELIC_ORICHALCUM, RELIC_PARRYING_SHIELD = "RELIC.MUMMIFIED_HAND", "RELIC.ORICHALCUM", "RELIC.PARRYING_SHIELD"
+RELIC_PEN_NIB, RELIC_PERMAFROST, RELIC_PETRIFIED_TOAD = "RELIC.PEN_NIB", "RELIC.PERMAFROST", "RELIC.PETRIFIED_TOAD"
+RELIC_POCKETWATCH, RELIC_RAINBOW_RING, RELIC_RAZOR_TOOTH = "RELIC.POCKETWATCH", "RELIC.RAINBOW_RING", "RELIC.RAZOR_TOOTH"
+RELIC_RED_SKULL, RELIC_REPTILE_TRINKET, RELIC_RIPPLE_BASIN = "RELIC.RED_SKULL", "RELIC.REPTILE_TRINKET", "RELIC.RIPPLE_BASIN"
+RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_STURDY_CLAMP = "RELIC.RUINED_HELMET", "RELIC.SELF_FORMING_CLAY", "RELIC.STURDY_CLAMP"
+RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE = "RELIC.TUNGSTEN_ROD", "RELIC.UNSETTLING_LAMP", "RELIC.VAMBRACE"
+RELIC_VENERABLE_TEA_SET = "RELIC.VENERABLE_TEA_SET"
 
 
 @dataclass(frozen=True)
@@ -140,6 +155,25 @@ class Combat:
     # CentennialPuzzle.AfterDamageReceived: only the first unblocked hit of the whole combat
     # draws cards; never reset.
     centennial_puzzle_used: bool = False
+    # State needed by the remaining combat relic hooks.  Optional/one-shot values are kept in
+    # the combat snapshot so a rollout branch never mutates the live observation.
+    player_max_hp: int = 80
+    player_potions: tuple[str, ...] = ()
+    belt_buckle_applied: bool = False
+    damage_received_this_turn: int = 0
+    cards_played_last_turn: int | None = None
+    free_cards: tuple[str, ...] = ()
+    powers_played_this_turn: int = 0
+    burning_sticks_used: bool = False
+    joss_paper_count: int = 0
+    permafrost_used: bool = False
+    rainbow_ring_used: bool = False
+    red_skull_active: bool = False
+    lizard_tail_used: bool = False
+    ruined_helmet_used: bool = False
+    vambrace_used: bool = False
+    unsettling_lamp_used: bool = False
+    upgraded_cards: tuple[str, ...] = ()
 
     @property
     def terminal(self) -> bool:
@@ -162,7 +196,115 @@ def _add_power(items: tuple[tuple[str, int], ...], name: str, amount: int) -> tu
     return tuple(sorted(powers.items()))
 
 
+BLOCK_CARDS = set(CARD_BLOCK) | {SHRUG, RELAX, TAUNT, SECOND_WIND}
+DEBUFF_CARDS = set(CARD_VULNERABLE_TARGET) | {TAUNT, TREMBLE, THUNDERCLAP, DOMINATE, MOLTEN_FIST}
+
+
+def _sync_red_skull(combat: Combat) -> Combat:
+    """Keep Red Skull's conditional Strength in sync with the simulated HP."""
+    if RELIC_RED_SKULL not in combat.player_relics or combat.player_max_hp <= 0:
+        return combat
+    active = combat.player_hp * 2 <= combat.player_max_hp
+    if active == combat.red_skull_active:
+        return combat
+    powers = _add_power(combat.player_powers, "StrengthPower", 3 if active else -3)
+    return replace(combat, player_powers=powers, red_skull_active=active)
+
+
+def _sync_belt_buckle(combat: Combat) -> Combat:
+    """Belt Buckle is already reflected at combat start; keep potion-free snapshots consistent."""
+    if RELIC_BELT_BUCKLE not in combat.player_relics:
+        return combat
+    active = not combat.player_potions
+    if active == combat.belt_buckle_applied:
+        return combat
+    return replace(
+        combat,
+        player_powers=_add_power(combat.player_powers, "DexterityPower", 2 if active else -2),
+        belt_buckle_applied=active,
+    )
+
+
+def _apply_player_damage(combat: Combat, amount: int) -> Combat:
+    """Apply unblocked HP loss and the relics that modify it."""
+    if amount <= 0:
+        return combat
+    tungsten = 1 if RELIC_TUNGSTEN_ROD in combat.player_relics else 0
+    actual = max(0, amount - tungsten)
+    if RELIC_BEATING_REMNANT in combat.player_relics:
+        actual = min(actual, max(0, 20 - combat.damage_received_this_turn))
+    # Tungsten Rod reduces each HP-loss event before Beating Remnant applies its turn-wide cap.
+    hp = combat.player_hp - actual
+    used_tail = combat.lizard_tail_used
+    if hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not used_tail:
+        hp = max(1, combat.player_max_hp // 2)
+        used_tail = True
+    powers = combat.player_powers
+    if actual > 0 and RELIC_SELF_FORMING_CLAY in combat.player_relics:
+        powers = _add_power(powers, "SelfFormingClayPower", 3)
+    return _sync_red_skull(replace(
+        combat, player_hp=hp, player_powers=powers,
+        damage_received_this_turn=combat.damage_received_this_turn + actual,
+        lizard_tail_used=used_tail,
+    ))
+
+
+def _after_exhaust(combat: Combat, cards: tuple[str, ...], rng: random.Random) -> Combat:
+    """Resolve the recurring exhaust relic hooks for one or more exhausted cards."""
+    if not cards:
+        return combat
+    relics = combat.player_relics
+    hand, draw, discard = list(combat.hand), combat.draw_pile, combat.discard_pile
+    joss_count = combat.joss_paper_count + (len(cards) if RELIC_JOSS_PAPER in relics else 0)
+    if RELIC_JOSS_PAPER in relics and joss_count >= 5:
+        drawn, draw, discard = _draw(draw, discard, joss_count // 5, rng)
+        hand.extend(drawn)
+        joss_count %= 5
+    burning_used = combat.burning_sticks_used
+    if RELIC_BURNING_STICKS in relics and not burning_used:
+        skill = next((card for card in cards if card in SKILLS), None)
+        if skill is not None:
+            hand.append(skill)
+            burning_used = True
+    enemies = list(combat.enemies)
+    if RELIC_CHARONS_ASHES in relics:
+        for _ in cards:
+            enemies = [_damage_enemy(enemy, 3) if enemy.alive else enemy for enemy in enemies]
+    return replace(
+        combat, hand=tuple(hand), draw_pile=draw, discard_pile=discard, enemies=tuple(enemies),
+        joss_paper_count=joss_count, burning_sticks_used=burning_used,
+    )
+
+
+def _after_power_play(combat: Combat, rng: random.Random) -> Combat:
+    """Resolve relics whose trigger is a Power card being played."""
+    if not combat.player_relics or not combat.powers_played_this_turn:
+        return combat
+    relics = combat.player_relics
+    if RELIC_GAME_PIECE in relics:
+        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
+        combat = replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard)
+    if RELIC_PERMAFROST in relics and not combat.permafrost_used:
+        combat = replace(combat, player_block=combat.player_block + 7, permafrost_used=True)
+    if RELIC_MUMMIFIED_HAND in relics:
+        candidates = [card for card in combat.hand if CARD_COST.get(card, 0) > 0]
+        if not candidates:
+            candidates = list(combat.hand)
+        if candidates:
+            combat = replace(combat, free_cards=combat.free_cards + (rng.choice(candidates),))
+    if RELIC_RAINBOW_RING in relics and not combat.rainbow_ring_used:
+        if combat.attacks_played_this_turn and combat.skills_played_this_turn:
+            combat = replace(
+                combat,
+                player_powers=_add_power(_add_power(combat.player_powers, "StrengthPower", 1), "DexterityPower", 1),
+                rainbow_ring_used=True,
+            )
+    return combat
+
+
 def _amount(expression: str, values: dict) -> int:
+    if isinstance(expression, (int, float)):
+        return int(expression)
     expression = re.sub(r"(?<=\d)[mfd]\b", "", expression)
 
     def calculate(node: ast.AST) -> int | float:
@@ -360,7 +502,7 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             if combat.energy > 0:
                 actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
             continue
-        if card not in CARD_COST or CARD_COST[card] > combat.energy:
+        if card not in CARD_COST or (card not in combat.free_cards and CARD_COST[card] > combat.energy):
             continue
         if card in UNTARGETED:
             actions.append(card)
@@ -436,7 +578,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", -1))
     player_powers, discard, draw, hand = combat.player_powers, combat.discard_pile, combat.draw_pile, list(combat.hand)
     enemies = list(combat.enemies)
-    total_unblocked = 0
+    damage_events: list[int] = []
+    ruined_helmet_used = combat.ruined_helmet_used
     attack_intent = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
     # PHEROMONE_SPIT_MOVE's real effect is an if/else in SpitMove's method body (grow
     # PersonalHivePower+Strength while PersonalHivePower < 3, else Strength alone) that the
@@ -469,8 +612,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             for _ in range(repeats):
                 blocked = min(player_block, damage)
                 player_block -= blocked
-                player_hp -= damage - blocked
-                total_unblocked += damage - blocked
+                unblocked = damage - blocked
+                damage_events.append(unblocked)
             # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
             # once per attack (approximated the same way as the symmetric enemy-side ThornsPower,
             # not per individual repeat hit).
@@ -487,6 +630,12 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             if effect["target"] == "base.Creature":
                 enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
             elif effect["target"] == "targets":
+                if (
+                    effect["model"] == "StrengthPower" and amount > 0
+                    and RELIC_RUINED_HELMET in combat.player_relics and not ruined_helmet_used
+                ):
+                    amount *= 2
+                    ruined_helmet_used = True
                 player_powers = _add_power(player_powers, effect["model"], amount)
             elif "TeammatesOf" in effect["target"]:
                 # GetTeammatesOf = GetCreaturesOnSide(side): every creature on the same side,
@@ -557,29 +706,62 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         # turn, regardless of which move was performed.
         enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1))
     enemies[index] = enemy
-    # DemonTongue/CentennialPuzzle.AfterDamageReceived: only approximated for enemy-attack damage
-    # (not self-damage cards like Hemokinesis/Bloodletting), matching this file's existing
-    # approximation style for damage-received hooks (see FlameBarrierPower above).
+    # Resolve HP-loss modifiers once all attacks in this enemy move have respected the current
+    # block.  Tungsten Rod is per damage event; Beating Remnant caps the turn-wide total.
+    damage_received = combat.damage_received_this_turn
+    if damage_events:
+        if RELIC_TUNGSTEN_ROD in combat.player_relics:
+            damage_events = [max(0, amount - 1) for amount in damage_events]
+        if RELIC_BEATING_REMNANT in combat.player_relics:
+            remaining = max(0, 20 - damage_received)
+            capped = []
+            for amount in damage_events:
+                taken = min(amount, remaining)
+                capped.append(taken)
+                remaining -= taken
+            damage_events = capped
+        actual_damage = sum(damage_events)
+        player_hp = combat.player_hp - actual_damage
+        if player_hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not combat.lizard_tail_used:
+            player_hp = max(1, combat.player_max_hp // 2)
+            lizard_tail_used = True
+        else:
+            lizard_tail_used = combat.lizard_tail_used
+        damage_received += actual_damage
+    else:
+        actual_damage = 0
+        lizard_tail_used = combat.lizard_tail_used
+    # DemonTongue/CentennialPuzzle/SelfFormingClay all observe the unblocked result, not the
+    # nominal intent damage.
     damaged_this_turn, centennial_puzzle_used = combat.damaged_this_turn, combat.centennial_puzzle_used
     relics = combat.player_relics
-    if total_unblocked > 0:
+    if actual_damage > 0:
         if RELIC_DEMON_TONGUE in relics and not damaged_this_turn:
-            player_hp += total_unblocked
+            player_hp += actual_damage
             damaged_this_turn = True
         if RELIC_CENTENNIAL_PUZZLE in relics and not centennial_puzzle_used:
             drawn, draw, discard = _draw(draw, discard, 3, rng)
             hand = hand + list(drawn)
             centennial_puzzle_used = True
+        if RELIC_SELF_FORMING_CLAY in relics:
+            player_powers = _add_power(player_powers, "SelfFormingClayPower", 3)
+    combat_after_damage = replace(
+        combat, player_hp=player_hp, player_powers=player_powers,
+        damage_received_this_turn=damage_received, lizard_tail_used=lizard_tail_used,
+    )
+    combat_after_damage = _sync_red_skull(combat_after_damage)
     return replace(
-        combat, player_hp=player_hp, player_block=player_block, player_powers=player_powers, discard_pile=discard,
-        draw_pile=draw, hand=tuple(hand), enemies=tuple(enemies), damaged_this_turn=damaged_this_turn,
-        centennial_puzzle_used=centennial_puzzle_used,
+        combat_after_damage, player_block=player_block, player_powers=combat_after_damage.player_powers,
+        discard_pile=discard, draw_pile=draw, hand=tuple(hand), enemies=tuple(enemies),
+        damaged_this_turn=damaged_this_turn, centennial_puzzle_used=centennial_puzzle_used,
+        ruined_helmet_used=ruined_helmet_used,
     )
 
 
 def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
+    combat = _sync_belt_buckle(_sync_red_skull(combat))
     if action == END_TURN:
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
         # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
@@ -596,9 +778,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # ScreamingFlagon.BeforeSideTurnEnd: 20 damage to every enemy if the hand ended up empty.
         screaming_flagon = RELIC_SCREAMING_FLAGON in relics and not combat.hand
         combat = replace(
-            combat, player_hp=combat.player_hp - hand_damage, player_block=combat.player_block + cloak_clasp_block,
+            combat, player_block=combat.player_block + cloak_clasp_block,
             discard_pile=combat.discard_pile + combat.hand, hand=(),
         )
+        combat = _apply_player_damage(combat, hand_damage)
         if screaming_flagon:
             combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20) if enemy.alive else enemy for enemy in combat.enemies))
         # ConstrictPower.AfterSideTurnEnd (Slithering Strangler): CreatureCmd.Damage for the
@@ -609,7 +792,23 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         constrict = _power(combat.player_powers, "ConstrictPower")
         if constrict:
             blocked = min(combat.player_block, constrict)
-            combat = replace(combat, player_hp=combat.player_hp - (constrict - blocked), player_block=combat.player_block - blocked)
+            combat = replace(combat, player_block=combat.player_block - blocked)
+            combat = _apply_player_damage(combat, constrict - blocked)
+        # BeforeSideTurnEnd hooks.  Orichalcum checks the pre-hook block value, while Ripple
+        # Basin independently rewards a turn with no attacks; both can trigger together.
+        end_block = combat.player_block
+        if RELIC_ORICHALCUM in relics and end_block == 0:
+            end_block += 6
+        if RELIC_RIPPLE_BASIN in relics and combat.attacks_played_this_turn == 0:
+            end_block += 4
+        combat = replace(combat, player_block=end_block)
+        if RELIC_PARRYING_SHIELD in relics and end_block >= 10:
+            alive = [i for i, enemy in enumerate(combat.enemies) if enemy.alive]
+            if alive:
+                hit = rng.choice(alive)
+                enemies = list(combat.enemies)
+                enemies[hit] = _damage_enemy(enemies[hit], 6)
+                combat = replace(combat, enemies=tuple(enemies))
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
         enemies = list(combat.enemies)
@@ -633,6 +832,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = combat.player_powers
         player_powers = _add_power(player_powers, "TaintedPower", -_power(player_powers, "TaintedPower"))
         player_powers = _add_power(player_powers, "FlameBarrierPower", -_power(player_powers, "FlameBarrierPower"))
+        player_powers = _add_power(player_powers, "ReptileTrinketPower", -_power(player_powers, "ReptileTrinketPower"))
         # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
         # upcoming turn). new_turn is the turn number the player is about to begin.
         new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
@@ -649,6 +849,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             extra_energy += 1
         if RELIC_CANDELABRA in relics and new_turn == 2:
             extra_energy += 2
+        if RELIC_CHANDELIER in relics and new_turn == 3:
+            extra_energy += 3
         if RELIC_HAPPY_FLOWER in relics and new_turn % 3 == 0:
             extra_energy += 1
         if RELIC_PENDULUM in relics and new_turn % 3 == 0:
@@ -659,14 +861,27 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             extra_block += 14
         if RELIC_SPARKLING_ROUGE in relics and new_turn == 3:
             player_powers = _add_power(_add_power(player_powers, "StrengthPower", 1), "DexterityPower", 1)
+        if RELIC_SELF_FORMING_CLAY in relics:
+            clay = _power(player_powers, "SelfFormingClayPower")
+            if clay:
+                extra_block += clay
+                player_powers = _add_power(player_powers, "SelfFormingClayPower", -clay)
+        if RELIC_POCKETWATCH in relics and new_turn > 1 and combat.cards_played_this_turn <= 3:
+            extra_draw += 3
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 5 + extra_draw, rng)
+        retained_block = min(combat.player_block, 10) if RELIC_STURDY_CLAMP in relics else 0
         return replace(
-            combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=extra_block,
+            combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
-            attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0, damaged_this_turn=False, enlightened_this_turn=False,
+            attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0,
+            powers_played_this_turn=0, damaged_this_turn=False, damage_received_this_turn=0,
+            cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
         )
 
     card, _, target = action.partition("@")
+    if RELIC_BELLOWS in combat.player_relics and combat.turn == 1:
+        upgraded = tuple(dict.fromkeys(combat.upgraded_cards + combat.hand))
+        combat = replace(combat, upgraded_cards=upgraded)
     hand = list(combat.hand)
     if card in SKILLS:
         vital_spark = sum(_power(enemy.powers, "VitalSparkPower") for enemy in combat.enemies if enemy.alive)
@@ -676,6 +891,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             # damage to powered attacks against the player until the enemy's turn ends.
             combat = replace(combat, player_powers=_add_power(combat.player_powers, "TaintedPower", vital_spark))
     hand.remove(card)
+    free_cards = list(combat.free_cards)
+    card_is_free = card in free_cards
+    card_was_upgraded = card in combat.upgraded_cards
+    if card_is_free:
+        free_cards.remove(card)
     # Card-play-counting relics (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener/
     # Nunchaku/Tuning Fork): all fire off a plain "every Nth attack/skill played" counter, either
     # reset each turn (the four "every 3rd attack" relics, Letter Opener's "every 3rd skill") or
@@ -686,7 +906,13 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     attacks_combat = combat.attacks_played_combat + (1 if card in ATTACKS else 0)
     skills_combat = combat.skills_played_combat + (1 if card in SKILLS else 0)
     cards_this_turn = combat.cards_played_this_turn + 1
+    powers_this_turn = combat.powers_played_this_turn + (1 if card in POWERS else 0)
+    pen_nib_double = RELIC_PEN_NIB in relics and card in ATTACKS and attacks_combat % 10 == 0
+    helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (CARD_COST.get(card, 0) >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
+    vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and card in BLOCK_CARDS
+    lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
+    combo_block += helmet_block
     if card in ATTACKS:
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
             combo_powers = _add_power(combo_powers, "DexterityPower", 1)
@@ -711,24 +937,30 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
         attacks_played_this_turn=attacks_this_turn, skills_played_this_turn=skills_this_turn,
         attacks_played_combat=attacks_combat, skills_played_combat=skills_combat, cards_played_this_turn=cards_this_turn,
+        powers_played_this_turn=powers_this_turn, free_cards=tuple(free_cards),
+        vambrace_used=combat.vambrace_used or vambrace_double,
+        unsettling_lamp_used=combat.unsettling_lamp_used or lamp_double,
     )
     if card == BATTLE_TRANCE:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 3, rng)
         return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,))
     if card == SLIMED:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
-        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard, energy=combat.energy - 1)
+        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard, energy=combat.energy - (0 if card_is_free else 1))
     if card == FRANTIC_ESCAPE:
         enemies = list(combat.enemies)
         for index, enemy in enumerate(enemies):
             if _power(enemy.powers, "SandpitPower"):
                 enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 1))
                 break
-        return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (card,), energy=combat.energy - 1, enemies=tuple(enemies))
+        return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (card,), energy=combat.energy - (0 if card_is_free else 1), enemies=tuple(enemies))
     if card == SHRUG:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
-        block = 8 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 8
-        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - 1, player_block=combat.player_block + block)
+        base = 8 + (1 if card_was_upgraded else 0)
+        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
+        if vambrace_double:
+            block *= 2
+        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - (0 if card_is_free else 1), player_block=combat.player_block + block)
     if card in CARD_DRAW:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, CARD_DRAW[card], rng)
         hand = hand + list(drawn)
@@ -745,9 +977,17 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         spent = min(CARD_COST[card], 1)
     else:
         spent = CARD_COST[card]
-    whirlwind_damage = 5 * combat.energy if card == WHIRLWIND else 0
+    if card_is_free:
+        spent = 0
+    whirlwind_x = combat.energy + (2 if RELIC_CHEMICAL_X in relics else 0)
+    whirlwind_damage = 5 * whirlwind_x if card == WHIRLWIND else 0
     energy = combat.energy - spent + (2 if card in {BLOODLETTING, BELIEVE_IN_YOU, PRODUCTION, OFFERING} else 0)
-    player_hp = combat.player_hp - SELF_DAMAGE.get(card, 0)
+    player_hp = combat.player_hp
+    self_damage = SELF_DAMAGE.get(card, 0)
+    if self_damage:
+        # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
+        damaged = _apply_player_damage(combat, self_damage)
+        player_hp, combat = damaged.player_hp, damaged
     if card == NOT_YET:
         # No max-HP tracking in this model (Combat has no companion max_hp field), so the heal is
         # uncapped - a small, safe-direction gap since it can only ever make the sim think the
@@ -776,14 +1016,27 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (card,)), exhaust_pile=exhaust_pile,
         energy=energy, player_hp=player_hp, player_powers=player_powers, enlightened_this_turn=enlightened,
     )
+    combat = _sync_red_skull(combat)
+    combat = _after_exhaust(combat, (card,) if exhaust else (), rng)
+    if card in POWERS:
+        combat = _after_power_play(combat, rng)
+    if RELIC_RAZOR_TOOTH in relics and (card in ATTACKS or card in SKILLS):
+        combat = replace(combat, upgraded_cards=combat.upgraded_cards + (card,))
     if card in CARD_BLOCK:
         base = CARD_BLOCK[card]
+        if card_was_upgraded:
+            base += 1
         block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
+        if vambrace_double:
+            block *= 2
         combat = replace(combat, player_block=combat.player_block + block)
     if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE}:
         return combat
     if card == RELAX:
-        block = 15 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 15
+        base = 15 + (1 if card_was_upgraded else 0)
+        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
+        if vambrace_double:
+            block *= 2
         return replace(combat, player_block=combat.player_block + block)
     if card == SECOND_WIND:
         # SecondWind.OnPlay: exhausts every non-Attack card still in hand, gaining 5 block
@@ -791,21 +1044,32 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         non_attacks = tuple(name for name in combat.hand if name not in ATTACKS)
         remaining = tuple(name for name in combat.hand if name in ATTACKS)
         block = 5 * len(non_attacks)
-        return replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks, player_block=combat.player_block + block)
+        if vambrace_double:
+            block *= 2
+        combat = replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks, player_block=combat.player_block + block)
+        return _after_exhaust(combat, non_attacks, rng)
     if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
-        block = 7 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 7
+        base = 7 + (1 if card_was_upgraded else 0)
+        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
+        if vambrace_double:
+            block *= 2
         enemy = enemies[int(target)]
-        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 1))
+        vulnerable = 1 * (2 if lamp_double else 1)
+        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
         return replace(combat, player_block=combat.player_block + block, enemies=tuple(enemies))
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
-        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower")
+        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+        if card_was_upgraded:
+            damage += 3
         if _power(combat.player_powers, "WeakPower"):
             damage = damage * 3 // 4
         if _power(combat.player_powers, "ShrinkPower"):
             damage = damage * 7 // 10
+        if pen_nib_double:
+            damage *= 2
         before = list(enemies)
         for index, enemy in enumerate(enemies):
             if not enemy.alive:
@@ -820,7 +1084,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         if card == THUNDERCLAP:
             for index, enemy in enumerate(enemies):
                 if enemy.alive:
-                    enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 1))
+                    vulnerable = 2 if lamp_double else 1
+                    enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
         for before_index, (before_enemy, after_enemy) in enumerate(zip(before, enemies)):
             if before_enemy.model == "MONSTER.PHROG_PARASITE" and before_enemy.alive and not after_enemy.alive:
                 enemies += _spawn_wrigglers(data, rng)
@@ -842,12 +1107,14 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
         enemy = enemies[int(target)]
-        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 3))
+        vulnerable = 6 if lamp_double else 3
+        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
         return replace(combat, enemies=tuple(enemies))
     if card == DOMINATE:
         # Apply 1 Vulnerable, then gain Strength equal to the target's (post-apply) Vulnerable.
         enemy = enemies[int(target)]
-        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", 1))
+        vulnerable = 2 if lamp_double else 1
+        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
         gained = _power(enemies[int(target)].powers, "VulnerablePower")
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     enemy = enemies[int(target)]
@@ -862,13 +1129,17 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = combat.player_block
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    damage += _power(combat.player_powers, "StrengthPower")
+    if card_was_upgraded:
+        damage += 3
+    damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
         damage *= 2
     if _power(combat.player_powers, "WeakPower"):
         damage = damage * 3 // 4
     if _power(combat.player_powers, "ShrinkPower"):
         damage = damage * 7 // 10
+    if pen_nib_double:
+        damage *= 2
     if _power(enemy.powers, "VulnerablePower"):
         damage = damage * 3 // 2
     # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage taken per
@@ -880,17 +1151,19 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == MOLTEN_FIST and enemies[int(target)].alive:
         vulnerable = _power(enemy.powers, "VulnerablePower")
         if vulnerable:
-            enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable))
+            enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable * (2 if lamp_double else 1)))
     if card == CINDER and hand:
         sacrificed = hand.pop(rng.randrange(len(hand)))
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
+        combat = _after_exhaust(combat, (sacrificed,), rng)
     player_powers = combat.player_powers
     if _power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedRight", -1), "SurroundedLeft", 1)
     elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
     if card in CARD_VULNERABLE_TARGET:
-        enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", CARD_VULNERABLE_TARGET[card]))
+        vulnerable = CARD_VULNERABLE_TARGET[card] * (2 if lamp_double else 1)
+        enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable))
     if card == ANGER:
         combat = replace(combat, discard_pile=combat.discard_pile + (ANGER,))
     if card == PILLAGE:
@@ -997,7 +1270,10 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
             # An enemy that fled (e.g. Thieving Hopper) ends the fight but is NOT a win.
             won = not any(enemy.alive for enemy in state.enemies) and not any(enemy.escaped for enemy in state.enemies)
             # Win/loss dominates; HP and the immediate-move score break ties so noisy rollouts still rank correctly.
-            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + state.player_hp / 100 + immediate)
+            scored_hp = state.player_hp
+            if won and RELIC_MEAT_ON_THE_BONE in state.player_relics and state.player_max_hp > 0 and scored_hp * 2 <= state.player_max_hp:
+                scored_hp = min(state.player_max_hp, scored_hp + 12)
+            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + scored_hp / 100 + immediate)
         results.append((action, sum(scores) / len(scores)))
     return sorted(results, key=lambda item: item[1], reverse=True)
 

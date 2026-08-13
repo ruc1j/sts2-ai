@@ -145,6 +145,14 @@ POWER_NAMES = {
     "POWER.PLOW_POWER": "PlowPower",
     "POWER.RINGING_POWER": "RingingPower",
     "POWER.SANDPIT_POWER": "SandpitPower",
+    "POWER.DEXTERITY": "DexterityPower",
+    "POWER.DEXTERITY_POWER": "DexterityPower",
+    "POWER.SELF_FORMING_CLAY_POWER": "SelfFormingClayPower",
+    "POWER.RUPTURE_POWER": "RupturePower",
+    "POWER.TAINTED_POWER": "TaintedPower",
+    "POWER.CONSTRICT_POWER": "ConstrictPower",
+    "POWER.FLAME_BARRIER_POWER": "FlameBarrierPower",
+    "POWER.REPTILE_TRINKET_POWER": "ReptileTrinketPower",
 }
 
 KNOWN_CARD_DAMAGE = {
@@ -268,7 +276,63 @@ SHOP_RELIC_SCORES = {
     "RELIC.SPARKLING_ROUGE": 6,
     "RELIC.DEMON_TONGUE": 6,
     "RELIC.PENDULUM": 6,
+    # Newly modeled combat relics.  Scores are the general-purpose baseline; axis bonuses
+    # below raise a matching relic by one tier so a coherent deck gets first pick.
+    "RELIC.POCKETWATCH": 8,
+    "RELIC.MUMMIFIED_HAND": 8,
+    "RELIC.CHARONS_ASHES": 7,
+    "RELIC.SELF_FORMING_CLAY": 7,
+    "RELIC.TUNGSTEN_ROD": 7,
+    "RELIC.LIZARD_TAIL": 7,
+    "RELIC.BURNING_STICKS": 6,
+    "RELIC.GAME_PIECE": 6,
+    "RELIC.PERMAFROST": 6,
+    "RELIC.ORICHALCUM": 6,
+    "RELIC.PARRYING_SHIELD": 6,
+    "RELIC.PEN_NIB": 6,
+    "RELIC.RED_SKULL": 6,
+    "RELIC.BEATING_REMNANT": 6,
+    "RELIC.JOSS_PAPER": 6,
+    "RELIC.RIPPLE_BASIN": 6,
+    "RELIC.VAMBRACE": 6,
+    "RELIC.INTIMIDATING_HELMET": 6,
+    "RELIC.CHEMICAL_X": 5,
+    "RELIC.BELT_BUCKLE": 5,
+    "RELIC.RAZOR_TOOTH": 5,
+    "RELIC.STURDY_CLAMP": 5,
+    "RELIC.BELLOWS": 5,
+    "RELIC.CHANDELIER": 5,
+    "RELIC.RUINED_HELMET": 5,
+    "RELIC.UNSETTLING_LAMP": 5,
 }
+
+# Acquisition tiers are separate from card tiers because relic value is conditional on the
+# deck's axis.  The matching sets are deliberately small: an unlisted relic keeps its general
+# score instead of being guessed into a synergetic build.
+RELIC_TIERS_BY_AXIS = {
+    "general": {"S": {"RELIC.CLOAK_CLASP", "RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.CENTENNIAL_PUZZLE", "RELIC.POCKETWATCH", "RELIC.MUMMIFIED_HAND"},
+                 "A": {"RELIC.ART_OF_WAR", "RELIC.CAPTAINS_WHEEL", "RELIC.HORN_CLEAT", "RELIC.MERCURY_HOURGLASS", "RELIC.HAPPY_FLOWER", "RELIC.LIZARD_TAIL", "RELIC.TUNGSTEN_ROD", "RELIC.SELF_FORMING_CLAY", "RELIC.CHARONS_ASHES"}},
+    "strike": {"S": {"RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.PEN_NIB", "RELIC.ORNAMENTAL_FAN"},
+                "A": {"RELIC.KUSARIGAMA", "RELIC.POCKETWATCH", "RELIC.MUMMIFIED_HAND", "RELIC.ART_OF_WAR"}},
+    "self_damage": {"S": {"RELIC.RED_SKULL", "RELIC.DEMON_TONGUE", "RELIC.TUNGSTEN_ROD"},
+                    "A": {"RELIC.BEATING_REMNANT", "RELIC.CENTENNIAL_PUZZLE", "RELIC.LIZARD_TAIL", "RELIC.SELF_FORMING_CLAY"}},
+    "vulnerable": {"S": {"RELIC.SCREAMING_FLAGON", "RELIC.MERCURY_HOURGLASS", "RELIC.SPARKLING_ROUGE"},
+                   "A": {"RELIC.PEN_NIB", "RELIC.POCKETWATCH", "RELIC.CLOAK_CLASP", "RELIC.CHARONS_ASHES"}},
+    "exhaust": {"S": {"RELIC.CHARONS_ASHES", "RELIC.BURNING_STICKS", "RELIC.JOSS_PAPER"},
+                "A": {"RELIC.PERMAFROST", "RELIC.GAME_PIECE", "RELIC.MUMMIFIED_HAND", "RELIC.SELF_FORMING_CLAY"}},
+}
+_RELIC_TIER_VALUE = {"S": 9, "A": 7, "B": 5, "C": 3, "D": 1}
+
+
+def _shop_relic_score(relic: str, axis: str | None) -> int:
+    score = SHOP_RELIC_SCORES.get(relic, -1)
+    if score < 0:
+        return score
+    for tier, relics in RELIC_TIERS_BY_AXIS.get(axis or "general", {}).items():
+        if relic in relics:
+            score = max(score, _RELIC_TIER_VALUE[tier])
+            break
+    return score
 
 
 def choose_event(observation: dict) -> dict:
@@ -541,6 +605,7 @@ def choose_shop(observation: dict) -> dict:
     deck_ids = _deck_ids(observation)
     deck_list = _deck_list(observation)
     buys = [action for action in actions if action.get("type") == "buy_card"]
+    axis = _axis(deck_ids)
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
 
@@ -559,12 +624,10 @@ def choose_shop(observation: dict) -> dict:
     relics = [action for action in actions if action.get("type") == "buy_relic"]
     best_relic = max(
         relics,
-        key=lambda action: SHOP_RELIC_SCORES.get(action.get("relic_id") or action.get("id"), -1),
+        key=lambda action: _shop_relic_score(action.get("relic_id") or action.get("id"), axis),
         default=None,
     )
-    relic_score = SHOP_RELIC_SCORES.get(
-        (best_relic or {}).get("relic_id") or (best_relic or {}).get("id"), -1
-    )
+    relic_score = _shop_relic_score((best_relic or {}).get("relic_id") or (best_relic or {}).get("id"), axis)
     best_card = max(buys, key=card_key, default=None)
     if best_card and card_key(best_card)[0] == 4:
         return best_card
@@ -867,6 +930,21 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         turn=observation["turn"],
         exhaust_pile=tuple(CARD_NAMES.get(card, card) for card in observation.get("exhaust_pile", ())),
         player_relics=tuple(observation["player"].get("relics", ())),
+        player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
+        player_potions=tuple(potion["id"] for potion in observation.get("potions", ()) if potion),
+        belt_buckle_applied=(
+            "RELIC.BELT_BUCKLE" in observation["player"].get("relics", ())
+            and not any(observation.get("potions", ()))
+        ),
+        red_skull_active=(
+            "RELIC.RED_SKULL" in observation["player"].get("relics", ())
+            and observation["player"]["hp"] * 2 <= observation["player"].get("max_hp", observation["player"]["hp"])
+        ),
+        upgraded_cards=tuple(
+            CARD_NAMES.get(card["id"], card["id"])
+            for card in observation.get("hand", ())
+            if card.get("upgrade", 0) > 0
+        ),
     )
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
