@@ -686,6 +686,27 @@ def choose_shop(observation: dict) -> dict:
     return next((action for action in actions if action.get("type") == "skip"), actions[0] if actions else {"type": "skip"})
 
 
+def _log_rest_routing(observation: dict, player: dict, routes: list[tuple[dict, tuple[int, int, int] | None]]) -> None:
+    # Opt-in diagnostic for choose_map's low-HP safety routing: dumps the candidate branches and
+    # their (fight_count, distance, elite_count) tuples so a real run can be checked afterwards
+    # for "no fight-free route existed" vs. "a better route existed and was not taken".
+    path = os.environ.get("STS2AI_MAP_DEBUG")
+    if not path:
+        return
+    points = {(p["col"], p["row"]): p["type"] for p in observation["map"]["points"]}
+    entry = {
+        "seq": observation.get("seq"),
+        "hp": player.get("hp"),
+        "max_hp": player.get("max_hp"),
+        "candidates": [
+            {"col": action["col"], "row": action["row"], "type": points.get((action["col"], action["row"])), "route": route}
+            for action, route in routes
+        ],
+    }
+    with open(path, "a", encoding="utf-8") as file:
+        file.write(json.dumps(entry) + "\n")
+
+
 def choose_map(observation: dict) -> dict:
     points = {(point["col"], point["row"]): point for point in observation["map"]["points"]}
     room_value = {"Ancient": 0, "Monster": 1, "Unknown": 1, "Shop": 1, "RestSite": 3, "Treasure": 3, "Elite": -5, "Boss": 0}
@@ -742,6 +763,7 @@ def choose_map(observation: dict) -> dict:
 
         routes = [(action, rest_path((action["col"], action["row"]))) for action in observation["legal_actions"]]
         reachable = [(action, route) for action, route in routes if route is not None]
+        _log_rest_routing(observation, player, routes)
         if reachable:
             return min(reachable, key=lambda choice: (*choice[1], -value((choice[0]["col"], choice[0]["row"]))))[0]
 

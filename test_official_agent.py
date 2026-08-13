@@ -1,4 +1,6 @@
 import json
+import os
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -108,6 +110,30 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
         }
         self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_map_debug_logs_rest_routing_candidates_when_enabled(self) -> None:
+        observation = {
+            "seq": 42,
+            "player": {"hp": 20, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Unknown", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": []},
+                {"col": 1, "row": 1, "type": "RestSite", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            log_path = os.path.join(tmp, "map_debug.jsonl")
+            with patch.dict(os.environ, {"STS2AI_MAP_DEBUG": log_path}):
+                choose_map(observation)
+            with open(log_path, encoding="utf-8") as file:
+                entry = json.loads(file.readline())
+        self.assertEqual(entry["seq"], 42)
+        self.assertEqual(entry["hp"], 20)
+        candidates = {(c["col"], c["type"]): c["route"] for c in entry["candidates"]}
+        self.assertEqual(candidates[(0, "Monster")], [1, 1, 0])
+        self.assertEqual(candidates[(1, "Unknown")], [0, 1, 0])
 
     def test_just_above_three_quarters_hp_uses_normal_routing(self) -> None:
         # One HP above the new cutoff (61/80): rest-priority routing must not engage yet.
