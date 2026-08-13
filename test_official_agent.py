@@ -465,6 +465,14 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.UNKNOWN_MANUAL")
 
+    def test_low_hp_skips_snecko_oil_fallback(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.SNECKO_OIL", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 12, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 143, "intents": [{"damage": 20, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_low_hp_uses_offensive_selection_potion(self) -> None:
         observation = {
             "legal_actions": [

@@ -413,7 +413,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     def unknown_manual() -> dict | None:
         for action in actions:
             potion_id = str(action.get("potion_id", "")).upper()
-            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV")):
+            # SNECKO_OIL randomizes the energy cost (0-3) of every card drawn into hand; using
+            # it as a blind emergency fallback can spike the cost of the exact card needed to
+            # survive the turn, making a dangerous situation worse instead of better.
+            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV", "SNECKO")):
                 return action
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2) or len(enemy_hp) >= 2
