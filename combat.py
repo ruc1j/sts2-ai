@@ -164,6 +164,7 @@ class Combat:
     cards_played_last_turn: int | None = None
     free_cards: tuple[str, ...] = ()
     powers_played_this_turn: int = 0
+    bellows_used: bool = False
     burning_sticks_used: bool = False
     joss_paper_count: int = 0
     permafrost_used: bool = False
@@ -879,9 +880,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         )
 
     card, _, target = action.partition("@")
-    if RELIC_BELLOWS in combat.player_relics and combat.turn == 1:
+    if RELIC_BELLOWS in combat.player_relics and combat.turn == 1 and not combat.bellows_used:
         upgraded = tuple(dict.fromkeys(combat.upgraded_cards + combat.hand))
-        combat = replace(combat, upgraded_cards=upgraded)
+        combat = replace(combat, upgraded_cards=upgraded, bellows_used=True)
     hand = list(combat.hand)
     if card in SKILLS:
         vital_spark = sum(_power(enemy.powers, "VitalSparkPower") for enemy in combat.enemies if enemy.alive)

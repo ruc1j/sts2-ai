@@ -320,8 +320,29 @@ RELIC_TIERS_BY_AXIS = {
                    "A": {"RELIC.PEN_NIB", "RELIC.POCKETWATCH", "RELIC.CLOAK_CLASP", "RELIC.CHARONS_ASHES"}},
     "exhaust": {"S": {"RELIC.CHARONS_ASHES", "RELIC.BURNING_STICKS", "RELIC.JOSS_PAPER"},
                 "A": {"RELIC.PERMAFROST", "RELIC.GAME_PIECE", "RELIC.MUMMIFIED_HAND", "RELIC.SELF_FORMING_CLAY"}},
+    "strength": {"S": {"RELIC.SPARKLING_ROUGE", "RELIC.BRIMSTONE", "RELIC.POCKETWATCH"},
+                  "A": {"RELIC.HAPPY_FLOWER", "RELIC.MERCURY_HOURGLASS", "RELIC.MUMMIFIED_HAND", "RELIC.CLOAK_CLASP"}},
+}
+EVENT_RELIC_TIERS_BY_AXIS = {
+    "general": {"S": {"RELIC.PAELS_FLESH", "RELIC.PAELS_BLOOD", "RELIC.PRISMATIC_GEM", "RELIC.SAND_CASTLE"},
+                 "A": {"RELIC.PAELS_LEGION", "RELIC.GLASS_EYE", "RELIC.TOASTY_MITTENS", "RELIC.VERY_HOT_COCOA"}},
+    "strike": {"S": {"RELIC.YUMMY_COOKIE", "RELIC.PAELS_FLESH", "RELIC.SAND_CASTLE"},
+                "A": {"RELIC.PAELS_BLOOD", "RELIC.PUMPKIN_CANDLE", "RELIC.GLASS_EYE"}},
+    "self_damage": {"S": {"RELIC.PAELS_FLESH", "RELIC.PAELS_TEARS", "RELIC.TOASTY_MITTENS"},
+                    "A": {"RELIC.PAELS_BLOOD", "RELIC.PAELS_LEGION", "RELIC.VERY_HOT_COCOA"}},
+    "vulnerable": {"S": {"RELIC.PAELS_FLESH", "RELIC.PAELS_LEGION", "RELIC.VERY_HOT_COCOA"},
+                   "A": {"RELIC.PAELS_BLOOD", "RELIC.TOASTY_MITTENS", "RELIC.PUMPKIN_CANDLE"}},
+    "exhaust": {"S": {"RELIC.PAELS_EYE", "RELIC.PAELS_BLOOD", "RELIC.SAND_CASTLE"},
+                "A": {"RELIC.PAELS_LEGION", "RELIC.PAELS_FLESH", "RELIC.YUMMY_COOKIE"}},
+    "strength": {"S": {"RELIC.PAELS_FLESH", "RELIC.TOASTY_MITTENS", "RELIC.PUMPKIN_CANDLE"},
+                  "A": {"RELIC.PAELS_BLOOD", "RELIC.VERY_HOT_COCOA", "RELIC.SAND_CASTLE"}},
 }
 _RELIC_TIER_VALUE = {"S": 9, "A": 7, "B": 5, "C": 3, "D": 1}
+
+
+def _relic_axis(deck_ids: set[str]) -> str | None:
+    axis = _axis(deck_ids)
+    return axis or ("strength" if STRENGTH_CARDS & deck_ids else None)
 
 
 def _shop_relic_score(relic: str, axis: str | None) -> int:
@@ -335,18 +356,27 @@ def _shop_relic_score(relic: str, axis: str | None) -> int:
     return score
 
 
+def _event_relic_score(relic: str, axis: str | None) -> int:
+    score = RELIC_SCORES.get(relic, 0)
+    for tier, relics in EVENT_RELIC_TIERS_BY_AXIS.get(axis or "general", {}).items():
+        if relic in relics:
+            return max(score, _RELIC_TIER_VALUE[tier])
+    return score
+
+
 def choose_event(observation: dict) -> dict:
     actions = [action for action in observation.get("legal_actions", ()) if action.get("type") == "event_relic"]
     if not actions:
         raise ValueError("no event relic actions")
     block_starved = _block_starved(_deck_list(observation))
+    axis = _relic_axis(_deck_ids(observation))
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     low_hp = hp <= max_hp // 2
 
     def score(action: dict) -> int:
         relic = action.get("relic_id", "")
-        value = RELIC_SCORES.get(relic, 0)
+        value = _event_relic_score(relic, axis)
         # Block-starved decks value the block pet even more.
         if block_starved and relic == "RELIC.PAELS_LEGION":
             value += 2
@@ -605,7 +635,7 @@ def choose_shop(observation: dict) -> dict:
     deck_ids = _deck_ids(observation)
     deck_list = _deck_list(observation)
     buys = [action for action in actions if action.get("type") == "buy_card"]
-    axis = _axis(deck_ids)
+    axis = _relic_axis(deck_ids)
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
 

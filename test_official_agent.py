@@ -1304,6 +1304,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_LEGION")
 
+    def test_event_relic_tier_follows_exhaust_axis(self) -> None:
+        observation = {
+            "phase": "event",
+            "player": {"hp": 80, "max_hp": 80},
+            "deck": ["CARD.CORRUPTION", "CARD.TRUE_GRIT"],
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.PAELS_EYE"},
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.PAELS_LEGION"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_EYE")
+
     def test_event_block_starved_prefers_block_pet(self) -> None:
         observation = {
             "phase": "event",
