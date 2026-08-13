@@ -693,10 +693,27 @@ def choose_card_reward(observation: dict) -> dict:
     # deck relies on weak Defends with fewer than 2 strong block cards), defensive picks (Shrug It
     # Off etc.) outrank same-tier offensive cards so Act 2 fights cost less HP.
     defense_needed = _block_starved(deck_list)
-    selected = max(actions, key=lambda action: (bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0, 1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0))
+    cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
+    # A 3-energy/turn economy can only ever field so many 3+ cost cards a turn - stacking more of
+    # them past a couple copies just clogs the hand with cards that sit dead, however strong each
+    # one is individually. Deprioritize (not ban) further high-cost picks once the deck already
+    # has HIGH_COST_CAP of them; this term sits ahead of core/tier so it overrides even a
+    # deck-defining pick, matching "avoid multiple high-cost cards even if strong".
+    HIGH_COST_CAP = 2
+    high_cost_in_deck = sum(_number(cards.get(card_id, {}).get("cost"), 0) >= 3 for card_id in deck_list)
+    over_high_cost_cap = high_cost_in_deck >= HIGH_COST_CAP
+
+    def is_high_cost(card_id: str) -> bool:
+        return _number(cards.get(card_id, {}).get("cost"), 0) >= 3
+
+    selected = max(actions, key=lambda action: (
+        0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
+        bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
+        priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
+        1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0,
+    ))
     if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
         return selected
-    cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
     attacks = [action for action in actions if cards.get(action["card_id"], {}).get("type") == "Attack"]
     if attacks:
         rarity = {"Rare": 3, "Uncommon": 2, "Common": 1}
