@@ -657,6 +657,24 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, hive, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 21)
 
+    def test_illusion_power_minion_attacks_normally_the_cycle_after_reviving(self) -> None:
+        # IllusionPower.AfterDeath (C#) force-sets the dying creature's move to a synthetic
+        # "REVIVE_MOVE" built at runtime (SetMoveImmediate) that never appears in the exported
+        # state machine JSON. The revival branch above only restored hp, leaving move stuck on
+        # that unresolvable id - the very next _enemy_turn() to find this enemy alive again
+        # would look it up and raise StopIteration instead of attacking.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        spec = next(monster for monster in hive["monsters"] if monster["id"] == "MONSTER.PARAFRIGHT")
+        values = tuple(sorted(spec["values"].items()))
+        minion = Enemy("MONSTER.PARAFRIGHT", 5, "SLAM_MOVE", values, powers=(("IllusionPower", 1), ("MinionPower", 1)), primary=False)
+        boss = Enemy("MONSTER.PARAFRIGHT", 50, "SLAM_MOVE", values)
+        combat = step(Combat(80, (ANGER,), (), (), (minion, boss)), f"{ANGER}@0", {}, random.Random(0))
+        revived = step(combat, END_TURN, hive, random.Random(0))
+        self.assertEqual(revived.enemies[0].move, "SLAM_MOVE")
+        attacked = step(revived, END_TURN, hive, random.Random(0))
+        self.assertLess(attacked.player_hp, revived.player_hp)  # SlamMove actually lands, no crash
+
     def test_search_prefers_killing_an_attacking_minion(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

@@ -615,8 +615,18 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         enemies = list(combat.enemies)
         for index, enemy in enumerate(enemies):
             # IllusionPower minions (e.g. Parafright) revive at full health after the enemy phase.
+            # IllusionPower.AfterDeath (C#) force-sets the creature's move to a synthetic
+            # "REVIVE_MOVE" state built at runtime (SetMoveImmediate) that never appears in the
+            # exported state machine JSON - left unresolved, the next _enemy_turn() call would
+            # find this enemy alive again, look up that move id, and raise StopIteration
+            # (confirmed via decompile: Parafright/EyeWithTeeth each export only their one real
+            # attack state). Re-resolve back through the monster's own initial state instead.
             if not enemy.alive and _power(enemy.powers, "IllusionPower"):
-                enemies[index] = replace(enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)))
+                spec = _specs(data)[enemy.model]
+                enemies[index] = replace(
+                    enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)),
+                    move=_resolve_move(enemy, spec, rng, spec["initial_state"]),
+                )
         combat = replace(combat, enemies=tuple(enemies))
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
         # themselves once the enemy side's turn ends.

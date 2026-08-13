@@ -3,10 +3,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import time
 import traceback
+from dataclasses import replace
 
-from combat import Combat, Enemy, search
+from combat import Combat, Enemy, _resolve_move, search
 
 
 CARD_NAMES = {
@@ -765,7 +767,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         if observed["id"] in {"MONSTER.PAELS_LEGION", "MONSTER.BYRDPIP"}:
             continue
         spec = specs[observed["id"]]
-        enemies.append(Enemy(
+        enemy = Enemy(
             model=observed["id"],
             hp=observed["hp"],
             move=observed["move"],
@@ -774,7 +776,15 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             block=observed["block"],
             powers=tuple(sorted((POWER_NAMES.get(power["id"], power["id"]), power["amount"]) for power in observed["powers"])),
             history=tuple(observed["history"] or ()),
-        ))
+        )
+        if not any(state["id"] == enemy.move for state in spec["states"]):
+            # Some moves are synthesized at runtime and never appear in the exported state
+            # machine - e.g. IllusionPower.AfterDeath (Parafright) SetMoveImmediate()s a
+            # "REVIVE_MOVE" the exporter never saw. Left as-is, the next _enemy_turn() call
+            # would look this move id up and raise StopIteration, crashing every rollout that
+            # reaches this enemy's turn. Re-resolve back through the monster's own initial state.
+            enemy = replace(enemy, move=_resolve_move(enemy, spec, random.Random(observation["seq"]), spec["initial_state"]))
+        enemies.append(enemy)
     state = Combat(
         player_hp=observation["player"]["hp"],
         hand=tuple(CARD_NAMES.get(card["id"], card["id"]) for card in observation["hand"]),
