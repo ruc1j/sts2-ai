@@ -366,6 +366,20 @@ class CombatTest(unittest.TestCase):
         beetle = next(e for e in combat.enemies if e.model == "MONSTER.SLUMBERING_BEETLE")
         self.assertEqual(beetle.move, "ROLL_OUT_MOVE")
 
+    def test_ovicopter_summons_three_eggs_and_resolves_can_lay(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        rng = random.Random(0)
+        combat = initial_combat(data, "ENCOUNTER.OVICOPTER_NORMAL", rng)
+        combat = step(combat, END_TURN, data, rng)
+        self.assertEqual(sum(enemy.model == "MONSTER.TOUGH_EGG" for enemy in combat.enemies), 3)
+        combat = step(combat, END_TURN, data, rng)
+        eggs = [enemy for enemy in combat.enemies if enemy.model == "MONSTER.TOUGH_EGG"]
+        self.assertTrue(all(19 <= enemy.hp <= 22 for enemy in eggs))
+        combat = step(combat, END_TURN, data, rng)
+        ovicopter = next(enemy for enemy in combat.enemies if enemy.model == "MONSTER.OVICOPTER")
+        self.assertEqual(ovicopter.move, "NUTRITIONAL_PASTE_MOVE")
+
     def test_phrog_parasite_death_spawns_four_wrigglers_and_continues(self) -> None:
         with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
             data = json.load(file)

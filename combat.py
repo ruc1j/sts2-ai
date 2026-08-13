@@ -335,11 +335,14 @@ def _state(spec: dict, state_id: str) -> dict:
     return next(state for state in spec["states"] if state["id"] == state_id)
 
 
-def _condition(expression: str, enemy: Enemy) -> bool:
+def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -> bool:
     values = _dict(enemy.values)
     if "SlotName ==" in expression:
         return enemy.slot == re.search(r'"([^"]+)"', expression).group(1)
-    if "HasPower<" in expression:
+    if expression.lstrip("!") == "CanLay":
+        # Ovicopter lays three ToughEgg minions while fewer than three remain alive.
+        result = sum(other.alive and other.model == "MONSTER.TOUGH_EGG" for other in enemies) < 3
+    elif "HasPower<" in expression:
         name = re.search(r"HasPower<([^>]+)>", expression).group(1)
         result = _power(enemy.powers, name) > 0
     elif ".IsFront" in expression:
@@ -361,12 +364,18 @@ def _condition(expression: str, enemy: Enemy) -> bool:
     return not result if expression.lstrip().startswith("!") else result
 
 
-def _resolve_move(enemy: Enemy, spec: dict, rng: random.Random, state_id: str | None = None) -> str:
+def _resolve_move(
+    enemy: Enemy,
+    spec: dict,
+    rng: random.Random,
+    state_id: str | None = None,
+    enemies: tuple[Enemy, ...] = (),
+) -> str:
     state_id = state_id or enemy.move
     while _state(spec, state_id)["type"] != "MoveState":
         branch = _state(spec, state_id)
         if branch["type"] == "ConditionalBranchState":
-            state_id = next(option["state"] for option in branch["branches"] if _condition(option["condition"], enemy))
+            state_id = next(option["state"] for option in branch["branches"] if _condition(option["condition"], enemy, enemies))
             continue
         choices = []
         for option in branch["branches"]:
@@ -670,7 +679,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             else:
                 discard += (card,) * count
         elif command == "CreatureCmd.Add":
-            enemies.append(_summon(effect["model"], data, rng))
+            count = 3 if enemy.model == "MONSTER.OVICOPTER" and move_id == "LAY_EGGS_MOVE" else 1
+            enemies.extend(_summon(effect["model"], data, rng) for _ in range(count))
         elif command in {"CreatureCmd.Kill", "CreatureCmd.SetMaxAndCurrentHp"}:
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
     if move_id == "SNORE_MOVE":
@@ -679,8 +689,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         # next-move resolution below (SlumberingBeetle also decrements it on taking unblocked
         # damage, not modeled - a safe, conservative wake-up estimate).
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SlumberPower", -1))
+    if enemy.model == "MONSTER.TOUGH_EGG" and move_id == "HATCH_MOVE":
+        values = _dict(enemy.values)
+        enemy = replace(enemy, hp=rng.randint(values["HatchlingMinHp"], values["HatchlingMaxHp"]))
     enemy = replace(enemy, history=enemy.history + (enemy.move,))
-    enemy = replace(enemy, move=_resolve_move(enemy, spec, rng, move.get("next")))
+    enemy = replace(enemy, move=_resolve_move(enemy, spec, rng, move.get("next"), tuple(enemies)))
     if enemy.model == "MONSTER.THE_INSATIABLE" and move_id == "LIQUIFY_GROUND_MOVE":
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 4))
         draw += (FRANTIC_ESCAPE,) * 3
