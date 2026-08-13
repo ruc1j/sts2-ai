@@ -473,6 +473,19 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_full_hp_two_enemy_fight_skips_foul_potion_fallback(self) -> None:
+        # FOUL_POTION damages every creature including the player; "danger" alone triggers on
+        # 2+ enemies even at full HP, so it must not be grabbed blindly here.
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.FOUL_POTION", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 82, "max_hp": 82},
+            "enemies": [
+                {"combat_id": 1, "hp": 209, "intents": [{"damage": 10, "repeats": 1}]},
+                {"combat_id": 2, "hp": 199, "intents": [{"damage": 10, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_low_hp_uses_offensive_selection_potion(self) -> None:
         observation = {
             "legal_actions": [

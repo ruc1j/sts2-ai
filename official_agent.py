@@ -418,7 +418,11 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             # SNECKO_OIL randomizes the energy cost (0-3) of every card drawn into hand; using
             # it as a blind emergency fallback can spike the cost of the exact card needed to
             # survive the turn, making a dangerous situation worse instead of better.
-            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV", "SNECKO")):
+            # FOUL_POTION deals 12 damage to every creature INCLUDING the player - against a
+            # high-HP boss this is a bad trade (a live run burned two full-HP casts, -24 HP, for
+            # a negligible 24/408 dent), and "danger" here triggers on 2+ enemies alone, so it
+            # can fire at full HP with nothing actually wrong yet.
+            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV", "SNECKO", "FOUL")):
                 return action
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2) or len(enemy_hp) >= 2
