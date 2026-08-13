@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, RUPTURE, SHRUG, SLIMED, STARTING_DECK, STRIKE,
+    RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _summon,
 )
@@ -513,6 +513,13 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(_power(combat.player_powers, "RupturePower"), 1)
         combat = step(combat, f"{HEMOKINESIS}@0", {}, random.Random(0))
         self.assertEqual(_power(combat.player_powers, "StrengthPower"), 1)
+
+    def test_second_wind_exhausts_non_attacks_for_block(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        combat = Combat(80, (SECOND_WIND, DEFEND, SHRUG, STRIKE), (), (), (enemy,))
+        after = step(combat, SECOND_WIND, {}, random.Random(0))
+        # DEFEND and SHRUG (non-Attack) exhaust for 5 block each; STRIKE (Attack) stays in hand.
+        self.assertEqual((after.player_block, after.hand, set(after.exhaust_pile)), (10, (STRIKE,), {SECOND_WIND, DEFEND, SHRUG}))
 
     def test_inflame_adds_strength_to_attacks(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())

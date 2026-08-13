@@ -68,6 +68,7 @@ CARD_NAMES = {
     "CARD.BELIEVE_IN_YOU": "Believe in You",
     "CARD.FINESSE": "Finesse",
     "CARD.RUPTURE": "Rupture",
+    "CARD.SECOND_WIND": "Second Wind",
 }
 
 CARD_TIERS = {
