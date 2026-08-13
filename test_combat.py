@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, SHRUG, SLIMED, STARTING_DECK, STRIKE,
+    RELIC_DEMON_TONGUE, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_SCREAMING_FLAGON, RUPTURE, SHRUG, SLIMED, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _summon,
 )
@@ -494,6 +494,14 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
         after = step(Combat(80, (HEMOKINESIS,), (), (), (enemy,)), f"{HEMOKINESIS}@0", {}, random.Random(0))
         self.assertEqual((after.player_hp, after.enemies[0].hp), (78, 25))
+
+    def test_rupture_grants_strength_when_a_self_damage_card_is_played(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        combat = Combat(80, (RUPTURE, HEMOKINESIS), (), (), (enemy,))
+        combat = step(combat, RUPTURE, {}, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "RupturePower"), 1)
+        combat = step(combat, f"{HEMOKINESIS}@0", {}, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "StrengthPower"), 1)
 
     def test_inflame_adds_strength_to_attacks(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())

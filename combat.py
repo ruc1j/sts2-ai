@@ -16,6 +16,7 @@ BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, 
 TOXIC, BURN, DAZED, FLAME_BARRIER = "Toxic", "Burn", "Dazed", "Flame Barrier"
 MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Yet", "Offering", "Pacts End", "Pommel Strike"
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
+RUPTURE = "Rupture"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
 # Status cards some monster moves add straight to PileType.Hand (Myte's Toxic, Mecha Knight's
 # Burn): CardModel.HasTurnEndInHandEffect deals this much flat Unpowered damage if the card is
@@ -29,7 +30,7 @@ CARD_COST = {
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
-    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0,
+    IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -56,7 +57,7 @@ ATTACKS = {
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
-    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE,
+    FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -721,6 +722,14 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # player has slightly more HP margin than they truly do.
         player_hp += 10
     player_powers = combat.player_powers
+    if card == RUPTURE:
+        player_powers = _add_power(player_powers, "RupturePower", 1)
+    # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
+    # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
+    # Strength equal to the Rupture stack.
+    rupture = _power(player_powers, "RupturePower")
+    if rupture and card in SELF_DAMAGE:
+        player_powers = _add_power(player_powers, "StrengthPower", rupture)
     if card == INFLAME:
         player_powers = _add_power(player_powers, "StrengthPower", 2)
     if card == FLAME_BARRIER:
@@ -740,7 +749,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == RELAX:
         block = 15 * 3 // 4 if _power(combat.player_powers, "FrailPower") else 15
         return replace(combat, player_block=combat.player_block + block)
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU}:
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:

@@ -67,6 +67,7 @@ CARD_NAMES = {
     "CARD.BODY_SLAM": "Body Slam",
     "CARD.BELIEVE_IN_YOU": "Believe in You",
     "CARD.FINESSE": "Finesse",
+    "CARD.RUPTURE": "Rupture",
 }
 
 CARD_TIERS = {
