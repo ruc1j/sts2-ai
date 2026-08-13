@@ -1151,7 +1151,7 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.DARK_EMBRACE")
 
-    def test_reward_prefers_defense_when_deck_lacks_block(self) -> None:
+    def test_reward_prefers_strong_defense_when_deck_lacks_block(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
             "legal_actions": [
@@ -1162,9 +1162,9 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
-    def test_reward_prefers_defense_at_one_third_block(self) -> None:
+    def test_reward_prefers_strong_defense_at_one_third_block(self) -> None:
         # sim19 died with exactly 8 block of 24 cards (33%): the old "under a third" threshold
-        # never fired. Block must be prioritized until it clears 40%.
+        # never fired. Strong defense must be prioritized until the deck clears the threshold.
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 16 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 8},
             "legal_actions": [
@@ -1175,9 +1175,10 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
-    def test_reward_prefers_defense_when_block_is_only_defends(self) -> None:
+    def test_reward_prefers_strong_defense_when_block_is_only_defends(self) -> None:
         # 6 of 13 cards are block (>40%), but they are all weak Defends (5 block): fewer than
-        # 2 strong block cards means the deck is still starved and defense stays a priority.
+        # 2 strong block cards means the deck is still defense-needy and strong defense stays
+        # a priority.
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 7 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 6},
             "legal_actions": [
@@ -1188,9 +1189,10 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
-    def test_reward_prefers_defense_when_block_is_only_iron_waves(self) -> None:
+    def test_reward_prefers_strong_defense_when_block_is_only_iron_waves(self) -> None:
         # 6 of 13 cards are block (>40%), but Iron Wave is also only 5 block: without 2 strong
-        # (8+) block cards the deck is still judged starved.
+        # (8+) block cards the deck is still judged defense-needy, so strong defense remains
+        # preferable.
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 7 + [{"id": "CARD.IRON_WAVE"}] * 6},
             "legal_actions": [
@@ -1245,7 +1247,7 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
 
-    def test_reward_defense_wins_tie_against_self_damage_offense(self) -> None:
+    def test_reward_prefers_high_tier_energy_over_weak_block(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
             "legal_actions": [
@@ -1254,9 +1256,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TRUE_GRIT")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BLOODLETTING")
 
-    def test_reward_prefers_taunt_over_tiered_offense_when_defense_is_needed(self) -> None:
+    def test_reward_prefers_same_tier_taunt_over_offense_when_defense_is_needed(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
             "legal_actions": [
@@ -1267,6 +1269,18 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TAUNT")
+
+    def test_reward_prefers_pommel_strike_over_true_grit_when_defense_is_needed(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 5 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4 + [{"id": "CARD.BASH"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.POMMEL_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.TRUE_GRIT"},
+                {"type": "card_reward", "card_id": "CARD.JUGGLING"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.POMMEL_STRIKE")
 
     def test_event_never_picks_paels_horn(self) -> None:
         observation = {

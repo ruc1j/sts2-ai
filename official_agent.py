@@ -86,13 +86,13 @@ CARD_TIERS = {
         "CARD.CORRUPTION", "CARD.FEED", "CARD.PYRE", "CARD.STOKE", "CARD.BLUDGEON",
         "CARD.EXPECT_A_FIGHT", "CARD.FEEL_NO_PAIN", "CARD.FLAME_BARRIER", "CARD.HEMOKINESIS",
         "CARD.RAGE", "CARD.SECOND_WIND", "CARD.ANGER", "CARD.BLOOD_WALL", "CARD.HEADBUTT",
-        "CARD.SHRUG_IT_OFF",
+        "CARD.SHRUG_IT_OFF", "CARD.TAUNT",
     }, "A"),
     **dict.fromkeys({
         "CARD.BREAK", "CARD.AGGRESSION", "CARD.TEAR_ASUNDER", "CARD.THRASH",
         "CARD.ASHEN_STRIKE", "CARD.DISMANTLE", "CARD.EVIL_EYE", "CARD.FORGOTTEN_RITUAL",
         "CARD.SPITE", "CARD.STOMP", "CARD.UNRELENTING", "CARD.WHIRLWIND", "CARD.BREAKTHROUGH",
-        "CARD.CINDER", "CARD.IRON_WAVE", "CARD.TAUNT", "CARD.TWIN_STRIKE",
+        "CARD.CINDER", "CARD.IRON_WAVE", "CARD.TWIN_STRIKE",
         "CARD.INFLAME",  # Strength scales every attack: boss firepower (was C)
     }, "B"),
     **dict.fromkeys({
@@ -676,12 +676,12 @@ DEFENSE_PRIORITY = {
     "CARD.IRON_WAVE", "CARD.TRUE_GRIT",
 }
 
-# Blocks of 8+ that can actually hold off Act 2's 28-36 hits. Defend (5), Iron Wave (5) and
-# Second Wind (5) and True Grit (7) are barely better than Defend, so they do not count as
-# strong when judging whether a deck can survive without more defensive picks.
+# Blocks of 8+ that can actually hold off Act 2's 28-36 hits. Taunt is included despite its
+# 7-block base because its Vulnerable rider makes it a dedicated defensive solution; Defend (5),
+# Iron Wave (5), Second Wind (5) and True Grit (7) are barely better than Defend.
 STRONG_BLOCK_CARDS = {
     "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
-    "CARD.BLOOD_WALL", "CARD.STONE_ARMOR",
+    "CARD.BLOOD_WALL", "CARD.STONE_ARMOR", "CARD.TAUNT",
 }
 
 
@@ -724,9 +724,9 @@ def choose_card_reward(observation: dict) -> dict:
         for card_id in STRENGTH_CARDS:
             if card_id in priority:
                 priority[card_id] += 1
-    # Keep the deck from becoming all-offense: once block cards are under 40% of the deck (or the
-    # deck relies on weak Defends with fewer than 2 strong block cards), defensive picks (Shrug It
-    # Off etc.) outrank same-tier offensive cards so Act 2 fights cost less HP.
+    # Keep the deck from becoming all-offense: true strong-block solutions (Shrug It Off, Taunt,
+    # ...) may override a tier, while weak block cards only win same-tier ties. This preserves the
+    # sim19 fix without letting True Grit/Iron Wave crowd out deck acceleration forever.
     defense_needed = _block_starved(deck_list)
     cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
     # A 3-energy/turn economy can only ever field so many 3+ cost cards a turn - stacking more of
@@ -743,8 +743,10 @@ def choose_card_reward(observation: dict) -> dict:
 
     selected = max(actions, key=lambda action: (
         0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
-        bool(core.get(action["card_id"])), core.get(action["card_id"], 0), 2 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
-        priority.get(action["card_id"], 0), 1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
+        bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
+        2 if defense_needed and action["card_id"] in STRONG_BLOCK_CARDS else 0,
+        priority.get(action["card_id"], 0),
+        1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
         1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0,
     ))
     if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
