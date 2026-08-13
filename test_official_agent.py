@@ -1256,6 +1256,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TRUE_GRIT")
 
+    def test_reward_prefers_taunt_over_tiered_offense_when_defense_is_needed(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.HEADBUTT"},
+                {"type": "card_reward", "card_id": "CARD.TAUNT"},
+                {"type": "card_reward", "card_id": "CARD.HAVOC"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TAUNT")
+
     def test_event_never_picks_paels_horn(self) -> None:
         observation = {
             "phase": "event",
