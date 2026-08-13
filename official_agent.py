@@ -202,6 +202,23 @@ def _intent_incoming(enemy: dict) -> int:
     return sum(max(0, _number(intent.get("damage"))) * max(1, _number(intent.get("repeats"), 1)) for intent in enemy.get("intents") or ())
 
 
+_LAST_POTION_CONTEXT: tuple[object, ...] | None = None
+
+
+def _potion_context(observation: dict) -> tuple[object, ...] | None:
+    run = observation.get("run")
+    turn = observation.get("turn")
+    enemies = tuple((enemy.get("combat_id"), enemy.get("id")) for enemy in observation.get("enemies", ()))
+    if not isinstance(run, dict) or run.get("act") is None or run.get("floor") is None or turn is None or not enemies:
+        return None
+    return (run["act"], run["floor"], turn, enemies)
+
+
+def _potion_is_lethal_incoming(observation: dict) -> bool:
+    hp = _number((observation.get("player") or {}).get("hp"))
+    return sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ())) >= hp
+
+
 def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
     card_id = action.get("card_id")
     card = hand.get(action.get("hand_index"), {})
@@ -397,6 +414,7 @@ def choose_event(observation: dict) -> dict:
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
+    global _LAST_POTION_CONTEXT
     if observation.get("phase") == "shop":
         return choose_shop(observation)
     if observation.get("phase") == "map":
@@ -421,7 +439,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     if sandpit_critical and escape:
         return escape
-    if potion := choose_potion(observation, potions):
+    potion_context = _potion_context(observation)
+    if (
+        potion_context is None
+        or potion_context != _LAST_POTION_CONTEXT
+        or _potion_is_lethal_incoming(observation)
+    ) and (potion := choose_potion(observation, potions)):
+        if potion_context is not None:
+            _LAST_POTION_CONTEXT = potion_context
         return potion
     if turn := choose_crab_facing(observation, cards):
         return turn
@@ -643,9 +668,11 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
         cards = [card for card in EXHAUST_CORE if card not in deck_ids]
     else:
         # Axis seeds: Inflame (strength) leads - boss-fight verification showed the strength
-        # axis deals the most damage - then Perfected Strike (strike), Rupture (self-damage),
-        # Corruption (exhaust).
-        first = ("CARD.INFLAME", "CARD.PERFECTED_STRIKE", "CARD.RUPTURE", "CARD.CORRUPTION")
+        # axis deals the most damage - then Perfected Strike (strike) and Corruption (exhaust).
+        # Rupture is only a seed once a self-damage enabler is already in the deck.
+        first = ["CARD.INFLAME", "CARD.PERFECTED_STRIKE", "CARD.CORRUPTION"]
+        if UNCOMMITTED_SELF_DAMAGE & deck_ids:
+            first.insert(2, "CARD.RUPTURE")
         cards = [card for card in first if available and card in available]
     if available is not None:
         cards = [card for card in cards if card in available]

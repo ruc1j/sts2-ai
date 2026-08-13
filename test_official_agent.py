@@ -514,6 +514,45 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
 
+    def test_nonlethal_danger_uses_only_one_potion_per_turn(self) -> None:
+        observation = {
+            "run": {"act": 98, "floor": 97},
+            "turn": 4,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 35, "max_hp": 70},
+            "hand": [],
+            "enemies": [
+                {"combat_id": 101, "id": "MONSTER.A", "hp": 30, "intents": [{"damage": 10, "repeats": 1}]},
+                {"combat_id": 102, "id": "MONSTER.B", "hp": 30, "intents": [{"damage": 10, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_lethal_danger_can_use_another_potion_same_turn(self) -> None:
+        observation = {
+            "run": {"act": 98, "floor": 98},
+            "turn": 4,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 70},
+            "hand": [],
+            "enemies": [{"combat_id": 103, "id": "MONSTER.C", "hp": 30, "intents": [{"damage": 25, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+        observation["legal_actions"] = [
+            {"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None},
+            {"type": "end_turn"},
+        ]
+        self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
+
     def test_low_hp_multiple_enemies_uses_swift_potion(self) -> None:
         observation = {
             "legal_actions": [
@@ -1273,6 +1312,28 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_uncommitted_rupture_does_not_force_core(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.RUPTURE"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_self_damage_enabler_seeds_rupture_core(self) -> None:
+        observation = {
+            "player": {"deck": ["CARD.BLOODLETTING"]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.RUPTURE"},
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.RUPTURE")
 
     def test_self_damage_axis_prefers_follow_up(self) -> None:
         observation = {
