@@ -510,6 +510,21 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
 
+    def test_low_hp_multiple_enemies_uses_swift_potion(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SWIFT_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 8, "max_hp": 80},
+            "hand": [],
+            "enemies": [
+                {"combat_id": 1, "hp": 20, "intents": [{"damage": 5, "repeats": 1}]},
+                {"combat_id": 2, "hp": 20, "intents": [{"damage": 5, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SWIFT_POTION")
+
     def test_low_hp_incoming_falls_back_to_regen(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None}],

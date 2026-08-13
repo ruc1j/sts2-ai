@@ -571,7 +571,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2) or len(enemy_hp) >= 2
     if incoming >= hp:
-        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     hand = observation.get("hand") or ()
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
@@ -582,12 +582,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
-        return use(recovery) or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use(blocking) or use(debuffs, enemy_damage) or energy or use(offensive, enemy_hp) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or energy or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
