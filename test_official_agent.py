@@ -66,6 +66,39 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_map(observation)["col"], 0)
 
+    def test_three_quarters_hp_prefers_nearest_reachable_rest(self) -> None:
+        # 58/80 sat just outside the old two-thirds cutoff (53.3) - a real run walked straight
+        # through it and two more costly Monster packs before finally reaching a rest site at
+        # 10 HP. The trigger now sits at three quarters (matching choose_rest's own HEAL
+        # threshold) so this exact HP band routes toward rest instead.
+        observation = {
+            "player": {"hp": 58, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Treasure", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": []},
+                {"col": 1, "row": 1, "type": "Monster", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "RestSite", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 0)
+
+    def test_just_above_three_quarters_hp_uses_normal_routing(self) -> None:
+        # One HP above the new cutoff (61/80): rest-priority routing must not engage yet.
+        observation = {
+            "player": {"hp": 61, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}]},
+                {"col": 1, "row": 0, "type": "Treasure", "children": [{"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": []},
+                {"col": 1, "row": 1, "type": "Monster", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "RestSite", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
     def test_two_thirds_hp_still_prefers_value_when_no_rest_is_reachable(self) -> None:
         observation = {
             "player": {"hp": 52, "max_hp": 80},

@@ -547,8 +547,16 @@ def choose_map(observation: dict) -> dict:
         return memo[coord]
 
     player = observation.get("player", {})
-    # Route toward rest sites and avoid elites once HP drops below two thirds.
-    if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 3 <= player["max_hp"] * 2:
+    # Route toward rest sites and avoid elites once HP drops below three quarters (matches
+    # choose_rest's own HEAL threshold, previously two thirds here). Normal-state routing below
+    # only minimizes total Monster tiles over the whole remaining route to the boss - it has no
+    # notion of "HP banked so far" at all, so a run can walk straight through several costly
+    # fights back to back before this safety mode ever engages. A real run (Act1, floor ~1-6)
+    # dropped 80 -> 52 HP across two ordinary Monster packs while still just outside the old
+    # two-thirds cutoff (53.3), only reaching a rest site at 10 HP after a third costly fight it
+    # had no choice but to walk through. Raising the trigger point buys an earlier, healthier
+    # margin before the unavoidable fights on the way to whatever rest site is actually reachable.
+    if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 4 <= player["max_hp"] * 3:
         rest_paths: dict[tuple[int, int], tuple[int, int] | None] = {}
         rest_visiting: set[tuple[int, int]] = set()
 
