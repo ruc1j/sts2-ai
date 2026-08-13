@@ -292,9 +292,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     # in one hit with no attack anywhere near that size). Never auto-play it.
     cards = [action for action in actions if action["type"] == "card" and action["card_id"] != "CARD.THE_GAMBIT"]
     potions = [action for action in actions if action["type"] == "potion"]
-    sandpit = any(power["id"] == "POWER.SANDPIT_POWER" and power["amount"] > 0 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
+    sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
-    if sandpit and escape:
+    if sandpit_critical and escape:
         return escape
     if turn := choose_crab_facing(observation, cards):
         return turn

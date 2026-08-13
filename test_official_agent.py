@@ -726,6 +726,16 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
 
+    def test_does_not_repeat_frantic_escape_after_sandpit_is_safe(self) -> None:
+        observation = {
+            "enemies": [{"combat_id": 1, "hp": 100, "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 3}], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 1},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+
     def test_targets_crab_to_face_the_larger_attack(self) -> None:
         observation = {
             "player": {"powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
