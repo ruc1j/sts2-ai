@@ -1588,6 +1588,28 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
+    def test_reward_prefers_higher_tier_attack_over_strong_defense(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.EVIL_EYE"},
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
+
+    def test_reward_prefers_higher_tier_attack_over_stone_armor(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.STONE_ARMOR"},
+                {"type": "card_reward", "card_id": "CARD.ASHEN_STRIKE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ASHEN_STRIKE")
+
     def test_reward_prefers_strong_defense_at_one_third_block(self) -> None:
         # sim19 died with exactly 8 block of 24 cards (33%): the old "under a third" threshold
         # never fired. Strong defense must be prioritized until the deck clears the threshold.

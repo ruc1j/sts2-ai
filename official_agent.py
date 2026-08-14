@@ -194,6 +194,8 @@ KNOWN_CARD_DAMAGE = {
     "CARD.UPPERCUT": 13,
     "CARD.FIEND_FIRE": 7,
 }
+# Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
+ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
 KNOWN_CARD_BLOCK = {
     "CARD.DEFEND_IRONCLAD": 5,
     "CARD.SHRUG_IT_OFF": 8,
@@ -1023,10 +1025,26 @@ def choose_card_reward(observation: dict) -> dict:
     def is_high_cost(card_id: str) -> bool:
         return _number(cards.get(card_id, {}).get("cost"), 0) >= 3
 
+    def is_attack_reward(action: dict) -> bool:
+        card_id = action["card_id"]
+        return cards.get(card_id, {}).get("type") == "Attack" or card_id in ATTACK_REWARD_CARDS
+
+    def strong_defense_bonus(card_id: str) -> int:
+        if not (defense_needed and card_id in STRONG_BLOCK_CARDS):
+            return 0
+        tier = tier_score.get(CARD_TIERS.get(card_id, "D"), 0)
+        if any(
+            is_attack_reward(action)
+            and tier_score.get(CARD_TIERS.get(action["card_id"], "D"), 0) > tier
+            for action in actions
+        ):
+            return 0
+        return 2
+
     selected = max(actions, key=lambda action: (
         0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
         bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
-        2 if defense_needed and action["card_id"] in STRONG_BLOCK_CARDS else 0,
+        strong_defense_bonus(action["card_id"]),
         1 if draw_needed and action["card_id"] in DRAW_CARDS else 0,
         priority.get(action["card_id"], 0),
         0 if not exhaust_ready and action["card_id"] in UNCOMMITTED_EXHAUST_PAYOFF else 1,
