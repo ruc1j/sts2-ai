@@ -581,7 +581,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     potion_lethal = _potion_is_lethal_incoming(observation)
     potion_hp = _number((observation.get("player") or {}).get("hp"))
     potion_max_hp = _number((observation.get("player") or {}).get("max_hp"), potion_hp)
-    potion_urgent = potion_lethal or (sandpit_critical and potion_hp <= max(1, potion_max_hp // 3))
+    potion_threatening = sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ())) >= max(1, potion_hp // 2)
+    potion_urgent = potion_lethal or (
+        sandpit_critical and (potion_hp <= max(1, potion_max_hp // 3) or potion_threatening)
+    )
     if (
         (not sandpit_critical or potion_urgent)
         and (
