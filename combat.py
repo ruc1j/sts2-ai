@@ -1320,7 +1320,9 @@ def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     prevented += sum(max(0, before.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and before.primary and not after.alive and not after.escaped)
     # Cap damage at each enemy's remaining HP so overkill is not overvalued.
     dealt = sum(
-        (max(0, before.hp) - max(0, after.hp)) * (1 if before.primary else 0.5)
+        (max(0, before.hp) - max(0, after.hp)) * (
+            1 if before.primary else 1.5 if _power(before.powers, "StrengthPower") >= 4 else 0.5
+        )
         for before, after in zip(combat.enemies, state.enemies)
         if before.alive and not after.escaped
     )

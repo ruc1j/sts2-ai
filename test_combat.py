@@ -302,6 +302,18 @@ class CombatTest(unittest.TestCase):
             _step_score(combat, minion_hit, DUMMY_DATA),
         )
 
+    def test_step_score_prioritizes_a_strong_minion_but_not_a_weak_one(self) -> None:
+        primary = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        weak_minion = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", (), primary=False, powers=(("StrengthPower", 2),))
+        strong_minion = replace(weak_minion, powers=(("StrengthPower", 4),))
+        combat = Combat(80, (), (), (), (primary, weak_minion))
+        primary_hit = replace(combat, enemies=(replace(primary, hp=30), weak_minion))
+        weak_minion_hit = replace(combat, enemies=(primary, replace(weak_minion, hp=30)))
+        strong_minion_hit = replace(combat, enemies=(primary, replace(strong_minion, hp=30)))
+        self.assertGreater(_step_score(combat, primary_hit, DUMMY_DATA), _step_score(combat, weak_minion_hit, DUMMY_DATA))
+        strong_combat = replace(combat, enemies=(primary, strong_minion))
+        self.assertGreater(_step_score(strong_combat, strong_minion_hit, DUMMY_DATA), _step_score(strong_combat, primary_hit, DUMMY_DATA))
+
     def test_bully_and_dismantle_scale_with_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
         bully = step(Combat(80, (BULLY,), (), (), (enemy,)), "Bully@0", {}, random.Random(0))
