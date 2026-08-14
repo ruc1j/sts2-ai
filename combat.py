@@ -22,6 +22,7 @@ ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
 HEADBUTT, UPPERCUT, TRUE_GRIT, BURNING_PACT = "Headbutt", "Uppercut", "True Grit", "Burning Pact"
 FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE = "Fiend Fire", "Evil Eye", "Brand", "Infernal Blade"
+RAGE, SPITE = "Rage", "Spite"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -37,12 +38,12 @@ CARD_COST = {
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
-    HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1,
+    HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
-    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
@@ -61,7 +62,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -73,14 +74,14 @@ POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN}
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE}
@@ -165,6 +166,8 @@ class Combat:
     # DemonTongue.AfterDamageReceived: only the first unblocked hit each turn heals; reset
     # alongside the per-turn combo counters.
     damaged_this_turn: bool = False
+    # Spite checks damage received during the current player side, not the preceding enemy side.
+    lost_hp_this_turn: bool = False
     exhausted_this_turn: bool = False
     # CentennialPuzzle.AfterDamageReceived: only the first unblocked hit of the whole combat
     # draws cards; never reset.
@@ -267,6 +270,7 @@ def _apply_player_damage(combat: Combat, amount: int) -> Combat:
     return _sync_red_skull(replace(
         combat, player_hp=hp, player_powers=powers,
         damage_received_this_turn=combat.damage_received_this_turn + actual,
+        lost_hp_this_turn=combat.lost_hp_this_turn or actual > 0,
         lizard_tail_used=used_tail,
     ))
 
@@ -866,7 +870,14 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action == END_TURN:
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
         # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
-        combat = replace(combat, player_powers=_add_power(combat.player_powers, "RingingPower", -_power(combat.player_powers, "RingingPower")), played_this_turn=False)
+        combat = replace(
+            combat,
+            player_powers=_add_power(
+                _add_power(combat.player_powers, "RingingPower", -_power(combat.player_powers, "RingingPower")),
+                "RagePower", -_power(combat.player_powers, "RagePower"),
+            ),
+            played_this_turn=False,
+        )
         # HasTurnEndInHandEffect (Toxic, Burn): flat Unpowered damage for each copy still in
         # hand when the player's turn ends, then the hand is cleared to discard as normal - a
         # monster move can inject fresh copies straight into the (now empty) hand during its own
@@ -988,7 +999,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
             attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0,
-            powers_played_this_turn=0, damaged_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
+            powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
         )
 
@@ -1039,6 +1050,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
     combo_block += helmet_block
     if card in ATTACKS:
+        combo_block += _power(combat.player_powers, "RagePower")
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
             combo_powers = _add_power(combo_powers, "DexterityPower", 1)
         if RELIC_SHURIKEN in relics and attacks_this_turn % 3 == 0:
@@ -1057,6 +1069,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             combo_enemies = [_damage_enemy(enemy, 5) if enemy.alive else enemy for enemy in combo_enemies]
         if RELIC_TUNING_FORK in relics and skills_combat % 10 == 0:
             combo_block += 7
+    if card == RAGE:
+        combo_powers = _add_power(combo_powers, "RagePower", 5 if card_was_upgraded else 3)
     combat = replace(
         combat, played_this_turn=True, player_powers=combo_powers, enemies=tuple(combo_enemies),
         player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
@@ -1164,6 +1178,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             block *= 2
         combat = replace(combat, player_block=combat.player_block + block)
     if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE}:
+        return combat
+    if card == RAGE:
         return combat
     if card == TRUE_GRIT:
         if combat.hand:
@@ -1274,7 +1290,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # holder inserts Amount Dazed cards into the draw pile at a random position - since
         # _draw() already pops randomly from draw_pile, appending is equivalent.
         hive = sum(_power(enemy.powers, "PersonalHivePower") for enemy in before if enemy.alive)
-        return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, draw_pile=combat.draw_pile + (DAZED,) * hive)
+        return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, lost_hp_this_turn=combat.lost_hp_this_turn or reflected > 0, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
         enemy = enemies[int(target)]
         vulnerable = 6 if lamp_double else 3
@@ -1288,7 +1304,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         gained = _power(enemies[int(target)].powers, "VulnerablePower")
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     enemy = enemies[int(target)]
-    hits = fiend_fire_count if card == FIEND_FIRE else CARD_HITS.get(card, 1)
+    if card == SPITE:
+        hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1
+    else:
+        hits = fiend_fire_count if card == FIEND_FIRE else CARD_HITS.get(card, 1)
     if card == PERFECTED_STRIKE:
         strikes = sum(1 for name in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile if name in STRIKE_TAGGED)
         damage = 6 + 2 * strikes
@@ -1302,7 +1321,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = 7
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card != UPPERCUT:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
@@ -1380,7 +1399,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     # PersonalHivePower.AfterDamageReceived (Entomancer): every powered attack against a holder
     # inserts Amount Dazed cards into the draw pile at a random position.
     hive = _power(enemy.powers, "PersonalHivePower")
-    return replace(combat, enemies=tuple(enemies), player_powers=player_powers, player_hp=combat.player_hp - reflected, draw_pile=combat.draw_pile + (DAZED,) * hive)
+    return replace(combat, enemies=tuple(enemies), player_powers=player_powers, player_hp=combat.player_hp - reflected, lost_hp_this_turn=combat.lost_hp_this_turn or reflected > 0, draw_pile=combat.draw_pile + (DAZED,) * hive)
 
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:

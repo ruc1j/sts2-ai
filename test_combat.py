@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
@@ -557,6 +557,40 @@ class CombatTest(unittest.TestCase):
         upgraded = step(Combat(80, (TWIN_STRIKE,), (), (), (enemy,), energy=1, upgraded_cards=(TWIN_STRIKE,)), f"{TWIN_STRIKE}@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(normal.enemies[0].hp, 90)
         self.assertEqual(upgraded.enemies[0].hp, 86)
+
+    def test_rage_grants_attack_block_until_turn_end(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = step(Combat(80, (RAGE, STRIKE), (), (), (enemy,), energy=1), RAGE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "RagePower"), 3)
+        combat = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((combat.player_block, combat.enemies[0].hp), (3, 94))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "RagePower"), 0)
+
+    def test_spite_repeats_after_unblocked_damage_and_upgrades_repeat_count(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        untouched = step(Combat(80, (SPITE,), (), (), (enemy,)), f"{SPITE}@0", DUMMY_DATA, random.Random(0))
+        damaged = step(Combat(80, (SPITE,), (), (), (enemy,), lost_hp_this_turn=True), f"{SPITE}@0", DUMMY_DATA, random.Random(0))
+        upgraded = step(Combat(80, (SPITE,), (), (), (enemy,), lost_hp_this_turn=True, upgraded_cards=(SPITE,)), f"{SPITE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((untouched.enemies[0].hp, damaged.enemies[0].hp, upgraded.enemies[0].hp), (95, 90, 85))
+
+    def test_spite_tracks_player_side_self_damage_and_resets_after_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (BLOODLETTING, SPITE), (), (), (enemy,), energy=1)
+        combat = step(combat, BLOODLETTING, DUMMY_DATA, random.Random(0))
+        self.assertTrue(combat.lost_hp_this_turn)
+        combat = step(combat, f"{SPITE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(combat.enemies[0].hp, 90)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertFalse(after.lost_hp_this_turn)
+
+    def test_spite_ignores_enemy_side_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
+        combat = Combat(80, (), (SPITE,), (), (enemy,))
+        combat = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(combat.player_hp, 70)
+        after = step(combat, f"{SPITE}@0", ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 95)
 
     def test_stomp_hits_all_enemies_and_costs_less_after_attacks(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 40, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))

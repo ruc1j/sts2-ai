@@ -88,6 +88,8 @@ CARD_NAMES = {
     "CARD.INFERNAL_BLADE": "Infernal Blade",
     "CARD.EVIL_EYE": "Evil Eye",
     "CARD.BRAND": "Brand",
+    "CARD.RAGE": "Rage",
+    "CARD.SPITE": "Spite",
     "CARD.DISINTEGRATION": "Disintegration",
     "CARD.MIND_ROT": "Mind Rot",
 }
@@ -184,6 +186,7 @@ POWER_NAMES = {
     "POWER.MIND_ROT_POWER": "MindRotPower",
     "POWER.THORNS_POWER": "ThornsPower",
     "POWER.VITAL_SPARK_POWER": "VitalSparkPower",
+    "POWER.RAGE_POWER": "RagePower",
     "POWER.ADAPTABLE_POWER": "AdaptablePower",
     "POWER.ENRAGE_POWER": "EnragePower",
     "POWER.PAINFUL_STABS_POWER": "PainfulStabsPower",
@@ -210,6 +213,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.HEADBUTT": 9,
     "CARD.UPPERCUT": 13,
     "CARD.FIEND_FIRE": 7,
+    "CARD.SPITE": 5,
 }
 # Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
 ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
