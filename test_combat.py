@@ -10,7 +10,7 @@ from combat import (
     ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _apply_player_damage, _enemy_attack_damage, _step_score, _summon,
+    _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -41,6 +41,21 @@ class CombatTest(unittest.TestCase):
         self.assertTrue(any("@2" in action for action in legal_actions(combat)))
         after = step(combat, END_TURN, self.data, random.Random(0))
         self.assertEqual(after.turn, 2)
+
+    def test_queen_runtime_branch_follows_torch_head_life(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        queen_spec = next(monster for monster in data["monsters"] if monster["id"] == "MONSTER.QUEEN")
+        queen = Enemy("MONSTER.QUEEN", 400, "BURN_BRIGHT_FOR_ME_BRANCH", tuple(sorted(queen_spec["values"].items())))
+        amalgam = Enemy("MONSTER.TORCH_HEAD_AMALGAM", 199, "TACKLE_MOVE", (), primary=False)
+        self.assertEqual(
+            _resolve_move(queen, queen_spec, random.Random(0), enemies=(amalgam, queen)),
+            "BURN_BRIGHT_FOR_ME_MOVE",
+        )
+        self.assertEqual(
+            _resolve_move(queen, queen_spec, random.Random(0), enemies=(replace(amalgam, hp=0), queen)),
+            "OFF_WITH_YOUR_HEAD_MOVE",
+        )
 
     def test_end_turn_restores_max_energy_not_hardcoded_three(self) -> None:
         combat = initial_combat(self.data, "ENCOUNTER.SLIMES_WEAK", random.Random(0))

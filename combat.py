@@ -366,6 +366,12 @@ def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -
         match = re.search(r"(<|>=)\s*(\d+)", expression)
         threshold, counter = int(match.group(2)), _power(enemy.powers, "CurseOfKnowledgeCounter")
         result = counter < threshold if match.group(1) == "<" else counter >= threshold
+    elif expression in {"runtime", "HasAmalgamDied"} and enemy.model == "MONSTER.QUEEN":
+        # Queen's exporter leaves the custom post-move predicate as "runtime".  Its only
+        # runtime input is whether the Torch Head Amalgam is still alive; derive both branches
+        # from the live formation instead of letting every Queen rollout fall back to heuristics.
+        amalgam_alive = any(other.alive and other.model == "MONSTER.TORCH_HEAD_AMALGAM" for other in enemies)
+        result = amalgam_alive if expression == "runtime" else not amalgam_alive
     elif expression.lstrip("!") in values:
         # A bare formation-level flag (like IsFront/IsAlone but without the "base.Creature."
         # prefix), e.g. Bowlbug Rock's POST_HEADBUTT branch on IsOffBalance.
