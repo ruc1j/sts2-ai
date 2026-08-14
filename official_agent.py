@@ -764,13 +764,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     offensive_now = offensive if threatening else offensive - {"POTION.SKILL_POTION"}
     hand = observation.get("hand") or ()
     has_slot = any(enemy.get("slot") for enemy in observation.get("enemies", ()))
-    boss_like = any(str(enemy.get("slot")).lower() == "boss" for enemy in observation.get("enemies", ()))
+    boss_slot = any(str(enemy.get("slot")).lower() == "boss" for enemy in observation.get("enemies", ()))
+    boss_like = boss_slot
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     boss_like = boss_like or (not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100)
     high_hp_regular = max_enemy_hp >= 100 and not boss_like
     major_allowed = not high_hp_regular or incoming >= max(1, (hp * 3 + 3) // 4) or hp <= max(1, max_hp // 3)
-    if max_enemy_hp >= 100 and incoming > 0 and major_allowed:
-        offensive_now.add("POTION.SKILL_POTION")
+    if max_enemy_hp >= 100 and major_allowed and (incoming > 0 or (boss_slot and hp <= max(1, max_hp // 3))):
+        offensive_now = offensive_now | {"POTION.SKILL_POTION"}
 
     def use_major_aware(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         return use(ids if major_allowed else ids - RESERVED_COMBAT_POTIONS, target_score)
