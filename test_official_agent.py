@@ -596,6 +596,19 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_half_hp_incoming_uses_recovery_potion(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.CURE_ALL", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 41, "max_hp": 80},
+            "hand": [],
+            "enemies": [{"combat_id": 1, "hp": 143, "intents": [{"damage": 28, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.CURE_ALL")
+
     def test_pre_hit_low_quarter_uses_lucky_tonic(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.LUCKY_TONIC", "target_id": None}, {"type": "end_turn"}],
@@ -1458,6 +1471,18 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FEEL_NO_PAIN")
+
+    def test_shop_uncommitted_exhaust_payoff_does_not_force_high_tier(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": [],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.DARK_EMBRACE"},
+                {"type": "buy_card", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.BATTLE_TRANCE")
 
     def test_reward_prefers_strong_defense_when_deck_lacks_block(self) -> None:
         observation = {

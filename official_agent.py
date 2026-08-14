@@ -620,7 +620,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         return use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use(blocking) or use(debuffs, enemy_damage) or energy or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or energy or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
@@ -703,6 +703,8 @@ def choose_shop(observation: dict) -> dict:
             return (0, 0, 0, 0, 0)
         if card_id in core:
             return (4, core[card_id], tier_score.get(CARD_TIERS.get(card_id, "D"), 0), 0, 0)
+        if not (set(EXHAUST_ENABLERS) & deck_ids) and card_id in UNCOMMITTED_EXHAUST_PAYOFF:
+            return (0, 0, 0, 0, 0)
         tier = CARD_TIERS.get(card_id)
         if tier not in {"S", "A"}:
             return (0, 0, 0, 0, 0)
