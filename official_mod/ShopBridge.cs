@@ -210,7 +210,14 @@ internal static class ShopBridge
             seq,
             terminal = false,
             phase = "shop",
-            run = new { act = run.CurrentActIndex, floor = run.ActFloor, seed = run.Rng.StringSeed },
+            run = new
+            {
+                act = run.CurrentActIndex,
+                floor = run.ActFloor,
+                seed = run.Rng.StringSeed,
+                boss_encounter_id = run.Act.BossEncounter?.Id.ToString(),
+                second_boss_encounter_id = run.Act.SecondBossEncounter?.Id.ToString(),
+            },
             gold = player.Gold,
             deck = deckIds,
             deck_cards = deck,

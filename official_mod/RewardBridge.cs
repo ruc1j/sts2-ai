@@ -77,7 +77,13 @@ internal static class RewardBridge
             seq,
             terminal = false,
             phase = "card_reward",
-            run = new { act = run.CurrentActIndex, floor = run.ActFloor },
+            run = new
+            {
+                act = run.CurrentActIndex,
+                floor = run.ActFloor,
+                boss_encounter_id = run.Act.BossEncounter?.Id.ToString(),
+                second_boss_encounter_id = run.Act.SecondBossEncounter?.Id.ToString(),
+            },
             player = new
             {
                 hp = player.Creature.CurrentHp,

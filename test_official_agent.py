@@ -527,6 +527,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
 
+    def test_reward_uses_known_boss_axis(self) -> None:
+        observation = {
+            "run": {"boss_encounter_id": "ENCOUNTER.THE_INSATIABLE_BOSS"},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_reward_skips_unknown_skill(self) -> None:
         observation = {
             "cards": [{"id": "CARD.UNKNOWN_SKILL", "type": "Skill", "rarity": "Uncommon", "cost": 1}],
@@ -1645,6 +1656,46 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 2)
 
+    def test_multi_enemy_threat_prefers_all_enemy_attack(self) -> None:
+        observation = {
+            "player": {"hp": 20, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.THUNDERCLAP", "type": "Attack", "vars": [{"id": "Damage", "value": 4}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 50, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []},
+                {"combat_id": 2, "hp": 50, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.THUNDERCLAP", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.THUNDERCLAP", "hand_index": 0, "target_id": 2},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.THUNDERCLAP")
+
+    def test_multi_enemy_threat_avoids_self_damage_aoe(self) -> None:
+        observation = {
+            "player": {"hp": 20, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.BREAKTHROUGH", "type": "Attack", "vars": [{"id": "Damage", "value": 9}, {"id": "SelfDamage", "value": 3}]},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 50, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []},
+                {"combat_id": 2, "hp": 50, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BREAKTHROUGH", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
+
     def test_focus_fire_prefers_weakest_enemy_when_nothing_is_lethal(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
@@ -1763,6 +1814,19 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_shop_uses_known_boss_axis(self) -> None:
+        observation = {
+            "phase": "shop",
+            "run": {"boss_encounter_id": "ENCOUNTER.THE_INSATIABLE_BOSS"},
+            "deck": [],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.BLUDGEON"},
+                {"type": "buy_card", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
     def test_shop_buys_high_value_potion_over_mid_value_relic(self) -> None:
         observation = {

@@ -624,14 +624,22 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         enemy = enemy_by_id.get(action.get("target_id"))
         return bool(enemy and damage(action) - enemy.get("block", 0) >= enemy["hp"])
 
+    # In a multi-enemy fight, a modeled rollout can still favor a single-target line because it
+    # undervalues the next combined hit. Prefer an available all-enemy card before rolling out
+    # when that combined threat is already large; lethal single-target attacks remain untouched.
+    player = observation.get("player", {})
+    hp, max_hp = player.get("hp", 0), player.get("max_hp", player.get("hp", 0))
+    incoming = sum(enemy_incoming.values())
+    aoe = [action for action in cards if action["card_id"] in ALL_ENEMY_CARDS and not _is_self_damage(action, hand)]
+    lethal = [action for action in cards if is_lethal(action)]
+    if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
+        return max(aoe, key=lambda action: _card_value(action, hand, "damage"))
+
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
-            player = observation.get("player", {})
-            hp, max_hp = player.get("hp", 0), player.get("max_hp", player.get("hp", 0))
-            incoming = sum(enemy_incoming.values())
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
@@ -640,10 +648,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
 
-    lethal = [
-        action for action in cards
-        if is_lethal(action)
-    ]
     if lethal:
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
         # Finish off the enemy that is about to attack first, then the weakest one.
@@ -903,6 +907,7 @@ def choose_shop(observation: dict) -> dict:
 
     def card_key(action: dict) -> tuple[int, int, int, int, int]:
         card_id = action.get("card_id") or action.get("id")
+        boss_bonus = _boss_card_bonus(observation, card_id)
         if over_unmodeled_cap and card_id in UNMODELED_REWARDS:
             return (0, 0, 0, 0, 0)
         if over_high_cost_cap and _number(shop_cards.get(card_id, {}).get("energy_cost"), 0) >= 3:
@@ -917,7 +922,7 @@ def choose_shop(observation: dict) -> dict:
             return (0, 0, 0, 0, 0)
         # A strong block is more valuable when the deck still lacks a real Act 2 answer.
         defense_bonus = 1 if defense_needed and card_id in STRONG_BLOCK_CARDS else 0
-        return (2, tier_score[tier], defense_bonus, 0, 0)
+        return (2, tier_score[tier], boss_bonus, defense_bonus, 0)
 
     # A high-value known relic beats a non-core card, but an axis-defining card still wins.
     relics = [action for action in actions if action.get("type") == "buy_relic"]
@@ -1164,6 +1169,33 @@ STRONG_BLOCK_CARDS = {
     "CARD.EQUILIBRIUM", "CARD.ULTIMATE_DEFEND",
 }
 
+# All-enemy attacks are the only reliable way to stop a multi-enemy turn from snowballing.
+# Keep this list in sync with combat.py's ALL_ENEMY_DAMAGE plus Whirlwind's special X-cost path.
+ALL_ENEMY_CARDS = {
+    "CARD.BREAKTHROUGH", "CARD.HOWL_FROM_BEYOND", "CARD.DRAMATIC_ENTRANCE",
+    "CARD.THUNDERCLAP", "CARD.PACTS_END", "CARD.STOMP", "CARD.EXTERMINATE",
+    "CARD.WHIRLWIND",
+}
+
+# Boss-specific axes are intentionally small: the bridge only exposes the encounter identity,
+# so use it to nudge known survival checks without replacing the general tier model.
+BOSS_CARD_AXES = {
+    "ENCOUNTER.THE_INSATIABLE_BOSS": STRONG_BLOCK_CARDS | DRAW_CARDS,
+    "ENCOUNTER.KNOWLEDGE_DEMON_BOSS": STRONG_BLOCK_CARDS | DRAW_CARDS,
+    "ENCOUNTER.CEREMONIAL_BEAST_BOSS": STRONG_BLOCK_CARDS | DRAW_CARDS,
+    "ENCOUNTER.QUEEN_BOSS": STRONG_BLOCK_CARDS | DRAW_CARDS | ALL_ENEMY_CARDS,
+}
+
+
+def _boss_card_bonus(observation: dict, card_id: str) -> int:
+    run = observation.get("run") or {}
+    boss_ids = {
+        str(run.get(key)).upper()
+        for key in ("boss_encounter_id", "second_boss_encounter_id")
+        if run.get(key)
+    }
+    return 2 if any(card_id in BOSS_CARD_AXES.get(boss_id, ()) for boss_id in boss_ids) else 0
+
 
 def _block_starved(deck: list[str]) -> bool:
     # True when the deck needs defensive picks: block cards make up under 40% of the deck, or
@@ -1271,6 +1303,7 @@ def choose_card_reward(observation: dict) -> dict:
     selected = max(actions, key=lambda action: (
         0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
         bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
+        _boss_card_bonus(observation, action["card_id"]),
         strong_defense_bonus(action["card_id"]),
         1 if draw_needed and action["card_id"] in DRAW_CARDS else 0,
         priority.get(action["card_id"], 0),
