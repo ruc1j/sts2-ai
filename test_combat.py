@@ -800,6 +800,18 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (TREMBLE,), (), (), (enemy,)), f"{TREMBLE}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].powers, (("VulnerablePower", 3),))
 
+    def test_vulnerable_and_weak_decay_after_enemy_side_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", (), powers=(("WeakPower", 2),))
+        combat = Combat(
+            80, (BASH,), (), (), (enemy,),
+            player_powers=(("VulnerablePower", 2), ("WeakPower", 2)), energy=2,
+        )
+        combat = step(combat, "Bash@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(dict(combat.enemies[0].powers), {"VulnerablePower": 2, "WeakPower": 2})
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(dict(after.enemies[0].powers), {"VulnerablePower": 1, "WeakPower": 1})
+        self.assertEqual(dict(after.player_powers), {"VulnerablePower": 1, "WeakPower": 1})
+
     def test_primal_force_transforms_attacks_into_giant_rocks(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
         after = step(Combat(80, (PRIMAL_FORCE, STRIKE, DEFEND), (), (), (enemy,)), PRIMAL_FORCE, {}, random.Random(0))

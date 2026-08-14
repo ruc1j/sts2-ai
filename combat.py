@@ -203,6 +203,10 @@ def _add_power(items: tuple[tuple[str, int], ...], name: str, amount: int) -> tu
     return tuple(sorted(powers.items()))
 
 
+def _tick_down_power(items: tuple[tuple[str, int], ...], name: str) -> tuple[tuple[str, int], ...]:
+    return _add_power(items, name, -1) if _power(items, name) > 0 else items
+
+
 BLOCK_CARDS = set(CARD_BLOCK) | {SHRUG, RELAX, TAUNT, SECOND_WIND}
 DEBUFF_CARDS = set(CARD_VULNERABLE_TARGET) | {TAUNT, TREMBLE, THUNDERCLAP, DOMINATE, MOLTEN_FIST}
 
@@ -864,7 +868,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                     enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)),
                     move=_resolve_move(enemy, spec, rng, spec["initial_state"]),
                 )
-        combat = replace(combat, enemies=tuple(enemies))
+        # VulnerablePower/WeakPower.AfterSideTurnEnd tick down after the enemy side, for both
+        # player and enemy owners (the decompiled powers gate on side == CombatSide.Enemy).
+        player_powers = _tick_down_power(_tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower")
+        enemies = [replace(enemy, powers=_tick_down_power(_tick_down_power(enemy.powers, "VulnerablePower"), "WeakPower")) for enemy in enemies]
+        combat = replace(combat, enemies=tuple(enemies), player_powers=player_powers)
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
         # themselves once the enemy side's turn ends.
         player_powers = combat.player_powers
