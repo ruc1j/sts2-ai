@@ -915,6 +915,14 @@ def choose_shop(observation: dict) -> dict:
     if (
         best_card
         and card_key(best_card)[0] == 2
+        and defense_needed
+        and (best_card.get("card_id") or best_card.get("id")) in STRONG_BLOCK_CARDS
+        and relic_score < 8
+    ):
+        return best_card
+    if (
+        best_card
+        and card_key(best_card)[0] == 2
         and _draw_starved(deck_list)
         and (best_card.get("card_id") or best_card.get("id")) in DRAW_CARDS
         and relic_score < 7
