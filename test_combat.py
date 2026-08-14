@@ -291,6 +291,17 @@ class CombatTest(unittest.TestCase):
         weakened = replace(combat, enemies=(replace(enemy, powers=(("WeakPower", 1),)),))
         self.assertGreater(_step_score(combat, weakened, ATTACKING_DUMMY_DATA), 0)
 
+    def test_step_score_discounts_partial_minion_damage(self) -> None:
+        primary = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        minion = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", (), primary=False)
+        combat = Combat(80, (), (), (), (primary, minion))
+        primary_hit = replace(combat, enemies=(replace(primary, hp=30), minion))
+        minion_hit = replace(combat, enemies=(primary, replace(minion, hp=30)))
+        self.assertGreater(
+            _step_score(combat, primary_hit, DUMMY_DATA),
+            _step_score(combat, minion_hit, DUMMY_DATA),
+        )
+
     def test_bully_and_dismantle_scale_with_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
         bully = step(Combat(80, (BULLY,), (), (), (enemy,)), "Bully@0", {}, random.Random(0))

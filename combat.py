@@ -1311,7 +1311,11 @@ def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     # boss kill outranks killing a reviving minion.
     prevented += sum(max(0, before.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and before.primary and not after.alive and not after.escaped)
     # Cap damage at each enemy's remaining HP so overkill is not overvalued.
-    dealt = sum(max(0, before.hp) - max(0, after.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.escaped)
+    dealt = sum(
+        (max(0, before.hp) - max(0, after.hp)) * (1 if before.primary else 0.5)
+        for before, after in zip(combat.enemies, state.enemies)
+        if before.alive and not after.escaped
+    )
     dealt -= max(0, combat.player_hp - state.player_hp)  # penalize self-damage
     # Debuffs that survive the card play reduce the next enemy phase. Exclude kills here because
     # their attack is already credited by `prevented` above.
