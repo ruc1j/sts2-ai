@@ -1064,7 +1064,7 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_uses_skill_potion_on_low_hp_boss_before_next_attack(self) -> None:
         observation = {
-            "run": {"act": 2, "floor": 16},
+            "run": {"act": 1, "floor": 16},
             "legal_actions": [
                 {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
                 {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
@@ -1077,7 +1077,7 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_uses_skill_before_recovery_on_lethal_boss_turn(self) -> None:
         observation = {
-            "run": {"act": 2, "floor": 16},
+            "run": {"act": 1, "floor": 16},
             "legal_actions": [
                 {"type": "potion", "potion_id": "POTION.FYSH_OIL", "target_id": None},
                 {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
@@ -1090,9 +1090,9 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_boss_floor_context_uses_act_specific_thresholds(self) -> None:
         for act, floor, expected in (
-            (1, 16, "POTION.STRENGTH_POTION"), (1, 17, "POTION.SKILL_POTION"),
-            (2, 15, "POTION.STRENGTH_POTION"), (2, 16, "POTION.SKILL_POTION"),
-            (3, 14, "POTION.STRENGTH_POTION"), (3, 15, "POTION.SKILL_POTION"),
+            (0, 16, "POTION.STRENGTH_POTION"), (0, 17, "POTION.SKILL_POTION"),
+            (1, 15, "POTION.STRENGTH_POTION"), (1, 16, "POTION.SKILL_POTION"),
+            (2, 14, "POTION.STRENGTH_POTION"), (2, 15, "POTION.SKILL_POTION"),
         ):
             with self.subTest(act=act, floor=floor):
                 observation = {

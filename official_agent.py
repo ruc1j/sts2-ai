@@ -766,7 +766,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     has_slot = any(enemy.get("slot") for enemy in observation.get("enemies", ()))
     boss_slot = any(str(enemy.get("slot")).lower() == "boss" for enemy in observation.get("enemies", ()))
     run = observation.get("run") or {}
-    boss_floor = {1: 17, 2: 16, 3: 15}.get(_number(run.get("act")))
+    boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
     boss_context = boss_slot or (boss_floor is not None and _number(run.get("floor")) >= boss_floor)
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     fallback_boss = not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100
