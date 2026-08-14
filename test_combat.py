@@ -4,12 +4,12 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BREAK, BREAKTHROUGH, BULLY, BYRD_SWOOP, CINDER, DAZED, DEFEND,
+    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
-    ENLIGHTENMENT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
+    ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
-    TAUNT, THUNDERCLAP, TOXIC, TREMBLE, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _summon,
 )
 
@@ -456,6 +456,45 @@ class CombatTest(unittest.TestCase):
     def test_body_slam_damage_scales_with_player_block(self) -> None:
         after = step(Combat(80, (BODY_SLAM,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, player_block=13), f"{BODY_SLAM}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 87)
+
+    def test_headbutt_deals_damage_and_returns_a_discard_card_to_draw(self) -> None:
+        after = step(Combat(80, (HEADBUTT,), (), (STRIKE,), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{HEADBUTT}@0", {}, random.Random(1))
+        self.assertEqual(after.enemies[0].hp, 91)
+        self.assertIn(STRIKE, after.draw_pile)
+
+    def test_uppercut_applies_weak_and_vulnerable(self) -> None:
+        after = step(Combat(80, (UPPERCUT,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=2), f"{UPPERCUT}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 87)
+        self.assertEqual(dict(after.enemies[0].powers), {"VulnerablePower": 1, "WeakPower": 1})
+
+    def test_upgraded_uppercut_only_increases_debuffs(self) -> None:
+        after = step(Combat(80, (UPPERCUT,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=2, upgraded_cards=(UPPERCUT,)), f"{UPPERCUT}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 87)
+        self.assertEqual(dict(after.enemies[0].powers), {"VulnerablePower": 2, "WeakPower": 2})
+
+    def test_true_grit_blocks_and_exhausts_a_hand_card(self) -> None:
+        after = step(Combat(80, (TRUE_GRIT, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), TRUE_GRIT, {}, random.Random(0))
+        self.assertEqual(after.player_block, 7)
+        self.assertEqual(after.hand, ())
+        self.assertEqual(after.exhaust_pile, (STRIKE,))
+
+    def test_burning_pact_exhausts_and_draws(self) -> None:
+        after = step(Combat(80, (BURNING_PACT, STRIKE), (DEFEND, DEFEND), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BURNING_PACT, {}, random.Random(0))
+        self.assertEqual(after.exhaust_pile, (STRIKE,))
+        self.assertEqual(len(after.hand), 2)
+
+    def test_fiend_fire_exhausts_the_hand_and_hits_once_per_card(self) -> None:
+        after = step(Combat(80, (FIEND_FIRE, STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=2), f"{FIEND_FIRE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 86)
+        self.assertEqual(after.exhaust_pile, (FIEND_FIRE, STRIKE, STRIKE))
+
+    def test_evil_eye_doubles_block_after_an_exhaust(self) -> None:
+        after = step(Combat(80, (EVIL_EYE,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, exhausted_this_turn=True), EVIL_EYE, {}, random.Random(0))
+        self.assertEqual(after.player_block, 16)
+
+    def test_brand_exhausts_a_card_and_gains_strength(self) -> None:
+        after = step(Combat(80, (BRAND, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BRAND, {}, random.Random(0))
+        self.assertEqual((after.player_hp, after.exhaust_pile, _power(after.player_powers, "StrengthPower")), (79, (STRIKE,), 1))
 
     def test_believe_in_you_grants_energy(self) -> None:
         after = step(Combat(80, (BELIEVE_IN_YOU,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BELIEVE_IN_YOU, {}, random.Random(0))

@@ -74,6 +74,13 @@ CARD_NAMES = {
     "CARD.RUPTURE": "Rupture",
     "CARD.SECOND_WIND": "Second Wind",
     "CARD.ENLIGHTENMENT": "Enlightenment",
+    "CARD.HEADBUTT": "Headbutt",
+    "CARD.UPPERCUT": "Uppercut",
+    "CARD.TRUE_GRIT": "True Grit",
+    "CARD.BURNING_PACT": "Burning Pact",
+    "CARD.FIEND_FIRE": "Fiend Fire",
+    "CARD.EVIL_EYE": "Evil Eye",
+    "CARD.BRAND": "Brand",
     "CARD.DISINTEGRATION": "Disintegration",
     "CARD.MIND_ROT": "Mind Rot",
 }
@@ -179,6 +186,9 @@ KNOWN_CARD_DAMAGE = {
     "CARD.FEED": 10,
     "CARD.BYRD_SWOOP": 14,
     "CARD.PILLAGE": 6,
+    "CARD.HEADBUTT": 9,
+    "CARD.UPPERCUT": 13,
+    "CARD.FIEND_FIRE": 7,
 }
 KNOWN_CARD_BLOCK = {
     "CARD.DEFEND_IRONCLAD": 5,
@@ -187,6 +197,8 @@ KNOWN_CARD_BLOCK = {
     "CARD.IRON_WAVE": 5,
     "CARD.EQUILIBRIUM": 13,
     "CARD.TAUNT": 7,
+    "CARD.TRUE_GRIT": 7,
+    "CARD.EVIL_EYE": 8,
 }
 
 
