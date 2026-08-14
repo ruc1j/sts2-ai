@@ -475,10 +475,12 @@ class OfficialAgentTest(unittest.TestCase):
                 {"id": "CARD.EXPECT_A_FIGHT", "cost": 1}, {"id": "CARD.INFLAME", "cost": 1},
             ]},
             "cards": [
+                {"id": "CARD.TAUNT", "rarity": "Uncommon", "cost": 1},
                 {"id": "CARD.POMMEL_STRIKE", "rarity": "Rare", "cost": 1},
                 {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
             ],
             "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TAUNT"},
                 {"type": "card_reward", "card_id": "CARD.POMMEL_STRIKE"},
                 {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},

@@ -1043,7 +1043,7 @@ STRENGTH_CARDS = {"CARD.INFLAME", "CARD.PRIMAL_FORCE", "CARD.DOMINATE", "CARD.CR
 # Reliable draw is the smallest common denominator across Ironclad builds. Keep this separate
 # from the tier table so a draw-starved deck can prefer a modest draw card without forcing an axis.
 DRAW_CARDS = {
-    "CARD.BATTLE_TRANCE", "CARD.BURNING_PACT", "CARD.POMMEL_STRIKE", "CARD.DRUM_OF_BATTLE",
+    "CARD.BATTLE_TRANCE", "CARD.BURNING_PACT", "CARD.POMMEL_STRIKE", "CARD.SHRUG_IT_OFF", "CARD.DRUM_OF_BATTLE",
     "CARD.MASTER_OF_STRATEGY", "CARD.FINESSE",
 }
 
