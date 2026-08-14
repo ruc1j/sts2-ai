@@ -7,7 +7,7 @@ from combat import (
     ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
-    ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
+    ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
@@ -533,6 +533,13 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", (), powers=(("VulnerablePower", 2),))
         after = step(Combat(80, (MOLTEN_FIST,), (), (), (enemy,)), f"{MOLTEN_FIST}@0", {}, random.Random(0))
         self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "VulnerablePower")), (85, 4))  # 100-15(10*1.5 vuln), Vulnerable 2+2
+
+    def test_mangle_reduces_strength_for_one_enemy_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", (), powers=(("StrengthPower", 2),))
+        combat = step(Combat(80, (MANGLE,), (), (), (enemy,), energy=3), "Mangle@0", ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((combat.enemies[0].hp, _power(combat.enemies[0].powers, "StrengthPower"), _power(combat.enemies[0].powers, "ManglePower")), (85, -8, 10))
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, _power(after.enemies[0].powers, "StrengthPower"), _power(after.enemies[0].powers, "ManglePower")), (78, 2, 0))
 
     def test_not_yet_heals_and_exhausts(self) -> None:
         after = step(Combat(70, (NOT_YET,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=2), NOT_YET, {}, random.Random(0))

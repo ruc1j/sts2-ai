@@ -22,7 +22,7 @@ SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
 HEADBUTT, UPPERCUT, TRUE_GRIT, BURNING_PACT = "Headbutt", "Uppercut", "True Grit", "Burning Pact"
-FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE = "Fiend Fire", "Evil Eye", "Brand", "Infernal Blade"
+FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE, MANGLE = "Fiend Fire", "Evil Eye", "Brand", "Infernal Blade", "Mangle"
 RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
@@ -33,7 +33,7 @@ HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
-    CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1,
+    CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3,
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
@@ -44,12 +44,12 @@ CARD_COST = {
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
-    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
 CARD_HITS = {TWIN_STRIKE: 2}
-CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2}
+CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2, MANGLE: 5}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
@@ -63,7 +63,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -597,7 +597,11 @@ def _enemy_attack_damage(
     if not move:
         return 0
     attack = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
-    damage = int(attack.get("damage", 0)) + _power(enemy.powers, "StrengthPower") + _power(player_powers, "TaintedPower")
+    damage = (
+        int(attack.get("damage", 0))
+        + _power(enemy.powers, "StrengthPower")
+        + _power(player_powers, "TaintedPower")
+    )
     if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (
         _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")
     ):
@@ -706,7 +710,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         if command == "DamageCmd.Attack":
             # TaintedPower.ModifyDamageAdditive: flat bonus to every powered attack against the
             # player while it's up (see step()'s SKILLS handling for how it's granted/cleared).
-            damage = int(attack_intent["damage"]) + _power(enemy.powers, "StrengthPower") + _power(player_powers, "TaintedPower")
+            damage = (
+                int(attack_intent["damage"])
+                + _power(enemy.powers, "StrengthPower")
+                + _power(player_powers, "TaintedPower")
+            )
             if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (_power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")):
                 damage = damage * 3 // 2
             repeats = int(attack_intent.get("repeats", 1))
@@ -818,6 +826,16 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         # TerritorialPower.AfterSideTurnEnd (not exported): +1 Strength unconditionally every
         # turn, regardless of which move was performed.
         enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1))
+    mangle = _power(enemy.powers, "ManglePower")
+    if mangle:
+        enemy = replace(
+            enemy,
+            powers=_add_power(
+                _add_power(enemy.powers, "ManglePower", -mangle),
+                "StrengthPower",
+                mangle,
+            ),
+        )
     enemies[index] = enemy
     # Resolve HP-loss modifiers once all attacks in this enemy move have respected the current
     # block.  Tungsten Rod is per damage event; Beating Remnant caps the turn-wide total.
@@ -1394,6 +1412,16 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         vulnerable = _power(enemy.powers, "VulnerablePower")
         if vulnerable:
             enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable * (2 if lamp_double else 1)))
+    if card == MANGLE and enemies[int(target)].alive:
+        amount = 15 if card_was_upgraded else 10
+        enemies[int(target)] = replace(
+            enemies[int(target)],
+            powers=_add_power(
+                _add_power(enemies[int(target)].powers, "StrengthPower", -amount),
+                "ManglePower",
+                amount,
+            ),
+        )
     if card == CINDER and hand:
         sacrificed = hand.pop(rng.randrange(len(hand)))
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))

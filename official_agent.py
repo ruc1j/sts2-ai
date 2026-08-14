@@ -86,6 +86,7 @@ CARD_NAMES = {
     "CARD.BURNING_PACT": "Burning Pact",
     "CARD.FIEND_FIRE": "Fiend Fire",
     "CARD.INFERNAL_BLADE": "Infernal Blade",
+    "CARD.MANGLE": "Mangle",
     "CARD.EVIL_EYE": "Evil Eye",
     "CARD.BRAND": "Brand",
     "CARD.RAGE": "Rage",
@@ -112,7 +113,7 @@ CARD_TIERS = {
     }, "A"),
     **dict.fromkeys({
         "CARD.BREAK", "CARD.AGGRESSION", "CARD.TEAR_ASUNDER", "CARD.THRASH",
-        "CARD.ASHEN_STRIKE", "CARD.DISMANTLE", "CARD.EVIL_EYE", "CARD.FORGOTTEN_RITUAL",
+        "CARD.ASHEN_STRIKE", "CARD.DISMANTLE", "CARD.EVIL_EYE", "CARD.FORGOTTEN_RITUAL", "CARD.MANGLE",
         "CARD.SPITE", "CARD.STOMP", "CARD.UNRELENTING", "CARD.WHIRLWIND", "CARD.BREAKTHROUGH",
         "CARD.CINDER", "CARD.IRON_WAVE", "CARD.TWIN_STRIKE", "CARD.VOLLEY",
         "CARD.INFLAME",  # Strength scales every attack: boss firepower (was C)
@@ -186,6 +187,7 @@ POWER_NAMES = {
     "POWER.FEEL_NO_PAIN_POWER": "FeelNoPainPower",
     "POWER.DISINTEGRATION_POWER": "DisintegrationPower",
     "POWER.MIND_ROT_POWER": "MindRotPower",
+    "POWER.MANGLE_POWER": "ManglePower",
     "POWER.THORNS_POWER": "ThornsPower",
     "POWER.VITAL_SPARK_POWER": "VitalSparkPower",
     "POWER.RAGE_POWER": "RagePower",
@@ -217,6 +219,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.FIEND_FIRE": 7,
     "CARD.SPITE": 5,
     "CARD.VOLLEY": 10,
+    "CARD.MANGLE": 15,
 }
 # Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
 ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
