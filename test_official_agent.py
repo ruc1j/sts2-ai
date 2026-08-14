@@ -1535,6 +1535,30 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.PERFECTED_STRIKE")
 
+    def test_shop_buys_high_value_potion_over_mid_value_relic(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 12,
+            "legal_actions": [
+                {"type": "buy_potion", "potion_id": "POTION.SHACKLING_POTION"},
+                {"type": "buy_relic", "relic_id": "RELIC.ART_OF_WAR"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["type"], "buy_potion")
+
+    def test_shop_keeps_top_relic_over_potion(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 12,
+            "legal_actions": [
+                {"type": "buy_potion", "potion_id": "POTION.SHACKLING_POTION"},
+                {"type": "buy_relic", "relic_id": "RELIC.CLOAK_CLASP"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["type"], "buy_relic")
+
     def test_shop_removes_defend_after_perfected_strike(self) -> None:
         observation = {
             "phase": "shop",

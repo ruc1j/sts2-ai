@@ -391,6 +391,20 @@ SHOP_RELIC_SCORES = {
     "RELIC.UNSETTLING_LAMP": 5,
 }
 
+# Shop potions are a one-use answer to the next elite/boss, so prefer only known defensive or
+# high-impact options and leave unknown/self-damaging potions for the normal reward path.
+SHOP_POTION_SCORES = {
+    "POTION.SHACKLING_POTION": 9, "POTION.GHOST_IN_A_JAR": 9,
+    "POTION.BLOCK_POTION": 8, "POTION.SHIP_IN_A_BOTTLE": 8,
+    "POTION.HEART_OF_IRON": 8, "POTION.FYSH_OIL": 8,
+    "POTION.DEXTERITY_POTION": 8, "POTION.SPEED_POTION": 8,
+    "POTION.REGEN_POTION": 7, "POTION.CURE_ALL": 7,
+    "POTION.ENERGY_POTION": 7, "POTION.SKILL_POTION": 7,
+    "POTION.STRENGTH_POTION": 7, "POTION.POWER_POTION": 7,
+    "POTION.LUCKY_TONIC": 7, "POTION.POTION_OF_BINDING": 7,
+}
+SHOP_POTION_MIN_SCORE = 7
+
 # Acquisition tiers are separate from card tiers because relic value is conditional on the
 # deck's axis.  The matching sets are deliberately small: an unlisted relic keeps its general
 # score instead of being guessed into a synergetic build.
@@ -847,15 +861,24 @@ def choose_shop(observation: dict) -> dict:
 
     # A high-value known relic beats a non-core card, but an axis-defining card still wins.
     relics = [action for action in actions if action.get("type") == "buy_relic"]
+    potions_for_sale = [action for action in actions if action.get("type") == "buy_potion"]
     best_relic = max(
         relics,
         key=lambda action: _shop_relic_score(action.get("relic_id") or action.get("id"), axis),
         default=None,
     )
     relic_score = _shop_relic_score((best_relic or {}).get("relic_id") or (best_relic or {}).get("id"), axis)
+    best_potion = max(
+        potions_for_sale,
+        key=lambda action: SHOP_POTION_SCORES.get(action.get("potion_id") or action.get("id"), -1),
+        default=None,
+    )
+    potion_score = SHOP_POTION_SCORES.get((best_potion or {}).get("potion_id") or (best_potion or {}).get("id"), -1)
     best_card = max(buys, key=card_key, default=None)
     if best_card and card_key(best_card)[0] == 4:
         return best_card
+    if best_potion and potion_score >= SHOP_POTION_MIN_SCORE and relic_score < 8:
+        return best_potion
     if (
         best_card
         and card_key(best_card)[0] == 2
