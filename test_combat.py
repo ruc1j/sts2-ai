@@ -65,9 +65,10 @@ class CombatTest(unittest.TestCase):
     def test_armaments_blocks_and_upgrades_hand(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
         combat = Combat(80, (ARMAMENTS, STRIKE, DEFEND), (), (), (enemy,), energy=1)
-        after_card = step(combat, ARMAMENTS, DUMMY_DATA, random.Random(0))
+        self.assertEqual(legal_actions(combat)[:2], (f"{ARMAMENTS}@0", f"{ARMAMENTS}@1"))
+        after_card = step(combat, f"{ARMAMENTS}@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(after_card.player_block, 5)
-        self.assertEqual(after_card.upgraded_cards, (DEFEND,))
+        self.assertEqual(after_card.upgraded_cards, (STRIKE,))
         upgraded = replace(combat, upgraded_cards=(ARMAMENTS,))
         after_upgraded = step(upgraded, ARMAMENTS, DUMMY_DATA, random.Random(0))
         self.assertEqual(after_upgraded.player_block, 5)

@@ -2077,7 +2077,7 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertFalse(captured["combat"].enemies[0].primary)
         self.assertTrue(captured["combat"].enemies[1].primary)
 
-    def test_rollout_preserves_upgrades_outside_the_hand(self) -> None:
+    def test_rollout_preserves_upgrades_in_deck_and_hand(self) -> None:
         data = {"monsters": [{
             "id": "MONSTER.DUMMY",
             "values": {},
@@ -2089,7 +2089,7 @@ class OfficialAgentTest(unittest.TestCase):
                 "hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": [],
                 "upgraded_cards": ["CARD.TWIN_STRIKE"],
             },
-            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "upgrade": 0}],
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "upgrade": 1}],
             "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
             "enemies": [{
                 "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
@@ -2108,7 +2108,31 @@ class OfficialAgentTest(unittest.TestCase):
 
         with patch("official_agent.search", side_effect=capture):
             rollout_choice(observation, observation["legal_actions"], data, 1)
-        self.assertEqual(captured["combat"].upgraded_cards, ("Twin Strike",))
+        self.assertEqual(captured["combat"].upgraded_cards, ("Twin Strike", "Strike"))
+
+    def test_rollout_sends_armaments_hand_target(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY", "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.ARMAMENTS"},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD"},
+                {"index": 2, "id": "CARD.DEFEND_IRONCLAD"},
+            ],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [{"type": "card", "card_id": "CARD.ARMAMENTS", "hand_index": 0, "target_id": None}, {"type": "end_turn"}],
+        }
+        with patch("official_agent.search", return_value=[("Armaments@0", 0.0)]):
+            action = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(action["upgrade_hand_index"], 1)
 
     def test_rollout_does_not_reuse_lizard_tail_below_half_hp(self) -> None:
         data = {"monsters": [{

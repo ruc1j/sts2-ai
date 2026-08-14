@@ -1228,12 +1228,12 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             # reaches this enemy's turn. Re-resolve back through the monster's own initial state.
             enemy = replace(enemy, move=_resolve_move(enemy, spec, random.Random(observation["seq"]), spec["initial_state"]))
         enemies.append(enemy)
-    upgraded_card_ids = observation["player"].get("upgraded_cards")
-    if upgraded_card_ids is None:
-        upgraded_card_ids = [
-            card["id"] for card in observation.get("hand", ())
-            if card.get("upgrade", 0) > 0
-        ]
+    upgraded_card_ids = list(observation["player"].get("upgraded_cards") or ())
+    upgraded_card_ids.extend(
+        card["id"] for card in observation.get("hand", ())
+        if card.get("upgrade", 0) > 0
+    )
+    upgraded_card_ids = tuple(dict.fromkeys(upgraded_card_ids))
     state = Combat(
         player_hp=observation["player"]["hp"],
         hand=tuple(CARD_NAMES.get(card["id"], card["id"]) for card in observation["hand"]),
@@ -1271,6 +1271,13 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         return selected | {"simulations": simulations, "search_value": value}
     name, _, target = best.partition("@")
     model = next(model for model, short in CARD_NAMES.items() if short == name)
+    if name == "Armaments":
+        selected = next(action for action in actions if action.get("card_id") == model and action.get("target_id") is None)
+        if target.isdigit():
+            played_index = next(index for index, card in enumerate(observation["hand"]) if card["id"] == model)
+            target_index = int(target) + (int(target) >= played_index)
+            selected = selected | {"upgrade_hand_index": target_index}
+        return selected | {"simulations": simulations, "search_value": value}
     target_id = observation["enemies"][int(target)]["combat_id"] if target else None
     selected = next(action for action in actions if action.get("card_id") == model and action.get("target_id") == target_id)
     return selected | {"simulations": simulations, "search_value": value}

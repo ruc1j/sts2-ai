@@ -5,6 +5,7 @@ using MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Entities.CardRewardAlternatives;
 using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.GameActions;
@@ -17,6 +18,7 @@ using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
+using MegaCrit.Sts2.Core.TestSupport;
 
 namespace Sts2Ai;
 
@@ -58,6 +60,7 @@ internal static class CombatBridge
         int Seq,
         string Type,
         [property: JsonPropertyName("hand_index")] int? HandIndex,
+        [property: JsonPropertyName("upgrade_hand_index")] int? UpgradeHandIndex,
         [property: JsonPropertyName("card_id")] string? CardId,
         [property: JsonPropertyName("target_id")] uint? TargetId,
         [property: JsonPropertyName("potion_index")] int? PotionIndex,
@@ -82,7 +85,8 @@ internal static class CombatBridge
             int seq = AgentIo.NextSequence();
             var action = await Exchange(run, player, seq, ct);
             var combat = CombatManager.Instance.DebugOnlyGetState()!;
-            AgentIo.Trace(new { seq = action.Seq, phase = "combat", turn = player.PlayerCombatState!.TurnNumber, player_hp = player.Creature.CurrentHp, action.Type, hand_index = action.HandIndex, card_id = action.CardId, potion_index = action.PotionIndex, potion_id = action.PotionId, potions = player.Potions.Select(potion => potion.Id.ToString()), target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue, enemies = combat.Enemies.Select(enemy => new { id = enemy.ModelId.ToString(), hp = enemy.CurrentHp, powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }) }) });
+            AgentIo.Trace(new { seq = action.Seq, phase = "combat", turn = player.PlayerCombatState!.TurnNumber, player_hp = player.Creature.CurrentHp, action.Type, hand_index = action.HandIndex, upgrade_hand_index = action.UpgradeHandIndex, card_id = action.CardId, potion_index = action.PotionIndex, potion_id = action.PotionId, potions = player.Potions.Select(potion => potion.Id.ToString()), target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue, enemies = combat.Enemies.Select(enemy => new { id = enemy.ModelId.ToString(), hp = enemy.CurrentHp, powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }) }) });
+            using var selector = CreateUpgradeSelector(player, action);
             if (action.Type == "end_turn")
             {
                 RunManager.Instance.ActionQueueSynchronizer.RequestEnqueue(new EndPlayerTurnAction(player, player.PlayerCombatState!.TurnNumber));
@@ -167,7 +171,7 @@ internal static class CombatBridge
                 max_energy = player.PlayerCombatState.MaxEnergy,
                 powers = player.Creature.Powers.Select(p => new { id = p.Id.ToString(), amount = p.Amount, facing = p is SurroundedPower surrounded ? surrounded.Facing.ToString() : null }),
                 relics = player.Relics.Select(r => r.Id.ToString()),
-                upgraded_cards = player.Deck.Cards.Where(card => card.CurrentUpgradeLevel > 0).Select(card => card.Id.ToString()),
+                upgraded_cards = player.Deck.Cards.Concat(player.PlayerCombatState.AllCards).Where(card => card.CurrentUpgradeLevel > 0).Select(card => card.Id.ToString()),
             },
             hand = hand.Select((card, index) => new
             {
@@ -203,11 +207,38 @@ internal static class CombatBridge
         return await AgentIo.AwaitAction<AgentAction>(seq, ct);
     }
 
+    private static IDisposable? CreateUpgradeSelector(MegaCrit.Sts2.Core.Entities.Players.Player player, AgentAction action)
+    {
+        if (action.UpgradeHandIndex is not int upgradeIndex)
+            return null;
+        if (action.Type != "card" || action.HandIndex is not int handIndex)
+            throw new InvalidOperationException("Armaments target requires a card action");
+        var hand = player.PlayerCombatState!.Hand.Cards;
+        if (upgradeIndex < 0 || upgradeIndex >= hand.Count || upgradeIndex == handIndex || !hand[upgradeIndex].IsUpgradable)
+            throw new InvalidOperationException($"invalid Armaments target: {upgradeIndex}");
+        return CardSelectCmd.PushSelector(new ExactCardSelector(hand[upgradeIndex]));
+    }
+
     private static object Intent(AbstractIntent intent, IReadOnlyList<Creature> targets, Creature owner)
     {
         if (intent is AttackIntent attack)
             return new { type = intent.IntentType.ToString(), damage = attack.GetSingleDamage(targets, owner), repeats = attack.Repeats };
         return new { type = intent.IntentType.ToString(), damage = 0, repeats = 0 };
+    }
+
+    private sealed class ExactCardSelector : ICardSelector
+    {
+        private readonly CardModel _selected;
+
+        public ExactCardSelector(CardModel selected) => _selected = selected;
+
+        public Task<IEnumerable<CardModel>> GetSelectedCards(IEnumerable<CardModel> options, int minSelect, int maxSelect)
+        {
+            var selected = options.FirstOrDefault(card => ReferenceEquals(card, _selected));
+            return Task.FromResult<IEnumerable<CardModel>>(selected is null ? Array.Empty<CardModel>() : [selected]);
+        }
+
+        public CardRewardSelection GetSelectedCardReward(IReadOnlyList<CardCreationResult> options, IReadOnlyList<CardRewardAlternative> alternatives) => default;
     }
 
 }

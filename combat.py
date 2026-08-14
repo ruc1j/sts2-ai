@@ -594,6 +594,14 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             continue
         if card not in CARD_COST or (card not in combat.free_cards and _effective_cost(combat, card) > combat.energy):
             continue
+        if card == ARMAMENTS and card not in combat.upgraded_cards:
+            remaining = list(combat.hand)
+            remaining.remove(card)
+            targets = [index for index, name in enumerate(remaining) if name in CARD_COST and name not in {SLIMED, FRANTIC_ESCAPE} and name not in combat.upgraded_cards]
+            actions.extend(f"{card}@{index}" for index in targets)
+            if not targets:
+                actions.append(card)
+            continue
         if card in UNTARGETED:
             actions.append(card)
         else:
@@ -1212,8 +1220,13 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         energy=energy, player_hp=player_hp, player_powers=player_powers, enlightened_this_turn=enlightened,
     )
     if card == ARMAMENTS:
-        upgradable = tuple(name for name in hand if name in CARD_COST and name not in {SLIMED, FRANTIC_ESCAPE})
-        targets = upgradable if card_was_upgraded else (rng.choice(upgradable),) if upgradable else ()
+        upgradable = tuple(name for name in hand if name in CARD_COST and name not in {SLIMED, FRANTIC_ESCAPE} and name not in combat.upgraded_cards)
+        if card_was_upgraded:
+            targets = upgradable
+        elif target.isdigit() and int(target) < len(hand) and hand[int(target)] in upgradable:
+            targets = (hand[int(target)],)
+        else:
+            targets = ()
         combat = replace(combat, upgraded_cards=tuple(dict.fromkeys(combat.upgraded_cards + targets)))
     if card == PYRE:
         combat = replace(combat, max_energy=combat.max_energy + (2 if card_was_upgraded else 1))
