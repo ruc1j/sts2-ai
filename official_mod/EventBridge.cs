@@ -193,7 +193,7 @@ internal static class EventRoomHandlerPatch
         if (!GodotObject.IsInstanceValid(room) || !room.IsInsideTree() || NMapScreen.Instance?.IsOpen == true)
             return EventChoiceResult.Completed;
         if (NOverlayStack.Instance?.ScreenCount > 0 || CombatManager.Instance.IsInProgress)
-            return EventChoiceResult.Fallback;
+            return EventChoiceResult.Completed;
         return EventChoiceResult.Chosen;
     }
 
