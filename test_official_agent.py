@@ -450,11 +450,21 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
 
-    def test_reward_skips_unmodeled_high_tier_cards(self) -> None:
+    def test_reward_allows_unmodeled_card_before_cap(self) -> None:
         observation = {
             "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.HELLRAISER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.HELLRAISER")
+
+    def test_reward_caps_unmodeled_cards(self) -> None:
+        observation = {
+            "player": {"deck": ["CARD.UNMOVABLE", "CARD.EXPECT_A_FIGHT"]},
+            "legal_actions": [
                 {"type": "card_reward", "card_id": "CARD.EXPECT_A_FIGHT"},
-                {"type": "card_reward", "card_id": "CARD.UNMOVABLE"},
+                {"type": "card_reward", "card_id": "CARD.HELLRAISER"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }

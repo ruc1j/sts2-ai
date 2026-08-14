@@ -61,7 +61,7 @@ class ShopPolicyTest(unittest.TestCase):
 
     def test_skips_unmodeled_high_tier_card(self):
         observation = shop_observation(
-            deck=["CARD.STRIKE_IRONCLAD"] * 10,
+            deck=["CARD.STRIKE_IRONCLAD"] * 10 + ["CARD.PYRE", "CARD.UNMOVABLE", "CARD.EXPECT_A_FIGHT"],
             cards=[{"index": 0, "slot_index": 1, "id": "CARD.UNMOVABLE", "type": "Power", "rarity": "Rare", "cost": 100, "affordable": True}],
             legal_actions=[{"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.UNMOVABLE"}, {"type": "skip"}],
         )

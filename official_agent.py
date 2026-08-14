@@ -98,6 +98,8 @@ CARD_NAMES = {
     "CARD.VOLLEY": "Volley",
     "CARD.DISINTEGRATION": "Disintegration",
     "CARD.MIND_ROT": "Mind Rot",
+    "CARD.BARRICADE": "Barricade",
+    "CARD.PYRE": "Pyre",
 }
 
 CARD_TIERS = {
@@ -801,6 +803,7 @@ def choose_shop(observation: dict) -> dict:
     deck_cards = observation.get("deck_cards") or ()
     high_cost_in_deck = sum(_number(card.get("cost"), 0) >= 3 for card in deck_cards)
     over_high_cost_cap = high_cost_in_deck >= 2
+    over_unmodeled_cap = sum(card_id in UNMODELED_REWARDS for card_id in deck_list) >= UNMODELED_CAP
     defense_needed = _block_starved(deck_list)
     buys = [action for action in actions if action.get("type") == "buy_card"]
     axis = _relic_axis(deck_ids)
@@ -809,7 +812,7 @@ def choose_shop(observation: dict) -> dict:
 
     def card_key(action: dict) -> tuple[int, int, int, int, int]:
         card_id = action.get("card_id") or action.get("id")
-        if card_id in UNMODELED_REWARDS:
+        if over_unmodeled_cap and card_id in UNMODELED_REWARDS:
             return (0, 0, 0, 0, 0)
         if over_high_cost_cap and _number(shop_cards.get(card_id, {}).get("energy_cost"), 0) >= 3:
             return (0, 0, 0, 0, 0)
@@ -1034,9 +1037,9 @@ DRAW_CARDS = {
 # Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost
 # block is too awkward for the greedy rollout to use consistently). Never pick these.
 UNPLAYABLE_REWARDS = {"CARD.RELAX"}
-# These cards have high reward tiers but no combat.py model yet. Do not acquire them until the
-# simulator can evaluate their turn-scoped effects; otherwise rollout silently ignores them.
-UNMODELED_REWARDS = {"CARD.EXPECT_A_FIGHT", "CARD.UNMOVABLE"}
+# Keep tiered cards out of the deck until both the reward tier and combat model are registered.
+UNMODELED_REWARDS = set(CARD_TIERS) - set(CARD_NAMES)
+UNMODELED_CAP = 2
 
 DEFENSE_PRIORITY = {
     "CARD.IMPERVIOUS", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
@@ -1069,17 +1072,19 @@ def _draw_starved(deck: list[str]) -> bool:
 
 
 def choose_card_reward(observation: dict) -> dict:
+    deck_list = _deck_list(observation)
+    unmodeled_in_deck = sum(card_id in UNMODELED_REWARDS for card_id in deck_list)
     actions = [
         action for action in observation["legal_actions"]
         if action["type"] == "card_reward"
-        and action["card_id"] not in UNPLAYABLE_REWARDS | UNMODELED_REWARDS
+        and action["card_id"] not in UNPLAYABLE_REWARDS
+        and (unmodeled_in_deck < UNMODELED_CAP or action["card_id"] not in UNMODELED_REWARDS)
     ]
     if not actions:
         # Every offered card is unplayable (e.g. only Relax was shown): take nothing.
         return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
     deck_ids = _deck_ids(observation)
-    deck_list = _deck_list(observation)
     core = _core_priority(deck_ids, {action["card_id"] for action in actions})
     priority = {card_id: tier_score[tier] for card_id, tier in CARD_TIERS.items()}
     player = observation.get("player", {})

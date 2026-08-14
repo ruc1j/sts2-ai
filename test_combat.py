@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, BARRICADE, PYRE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -45,6 +45,22 @@ class CombatTest(unittest.TestCase):
     def test_search_returns_safe_action_for_terminal_snapshot(self) -> None:
         combat = Combat(0, (), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),))
         self.assertEqual(search(combat, DUMMY_DATA, simulations=1, seed=0), [(END_TURN, 0.0)])
+
+    def test_barricade_preserves_block_across_turns(self) -> None:
+        combat = Combat(80, (BARRICADE,), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), player_block=12, energy=3)
+        after_card = step(combat, BARRICADE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after_card.player_powers, "BarricadePower"), 1)
+        after_turn = step(after_card, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_turn.player_block, 12)
+        self.assertNotIn(BARRICADE, legal_actions(replace(combat, energy=2)))
+        self.assertIn(BARRICADE, legal_actions(replace(combat, energy=2, upgraded_cards=(BARRICADE,))))
+
+    def test_pyre_adds_persistent_energy(self) -> None:
+        combat = Combat(80, (PYRE,), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), energy=3)
+        after_card = step(combat, PYRE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_card.max_energy, 4)
+        after_turn = step(after_card, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.max_energy, after_turn.energy), (4, 4))
 
     def test_peck_has_three_hits_and_four_when_upgraded(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
