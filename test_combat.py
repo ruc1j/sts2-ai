@@ -797,6 +797,12 @@ class CombatTest(unittest.TestCase):
         best, _ = search(combat, DUMMY_DATA, 300, 0)[0]
         self.assertEqual(best, f"{STRIKE}@0")
 
+    def test_search_does_not_count_thorns_suicide_as_win(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 1, "IDLE_MOVE", (), powers=(("ThornsPower", 5),))
+        combat = Combat(1, (STRIKE,), (), (), (enemy,))
+        values = dict(search(combat, DUMMY_DATA, 300, 0))
+        self.assertLess(values[f"{STRIKE}@0"], 0)
+
     def test_greedy_action_prefers_killing_the_attacking_minion(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

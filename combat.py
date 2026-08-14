@@ -1296,7 +1296,7 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
                     break
                 state = step(state, _greedy_action(state, data), data, rng)
             # An enemy that fled (e.g. Thieving Hopper) ends the fight but is NOT a win.
-            won = not any(enemy.alive and enemy.primary for enemy in state.enemies) and not any(enemy.escaped and enemy.primary for enemy in state.enemies)
+            won = state.player_hp > 0 and not any(enemy.alive and enemy.primary for enemy in state.enemies) and not any(enemy.escaped and enemy.primary for enemy in state.enemies)
             # Win/loss dominates; HP and the immediate-move score break ties so noisy rollouts still rank correctly.
             scored_hp = state.player_hp
             if won and RELIC_MEAT_ON_THE_BONE in state.player_relics and state.player_max_hp > 0 and scored_hp * 2 <= state.player_max_hp:
