@@ -176,6 +176,10 @@ POWER_NAMES = {
     "POWER.FEEL_NO_PAIN_POWER": "FeelNoPainPower",
     "POWER.DISINTEGRATION_POWER": "DisintegrationPower",
     "POWER.MIND_ROT_POWER": "MindRotPower",
+    "POWER.ADAPTABLE_POWER": "AdaptablePower",
+    "POWER.ENRAGE_POWER": "EnragePower",
+    "POWER.PAINFUL_STABS_POWER": "PainfulStabsPower",
+    "POWER.NEMESIS_POWER": "NemesisPower",
 }
 
 KNOWN_CARD_DAMAGE = {
@@ -1110,6 +1114,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             block=observed["block"],
             powers=tuple(sorted((POWER_NAMES.get(power["id"], power["id"]), power["amount"]) for power in observed["powers"])),
             history=tuple(observed["history"] or ()),
+            respawns=2 if any(power.get("id") == "POWER.NEMESIS_POWER" for power in observed.get("powers", ())) else 1 if any(power.get("id") == "POWER.PAINFUL_STABS_POWER" for power in observed.get("powers", ())) else 0,
         )
         if not any(state["id"] == enemy.move for state in spec["states"]):
             # Some moves are synthesized at runtime and never appear in the exported state

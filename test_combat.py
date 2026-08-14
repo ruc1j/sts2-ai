@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
-    STOMP, TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -466,6 +466,37 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, data, rng)  # REATTACH_MOVE turn: heals back to life
         self.assertEqual(combat.enemies[0].hp, 25)
         self.assertTrue(combat.enemies[0].alive)
+
+    def test_test_subject_revives_twice_before_combat_can_end(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        spec = next(monster for monster in data["monsters"] if monster["id"] == TEST_SUBJECT)
+        values = tuple(sorted(spec["values"].items()))
+        first = Enemy(TEST_SUBJECT, 1, "BITE_MOVE", values, powers=(("AdaptablePower", 1), ("EnragePower", 2)))
+        combat = step(Combat(80, (STRIKE,), (), (), (first,)), f"{STRIKE}@0", data, random.Random(0))
+        self.assertEqual(combat.enemies[0].move, "RESPAWN_MOVE")
+        self.assertFalse(combat.terminal)
+        combat = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual((combat.enemies[0].hp, combat.enemies[0].respawns), (200, 1))
+        second = replace(combat.enemies[0], hp=1)
+        combat = step(replace(combat, enemies=(second,), hand=(STRIKE,)), f"{STRIKE}@0", data, random.Random(0))
+        combat = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual((combat.enemies[0].hp, combat.enemies[0].respawns), (300, 2))
+        self.assertFalse(combat.terminal)
+
+    def test_test_subject_enrage_strengthens_on_every_skill(self) -> None:
+        enemy = Enemy(TEST_SUBJECT, 100, "BITE_MOVE", (), powers=(("EnragePower", 2),))
+        combat = step(Combat(80, (DEFEND,), (), (), (enemy,)), DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(combat.enemies[0].powers, "StrengthPower"), 2)
+
+    def test_test_subject_painful_stabs_adds_wounds_for_unblocked_hits(self) -> None:
+        data = {"monsters": [{"id": TEST_SUBJECT, "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "SingleAttackIntent", "damage": 4.0, "repeats": 1}],
+            "next": "HIT_MOVE", "effects": [{"command": "DamageCmd.Attack"}],
+        }]}]}
+        enemy = Enemy(TEST_SUBJECT, 100, "HIT_MOVE", (), powers=(("PainfulStabsPower", 1),))
+        combat = step(Combat(80, (), (), (), (enemy,)), END_TURN, data, random.Random(0))
+        self.assertEqual(combat.hand, (WOUND,))
 
     def test_infested_prism_vital_spark_taints_skill_cards_into_bonus_damage(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:

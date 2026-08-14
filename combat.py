@@ -26,6 +26,7 @@ FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE = "Fiend Fire", "Evil Eye", "Brand",
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
 # PileType.Discard by Wriggler's WRIGGLE_MOVE and only bites once it's drawn into a later hand.
+WOUND = "Wound"
 HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
@@ -111,6 +112,7 @@ RELIC_RED_SKULL, RELIC_REPTILE_TRINKET, RELIC_RIPPLE_BASIN = "RELIC.RED_SKULL", 
 RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_STURDY_CLAMP = "RELIC.RUINED_HELMET", "RELIC.SELF_FORMING_CLAY", "RELIC.STURDY_CLAMP"
 RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE = "RELIC.TUNGSTEN_ROD", "RELIC.UNSETTLING_LAMP", "RELIC.VAMBRACE"
 RELIC_VENERABLE_TEA_SET = "RELIC.VENERABLE_TEA_SET"
+TEST_SUBJECT, RESPAWN_MOVE = "MONSTER.TEST_SUBJECT", "RESPAWN_MOVE"
 
 
 @dataclass(frozen=True)
@@ -125,6 +127,7 @@ class Enemy:
     history: tuple[str, ...] = ()
     escaped: bool = False
     primary: bool = True
+    respawns: int = 0
 
     @property
     def alive(self) -> bool:
@@ -189,7 +192,10 @@ class Combat:
 
     @property
     def terminal(self) -> bool:
-        return self.player_hp <= 0 or not any(enemy.alive and enemy.primary for enemy in self.enemies)
+        return self.player_hp <= 0 or not any(
+            (enemy.alive or (enemy.model == TEST_SUBJECT and enemy.move == RESPAWN_MOVE)) and enemy.primary
+            for enemy in self.enemies
+        )
 
 
 def _dict(items: tuple[tuple, ...]) -> dict:
@@ -485,6 +491,10 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
             # AfterAddedToRoom grants PersonalHivePower(1) (not exported); see step()/_enemy_turn
             # for the Dazed-into-draw-pile chain and PHEROMONE_SPIT_MOVE's growth cap.
             enemy = replace(enemy, powers=enemy.powers + (("PersonalHivePower", 1),))
+        elif enemy.model == TEST_SUBJECT:
+            # AdaptablePower/EnragePower are granted by AfterAddedToRoom, not the exported
+            # state machine. AdaptablePower keeps the two-phase revival alive after death.
+            enemy = replace(enemy, powers=(("AdaptablePower", 1), ("EnragePower", int(values["EnrageAmount"]))))
         enemies.append(enemy)
     hand, draw, _ = _draw(STARTING_DECK, (), 5, rng)
     powers = (("SurroundedRight", 1),) if any(enemy.model == "MONSTER.ROCKET" for enemy in enemies) else ()
@@ -533,6 +543,15 @@ def _effective_cost(combat: Combat, card: str) -> int:
     return cost
 
 
+def _mark_test_subject_death(enemy: Enemy) -> Enemy:
+    if (
+        enemy.model == TEST_SUBJECT and enemy.hp <= 0
+        and _power(enemy.powers, "AdaptablePower") and enemy.respawns < 2
+    ):
+        return replace(enemy, move=RESPAWN_MOVE)
+    return enemy
+
+
 def legal_actions(combat: Combat) -> tuple[str, ...]:
     if combat.terminal:
         return ()
@@ -577,7 +596,10 @@ def _enemy_attack_damage(
         damage = damage * 3 // 4
     if _power(player_powers, "VulnerablePower"):
         damage = damage * 3 // 2
-    return max(0, damage * max(1, int(attack.get("repeats", 1))))
+    repeats = int(attack.get("repeats", 1))
+    if enemy.model == TEST_SUBJECT and enemy.move == "MULTI_CLAW_MOVE":
+        repeats += sum(move_id == "MULTI_CLAW_MOVE" for move_id in enemy.history)
+    return max(0, damage * max(1, repeats))
 
 
 def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
@@ -606,7 +628,7 @@ def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
         powers = _add_power(powers, "StrengthPower", -_power(powers, "StrengthPower"))
         powers = _add_power(powers, "PlowPower", -plow)
         return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers, move="STUN_MOVE")
-    return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers)
+    return _mark_test_subject_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers))
 
 
 def _decimillipede_teammates_dead(enemies: tuple[Enemy, ...], index: int) -> bool:
@@ -618,6 +640,22 @@ def _decimillipede_teammates_dead(enemies: tuple[Enemy, ...], index: int) -> boo
 
 def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> Combat:
     enemy = replace(combat.enemies[index], block=0)
+    if enemy.model == TEST_SUBJECT and enemy.move == RESPAWN_MOVE:
+        values = _dict(enemy.values)
+        respawns = enemy.respawns + 1
+        if respawns == 1:
+            revived = replace(
+                enemy, hp=int(values["SecondFormHp"]), move="MULTI_CLAW_MOVE", respawns=respawns,
+                powers=(("AdaptablePower", 1), ("PainfulStabsPower", 1)),
+            )
+        else:
+            revived = replace(
+                enemy, hp=int(values["ThirdFormHp"]), move="PHASE3_LACERATE_MOVE", respawns=respawns,
+                powers=(("NemesisPower", 1),),
+            )
+        enemies = list(combat.enemies)
+        enemies[index] = revived
+        return replace(combat, enemies=tuple(enemies))
     if not enemy.alive:
         # Decimillipede segments don't actually leave combat on death (unless every other
         # segment is already dead too) - they were tagged DEAD_MOVE at the moment of death and
@@ -660,6 +698,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (_power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")):
                 damage = damage * 3 // 2
             repeats = int(attack_intent.get("repeats", 1))
+            if enemy.model == TEST_SUBJECT and move_id == "MULTI_CLAW_MOVE":
+                repeats += sum(move == "MULTI_CLAW_MOVE" for move in enemy.history)
             if _power(enemy.powers, "WeakPower"):
                 damage = damage * 3 // 4
             if _power(player_powers, "VulnerablePower"):
@@ -780,6 +820,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 remaining -= taken
             damage_events = capped
         actual_damage = sum(damage_events)
+        if _power(enemy.powers, "PainfulStabsPower"):
+            discard += (WOUND,) * sum(amount > 0 for amount in damage_events)
         player_hp = combat.player_hp - actual_damage
         if player_hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not combat.lizard_tail_used:
             player_hp = max(1, combat.player_max_hp // 2)
@@ -962,6 +1004,16 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             # deck; playing one grants TaintedPower equal to the current stack, which adds flat
             # damage to powered attacks against the player until the enemy's turn ends.
             combat = replace(combat, player_powers=_add_power(combat.player_powers, "TaintedPower", vital_spark))
+        # EnragePower.AfterCardPlayed: every Skill grants its stack as Strength to the owner.
+        # Apply this before the card branch returns so block/draw-only Skills are covered too.
+        combat = replace(
+            combat,
+            enemies=tuple(
+                replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", _power(enemy.powers, "EnragePower")))
+                if enemy.alive and _power(enemy.powers, "EnragePower") else enemy
+                for enemy in combat.enemies
+            ),
+        )
     hand.remove(card)
     free_cards = list(combat.free_cards)
     card_is_free = card in free_cards
@@ -1423,7 +1475,14 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
                     break
                 state = step(state, _greedy_action(state, data), data, rng)
             # An enemy that fled (e.g. Thieving Hopper) ends the fight but is NOT a win.
-            won = state.player_hp > 0 and not any(enemy.alive and enemy.primary for enemy in state.enemies) and not any(enemy.escaped and enemy.primary for enemy in state.enemies)
+            won = (
+                state.player_hp > 0
+                and not any(
+                    (enemy.alive or (enemy.model == TEST_SUBJECT and enemy.move == RESPAWN_MOVE)) and enemy.primary
+                    for enemy in state.enemies
+                )
+                and not any(enemy.escaped and enemy.primary for enemy in state.enemies)
+            )
             # Win/loss dominates; HP and the immediate-move score break ties so noisy rollouts still rank correctly.
             scored_hp = state.player_hp
             if won and RELIC_MEAT_ON_THE_BONE in state.player_relics and state.player_max_hp > 0 and scored_hp * 2 <= state.player_max_hp:
