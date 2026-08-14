@@ -24,3 +24,5 @@ data/*_log.txt
 data/*_trace.jsonl
 data/*_map.json
 data/*_mapdebug.jsonl
+data/dashboard.html
+data/dashboard_gen.log
