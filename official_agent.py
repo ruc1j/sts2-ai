@@ -100,6 +100,7 @@ CARD_NAMES = {
     "CARD.MIND_ROT": "Mind Rot",
     "CARD.BARRICADE": "Barricade",
     "CARD.PYRE": "Pyre",
+    "CARD.ARMAMENTS": "Armaments",
 }
 
 CARD_TIERS = {
