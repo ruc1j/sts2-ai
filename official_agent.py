@@ -89,6 +89,7 @@ CARD_NAMES = {
     "CARD.MANGLE": "Mangle",
     "CARD.PECK": "Peck",
     "CARD.EXTERMINATE": "Exterminate",
+    "CARD.SETUP_STRIKE": "Setup Strike",
     "CARD.EVIL_EYE": "Evil Eye",
     "CARD.BRAND": "Brand",
     "CARD.RAGE": "Rage",
@@ -191,6 +192,7 @@ POWER_NAMES = {
     "POWER.DISINTEGRATION_POWER": "DisintegrationPower",
     "POWER.MIND_ROT_POWER": "MindRotPower",
     "POWER.MANGLE_POWER": "ManglePower",
+    "POWER.SETUP_STRIKE_POWER": "SetupStrikePower",
     "POWER.THORNS_POWER": "ThornsPower",
     "POWER.VITAL_SPARK_POWER": "VitalSparkPower",
     "POWER.RAGE_POWER": "RagePower",
@@ -225,6 +227,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.MANGLE": 15,
     "CARD.PECK": 6,
     "CARD.EXTERMINATE": 12,
+    "CARD.SETUP_STRIKE": 7,
 }
 # Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
 ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
@@ -957,7 +960,7 @@ def choose_map(observation: dict) -> dict:
     return max(legal_actions, key=lambda action: value((action["col"], action["row"])))
 
 
-STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE", "CARD.TWIN_STRIKE"}
+STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE", "CARD.TWIN_STRIKE", "CARD.SETUP_STRIKE"}
 
 # Strength sources that scale every attack into boss firepower; once one is in the deck the
 # others are prioritized so the axis keeps growing.

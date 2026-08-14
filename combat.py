@@ -26,6 +26,7 @@ FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE, MANGLE = "Fiend Fire", "Evil Eye", 
 RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
 EXTERMINATE = "Exterminate"
+SETUP_STRIKE = "Setup Strike"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -36,7 +37,7 @@ STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3,
-    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1,
+    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
@@ -46,12 +47,12 @@ CARD_COST = {
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
-    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
 CARD_HITS = {TWIN_STRIKE: 2}
-CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2, MANGLE: 5}
+CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2, MANGLE: 5, SETUP_STRIKE: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
@@ -67,7 +68,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -91,7 +92,7 @@ SKILLS = {
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE}
 # Cards tagged as Strike, used by Perfected Strike scaling.
-STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE}
+STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE}
 
 # Relics with an automatic in-combat effect the search() rollout needs to see to project future
 # turns correctly (verified against each relic's decompiled OnPlay-equivalent hook body). Relics
@@ -918,6 +919,15 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             ),
             played_this_turn=False,
         )
+        setup_strike = _power(combat.player_powers, "SetupStrikePower")
+        if setup_strike:
+            combat = replace(
+                combat,
+                player_powers=_add_power(
+                    _add_power(combat.player_powers, "SetupStrikePower", -setup_strike),
+                    "StrengthPower", -setup_strike,
+                ),
+            )
         # HasTurnEndInHandEffect (Toxic, Burn): flat Unpowered damage for each copy still in
         # hand when the player's turn ends, then the hand is cleared to discard as normal - a
         # monster move can inject fresh copies straight into the (now empty) hand during its own
@@ -1446,6 +1456,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
         combat = _after_exhaust(combat, (sacrificed,), rng)
     player_powers = combat.player_powers
+    if card == SETUP_STRIKE:
+        amount = 3 if card_was_upgraded else 2
+        player_powers = _add_power(_add_power(player_powers, "StrengthPower", amount), "SetupStrikePower", amount)
     if _power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedRight", -1), "SurroundedLeft", 1)
     elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):

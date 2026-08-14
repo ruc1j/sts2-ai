@@ -7,7 +7,7 @@ from combat import (
     ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
-    ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
+    ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
@@ -60,6 +60,22 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("HardToKillPower", 9),))
         combat = Combat(80, (EXTERMINATE,), (), (), (enemy,), energy=1, player_powers=(("StrengthPower", 10),))
         self.assertEqual(step(combat, "Exterminate@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 64)
+
+    def test_setup_strike_buffs_followup_attacks_for_one_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (SETUP_STRIKE, STRIKE), (), (), (enemy,), energy=2)
+        after_setup = step(combat, "Setup Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_setup.enemies[0].hp, _power(after_setup.player_powers, "StrengthPower"), _power(after_setup.player_powers, "SetupStrikePower")), (93, 2, 2))
+        after_strike = step(after_setup, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_strike.enemies[0].hp, 85)
+        after_turn = step(after_strike, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((_power(after_turn.player_powers, "StrengthPower"), _power(after_turn.player_powers, "SetupStrikePower")), (0, 0))
+
+    def test_upgraded_setup_strike_gains_three_strength_and_two_extra_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (SETUP_STRIKE,), (), (), (enemy,), energy=1, upgraded_cards=(SETUP_STRIKE,))
+        after = step(combat, "Setup Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.player_powers, "StrengthPower"), _power(after.player_powers, "SetupStrikePower")), (91, 3, 3))
 
     def test_queen_runtime_branch_follows_torch_head_life(self) -> None:
         with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
