@@ -203,6 +203,7 @@ POWER_NAMES = {
     "POWER.ENRAGE_POWER": "EnragePower",
     "POWER.PAINFUL_STABS_POWER": "PainfulStabsPower",
     "POWER.NEMESIS_POWER": "NemesisPower",
+    "POWER.BUFFER_POWER": "BufferPower",
 }
 
 KNOWN_CARD_DAMAGE = {

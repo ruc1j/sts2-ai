@@ -271,6 +271,8 @@ def _apply_player_damage(combat: Combat, amount: int) -> Combat:
     if RELIC_BEATING_REMNANT in combat.player_relics:
         actual = min(actual, max(0, 20 - combat.damage_received_this_turn))
     # Tungsten Rod reduces each HP-loss event before Beating Remnant applies its turn-wide cap.
+    if actual > 0 and _power(combat.player_powers, "BufferPower"):
+        return replace(combat, player_powers=_add_power(combat.player_powers, "BufferPower", -1))
     hp = combat.player_hp - actual
     used_tail = combat.lizard_tail_used
     if hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not used_tail:
@@ -1372,7 +1374,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # holder inserts Amount Dazed cards into the draw pile at a random position - since
         # _draw() already pops randomly from draw_pile, appending is equivalent.
         hive = sum(_power(enemy.powers, "PersonalHivePower") for enemy in before if enemy.alive)
-        return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, lost_hp_this_turn=combat.lost_hp_this_turn or reflected > 0, draw_pile=combat.draw_pile + (DAZED,) * hive)
+        combat = _apply_player_damage(combat, reflected)
+        return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
         enemy = enemies[int(target)]
         vulnerable = 6 if lamp_double else 3
@@ -1418,7 +1421,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 enemies += _spawn_wrigglers(data, rng)
             elif before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(tuple(enemies), index):
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
-        return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, lost_hp_this_turn=combat.lost_hp_this_turn or reflected > 0, draw_pile=combat.draw_pile + (DAZED,) * hive)
+        combat = _apply_player_damage(combat, reflected)
+        return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
     enemy = enemies[int(target)]
     if card == SPITE:
         hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1
@@ -1530,7 +1534,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     # PersonalHivePower.AfterDamageReceived (Entomancer): every powered attack against a holder
     # inserts Amount Dazed cards into the draw pile at a random position.
     hive = _power(enemy.powers, "PersonalHivePower")
-    return replace(combat, enemies=tuple(enemies), player_powers=player_powers, player_hp=combat.player_hp - reflected, lost_hp_this_turn=combat.lost_hp_this_turn or reflected > 0, draw_pile=combat.draw_pile + (DAZED,) * hive)
+    combat = replace(combat, player_powers=player_powers)
+    combat = _apply_player_damage(combat, reflected)
+    return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
 
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:

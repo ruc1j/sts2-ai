@@ -55,6 +55,15 @@ class CombatTest(unittest.TestCase):
         self.assertNotIn(BARRICADE, legal_actions(replace(combat, energy=2)))
         self.assertIn(BARRICADE, legal_actions(replace(combat, energy=2, upgraded_cards=(BARRICADE,))))
 
+    def test_buffer_prevents_one_hp_loss_event(self) -> None:
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), player_powers=(("BufferPower", 1),))
+        after = _apply_player_damage(combat, 5)
+        self.assertEqual((after.player_hp, _power(after.player_powers, "BufferPower")), (80, 0))
+        self.assertEqual(_apply_player_damage(after, 5).player_hp, 75)
+        thorny = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", (), powers=(("ThornsPower", 5),)),), player_powers=(("BufferPower", 1),), energy=1)
+        reflected = step(thorny, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((reflected.player_hp, _power(reflected.player_powers, "BufferPower")), (80, 0))
+
     def test_pyre_adds_persistent_energy(self) -> None:
         combat = Combat(80, (PYRE,), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), energy=3)
         after_card = step(combat, PYRE, DUMMY_DATA, random.Random(0))
