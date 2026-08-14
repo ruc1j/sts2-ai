@@ -6,7 +6,7 @@
 
 ### `official_agent.py`
 
-大型デッキ(16枚以上)では強ブロック3枚未満も防御不足と判定する。長期戦のSKILL_POTIONはincomingがHPの半分以上のときだけ使用する。
+大型デッキ(16枚以上)では強ブロック3枚未満も防御不足と判定する。SKILL_POTIONは全分岐でincomingがHPの半分以上のときだけ使用する。
 
 `choose(observation, enemy_data=None, simulations=0)` がフェーズ別の入口である。
 

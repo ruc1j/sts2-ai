@@ -954,6 +954,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
 
+    def test_saves_skill_potion_in_a_low_hp_nonthreatening_fight(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.POWER_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 173, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.POWER_POTION")
+
     def test_uses_weak_potion_against_lethal_enemy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.WEAK_POTION", "target_id": 7}],

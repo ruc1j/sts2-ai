@@ -714,11 +714,15 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
                 return action
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
+    threatening = incoming >= max(1, hp // 2)
+    # Skill Potion is a hand-dependent gamble; save it for a turn whose incoming damage is
+    # substantial enough to justify spending a scarce potion slot.
+    offensive_now = offensive if threatening else offensive - {"POTION.SKILL_POTION"}
     hand = observation.get("hand") or ()
     boss_shackling = use({"POTION.SHACKLING_POTION"}) if max(enemy_hp.values(), default=0) >= 100 and incoming > 0 else None
     if incoming >= hp:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive_now, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
@@ -728,12 +732,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
-        return use(recovery) or boss_shackling or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(recovery) or boss_shackling or use(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or energy or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or energy or use(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
@@ -742,10 +746,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # Effigy that don't attack on an early turn). Only spend it once an attack is actually
         # incoming this decision, so the -7 lands on a turn that would otherwise deal damage.
         shackling = use({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
-        # Skill Potion is a hand-dependent gamble; keep it for a genuinely threatening boss
-        # turn instead of spending it on turn one while the boss is idle.
-        boss_offensive = offensive if incoming >= max(1, hp // 2) else offensive - {"POTION.SKILL_POTION"}
-        return shackling or use(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        return shackling or use(offensive_now) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None
