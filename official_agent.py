@@ -576,6 +576,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     potion_context = _potion_context(observation)
+    if potion_context is None:
+        _LAST_POTION_CONTEXT = None
     potion_lethal = _potion_is_lethal_incoming(observation)
     potion_hp = _number((observation.get("player") or {}).get("hp"))
     potion_max_hp = _number((observation.get("player") or {}).get("max_hp"), potion_hp)
@@ -766,7 +768,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     boss_like = boss_like or (not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100)
     high_hp_regular = max_enemy_hp >= 100 and not boss_like
-    major_allowed = not high_hp_regular or incoming >= max(1, (hp * 3 + 3) // 4) or hp <= max(1, max_hp // 4)
+    major_allowed = not high_hp_regular or incoming >= max(1, (hp * 3 + 3) // 4) or hp <= max(1, max_hp // 3)
 
     def use_major_aware(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         return use(ids if major_allowed else ids - RESERVED_COMBAT_POTIONS, target_score)
