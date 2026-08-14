@@ -775,6 +775,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     run = observation.get("run") or {}
     boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
     boss_context = boss_slot or (boss_floor is not None and _number(run.get("floor")) >= boss_floor)
+    reserve_boss_colorless = boss_context and hp > max(1, max_hp // 3) and incoming < max(1, hp // 2)
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     fallback_boss = not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100
     boss_like = boss_slot or fallback_boss
@@ -812,7 +813,8 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if hp <= max_hp // 2:
         if boss_context and boss_skill and hp <= max(1, max_hp // 3):
             return boss_skill
-        return use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        low_hp_offensive = offensive_now - ({"POTION.COLORLESS_POTION"} if reserve_boss_colorless else set())
+        return use_major_aware(recovery) or boss_shackling or use_major_aware(low_hp_offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
         return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
@@ -834,6 +836,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # turn to spend the generated block card.
         boss_offensive = offensive_now | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
         if boss_context and hp > max(1, (max_hp * 2) // 3):
+            boss_offensive -= {"POTION.COLORLESS_POTION"}
+        # Colorless is a scarce emergency hand: on a long boss, spending it at a merely
+        # moderate hit leaves no answer for the next attack cycle (Knowledge Demon killed the
+        # run after Colorless at 39/80 HP and incoming 11). Keep it until HP is critical or the
+        # current hit is already half the remaining HP.
+        if reserve_boss_colorless:
             boss_offensive -= {"POTION.COLORLESS_POTION"}
         return shackling or fysh or binding or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
