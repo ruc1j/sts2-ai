@@ -577,12 +577,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     potion_context = _potion_context(observation)
     potion_lethal = _potion_is_lethal_incoming(observation)
+    potion_hp = _number((observation.get("player") or {}).get("hp"))
+    potion_max_hp = _number((observation.get("player") or {}).get("max_hp"), potion_hp)
+    potion_urgent = potion_lethal or (sandpit_critical and potion_hp <= max(1, potion_max_hp // 3))
     if (
-        (not sandpit_critical or potion_lethal)
+        (not sandpit_critical or potion_urgent)
         and (
             potion_context is None
             or potion_context != _LAST_POTION_CONTEXT
-            or potion_lethal
+            or potion_urgent
         )
         and (potion := choose_potion(observation, potions))
     ):
