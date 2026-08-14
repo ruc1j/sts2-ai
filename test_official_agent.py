@@ -1050,6 +1050,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.POWER_POTION")
 
+    def test_uses_skill_potion_on_low_hp_attacking_long_boss(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "id": "MONSTER.THE_INSATIABLE", "slot": "boss", "hp": 321, "intents": [{"damage": 8, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
+
     def test_uses_weak_potion_against_lethal_enemy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.WEAK_POTION", "target_id": 7}],
