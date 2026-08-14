@@ -84,6 +84,7 @@ CARD_NAMES = {
     "CARD.TRUE_GRIT": "True Grit",
     "CARD.BURNING_PACT": "Burning Pact",
     "CARD.FIEND_FIRE": "Fiend Fire",
+    "CARD.INFERNAL_BLADE": "Infernal Blade",
     "CARD.EVIL_EYE": "Evil Eye",
     "CARD.BRAND": "Brand",
     "CARD.DISINTEGRATION": "Disintegration",

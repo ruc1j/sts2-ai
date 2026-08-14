@@ -7,7 +7,7 @@ from combat import (
     ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
-    ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
+    ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
@@ -554,6 +554,17 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (FIEND_FIRE, STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=2), f"{FIEND_FIRE}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 86)
         self.assertEqual(after.exhaust_pile, (FIEND_FIRE, STRIKE, STRIKE))
+
+    def test_infernal_blade_generates_a_free_attack_and_exhausts(self) -> None:
+        after = step(Combat(80, (INFERNAL_BLADE,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), INFERNAL_BLADE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.exhaust_pile, (INFERNAL_BLADE,))
+        self.assertEqual(after.free_cards, after.hand)
+        self.assertEqual(after.energy, 0)
+        self.assertTrue(after.hand)
+
+    def test_upgraded_infernal_blade_costs_zero(self) -> None:
+        after = step(Combat(80, (INFERNAL_BLADE,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, upgraded_cards=(INFERNAL_BLADE,)), INFERNAL_BLADE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 1)
 
     def test_evil_eye_doubles_block_after_an_exhaust(self) -> None:
         after = step(Combat(80, (EVIL_EYE,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, exhausted_this_turn=True), EVIL_EYE, {}, random.Random(0))
