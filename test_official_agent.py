@@ -286,6 +286,32 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_map(observation)["col"], 1)
 
+    def test_map_route_avoids_unrested_elite_chain(self) -> None:
+        # Do not trade a second elite without a rest for two ordinary fights and one rested elite.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Treasure", "children": [{"col": 0, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": [{"col": 0, "row": 2}]},
+                {"col": 0, "row": 2, "type": "Elite", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Unknown", "children": [{"col": 0, "row": 4}]},
+                {"col": 0, "row": 4, "type": "Elite", "children": [{"col": 0, "row": 5}]},
+                {"col": 0, "row": 5, "type": "RestSite", "children": [{"col": 0, "row": 6}]},
+                {"col": 0, "row": 6, "type": "Boss", "children": []},
+                {"col": 1, "row": 0, "type": "Treasure", "children": [{"col": 1, "row": 1}]},
+                {"col": 1, "row": 1, "type": "Unknown", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "Monster", "children": [{"col": 1, "row": 3}]},
+                {"col": 1, "row": 3, "type": "RestSite", "children": [{"col": 1, "row": 4}]},
+                {"col": 1, "row": 4, "type": "Elite", "children": [{"col": 1, "row": 5}]},
+                {"col": 1, "row": 5, "type": "RestSite", "children": [{"col": 0, "row": 6}]},
+            ]},
+            "legal_actions": [
+                {"type": "map", "col": 0, "row": 0},
+                {"type": "map", "col": 1, "row": 0},
+            ],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
     def test_map_route_plans_suffix_from_current_position(self) -> None:
         # Current position is mid-map; the plan continues from there (0 monsters via col-1).
         observation = {

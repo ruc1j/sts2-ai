@@ -862,9 +862,17 @@ def choose_map(observation: dict) -> dict:
         dfs(start, [start])
         return found
 
-    def route_key(path: list[tuple[int, int]]) -> tuple[int, int, int, int, int, int]:
+    def route_key(path: list[tuple[int, int]]) -> tuple[int, int, int, int, int, int, int]:
         types = [points[coord]["type"] for coord in path]
+        elite_run = unrested_elites = 0
+        for room_type in types:
+            if room_type == "RestSite":
+                elite_run = 0
+            elif room_type == "Elite":
+                elite_run += 1
+                unrested_elites += int(elite_run > 1)
         return (
+            unrested_elites,
             types.count("Monster"),
             -types.count("RestSite"),
             types.count("Elite"),
