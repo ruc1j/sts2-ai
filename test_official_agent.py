@@ -2079,6 +2079,17 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(CARD_TIERS["CARD.TREMBLE"], "S")
         self.assertEqual(CARD_TIERS["CARD.CORRUPTION"], "A")
 
+    def test_modeled_cards_with_no_attack_fallback_are_rewardable(self) -> None:
+        for card_id in ("CARD.EQUILIBRIUM", "CARD.ULTIMATE_DEFEND", "CARD.IMPATIENCE"):
+            observation = {
+                "cards": [{"id": card_id, "type": "Skill", "rarity": "Uncommon", "cost": 1}],
+                "legal_actions": [
+                    {"type": "card_reward", "card_id": card_id},
+                    {"type": "card_reward_alternative", "option_id": "Skip"},
+                ],
+            }
+            self.assertEqual(choose_card_reward(observation)["card_id"], card_id)
+
     def test_card_tiers_cover_source_unranked_cards(self) -> None:
         known = {"CARD.MIDNIGHT", "CARD.TANK", "CARD.BLAZE", "CARD.DEMONIC_SHIELD", "CARD.OUTRAGE"}
         self.assertTrue(known <= CARD_TIERS.keys())
