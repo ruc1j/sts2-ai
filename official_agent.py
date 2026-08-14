@@ -829,6 +829,8 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
         # turn to spend the generated block card.
         boss_offensive = offensive_now | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
+        if boss_context and hp > max(1, (max_hp * 2) // 3):
+            boss_offensive -= {"POTION.COLORLESS_POTION"}
         return shackling or fysh or binding or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)

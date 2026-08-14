@@ -1051,6 +1051,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.POTION_OF_BINDING")
 
+    def test_saves_colorless_potion_on_a_safe_boss_turn(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 16},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.COLORLESS_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 379, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_uses_major_potion_against_known_boss(self) -> None:
         observation = {
             "legal_actions": [
