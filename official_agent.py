@@ -1032,6 +1032,7 @@ def choose_card_reward(observation: dict) -> dict:
         0 if not exhaust_ready and action["card_id"] in UNCOMMITTED_EXHAUST_PAYOFF else 1,
         1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
         1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0,
+        1 if action["card_id"] not in deck_ids else 0,
     ))
     if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
         return selected

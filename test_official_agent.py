@@ -1696,6 +1696,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TAUNT")
 
+    def test_reward_prefers_new_same_tier_card_over_duplicate(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.TREMBLE"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.TREMBLE"},
+                {"type": "card_reward", "card_id": "CARD.FIEND_FIRE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FIEND_FIRE")
+
     def test_reward_prefers_pommel_strike_over_true_grit_when_defense_is_needed(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 5 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4 + [{"id": "CARD.BASH"}]},
