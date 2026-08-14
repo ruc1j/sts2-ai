@@ -317,7 +317,7 @@ class CombatTest(unittest.TestCase):
             _step_score(combat, minion_hit, DUMMY_DATA),
         )
 
-    def test_step_score_prioritizes_an_attacking_minion_but_not_an_idle_one(self) -> None:
+    def test_step_score_prioritizes_primary_over_partial_minion_damage(self) -> None:
         primary = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
         idle_minion = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", (), primary=False)
         combat = Combat(80, (), (), (), (primary, idle_minion))
@@ -328,7 +328,18 @@ class CombatTest(unittest.TestCase):
         attacking_combat = replace(combat, enemies=(primary, attacking_minion))
         attacking_primary_hit = replace(attacking_combat, enemies=(replace(primary, hp=30), attacking_minion))
         attacking_minion_hit = replace(attacking_combat, enemies=(primary, replace(attacking_minion, hp=30)))
-        self.assertGreater(_step_score(attacking_combat, attacking_minion_hit, ATTACKING_DUMMY_DATA), _step_score(attacking_combat, attacking_primary_hit, ATTACKING_DUMMY_DATA))
+        self.assertGreater(_step_score(attacking_combat, attacking_primary_hit, ATTACKING_DUMMY_DATA), _step_score(attacking_combat, attacking_minion_hit, ATTACKING_DUMMY_DATA))
+
+    def test_step_score_still_prioritizes_a_lethal_high_threat_minion(self) -> None:
+        primary = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        minion = Enemy("MONSTER.DUMMY", 10, "HIT_MOVE", (), primary=False)
+        combat = Combat(80, (), (), (), (primary, minion))
+        primary_hit = replace(combat, enemies=(replace(primary, hp=30), minion))
+        minion_kill = replace(combat, enemies=(primary, replace(minion, hp=0)))
+        self.assertGreater(
+            _step_score(combat, minion_kill, ATTACKING_DUMMY_DATA),
+            _step_score(combat, primary_hit, ATTACKING_DUMMY_DATA),
+        )
 
     def test_bully_and_dismantle_scale_with_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
