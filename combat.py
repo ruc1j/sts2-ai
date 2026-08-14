@@ -529,7 +529,11 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
     return tuple(actions) + (END_TURN,)
 
 
-def _enemy_attack_damage(enemy: Enemy, data: dict) -> int:
+def _enemy_attack_damage(
+    enemy: Enemy,
+    data: dict,
+    player_powers: tuple[tuple[str, int], ...] = (),
+) -> int:
     spec = _specs(data).get(enemy.model)
     if not spec:
         return 0
@@ -537,9 +541,15 @@ def _enemy_attack_damage(enemy: Enemy, data: dict) -> int:
     if not move:
         return 0
     attack = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
-    damage = int(attack.get("damage", 0)) + _power(enemy.powers, "StrengthPower")
+    damage = int(attack.get("damage", 0)) + _power(enemy.powers, "StrengthPower") + _power(player_powers, "TaintedPower")
+    if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (
+        _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")
+    ):
+        damage = damage * 3 // 2
     if _power(enemy.powers, "WeakPower"):
         damage = damage * 3 // 4
+    if _power(player_powers, "VulnerablePower"):
+        damage = damage * 3 // 2
     return max(0, damage * max(1, int(attack.get("repeats", 1))))
 
 
@@ -1290,15 +1300,30 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     """Score a single step: prevented damage + damage dealt - self-damage + effective block."""
-    incoming = sum(_enemy_attack_damage(enemy, data) for enemy in combat.enemies if enemy.alive)
+    incoming = sum(_enemy_attack_damage(enemy, data, combat.player_powers) for enemy in combat.enemies if enemy.alive)
     exposed = max(0, incoming - combat.player_block)
-    prevented = sum(_enemy_attack_damage(before, data) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.alive and not after.escaped)
+    prevented = sum(
+        _enemy_attack_damage(before, data, combat.player_powers)
+        for before, after in zip(combat.enemies, state.enemies)
+        if before.alive and not after.alive and not after.escaped
+    )
     # Killing the primary enemy (the boss) wins the fight; credit its remaining HP so a
     # boss kill outranks killing a reviving minion.
     prevented += sum(max(0, before.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and before.primary and not after.alive and not after.escaped)
     # Cap damage at each enemy's remaining HP so overkill is not overvalued.
     dealt = sum(max(0, before.hp) - max(0, after.hp) for before, after in zip(combat.enemies, state.enemies) if before.alive and not after.escaped)
     dealt -= max(0, combat.player_hp - state.player_hp)  # penalize self-damage
+    # Debuffs that survive the card play reduce the next enemy phase. Exclude kills here because
+    # their attack is already credited by `prevented` above.
+    threat_reduced = sum(
+        max(
+            0,
+            _enemy_attack_damage(before, data, combat.player_powers)
+            - _enemy_attack_damage(after, data, state.player_powers),
+        )
+        for before, after in zip(combat.enemies, state.enemies)
+        if before.alive and after.alive
+    )
     # Stripping Slippery enables full damage on later hits; credit each strip so the
     # policy keeps attacking Slippery bosses (e.g. VANTOM) instead of only blocking.
     dealt += sum(max(0, _power(before.powers, "SlipperyPower") - _power(after.powers, "SlipperyPower")) for before, after in zip(combat.enemies, state.enemies) if before.alive)
@@ -1316,7 +1341,7 @@ def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     # plays, never outranks an actual attack or block. Guarded to real card plays (state.turn ==
     # combat.turn) since this is also called for End turn's own immediate score in search().
     drawn = len(state.hand) - (len(combat.hand) - 1) if state.turn == combat.turn else 0
-    return prevented + dealt + min(blocked, exposed) + upkeep + 0.3 * max(0, drawn)
+    return prevented + dealt + threat_reduced + min(blocked, exposed) + upkeep + 0.3 * max(0, drawn)
 
 
 def _greedy_action(combat: Combat, data: dict) -> str:

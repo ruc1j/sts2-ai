@@ -1421,6 +1421,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
 
+    def test_reward_avoids_second_uncommitted_self_damage_card(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.BLOODLETTING"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLOODLETTING"},
+                {"type": "card_reward", "card_id": "CARD.EVIL_EYE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.EVIL_EYE")
+
     def test_uncommitted_rupture_does_not_force_core(self) -> None:
         observation = {
             "player": {"deck": []},
@@ -1509,6 +1520,18 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_shop(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_shop_prefers_missing_draw_over_mid_value_relic(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 5 + ["CARD.DEFEND_IRONCLAD"] * 5,
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.BURNING_PACT"},
+                {"type": "buy_relic", "relic_id": "RELIC.PARRYING_SHIELD"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.BURNING_PACT")
 
     def test_reward_prefers_strong_defense_when_deck_lacks_block(self) -> None:
         observation = {

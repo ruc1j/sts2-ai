@@ -10,7 +10,7 @@ from combat import (
     ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
     TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _apply_player_damage, _summon,
+    _apply_player_damage, _enemy_attack_damage, _step_score, _summon,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -269,6 +269,27 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (ANGER,), (), (), (left,), player_powers=(("SurroundedRight", 1),))
         after = step(combat, "Anger@0", {}, random.Random(0))
         self.assertEqual(after.player_powers, (("SurroundedLeft", 1),))
+
+    def test_enemy_attack_forecast_includes_player_damage_modifiers(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", (), powers=(("BackAttackLeftPower", 1),))
+        self.assertEqual(
+            _enemy_attack_damage(enemy, ATTACKING_DUMMY_DATA, (("VulnerablePower", 1),)),
+            15,
+        )
+        self.assertEqual(
+            _enemy_attack_damage(
+                enemy,
+                ATTACKING_DUMMY_DATA,
+                (("SurroundedRight", 1), ("TaintedPower", 2)),
+            ),
+            18,
+        )
+
+    def test_step_score_rewards_reducing_next_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", ())
+        combat = Combat(80, (), (), (), (enemy,))
+        weakened = replace(combat, enemies=(replace(enemy, powers=(("WeakPower", 1),)),))
+        self.assertGreater(_step_score(combat, weakened, ATTACKING_DUMMY_DATA), 0)
 
     def test_bully_and_dismantle_scale_with_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))

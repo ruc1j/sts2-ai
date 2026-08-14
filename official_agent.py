@@ -735,6 +735,14 @@ def choose_shop(observation: dict) -> dict:
     best_card = max(buys, key=card_key, default=None)
     if best_card and card_key(best_card)[0] == 4:
         return best_card
+    if (
+        best_card
+        and card_key(best_card)[0] == 2
+        and _draw_starved(deck_list)
+        and (best_card.get("card_id") or best_card.get("id")) in DRAW_CARDS
+        and relic_score < 7
+    ):
+        return best_card
     if best_relic is not None and relic_score >= 6:
         return best_relic
     if best_card and card_key(best_card)[0] == 2:
@@ -915,6 +923,13 @@ STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE"}
 # others are prioritized so the axis keeps growing.
 STRENGTH_CARDS = {"CARD.INFLAME", "CARD.PRIMAL_FORCE", "CARD.DOMINATE", "CARD.CRUELTY"}
 
+# Reliable draw is the smallest common denominator across Ironclad builds. Keep this separate
+# from the tier table so a draw-starved deck can prefer a modest draw card without forcing an axis.
+DRAW_CARDS = {
+    "CARD.BATTLE_TRANCE", "CARD.BURNING_PACT", "CARD.POMMEL_STRIKE", "CARD.DRUM_OF_BATTLE",
+    "CARD.MASTER_OF_STRATEGY", "CARD.FINESSE",
+}
+
 # Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost
 # block is too awkward for the greedy rollout to use consistently). Never pick these.
 UNPLAYABLE_REWARDS = {"CARD.RELAX"}
@@ -930,7 +945,7 @@ DEFENSE_PRIORITY = {
 # Iron Wave (5), Second Wind (5) and True Grit (7) are barely better than Defend.
 STRONG_BLOCK_CARDS = {
     "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
-    "CARD.BLOOD_WALL", "CARD.STONE_ARMOR", "CARD.TAUNT",
+    "CARD.BLOOD_WALL", "CARD.STONE_ARMOR", "CARD.TAUNT", "CARD.EVIL_EYE",
 }
 
 
@@ -944,6 +959,10 @@ def _block_starved(deck: list[str]) -> bool:
     return len(deck) >= 10 and (block_cards * 5 < len(deck) * 2 or strong_blocks < 2)
 
 
+def _draw_starved(deck: list[str]) -> bool:
+    return len(deck) >= 10 and sum(card in DRAW_CARDS for card in deck) < 2
+
+
 def choose_card_reward(observation: dict) -> dict:
     actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward" and action["card_id"] not in UNPLAYABLE_REWARDS]
     if not actions:
@@ -951,22 +970,23 @@ def choose_card_reward(observation: dict) -> dict:
         return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
     deck_ids = _deck_ids(observation)
+    deck_list = _deck_list(observation)
     core = _core_priority(deck_ids, {action["card_id"] for action in actions})
     priority = {card_id: tier_score[tier] for card_id, tier in CARD_TIERS.items()}
     player = observation.get("player", {})
     if player.get("hp", 0) <= player.get("max_hp", 1) // 2 and "CARD.FEED" in priority:
         priority["CARD.FEED"] += 1
     if _axis(deck_ids) != "self_damage":
+        uncommitted_count = sum(card in UNCOMMITTED_SELF_DAMAGE for card in deck_list)
         for card_id in UNCOMMITTED_SELF_DAMAGE:
             if card_id in priority:
-                priority[card_id] -= 1
+                priority[card_id] -= 1 + (2 if uncommitted_count else 0)
     exhaust_ready = bool(set(EXHAUST_ENABLERS) & deck_ids)
     if not exhaust_ready:
         for card_id in UNCOMMITTED_EXHAUST_PAYOFF:
             if card_id in priority:
                 priority[card_id] -= 1
     strike_axis = _axis(deck_ids) == "strike"
-    deck_list = _deck_list(observation)
     # Perfected Strike (6 + 2 per Strike) hits ~16 with the starter deck's 5 Strikes, so a
     # seed is worth taking, but every Strike-tagged card grows the deck and the boss-fight
     # verification showed PS-heavy decks deal the least damage. Feed the strike axis only
@@ -985,6 +1005,7 @@ def choose_card_reward(observation: dict) -> dict:
     # ...) may override a tier, while weak block cards only win same-tier ties. This preserves the
     # sim19 fix without letting True Grit/Iron Wave crowd out deck acceleration forever.
     defense_needed = _block_starved(deck_list)
+    draw_needed = _draw_starved(deck_list)
     cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
     # A 3-energy/turn economy can only ever field so many 3+ cost cards a turn - stacking more of
     # them past a couple copies just clogs the hand with cards that sit dead, however strong each
@@ -1002,6 +1023,7 @@ def choose_card_reward(observation: dict) -> dict:
         0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
         bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
         2 if defense_needed and action["card_id"] in STRONG_BLOCK_CARDS else 0,
+        1 if draw_needed and action["card_id"] in DRAW_CARDS else 0,
         priority.get(action["card_id"], 0),
         0 if not exhaust_ready and action["card_id"] in UNCOMMITTED_EXHAUST_PAYOFF else 1,
         1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
