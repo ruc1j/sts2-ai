@@ -25,6 +25,7 @@ HEADBUTT, UPPERCUT, TRUE_GRIT, BURNING_PACT = "Headbutt", "Uppercut", "True Grit
 FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE, MANGLE = "Fiend Fire", "Evil Eye", "Brand", "Infernal Blade", "Mangle"
 RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
+EXTERMINATE = "Exterminate"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -35,7 +36,7 @@ STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3,
-    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1,
+    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
@@ -52,7 +53,9 @@ CARD_DAMAGE = {
 CARD_HITS = {TWIN_STRIKE: 2}
 CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2, MANGLE: 5}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
-ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12}
+ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
+ALL_ENEMY_HITS = {EXTERMINATE: 4}
+ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
@@ -64,7 +67,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -1289,7 +1292,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
         damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
         if card_was_upgraded:
-            damage += 3
+            damage += ALL_ENEMY_UPGRADE_DAMAGE.get(card, 3)
         if _power(combat.player_powers, "WeakPower"):
             damage = damage * 3 // 4
         if _power(combat.player_powers, "ShrinkPower"):
@@ -1297,16 +1300,21 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         if pen_nib_double:
             damage *= 2
         before = list(enemies)
+        hits = ALL_ENEMY_HITS.get(card, 1)
         for index, enemy in enumerate(enemies):
             if not enemy.alive:
                 continue
-            scaled = damage * 3 // 2 if _power(enemy.powers, "VulnerablePower") else damage
-            # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage
-            # taken per card played earlier this turn (combat.cards_played_this_turn already
-            # counts the card resolving right now, hence the -1).
-            if _power(enemy.powers, "SlowPower"):
-                scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
-            enemies[index] = _damage_enemy(enemy, scaled)
+            for _ in range(hits):
+                if not enemies[index].alive:
+                    break
+                target_enemy = enemies[index]
+                scaled = damage * 3 // 2 if _power(target_enemy.powers, "VulnerablePower") else damage
+                # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage
+                # taken per card played earlier this turn (combat.cards_played_this_turn already
+                # counts the card resolving right now, hence the -1).
+                if _power(target_enemy.powers, "SlowPower"):
+                    scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
+                enemies[index] = _damage_enemy(target_enemy, scaled)
         if card == THUNDERCLAP:
             for index, enemy in enumerate(enemies):
                 if enemy.alive:

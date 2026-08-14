@@ -88,6 +88,7 @@ CARD_NAMES = {
     "CARD.INFERNAL_BLADE": "Infernal Blade",
     "CARD.MANGLE": "Mangle",
     "CARD.PECK": "Peck",
+    "CARD.EXTERMINATE": "Exterminate",
     "CARD.EVIL_EYE": "Evil Eye",
     "CARD.BRAND": "Brand",
     "CARD.RAGE": "Rage",
@@ -115,7 +116,7 @@ CARD_TIERS = {
     **dict.fromkeys({
         "CARD.BREAK", "CARD.AGGRESSION", "CARD.TEAR_ASUNDER", "CARD.THRASH",
         "CARD.ASHEN_STRIKE", "CARD.DISMANTLE", "CARD.EVIL_EYE", "CARD.FORGOTTEN_RITUAL", "CARD.MANGLE",
-        "CARD.SPITE", "CARD.STOMP", "CARD.UNRELENTING", "CARD.WHIRLWIND", "CARD.BREAKTHROUGH", "CARD.PECK",
+        "CARD.SPITE", "CARD.STOMP", "CARD.UNRELENTING", "CARD.WHIRLWIND", "CARD.BREAKTHROUGH", "CARD.PECK", "CARD.EXTERMINATE",
         "CARD.CINDER", "CARD.IRON_WAVE", "CARD.TWIN_STRIKE", "CARD.VOLLEY",
         "CARD.INFLAME",  # Strength scales every attack: boss firepower (was C)
     }, "B"),
@@ -222,6 +223,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.VOLLEY": 10,
     "CARD.MANGLE": 15,
     "CARD.PECK": 6,
+    "CARD.EXTERMINATE": 12,
 }
 # Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
 ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
