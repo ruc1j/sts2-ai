@@ -684,15 +684,18 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     # Fortifier doubles the current block, so with no block it is wasted (sim19 used it at 0
     # block and gained nothing); only count it once the player already has block this turn.
-    blocking = {"POTION.BLOCK_POTION"} | ({"POTION.FORTIFIER"} if block > 0 else set())
+    blocking = {"POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE"} | ({"POTION.FORTIFIER"} if block > 0 else set())
     # Speed Potion just grants Dexterity via SpeedPotionPower - same effect as Dexterity Potion.
-    defensive_buffs = {"POTION.DEXTERITY_POTION", "POTION.SPEED_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION", "POTION.LIQUID_BRONZE"}
+    defensive_buffs = {
+        "POTION.DEXTERITY_POTION", "POTION.SPEED_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION",
+        "POTION.LIQUID_BRONZE", "POTION.FYSH_OIL", "POTION.HEART_OF_IRON",
+    }
     recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
     # Shackling is deliberately excluded from `debuffs` below: its -7 Strength lasts the whole
     # fight, so it is reserved for the >=100 HP boss-length branch further down rather than
     # spent reactively on any dangerous *regular* fight (e.g. a Wriggler swarm) - sim13 burned
     # Shackling on a normal encounter and had nothing left for the boss that actually needed it.
-    debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION"}
+    debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.POTION_OF_BINDING"}
     offensive = {
         "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",

@@ -974,6 +974,29 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.WEAK_POTION")
 
+    def test_uses_ship_in_a_bottle_against_lethal_incoming(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.SHIP_IN_A_BOTTLE", "target_id": None}],
+            "player": {"hp": 10, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 40, "intents": [{"damage": 12, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SHIP_IN_A_BOTTLE")
+
+    def test_uses_new_defensive_and_debuff_potions_when_low(self) -> None:
+        cases = (
+            ("POTION.FYSH_OIL", 0, "POTION.FYSH_OIL"),
+            ("POTION.HEART_OF_IRON", 0, "POTION.HEART_OF_IRON"),
+            ("POTION.POTION_OF_BINDING", 12, "POTION.POTION_OF_BINDING"),
+        )
+        for potion_id, incoming, expected in cases:
+            with self.subTest(potion_id=potion_id):
+                observation = {
+                    "legal_actions": [{"type": "potion", "potion_id": potion_id, "target_id": None}],
+                    "player": {"hp": 20, "max_hp": 80, "block": 0},
+                    "enemies": [{"combat_id": 7, "hp": 40, "intents": [{"damage": incoming, "repeats": 1}]}] if incoming else [],
+                }
+                self.assertEqual(choose(observation)["potion_id"], expected)
+
     def test_uses_shackling_potion_first_in_boss_fight(self) -> None:
         # ShacklingPotionPower subclasses TemporaryStrengthPower, whose AfterSideTurnEnd removes
         # the -7 Strength once the enemy's own turn ends - it only blunts the enemy's very next
