@@ -18,6 +18,31 @@ class OfficialAgentTest(unittest.TestCase):
     def test_maps_insatiable_sandpit_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.SANDPIT_POWER"], "SandpitPower")
 
+    def test_maps_kaiser_crab_rage_power_for_rollouts(self) -> None:
+        self.assertEqual(POWER_NAMES["POWER.CRAB_RAGE_POWER"], "CrabRagePower")
+
+    def test_maps_act2_enemy_powers_for_rollouts(self) -> None:
+        self.assertEqual(
+            {power_id: POWER_NAMES[power_id] for power_id in (
+                "POWER.FLUTTER_POWER",
+                "POWER.PERSONAL_HIVE_POWER",
+                "POWER.SHRINK_POWER",
+                "POWER.SLOW_POWER",
+                "POWER.SLUMBER_POWER",
+                "POWER.THORNS_POWER",
+                "POWER.VITAL_SPARK_POWER",
+            )},
+            {
+                "POWER.FLUTTER_POWER": "FlutterPower",
+                "POWER.PERSONAL_HIVE_POWER": "PersonalHivePower",
+                "POWER.SHRINK_POWER": "ShrinkPower",
+                "POWER.SLOW_POWER": "SlowPower",
+                "POWER.SLUMBER_POWER": "SlumberPower",
+                "POWER.THORNS_POWER": "ThornsPower",
+                "POWER.VITAL_SPARK_POWER": "VitalSparkPower",
+            },
+        )
+
     def test_maps_stone_armor_and_feel_no_pain_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.PLATING_POWER"], "PlatingPower")
         self.assertEqual(POWER_NAMES["POWER.FEEL_NO_PAIN_POWER"], "FeelNoPainPower")
