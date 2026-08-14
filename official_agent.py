@@ -575,21 +575,26 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
     sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
+    potion_context = _potion_context(observation)
+    potion_lethal = _potion_is_lethal_incoming(observation)
+    if (
+        (not sandpit_critical or potion_lethal)
+        and (
+            potion_context is None
+            or potion_context != _LAST_POTION_CONTEXT
+            or potion_lethal
+        )
+        and (potion := choose_potion(observation, potions))
+    ):
+        if potion_context is not None:
+            _LAST_POTION_CONTEXT = potion_context
+        return potion
     if sandpit_critical and escape:
         return escape
     if sandpit_critical:
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
         if draw_cards:
             return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))
-    potion_context = _potion_context(observation)
-    if (
-        potion_context is None
-        or potion_context != _LAST_POTION_CONTEXT
-        or _potion_is_lethal_incoming(observation)
-    ) and (potion := choose_potion(observation, potions)):
-        if potion_context is not None:
-            _LAST_POTION_CONTEXT = potion_context
-        return potion
     if turn := choose_crab_facing(observation, cards):
         return turn
     enemy_by_id = {enemy["combat_id"]: enemy for enemy in observation.get("enemies", ())}

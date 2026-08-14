@@ -1194,6 +1194,25 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
 
+    def test_uses_potion_before_sandpit_escape_when_incoming_is_lethal(self) -> None:
+        observation = {
+            "player": {"hp": 10, "max_hp": 80},
+            "enemies": [{
+                "combat_id": 1,
+                "id": "MONSTER.THE_INSATIABLE",
+                "slot": "boss",
+                "hp": 321,
+                "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}],
+                "intents": [{"damage": 12, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 0},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
+
     def test_uses_draw_card_when_sandpit_is_critical_without_frantic_escape(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
