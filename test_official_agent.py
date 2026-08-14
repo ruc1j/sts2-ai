@@ -1432,6 +1432,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.EVIL_EYE")
 
+    def test_uncommitted_self_damage_loses_same_tier_to_normal_card(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLOODLETTING"},
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
+
     def test_uncommitted_rupture_does_not_force_core(self) -> None:
         observation = {
             "player": {"deck": []},

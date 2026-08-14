@@ -980,7 +980,7 @@ def choose_card_reward(observation: dict) -> dict:
         uncommitted_count = sum(card in UNCOMMITTED_SELF_DAMAGE for card in deck_list)
         for card_id in UNCOMMITTED_SELF_DAMAGE:
             if card_id in priority:
-                priority[card_id] -= 1 + (2 if uncommitted_count else 0)
+                priority[card_id] -= 2 + (1 if uncommitted_count else 0)
     exhaust_ready = bool(set(EXHAUST_ENABLERS) & deck_ids)
     if not exhaust_ready:
         for card_id in UNCOMMITTED_EXHAUST_PAYOFF:
