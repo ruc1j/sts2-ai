@@ -951,7 +951,7 @@ def choose_card_reward(observation: dict) -> dict:
     # while it is lean (1-2 copies); afterwards the strength axis (Inflame etc.) outranks it.
     strikes = sum(card in STRIKE_TAGGED_REWARDS or card == "CARD.STRIKE_IRONCLAD" for card in deck_list)
     perfected = sum(card == "CARD.PERFECTED_STRIKE" for card in deck_list)
-    if strikes >= 5 and perfected < 2:
+    if strike_axis and strikes >= 5 and perfected < 2:
         for card_id in STRIKE_TAGGED_REWARDS:
             if card_id in priority:
                 priority[card_id] += 2

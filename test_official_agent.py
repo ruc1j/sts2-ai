@@ -1313,6 +1313,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TRUE_GRIT")
 
+    def test_reward_does_not_seed_strike_axis_after_self_damage_axis(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 5 + [{"id": "CARD.RUPTURE"}]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.IRON_WAVE"},
+                {"type": "card_reward", "card_id": "CARD.RAMPAGE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.IRON_WAVE")
+
     def test_reward_switches_core_after_axis_is_owned(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.PERFECTED_STRIKE"}, {"id": "CARD.RUPTURE"}]},
