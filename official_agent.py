@@ -742,7 +742,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # Effigy that don't attack on an early turn). Only spend it once an attack is actually
         # incoming this decision, so the -7 lands on a turn that would otherwise deal damage.
         shackling = use({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
-        return shackling or use(offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        # Skill Potion is a hand-dependent gamble; keep it for a genuinely threatening boss
+        # turn instead of spending it on turn one while the boss is idle.
+        boss_offensive = offensive if incoming >= max(1, hp // 2) else offensive - {"POTION.SKILL_POTION"}
+        return shackling or use(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None
@@ -1066,7 +1069,10 @@ def _block_starved(deck: list[str]) -> bool:
     # starved. sim19 died at exactly 1/3 block cards because the old 1/3 threshold never fired.
     block_cards = sum(card in DEFENSE_PRIORITY or card == "CARD.DEFEND_IRONCLAD" for card in deck)
     strong_blocks = sum(card in STRONG_BLOCK_CARDS for card in deck)
-    return len(deck) >= 10 and (block_cards * 5 < len(deck) * 2 or strong_blocks < 2)
+    # Once the deck reaches Act 2 size, two strong blocks are too thin for a long boss fight;
+    # keep the early balanced-deck behavior (12 cards with two Shrugs) unchanged.
+    strong_block_shortage = strong_blocks < (3 if len(deck) >= 16 else 2)
+    return len(deck) >= 10 and (block_cards * 5 < len(deck) * 2 or strong_block_shortage)
 
 
 def _draw_starved(deck: list[str]) -> bool:

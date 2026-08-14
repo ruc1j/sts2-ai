@@ -930,6 +930,30 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.COLORLESS_POTION")
 
+    def test_saves_skill_potion_for_a_threatening_boss_turn(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 173, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.STRENGTH_POTION")
+
+    def test_uses_skill_potion_when_boss_incoming_is_high(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 173, "intents": [{"damage": 40, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
+
     def test_uses_weak_potion_against_lethal_enemy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.WEAK_POTION", "target_id": 7}],
@@ -1745,6 +1769,23 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
+    def test_reward_prefers_strong_defense_in_a_large_deck_with_two_strong_blocks(self) -> None:
+        # At 17 cards, two strong blocks are too thin for Act 2 even when total block cards clear
+        # the 40% line; a third real answer is preferable to another strike-axis card.
+        observation = {
+            "player": {"deck": (
+                [{"id": "CARD.STRIKE_IRONCLAD"}] * 7
+                + [{"id": "CARD.DEFEND_IRONCLAD"}] * 8
+                + [{"id": "CARD.SHRUG_IT_OFF"}] * 2
+            )},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
+                {"type": "card_reward", "card_id": "CARD.SETUP_STRIKE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_defense_does_not_override_core(self) -> None:
         observation = {
