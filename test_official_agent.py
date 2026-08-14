@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, POWER_NAMES, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from combat import BURN, DAZED, INFECTION, TOXIC
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -21,6 +22,38 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(POWER_NAMES["POWER.PLATING_POWER"], "PlatingPower")
         self.assertEqual(POWER_NAMES["POWER.FEEL_NO_PAIN_POWER"], "FeelNoPainPower")
         self.assertTrue({"CARD.STONE_ARMOR", "CARD.FEEL_NO_PAIN"} <= set(CARD_NAMES))
+
+    def test_maps_bridge_status_cards_for_rollouts(self) -> None:
+        self.assertEqual(
+            {CARD_NAMES[card_id] for card_id in ("CARD.TOXIC", "CARD.BURN", "CARD.DAZED", "CARD.INFECTION")},
+            {TOXIC, BURN, DAZED, INFECTION},
+        )
+
+    def test_rollout_maps_toxic_hand_card_to_turn_end_damage_model(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY", "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {"hp": 1, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.TOXIC"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["combat"] = state
+            return [("End turn", 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["combat"].hand, (TOXIC,))
 
     def test_maps_knowledge_demon_powers_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.DISINTEGRATION_POWER"], "DisintegrationPower")
