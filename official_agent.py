@@ -28,6 +28,7 @@ CARD_NAMES = {
     "CARD.INFECTION": "Infection",
     "CARD.FRANTIC_ESCAPE": "Frantic Escape",
     "CARD.IRON_WAVE": "Iron Wave",
+    "CARD.TWIN_STRIKE": "Twin Strike",
     "CARD.CINDER": "Cinder",
     "CARD.ASHEN_STRIKE": "Ashen Strike",
     "CARD.HEMOKINESIS": "Hemokinesis",
@@ -182,6 +183,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.BLUDGEON": 32,
     "CARD.DISMANTLE": 8,
     "CARD.IRON_WAVE": 5,
+    "CARD.TWIN_STRIKE": 10,
     "CARD.CINDER": 18,
     "CARD.HEMOKINESIS": 15,
     "CARD.UNRELENTING": 14,
@@ -923,7 +925,7 @@ def choose_map(observation: dict) -> dict:
     return max(legal_actions, key=lambda action: value((action["col"], action["row"])))
 
 
-STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE"}
+STRIKE_TAGGED_REWARDS = {"CARD.PERFECTED_STRIKE", "CARD.ASHEN_STRIKE", "CARD.TWIN_STRIKE"}
 
 # Strength sources that scale every attack into boss firepower; once one is in the deck the
 # others are prioritized so the axis keeps growing.
