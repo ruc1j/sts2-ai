@@ -1135,6 +1135,9 @@ def choose_card_reward(observation: dict) -> dict:
     # ...) may override a tier, while weak block cards only win same-tier ties. This preserves the
     # sim19 fix without letting True Grit/Iron Wave crowd out deck acceleration forever.
     defense_needed = _block_starved(deck_list)
+    # Only large decks use the hard override: early runs still allow a high-tier attack to win
+    # over a defensive pick while the deck is small enough to recover its block density quickly.
+    strong_block_shortage = len(deck_list) >= 16 and sum(card in STRONG_BLOCK_CARDS for card in deck_list) < 3
     draw_needed = _draw_starved(deck_list)
     cards = {card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())}
     # A 3-energy/turn economy can only ever field so many 3+ cost cards a turn - stacking more of
@@ -1162,7 +1165,7 @@ def choose_card_reward(observation: dict) -> dict:
         if not (defense_needed and card_id in STRONG_BLOCK_CARDS):
             return 0
         tier = tier_score.get(CARD_TIERS.get(card_id, "D"), 0)
-        if any(
+        if not strong_block_shortage and any(
             is_attack_reward(action)
             and tier_score.get(CARD_TIERS.get(action["card_id"], "D"), 0) > tier
             for action in actions
