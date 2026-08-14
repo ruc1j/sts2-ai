@@ -1343,6 +1343,25 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "potion")
 
+    def test_uses_block_potion_on_threatening_act1_boss(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 17},
+            "player": {"hp": 37, "max_hp": 80, "block": 0},
+            "enemies": [{
+                "combat_id": 1,
+                "id": "MONSTER.CEREMONIAL_BEAST",
+                "hp": 188,
+                "max_hp": 252,
+                "intents": [{"damage": 18, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.LIQUID_BRONZE", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.BLOCK_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.BLOCK_POTION")
+
     def test_uses_draw_card_when_sandpit_is_critical_without_frantic_escape(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},

@@ -785,7 +785,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         offensive_now = offensive_now | {"POTION.SKILL_POTION"}
 
     def use_major_aware(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
-        return use(ids if major_allowed else ids - RESERVED_COMBAT_POTIONS, target_score)
+        allowed = ids if major_allowed else ids - RESERVED_COMBAT_POTIONS
+        if not major_allowed and incoming >= max(1, hp // 2):
+            allowed |= ids & {"POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE"}
+        return use(allowed, target_score)
 
     boss_shackling = use_major_aware({"POTION.SHACKLING_POTION"}) if max_enemy_hp >= 100 and incoming > 0 else None
     boss_skill = use_major_aware({"POTION.SKILL_POTION"}) if max_enemy_hp >= 100 and (boss_context or fallback_boss) else None
