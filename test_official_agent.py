@@ -1900,6 +1900,43 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_event(observation)["option_index"], 0)
 
+    def test_event_option_scores_prefer_immediate_sunken_statue_reward(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "SUNKEN_STATUE",
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "text_key": "SUNKEN_STATUE.DIVE_INTO_WATER"},
+                {"type": "event_option", "option_index": 1, "text_key": "SUNKEN_STATUE.GRAB_SWORD"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 0)
+
+    def test_self_help_book_prefers_block_when_block_starved(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "SELF_HELP_BOOK",
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 12,
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "text_key": "SELF_HELP_BOOK.READ_THE_BACK"},
+                {"type": "event_option", "option_index": 1, "text_key": "SELF_HELP_BOOK.READ_PASSAGE"},
+                {"type": "event_option", "option_index": 2, "text_key": "SELF_HELP_BOOK.READ_ENTIRE_BOOK"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 1)
+
+    def test_self_help_book_prefers_damage_when_block_is_sufficient(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "SELF_HELP_BOOK",
+            "deck": ["CARD.SHRUG_IT_OFF"] * 4 + ["CARD.STRIKE_IRONCLAD"] * 6,
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "text_key": "SELF_HELP_BOOK.READ_THE_BACK"},
+                {"type": "event_option", "option_index": 1, "text_key": "SELF_HELP_BOOK.READ_PASSAGE"},
+                {"type": "event_option", "option_index": 2, "text_key": "SELF_HELP_BOOK.READ_ENTIRE_BOOK"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 0)
+
     def test_event_relic_scores_cover_all_ancients(self) -> None:
         pael = {"RELIC.PAELS_CLAW", "RELIC.PAELS_TOOTH", "RELIC.PAELS_GROWTH", "RELIC.PAELS_LEGION",
                 "RELIC.PAELS_FLESH", "RELIC.PAELS_TEARS", "RELIC.PAELS_HORN", "RELIC.PAELS_WING",

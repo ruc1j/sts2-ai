@@ -426,6 +426,19 @@ _RELIC_TIER_VALUE = {"S": 9, "A": 7, "B": 5, "C": 3, "D": 1}
 EVENT_OPTION_SCORES = {
     "BYRDONIS_NEST": {"TAKE": 100},
     "TABLET_OF_TRUTH": {"SMASH": 100},
+    "MORPHIC_GROVE": {"LONER": 100},
+    "WELLSPRING": {"BOTTLE": 100},
+    "AROMA_OF_CHAOS": {"MAINTAIN_CONTROL": 100},
+    # SwordOfStone is delayed until five elites are defeated; 166-run data shows the current
+    # median run reaches only nine combats, so the immediate gold/HP trade is better for now.
+    "SUNKEN_STATUE": {"DIVE_INTO_WATER": 100},
+    # ChosenCheese grants +1 max HP after each combat; its 14-combat break-even is beyond the
+    # current 9-combat median (9.9 average), so taking two free commons is better for now.
+    "ROOM_FULL_OF_CHEESE": {"GORGE": 100},
+    "WOOD_CARVINGS": {"TORUS": 100, "BIRD": 50},
+    "THIS_OR_THAT": {"ORNATE": 60},
+    "JUNGLE_MAZE_ADVENTURE": {"JOIN_FORCES": 60},
+    "SELF_HELP_BOOK": {},  # scored below from the deck's current block needs
 }
 
 
@@ -457,6 +470,8 @@ def choose_event(observation: dict) -> dict:
     actions = [
         action for action in observation.get("legal_actions", ())
         if action.get("type") in {"event_option", "event_relic"}
+        and not action.get("is_locked")
+        and not action.get("text_key", "").rsplit(".", 1)[-1].endswith("_LOCKED")
     ]
     if not actions:
         raise ValueError("no event relic actions")
@@ -487,7 +502,16 @@ def choose_event(observation: dict) -> dict:
         if scores is None:
             return None
         text_key = action.get("text_key", "")
-        return scores.get(text_key, scores.get(text_key.rsplit(".", 1)[-1]))
+        option = text_key.rsplit(".", 1)[-1]
+        if event_id == "SELF_HELP_BOOK":
+            preferred = "READ_PASSAGE" if _block_starved(_deck_list(observation)) else "READ_THE_BACK"
+            if option == preferred:
+                return 100
+            if option == "READ_ENTIRE_BOOK":
+                return -1
+            if option in {"READ_THE_BACK", "READ_PASSAGE"}:
+                return 0
+        return scores.get(text_key, scores.get(option))
 
     scored = [(option_score(action), action) for action in actions]
     known = [(score, action) for score, action in scored if score is not None]
