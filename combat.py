@@ -6,6 +6,7 @@ import json
 import random
 import re
 from dataclasses import dataclass, replace
+from functools import lru_cache
 
 
 STRIKE, DEFEND, BASH, ANGER, BLUDGEON, STOMP, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, TWIN_STRIKE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Stomp", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "Twin Strike", "End turn"
@@ -205,8 +206,13 @@ def _dict(items: tuple[tuple, ...]) -> dict:
     return dict(items)
 
 
+@lru_cache(maxsize=8192)
+def _power_lookup(items: tuple[tuple[str, int], ...], name: str) -> int:
+    return dict(items).get(name, 0)
+
+
 def _power(items: tuple[tuple[str, int], ...], name: str) -> int:
-    return _dict(items).get(name, 0)
+    return _power_lookup(items, name)
 
 
 def _add_power(items: tuple[tuple[str, int], ...], name: str, amount: int) -> tuple[tuple[str, int], ...]:
