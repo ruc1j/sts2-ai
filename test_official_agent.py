@@ -463,6 +463,29 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
+    def test_reward_overrides_attack_tier_when_large_deck_block_density_is_low(self) -> None:
+        observation = {
+            "player": {"deck": [
+                *({"id": "CARD.STRIKE_IRONCLAD", "cost": 1} for _ in range(5)),
+                *({"id": "CARD.DEFEND_IRONCLAD", "cost": 1} for _ in range(4)),
+                {"id": "CARD.BASH", "cost": 2}, {"id": "CARD.BLUDGEON", "cost": 3},
+                {"id": "CARD.EVIL_EYE", "cost": 1}, {"id": "CARD.EVIL_EYE", "cost": 1},
+                {"id": "CARD.SHRUG_IT_OFF", "cost": 1}, {"id": "CARD.COLOSSUS", "cost": 1},
+                {"id": "CARD.AGGRESSION", "cost": 1}, {"id": "CARD.ANGER", "cost": 0},
+                {"id": "CARD.EXPECT_A_FIGHT", "cost": 1}, {"id": "CARD.INFLAME", "cost": 1},
+            ]},
+            "cards": [
+                {"id": "CARD.POMMEL_STRIKE", "rarity": "Rare", "cost": 1},
+                {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
+            ],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.POMMEL_STRIKE"},
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_reward_skips_unsupported_cards(self) -> None:
         observation = {
             "cards": [{"id": "CARD.UNKNOWN", "rarity": "Uncommon"}],

@@ -1165,7 +1165,7 @@ def choose_card_reward(observation: dict) -> dict:
         if not (defense_needed and card_id in STRONG_BLOCK_CARDS):
             return 0
         tier = tier_score.get(CARD_TIERS.get(card_id, "D"), 0)
-        if not strong_block_shortage and any(
+        if len(deck_list) < 16 and not strong_block_shortage and any(
             is_attack_reward(action)
             and tier_score.get(CARD_TIERS.get(action["card_id"], "D"), 0) > tier
             for action in actions
