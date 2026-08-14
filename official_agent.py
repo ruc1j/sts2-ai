@@ -801,6 +801,7 @@ def choose_shop(observation: dict) -> dict:
     deck_cards = observation.get("deck_cards") or ()
     high_cost_in_deck = sum(_number(card.get("cost"), 0) >= 3 for card in deck_cards)
     over_high_cost_cap = high_cost_in_deck >= 2
+    defense_needed = _block_starved(deck_list)
     buys = [action for action in actions if action.get("type") == "buy_card"]
     axis = _relic_axis(deck_ids)
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
@@ -815,10 +816,11 @@ def choose_shop(observation: dict) -> dict:
         if not (set(EXHAUST_ENABLERS) & deck_ids) and card_id in UNCOMMITTED_EXHAUST_PAYOFF:
             return (0, 0, 0, 0, 0)
         tier = CARD_TIERS.get(card_id)
-        if tier not in {"S", "A"}:
+        allow_b_defense = defense_needed and tier == "B" and card_id in STRONG_BLOCK_CARDS
+        if tier not in {"S", "A"} and not allow_b_defense:
             return (0, 0, 0, 0, 0)
         # A strong block is more valuable when the deck still lacks a real Act 2 answer.
-        defense_bonus = 1 if _block_starved(deck_list) and card_id in STRONG_BLOCK_CARDS else 0
+        defense_bonus = 1 if defense_needed and card_id in STRONG_BLOCK_CARDS else 0
         return (2, tier_score[tier], defense_bonus, 0, 0)
 
     # A high-value known relic beats a non-core card, but an axis-defining card still wins.
@@ -1043,6 +1045,7 @@ DEFENSE_PRIORITY = {
 STRONG_BLOCK_CARDS = {
     "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
     "CARD.BLOOD_WALL", "CARD.STONE_ARMOR", "CARD.TAUNT", "CARD.EVIL_EYE",
+    "CARD.EQUILIBRIUM", "CARD.ULTIMATE_DEFEND",
 }
 
 

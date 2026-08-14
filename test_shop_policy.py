@@ -42,6 +42,23 @@ class ShopPolicyTest(unittest.TestCase):
         )
         self.assertEqual(choose_shop(observation)["type"], "skip")
 
+    def test_buys_b_tier_strong_block_when_defense_is_needed(self):
+        equilibrium = {"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.EQUILIBRIUM"}
+        observation = shop_observation(
+            deck=["CARD.STRIKE_IRONCLAD"] * 12,
+            cards=[{"index": 0, "slot_index": 1, "id": "CARD.EQUILIBRIUM", "type": "Skill", "rarity": "Uncommon", "cost": 75, "affordable": True}],
+            legal_actions=[equilibrium, {"type": "skip"}],
+        )
+        self.assertEqual(choose_shop(observation), equilibrium)
+
+    def test_skips_b_tier_strong_block_when_defense_is_sufficient(self):
+        observation = shop_observation(
+            deck=["CARD.SHRUG_IT_OFF"] * 4 + ["CARD.STRIKE_IRONCLAD"] * 6,
+            cards=[{"index": 0, "slot_index": 1, "id": "CARD.EQUILIBRIUM", "type": "Skill", "rarity": "Uncommon", "cost": 75, "affordable": True}],
+            legal_actions=[{"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.EQUILIBRIUM"}, {"type": "skip"}],
+        )
+        self.assertEqual(choose_shop(observation)["type"], "skip")
+
     def test_buys_known_relic_over_non_core_card(self):
         relic = {"type": "buy_relic", "relic_index": 0, "slot_index": 3, "relic_id": "RELIC.KUNAI"}
         observation = shop_observation(
