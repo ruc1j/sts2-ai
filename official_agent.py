@@ -130,6 +130,7 @@ UNCOMMITTED_SELF_DAMAGE = {
     "CARD.BLOODLETTING", "CARD.HEMOKINESIS", "CARD.BRAND", "CARD.BREAKTHROUGH",
     "CARD.BLOOD_WALL", "CARD.INFERNO", "CARD.OFFERING",
 }
+UNCOMMITTED_EXHAUST_PAYOFF = {"CARD.FEEL_NO_PAIN", "CARD.DARK_EMBRACE"}
 POWER_NAMES = {
     "POWER.FRAIL": "FrailPower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
@@ -929,6 +930,11 @@ def choose_card_reward(observation: dict) -> dict:
         for card_id in UNCOMMITTED_SELF_DAMAGE:
             if card_id in priority:
                 priority[card_id] -= 1
+    exhaust_ready = bool(set(EXHAUST_ENABLERS) & deck_ids)
+    if not exhaust_ready:
+        for card_id in UNCOMMITTED_EXHAUST_PAYOFF:
+            if card_id in priority:
+                priority[card_id] -= 1
     strike_axis = _axis(deck_ids) == "strike"
     deck_list = _deck_list(observation)
     # Perfected Strike (6 + 2 per Strike) hits ~16 with the starter deck's 5 Strikes, so a
@@ -967,6 +973,7 @@ def choose_card_reward(observation: dict) -> dict:
         bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
         2 if defense_needed and action["card_id"] in STRONG_BLOCK_CARDS else 0,
         priority.get(action["card_id"], 0),
+        0 if not exhaust_ready and action["card_id"] in UNCOMMITTED_EXHAUST_PAYOFF else 1,
         1 if defense_needed and action["card_id"] in DEFENSE_PRIORITY else 0,
         1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0,
     ))

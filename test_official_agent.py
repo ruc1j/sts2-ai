@@ -1425,6 +1425,28 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.DARK_EMBRACE")
 
+    def test_uncommitted_exhaust_payoff_does_not_force_high_tier(self) -> None:
+        observation = {
+            "player": {"deck": []},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.FEEL_NO_PAIN"},
+                {"type": "card_reward", "card_id": "CARD.TWIN_STRIKE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.TWIN_STRIKE")
+
+    def test_exhaust_enabler_keeps_payoff_priority(self) -> None:
+        observation = {
+            "player": {"deck": ["CARD.TRUE_GRIT"]},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.FEEL_NO_PAIN"},
+                {"type": "card_reward", "card_id": "CARD.TWIN_STRIKE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FEEL_NO_PAIN")
+
     def test_reward_prefers_strong_defense_when_deck_lacks_block(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
