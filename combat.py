@@ -1615,6 +1615,8 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
                 scored_hp = min(state.player_max_hp, scored_hp + 12)
             scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + scored_hp / 100 + immediate)
         results.append((action, sum(scores) / len(scores)))
+    if not results:
+        return [(END_TURN, 0.0)]
     return sorted(results, key=lambda item: item[1], reverse=True)
 
 

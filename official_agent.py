@@ -809,6 +809,8 @@ def choose_shop(observation: dict) -> dict:
 
     def card_key(action: dict) -> tuple[int, int, int, int, int]:
         card_id = action.get("card_id") or action.get("id")
+        if card_id in UNMODELED_REWARDS:
+            return (0, 0, 0, 0, 0)
         if over_high_cost_cap and _number(shop_cards.get(card_id, {}).get("energy_cost"), 0) >= 3:
             return (0, 0, 0, 0, 0)
         if card_id in core:
@@ -1032,9 +1034,12 @@ DRAW_CARDS = {
 # Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost
 # block is too awkward for the greedy rollout to use consistently). Never pick these.
 UNPLAYABLE_REWARDS = {"CARD.RELAX"}
+# These cards have high reward tiers but no combat.py model yet. Do not acquire them until the
+# simulator can evaluate their turn-scoped effects; otherwise rollout silently ignores them.
+UNMODELED_REWARDS = {"CARD.EXPECT_A_FIGHT", "CARD.UNMOVABLE"}
 
 DEFENSE_PRIORITY = {
-    "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
+    "CARD.IMPERVIOUS", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
     "CARD.BLOOD_WALL", "CARD.SECOND_WIND", "CARD.STONE_ARMOR", "CARD.TAUNT",
     "CARD.IRON_WAVE", "CARD.TRUE_GRIT",
 }
@@ -1043,7 +1048,7 @@ DEFENSE_PRIORITY = {
 # 7-block base because its Vulnerable rider makes it a dedicated defensive solution; Defend (5),
 # Iron Wave (5), Second Wind (5) and True Grit (7) are barely better than Defend.
 STRONG_BLOCK_CARDS = {
-    "CARD.IMPERVIOUS", "CARD.UNMOVABLE", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
+    "CARD.IMPERVIOUS", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
     "CARD.BLOOD_WALL", "CARD.STONE_ARMOR", "CARD.TAUNT", "CARD.EVIL_EYE",
     "CARD.EQUILIBRIUM", "CARD.ULTIMATE_DEFEND",
 }
@@ -1064,7 +1069,11 @@ def _draw_starved(deck: list[str]) -> bool:
 
 
 def choose_card_reward(observation: dict) -> dict:
-    actions = [action for action in observation["legal_actions"] if action["type"] == "card_reward" and action["card_id"] not in UNPLAYABLE_REWARDS]
+    actions = [
+        action for action in observation["legal_actions"]
+        if action["type"] == "card_reward"
+        and action["card_id"] not in UNPLAYABLE_REWARDS | UNMODELED_REWARDS
+    ]
     if not actions:
         # Every offered card is unplayable (e.g. only Relax was shown): take nothing.
         return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")

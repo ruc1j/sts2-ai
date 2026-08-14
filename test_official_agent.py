@@ -450,6 +450,16 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
 
+    def test_reward_skips_unmodeled_high_tier_cards(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.EXPECT_A_FIGHT"},
+                {"type": "card_reward", "card_id": "CARD.UNMOVABLE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+
     def test_reward_takes_anger_for_the_normal_fights(self) -> None:
         observation = {
             "legal_actions": [

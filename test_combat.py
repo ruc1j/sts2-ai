@@ -42,6 +42,10 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, self.data, random.Random(0))
         self.assertEqual(after.turn, 2)
 
+    def test_search_returns_safe_action_for_terminal_snapshot(self) -> None:
+        combat = Combat(0, (), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),))
+        self.assertEqual(search(combat, DUMMY_DATA, simulations=1, seed=0), [(END_TURN, 0.0)])
+
     def test_peck_has_three_hits_and_four_when_upgraded(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         base = Combat(80, (PECK,), (), (), (enemy,), energy=1)

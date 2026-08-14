@@ -59,6 +59,14 @@ class ShopPolicyTest(unittest.TestCase):
         )
         self.assertEqual(choose_shop(observation)["type"], "skip")
 
+    def test_skips_unmodeled_high_tier_card(self):
+        observation = shop_observation(
+            deck=["CARD.STRIKE_IRONCLAD"] * 10,
+            cards=[{"index": 0, "slot_index": 1, "id": "CARD.UNMOVABLE", "type": "Power", "rarity": "Rare", "cost": 100, "affordable": True}],
+            legal_actions=[{"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.UNMOVABLE"}, {"type": "skip"}],
+        )
+        self.assertEqual(choose_shop(observation)["type"], "skip")
+
     def test_buys_known_relic_over_non_core_card(self):
         relic = {"type": "buy_relic", "relic_index": 0, "slot_index": 3, "relic_id": "RELIC.KUNAI"}
         observation = shop_observation(
