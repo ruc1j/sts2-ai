@@ -1088,6 +1088,19 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
 
+    def test_uses_skill_before_recovery_at_critical_boss_hp(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 16},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.FYSH_OIL", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 24, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "id": "MONSTER.THE_INSATIABLE", "hp": 166, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
+
     def test_boss_floor_context_uses_act_specific_thresholds(self) -> None:
         for act, floor, expected in (
             (0, 16, "POTION.STRENGTH_POTION"), (0, 17, "POTION.SKILL_POTION"),
