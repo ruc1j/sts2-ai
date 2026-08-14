@@ -167,6 +167,7 @@ internal static class CombatBridge
                 max_energy = player.PlayerCombatState.MaxEnergy,
                 powers = player.Creature.Powers.Select(p => new { id = p.Id.ToString(), amount = p.Amount, facing = p is SurroundedPower surrounded ? surrounded.Facing.ToString() : null }),
                 relics = player.Relics.Select(r => r.Id.ToString()),
+                upgraded_cards = player.Deck.Cards.Where(card => card.CurrentUpgradeLevel > 0).Select(card => card.Id.ToString()),
             },
             hand = hand.Select((card, index) => new
             {

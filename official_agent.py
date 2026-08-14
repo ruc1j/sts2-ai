@@ -1137,6 +1137,12 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             # reaches this enemy's turn. Re-resolve back through the monster's own initial state.
             enemy = replace(enemy, move=_resolve_move(enemy, spec, random.Random(observation["seq"]), spec["initial_state"]))
         enemies.append(enemy)
+    upgraded_card_ids = observation["player"].get("upgraded_cards")
+    if upgraded_card_ids is None:
+        upgraded_card_ids = [
+            card["id"] for card in observation.get("hand", ())
+            if card.get("upgrade", 0) > 0
+        ]
     state = Combat(
         player_hp=observation["player"]["hp"],
         hand=tuple(CARD_NAMES.get(card["id"], card["id"]) for card in observation["hand"]),
@@ -1166,11 +1172,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             "RELIC.RED_SKULL" in observation["player"].get("relics", ())
             and observation["player"]["hp"] * 2 <= observation["player"].get("max_hp", observation["player"]["hp"])
         ),
-        upgraded_cards=tuple(
-            CARD_NAMES.get(card["id"], card["id"])
-            for card in observation.get("hand", ())
-            if card.get("upgrade", 0) > 0
-        ),
+        upgraded_cards=tuple(CARD_NAMES.get(card, card) for card in upgraded_card_ids),
     )
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
