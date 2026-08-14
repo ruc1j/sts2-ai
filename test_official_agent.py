@@ -881,6 +881,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SHACKLING_POTION")
 
+    def test_uses_shackling_potion_when_low_hp_boss_is_attacking(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SHACKLING_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 9, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 190, "intents": [{"damage": 16, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SHACKLING_POTION")
+
     def test_withholds_shackling_potion_while_boss_is_not_attacking(self) -> None:
         # Bygone Effigy's opening turns (SLEEP_MOVE/WAKE_MOVE) deal no damage; spending Shackling
         # here would waste it entirely since it expires before any attack lands (regression: a

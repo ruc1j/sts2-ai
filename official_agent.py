@@ -17,6 +17,7 @@ CARD_NAMES = {
     "CARD.BASH": "Bash",
     "CARD.ANGER": "Anger",
     "CARD.BLUDGEON": "Bludgeon",
+    "CARD.STOMP": "Stomp",
     "CARD.SHRUG_IT_OFF": "Shrug It Off",
     "CARD.BATTLE_TRANCE": "Battle Trance",
     "CARD.BULLY": "Bully",
@@ -182,6 +183,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.BASH": 8,
     "CARD.ANGER": 6,
     "CARD.BLUDGEON": 32,
+    "CARD.STOMP": 12,
     "CARD.DISMANTLE": 8,
     "CARD.IRON_WAVE": 5,
     "CARD.TWIN_STRIKE": 10,
@@ -624,9 +626,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
     hand = observation.get("hand") or ()
+    boss_shackling = use({"POTION.SHACKLING_POTION"}) if max(enemy_hp.values(), default=0) >= 100 and incoming > 0 else None
     if incoming >= hp:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
@@ -636,12 +639,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
-        return use(recovery) or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(recovery) or boss_shackling or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or energy or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or energy or use(offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if max(enemy_hp.values(), default=0) >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own

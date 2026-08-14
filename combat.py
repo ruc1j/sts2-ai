@@ -8,7 +8,7 @@ import re
 from dataclasses import dataclass, replace
 
 
-STRIKE, DEFEND, BASH, ANGER, BLUDGEON, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, TWIN_STRIKE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "Twin Strike", "End turn"
+STRIKE, DEFEND, BASH, ANGER, BLUDGEON, STOMP, SHRUG, BATTLE_TRANCE, BULLY, DISMANTLE, SLIMED, FRANTIC_ESCAPE, IRON_WAVE, TWIN_STRIKE, END_TURN = "Strike", "Defend", "Bash", "Anger", "Bludgeon", "Stomp", "Shrug It Off", "Battle Trance", "Bully", "Dismantle", "Slimed", "Frantic Escape", "Iron Wave", "Twin Strike", "End turn"
 CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, INFLAME, PRIMAL_FORCE, UNRELENTING, GIANT_ROCK, RELAX, TREMBLE, BREAKTHROUGH, WHIRLWIND, BLOODLETTING, FEED, DOMINATE, STONE_ARMOR, FEEL_NO_PAIN = "Cinder", "Ashen Strike", "Hemokinesis", "Perfected Strike", "Inflame", "Primal Force", "Unrelenting", "Giant Rock", "Relax", "Tremble", "Breakthrough", "Whirlwind", "Bloodletting", "Feed", "Dominate", "Stone Armor", "Feel No Pain"
 BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
 BREAK, HOWL_FROM_BEYOND, IMPERVIOUS, RAMPAGE, TAUNT, THUNDERCLAP = "Break", "Howl From Beyond", "Impervious", "Rampage", "Taunt", "Thunderclap"
@@ -29,7 +29,7 @@ FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE = "Fiend Fire", "Evil Eye", "Brand",
 HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
-    STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
+    STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1,
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
@@ -48,7 +48,7 @@ CARD_DAMAGE = {
 CARD_HITS = {TWIN_STRIKE: 2}
 CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
-ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17}
+ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
@@ -58,7 +58,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 # Cards that require an enemy target because they deal damage (AllEnemies/RandomEnemy attacks
 # still take an index here even though the actual targeting ignores it - see WHIRLWIND).
 ATTACKS = {
-    STRIKE, BASH, ANGER, BLUDGEON, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
+    STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE,
 }
@@ -521,6 +521,18 @@ def _spawn_wrigglers(data: dict, rng: random.Random) -> tuple[Enemy, ...]:
     )
 
 
+def _effective_cost(combat: Combat, card: str) -> int:
+    cost = CARD_COST.get(card, 0)
+    if card == STOMP:
+        # Stomp's BeforeCardPlayed hook lowers its current-turn cost for each completed Attack.
+        cost = max(0, cost - combat.attacks_played_this_turn)
+    if card == INFERNAL_BLADE and card in combat.upgraded_cards:
+        cost = 0
+    if combat.enlightened_this_turn and card != WHIRLWIND:
+        cost = min(cost, 1)
+    return cost
+
+
 def legal_actions(combat: Combat) -> tuple[str, ...]:
     if combat.terminal:
         return ()
@@ -535,7 +547,7 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             if combat.energy > 0 or card in combat.free_cards:
                 actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
             continue
-        if card not in CARD_COST or (card not in combat.free_cards and CARD_COST[card] > combat.energy):
+        if card not in CARD_COST or (card not in combat.free_cards and _effective_cost(combat, card) > combat.energy):
             continue
         if card in UNTARGETED:
             actions.append(card)
@@ -954,6 +966,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     free_cards = list(combat.free_cards)
     card_is_free = card in free_cards
     card_was_upgraded = card in combat.upgraded_cards
+    card_cost = 0 if card_is_free else _effective_cost(combat, card)
     if card_is_free:
         free_cards.remove(card)
     # Card-play-counting relics (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener/
@@ -968,7 +981,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     cards_this_turn = combat.cards_played_this_turn + 1
     powers_this_turn = combat.powers_played_this_turn + (1 if card in POWERS else 0)
     pen_nib_double = RELIC_PEN_NIB in relics and card in ATTACKS and attacks_combat % 10 == 0
-    helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (CARD_COST.get(card, 0) >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
+    helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (card_cost >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
     vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and card in BLOCK_CARDS
     lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
@@ -1033,12 +1046,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     # the turn. WHIRLWIND's X cost is exempt - it isn't a fixed cost to reduce.
     if card == WHIRLWIND:
         spent = combat.energy
-    elif card == INFERNAL_BLADE and card_was_upgraded:
-        spent = 0
-    elif combat.enlightened_this_turn:
-        spent = min(CARD_COST[card], 1)
     else:
-        spent = CARD_COST[card]
+        spent = card_cost
     if card_is_free:
         spent = 0
     whirlwind_x = combat.energy + (2 if RELIC_CHEMICAL_X in relics else 0)

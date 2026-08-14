@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
-    TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -515,6 +515,19 @@ class CombatTest(unittest.TestCase):
         upgraded = step(Combat(80, (TWIN_STRIKE,), (), (), (enemy,), energy=1, upgraded_cards=(TWIN_STRIKE,)), f"{TWIN_STRIKE}@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(normal.enemies[0].hp, 90)
         self.assertEqual(upgraded.enemies[0].hp, 86)
+
+    def test_stomp_hits_all_enemies_and_costs_less_after_attacks(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 40, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
+        combat = Combat(80, (STRIKE, STOMP), (), (), enemies, energy=3)
+        combat = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertIn(f"{STOMP}@0", legal_actions(combat))
+        after = step(combat, f"{STOMP}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, after.enemies[0].hp, after.enemies[1].hp), (0, 22, 18))
+
+    def test_upgraded_stomp_deals_fifteen_to_all_enemies(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 40, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
+        after = step(Combat(80, (STOMP,), (), (), enemies, energy=3, upgraded_cards=(STOMP,)), f"{STOMP}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.enemies[1].hp), (25, 15))
 
     def test_mind_blast_damage_scales_with_draw_pile_size(self) -> None:
         after = step(Combat(80, (MIND_BLAST,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{MIND_BLAST}@0", {}, random.Random(0))
