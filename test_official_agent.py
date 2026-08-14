@@ -1321,6 +1321,28 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
 
+    def test_allows_reserved_potion_on_threatening_floor_boss(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 16},
+            "turn": 7,
+            "player": {"hp": 53, "max_hp": 80},
+            "enemies": [{
+                "combat_id": 1,
+                "id": "MONSTER.THE_INSATIABLE",
+                "hp": 166,
+                "max_hp": 321,
+                "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 1}],
+                "intents": [{"damage": 30, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.FYSH_OIL", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 0},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "potion")
+
     def test_uses_draw_card_when_sandpit_is_critical_without_frantic_escape(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
