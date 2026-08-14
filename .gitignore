@@ -20,5 +20,7 @@ data/map_*.json
 # use the run_simN.ps1 naming convention above but are the same kind of
 # regenerable experiment output, not something to commit.
 data/*.log
+data/*_log.txt
 data/*_trace.jsonl
 data/*_map.json
+data/*_mapdebug.jsonl
