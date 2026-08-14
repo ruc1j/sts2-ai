@@ -299,6 +299,7 @@ SHOP_RELIC_SCORES = {
     "RELIC.KUSARIGAMA": 6,
     "RELIC.SCREAMING_FLAGON": 6,
     "RELIC.SPARKLING_ROUGE": 6,
+    "RELIC.BRIMSTONE": 6,
     "RELIC.DEMON_TONGUE": 6,
     "RELIC.PENDULUM": 6,
     # Newly modeled combat relics.  Scores are the general-purpose baseline; axis bonuses
