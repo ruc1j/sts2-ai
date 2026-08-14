@@ -405,6 +405,15 @@ SHOP_POTION_SCORES = {
 }
 SHOP_POTION_MIN_SCORE = 7
 
+# The bridge reports boss slots directly. Keep the HP fallback for older unit fixtures that omit
+# both slot and id, but do not mistake a high-HP regular (e.g. Louse Progenitor) for a boss.
+RESERVED_COMBAT_POTIONS = {
+    "POTION.SHACKLING_POTION", "POTION.GHOST_IN_A_JAR", "POTION.BLOCK_POTION",
+    "POTION.SHIP_IN_A_BOTTLE", "POTION.HEART_OF_IRON", "POTION.FYSH_OIL",
+    "POTION.DEXTERITY_POTION", "POTION.SPEED_POTION", "POTION.REGEN_POTION",
+    "POTION.CURE_ALL", "POTION.SKILL_POTION", "POTION.POWER_POTION", "POTION.STRENGTH_POTION",
+}
+
 # Acquisition tiers are separate from card tiers because relic value is conditional on the
 # deck's axis.  The matching sets are deliberately small: an unlisted relic keeps its general
 # score instead of being guessed into a synergetic build.
@@ -685,6 +694,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if not actions:
         return None
     enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
+    enemy_max_hp = {
+        enemy["combat_id"]: _number(enemy.get("max_hp"), enemy.get("hp", 0))
+        for enemy in observation.get("enemies", ())
+    }
     enemy_damage = {enemy["combat_id"]: _intent_incoming(enemy) for enemy in observation.get("enemies", ())}
     def use(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         candidates = [action for action in actions if action["potion_id"] in ids]
@@ -740,10 +753,20 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     # substantial enough to justify spending a scarce potion slot.
     offensive_now = offensive if threatening else offensive - {"POTION.SKILL_POTION"}
     hand = observation.get("hand") or ()
-    boss_shackling = use({"POTION.SHACKLING_POTION"}) if max(enemy_hp.values(), default=0) >= 100 and incoming > 0 else None
+    has_slot = any(enemy.get("slot") for enemy in observation.get("enemies", ()))
+    boss_like = any(str(enemy.get("slot")).lower() == "boss" for enemy in observation.get("enemies", ()))
+    max_enemy_hp = max(enemy_max_hp.values(), default=0)
+    boss_like = boss_like or (not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100)
+    high_hp_regular = max_enemy_hp >= 100 and not boss_like
+    major_allowed = not high_hp_regular or incoming >= max(1, (hp * 3 + 3) // 4) or hp <= max(1, max_hp // 4)
+
+    def use_major_aware(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
+        return use(ids if major_allowed else ids - RESERVED_COMBAT_POTIONS, target_score)
+
+    boss_shackling = use_major_aware({"POTION.SHACKLING_POTION"}) if max_enemy_hp >= 100 and incoming > 0 else None
     if incoming >= hp:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive_now, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
@@ -753,25 +776,25 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or use(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
-        return use(recovery) or boss_shackling or use(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use(blocking) or use(debuffs, enemy_damage) or use(recovery) or boss_shackling or energy or use(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
-    if max(enemy_hp.values(), default=0) >= 100:
+        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+    if max_enemy_hp >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
         # side-turn ends - it only blunts the enemy's very next turn, not the whole fight (a
         # prior assumption here was wrong and wasted the potion on sleeping bosses like Bygone
         # Effigy that don't attack on an early turn). Only spend it once an attack is actually
         # incoming this decision, so the -7 lands on a turn that would otherwise deal damage.
-        shackling = use({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
+        shackling = use_major_aware({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
         # Skill Potion is also worth firing on any attacking boss turn: unlike a regular fight,
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
         # turn to spend the generated block card.
         boss_offensive = offensive_now | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
-        return shackling or use(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        return shackling or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None
