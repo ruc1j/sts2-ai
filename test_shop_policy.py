@@ -82,6 +82,25 @@ class ShopPolicyTest(unittest.TestCase):
         )
         self.assertEqual(choose_shop(observation), card)
 
+    def test_deprioritizes_high_cost_shop_card_after_cap(self):
+        observation = shop_observation(
+            deck=["CARD.COLOSSUS", "CARD.BLUDGEON"],
+            cards=[
+                {"index": 0, "slot_index": 1, "id": "CARD.COLOSSUS", "type": "Skill", "rarity": "Rare", "cost": 100, "energy_cost": 3, "affordable": True},
+                {"index": 1, "slot_index": 2, "id": "CARD.BATTLE_TRANCE", "type": "Skill", "rarity": "Uncommon", "cost": 75, "energy_cost": 0, "affordable": True},
+            ],
+            legal_actions=[
+                {"type": "buy_card", "card_index": 0, "slot_index": 1, "card_id": "CARD.COLOSSUS"},
+                {"type": "buy_card", "card_index": 1, "slot_index": 2, "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "skip"},
+            ],
+        )
+        observation["deck_cards"] = [
+            {"id": "CARD.COLOSSUS", "cost": 3},
+            {"id": "CARD.BLUDGEON", "cost": 3},
+        ]
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
     def test_removal_does_not_delete_strikes_in_strike_axis(self):
         remove_defend = {"type": "remove", "slot_index": 7, "card_index": 2, "card_id": "CARD.DEFEND_IRONCLAD"}
         observation = shop_observation(

@@ -686,21 +686,29 @@ def choose_shop(observation: dict) -> dict:
     actions = observation.get("legal_actions", ())
     deck_ids = _deck_ids(observation)
     deck_list = _deck_list(observation)
+    shop_cards = {
+        card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())
+    }
+    deck_cards = observation.get("deck_cards") or ()
+    high_cost_in_deck = sum(_number(card.get("cost"), 0) >= 3 for card in deck_cards)
+    over_high_cost_cap = high_cost_in_deck >= 2
     buys = [action for action in actions if action.get("type") == "buy_card"]
     axis = _relic_axis(deck_ids)
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
 
-    def card_key(action: dict) -> tuple[int, int, int, int]:
+    def card_key(action: dict) -> tuple[int, int, int, int, int]:
         card_id = action.get("card_id") or action.get("id")
+        if over_high_cost_cap and _number(shop_cards.get(card_id, {}).get("energy_cost"), 0) >= 3:
+            return (0, 0, 0, 0, 0)
         if card_id in core:
-            return (4, core[card_id], tier_score.get(CARD_TIERS.get(card_id, "D"), 0), 0)
+            return (4, core[card_id], tier_score.get(CARD_TIERS.get(card_id, "D"), 0), 0, 0)
         tier = CARD_TIERS.get(card_id)
         if tier not in {"S", "A"}:
-            return (0, 0, 0, 0)
+            return (0, 0, 0, 0, 0)
         # A strong block is more valuable when the deck still lacks a real Act 2 answer.
         defense_bonus = 1 if _block_starved(deck_list) and card_id in STRONG_BLOCK_CARDS else 0
-        return (2, tier_score[tier], defense_bonus, 0)
+        return (2, tier_score[tier], defense_bonus, 0, 0)
 
     # A high-value known relic beats a non-core card, but an axis-defining card still wins.
     relics = [action for action in actions if action.get("type") == "buy_relic"]

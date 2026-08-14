@@ -128,6 +128,7 @@ internal static class ShopBridge
                     id,
                     type = card.Type.ToString(),
                     rarity = card.Rarity.ToString(),
+                    energy_cost = card.EnergyCost.GetWithModifiers(CostModifiers.All),
                     cost = cardEntry.Cost,
                     on_sale = cardEntry.IsOnSale,
                     affordable,
