@@ -82,7 +82,12 @@ internal static class RewardBridge
                 hp = player.Creature.CurrentHp,
                 max_hp = player.Creature.MaxHp,
                 gold = player.Gold,
-                deck = player.Deck.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel }),
+                deck = player.Deck.Cards.Select(card => new
+                {
+                    id = card.Id.ToString(),
+                    upgrade = card.CurrentUpgradeLevel,
+                    cost = card.EnergyCost.GetWithModifiers(CostModifiers.All),
+                }),
             },
             cards = cards.Select((result, index) => new
             {

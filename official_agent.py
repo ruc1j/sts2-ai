@@ -1037,7 +1037,12 @@ def choose_card_reward(observation: dict) -> dict:
     # has HIGH_COST_CAP of them; this term sits ahead of core/tier so it overrides even a
     # deck-defining pick, matching "avoid multiple high-cost cards even if strong".
     HIGH_COST_CAP = 2
-    high_cost_in_deck = sum(_number(cards.get(card_id, {}).get("cost"), 0) >= 3 for card_id in deck_list)
+    deck_cards = (observation.get("player") or {}).get("deck") or observation.get("deck_cards") or ()
+    high_cost_in_deck = sum(
+        _number(card.get("cost"), 0) >= 3
+        for card in deck_cards
+        if isinstance(card, dict)
+    )
     over_high_cost_cap = high_cost_in_deck >= HIGH_COST_CAP
 
     def is_high_cost(card_id: str) -> bool:

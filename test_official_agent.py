@@ -413,6 +413,26 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BLUDGEON")
 
+    def test_reward_reads_existing_deck_costs_before_adding_high_cost_card(self) -> None:
+        observation = {
+            "player": {"deck": [
+                {"id": "CARD.BLUDGEON", "cost": 3},
+                {"id": "CARD.UNMOVABLE", "cost": 3},
+            ]},
+            "cards": [
+                {"id": "CARD.BLUDGEON", "rarity": "Rare", "cost": 3},
+                {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
+                {"id": "CARD.ANGER", "rarity": "Common", "cost": 0},
+            ],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_reward_skips_unsupported_cards(self) -> None:
         observation = {
             "cards": [{"id": "CARD.UNKNOWN", "rarity": "Uncommon"}],
