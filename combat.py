@@ -359,8 +359,16 @@ def _amount(expression: str, values: dict) -> int:
     return int(calculate(ast.parse(expression, mode="eval").body))
 
 
+_SPECS_SOURCE: dict | None = None
+_SPECS_CACHE: dict[str, dict] = {}
+
+
 def _specs(data: dict) -> dict[str, dict]:
-    return {monster["id"]: monster for monster in data.get("monsters", [])}
+    global _SPECS_SOURCE, _SPECS_CACHE
+    if data is not _SPECS_SOURCE:
+        _SPECS_SOURCE = data
+        _SPECS_CACHE = {monster["id"]: monster for monster in data.get("monsters", [])}
+    return _SPECS_CACHE
 
 
 def _state(spec: dict, state_id: str) -> dict:
