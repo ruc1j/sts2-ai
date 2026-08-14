@@ -549,10 +549,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     # in one hit with no attack anywhere near that size). Never auto-play it.
     cards = [action for action in actions if action["type"] == "card" and action["card_id"] != "CARD.THE_GAMBIT"]
     potions = [action for action in actions if action["type"] == "potion"]
+    hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
     sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     if sandpit_critical and escape:
         return escape
+    if sandpit_critical:
+        draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
+        if draw_cards:
+            return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))
     potion_context = _potion_context(observation)
     if (
         potion_context is None
@@ -565,7 +570,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if turn := choose_crab_facing(observation, cards):
         return turn
     enemy_by_id = {enemy["combat_id"]: enemy for enemy in observation.get("enemies", ())}
-    hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
     enemy_incoming = {enemy["combat_id"]: _intent_incoming(enemy) for enemy in observation.get("enemies", ())}
 
     def damage(action: dict) -> int:

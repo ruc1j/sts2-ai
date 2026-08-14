@@ -1170,6 +1170,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
 
+    def test_uses_draw_card_when_sandpit_is_critical_without_frantic_escape(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack"},
+                {"index": 1, "id": "CARD.SHRUG_IT_OFF", "type": "Skill"},
+            ],
+            "enemies": [{"powers": [{"id": "POWER.SANDPIT_POWER", "amount": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_does_not_repeat_frantic_escape_after_sandpit_is_safe(self) -> None:
         observation = {
             "enemies": [{"combat_id": 1, "hp": 100, "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 3}], "intents": []}],
