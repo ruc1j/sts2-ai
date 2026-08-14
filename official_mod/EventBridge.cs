@@ -3,11 +3,14 @@ using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 using MegaCrit.Sts2.Core.AutoSlay.Helpers;
+using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Nodes.Events;
 using MegaCrit.Sts2.Core.Nodes.GodotExtensions;
+using MegaCrit.Sts2.Core.Nodes.Screens.Map;
+using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
 
@@ -18,33 +21,44 @@ internal static class EventRoomHandlerPatch
 {
     private static bool _bypass;
 
+    private enum EventChoiceResult
+    {
+        Fallback,
+        Chosen,
+        Completed,
+    }
+
+    private sealed record EventAction(
+        int Seq,
+        string Type,
+        [property: JsonPropertyName("option_index")] int? OptionIndex,
+        [property: JsonPropertyName("text_key")] string? TextKey,
+        [property: JsonPropertyName("relic_id")] string? RelicId) : IAgentAction;
+
     private static bool Prefix(Rng random, CancellationToken ct, ref Task __result)
     {
         if (!CommandLineHelper.HasArg("sts2ai-agent") || _bypass)
             return true;
-        __result = PreferByrdonisEgg(random, ct);
+        __result = Handle(random, ct);
         return false;
     }
 
-    private static async Task PreferByrdonisEgg(Rng random, CancellationToken ct)
+    private static async Task Handle(Rng random, CancellationToken ct)
     {
         var root = ((SceneTree)Engine.GetMainLoop()).Root;
         var room = await WaitHelper.ForNode<Node>(root, "/root/Game/RootSceneContainer/Run/RoomContainer/EventRoom", ct);
-        var egg = UiHelper.FindAll<NEventOptionButton>(room).FirstOrDefault(button =>
-            button.Event.Id.Entry == "BYRDONIS_NEST" && button.Option.TextKey.EndsWith("TAKE") && !button.Option.IsLocked);
-        if (egg is not null)
+        for (int iteration = 0; iteration < 50; iteration++)
         {
-            AgentIo.Trace(new { phase = "event", event_id = egg.Event.Id.Entry, option = "TAKE_BYRDONIS_EGG" });
-            await UiHelper.Click(egg);
+            EventChoiceResult result = await DelegateEventChoice(room, ct);
+            if (result == EventChoiceResult.Completed)
+                return;
+            if (result == EventChoiceResult.Fallback)
+                break;
+            if (!GodotObject.IsInstanceValid(room) || !room.IsInsideTree())
+                return;
+            await Task.Delay(100, ct);
         }
-        var tablet = UiHelper.FindAll<NEventOptionButton>(room).FirstOrDefault(button =>
-            button.Event.Id.Entry == "TABLET_OF_TRUTH" && button.Option.TextKey.EndsWith(".SMASH") && !button.Option.IsLocked);
-        if (tablet is not null)
-        {
-            AgentIo.Trace(new { phase = "event", event_id = tablet.Event.Id.Entry, option = "SMASH" });
-            await UiHelper.Click(tablet);
-        }
-        await DelegateRelicChoices(room, ct);
+
         _bypass = true;
         try
         {
@@ -56,72 +70,138 @@ internal static class EventRoomHandlerPatch
         }
     }
 
-    private sealed record EventAction(
-        int Seq,
-        string Type,
-        [property: JsonPropertyName("option_index")] int? OptionIndex,
-        [property: JsonPropertyName("relic_id")] string? RelicId) : IAgentAction;
-
-    /// <summary>
-    /// Ancient events (e.g. PAEL at Act 2 start) offer several relics; the default handler
-    /// picks one at random, which can add unplayable cards to the deck (PaelsHorn adds 2 Relax).
-    /// Delegate the relic choice to the agent so the best option is picked instead.
-    /// </summary>
-    private static async Task DelegateRelicChoices(Node room, CancellationToken ct)
+    private static async Task<EventChoiceResult> DelegateEventChoice(Node room, CancellationToken ct)
     {
         var ancient = UiHelper.FindFirst<NAncientEventLayout>(room);
-        if (ancient is null)
-            return;
-        await ClickThroughAncientDialogue(ancient, ct);
-        var options = UiHelper.FindAll<NEventOptionButton>(ancient)
-            .Where(button => button.IsEnabled && !button.Option.IsLocked && button.Option.Relic is not null)
-            .ToList();
-        if (options.Count < 2)
-            return;
+        if (ancient is not null)
+            await ClickThroughAncientDialogue(ancient, ct);
+
+        var indexed = UiHelper.FindAll<NEventOptionButton>(room)
+            .Select((button, index) => new { Button = button, Index = index })
+            .ToArray();
+        if (indexed.Length == 0)
+            return EventChoiceResult.Fallback;
+        var eligible = indexed.Where(item => item.Button.IsEnabled && IsSafe(item.Button)).ToArray();
+        if (eligible.Length == 0)
+            return EventChoiceResult.Fallback;
 
         var run = RunManager.Instance.DebugOnlyGetState();
-        var player = LocalContext.GetMe(run);
+        var player = run is null ? null : LocalContext.GetMe(run);
+        if (run is null || player is null)
+            return EventChoiceResult.Fallback;
         int seq = AgentIo.NextSequence();
+        string eventId = indexed[0].Button.Event.Id.Entry;
         AgentIo.WriteObservation(new
         {
             seq,
             terminal = false,
             phase = "event",
-            run = new { act = run?.CurrentActIndex, floor = run?.ActFloor },
+            run = new { act = run.CurrentActIndex, floor = run.ActFloor },
             player = new
             {
-                hp = player?.Creature.CurrentHp,
-                max_hp = player?.Creature.MaxHp,
-                gold = player?.Gold,
-                deck = player?.Deck.Cards.Select(card => card.Id.ToString()),
-                relics = player?.Relics.Select(relic => relic.Id.ToString()),
+                hp = player.Creature.CurrentHp,
+                max_hp = player.Creature.MaxHp,
+                gold = player.Gold,
+                deck = player.Deck.Cards.Select(card => card.Id.ToString()),
+                relics = player.Relics.Select(relic => relic.Id.ToString()),
             },
-            event_id = options[0].Event.Id.Entry,
-            options = options.Select((button, index) => new
+            event_id = eventId,
+            options = indexed.Select(item => new
             {
-                index,
-                relic_id = button.Option.Relic!.Id.ToString(),
-                title = button.Option.Title.GetFormattedText(),
+                option_index = item.Index,
+                text_key = item.Button.Option.TextKey,
+                is_proceed = item.Button.Option.IsProceed,
+                is_locked = item.Button.Option.IsLocked,
+                relic_id = item.Button.Option.Relic?.Id.ToString(),
+                title = item.Button.Option.Title.GetFormattedText(),
             }),
-            legal_actions = options.Select((button, index) => new
+            legal_actions = eligible.Select(item => new
             {
-                type = "event_relic",
-                option_index = index,
-                relic_id = button.Option.Relic!.Id.ToString(),
+                type = "event_option",
+                option_index = item.Index,
+                text_key = item.Button.Option.TextKey,
+                is_proceed = item.Button.Option.IsProceed,
+                relic_id = item.Button.Option.Relic?.Id.ToString(),
             }),
         });
-        var action = await AgentIo.AwaitAction<EventAction>(seq, ct);
-        if (action.Type == "event_relic" && action.OptionIndex is int optionIndex &&
-            optionIndex >= 0 && optionIndex < options.Count &&
-            action.RelicId == options[optionIndex].Option.Relic!.Id.ToString())
+
+        EventAction action;
+        try
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = options[0].Event.Id.Entry, option_index = optionIndex, relic_id = action.RelicId });
-            await UiHelper.Click(options[optionIndex]);
+            action = await AgentIo.AwaitAction<EventAction>(seq, ct);
         }
-        else
+        catch (TimeoutException)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = options[0].Event.Id.Entry, action = "skip", reason = "invalid_relic_action" });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "agent_timeout" });
+            return EventChoiceResult.Fallback;
         }
+
+        if (action.Type != "event_option" || action.OptionIndex is not int optionIndex ||
+            optionIndex < 0 || optionIndex >= indexed.Length)
+        {
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action" });
+            return EventChoiceResult.Fallback;
+        }
+        var selected = indexed[optionIndex].Button;
+        if (!eligible.Any(item => item.Index == optionIndex) || selected.Option.TextKey != action.TextKey ||
+            selected.Option.Relic?.Id.ToString() != action.RelicId)
+        {
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action" });
+            return EventChoiceResult.Fallback;
+        }
+
+        AgentIo.Trace(new
+        {
+            seq,
+            phase = "event",
+            event_id = eventId,
+            option_index = optionIndex,
+            text_key = selected.Option.TextKey,
+            relic_id = selected.Option.Relic?.Id.ToString(),
+        });
+        var previous = indexed.Where(item => !item.Button.Option.IsLocked).Select(item => item.Button).ToHashSet();
+        await UiHelper.Click(selected);
+
+        try
+        {
+            if (selected.Option.IsProceed)
+            {
+                await WaitHelper.Until(
+                    () => !GodotObject.IsInstanceValid(room) || !room.IsInsideTree() || NMapScreen.Instance?.IsOpen == true,
+                    ct,
+                    TimeSpan.FromSeconds(5),
+                    "Event room did not close after clicking proceed");
+                return EventChoiceResult.Completed;
+            }
+            await WaitHelper.Until(
+                () =>
+                    !GodotObject.IsInstanceValid(room) || !room.IsInsideTree() ||
+                    NMapScreen.Instance?.IsOpen == true ||
+                    NOverlayStack.Instance?.ScreenCount > 0 ||
+                    CombatManager.Instance.IsInProgress ||
+                    !previous.SetEquals(UiHelper.FindAll<NEventOptionButton>(room).Where(button => !button.Option.IsLocked)),
+                ct,
+                TimeSpan.FromSeconds(5),
+                "Event options did not change after choice");
+        }
+        catch (TimeoutException)
+        {
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "event_did_not_advance" });
+            return EventChoiceResult.Fallback;
+        }
+
+        if (!GodotObject.IsInstanceValid(room) || !room.IsInsideTree() || NMapScreen.Instance?.IsOpen == true)
+            return EventChoiceResult.Completed;
+        if (NOverlayStack.Instance?.ScreenCount > 0 || CombatManager.Instance.IsInProgress)
+            return EventChoiceResult.Fallback;
+        return EventChoiceResult.Chosen;
+    }
+
+    private static bool IsSafe(NEventOptionButton button)
+    {
+        var killer = button.Option.WillKillPlayer;
+        var owner = button.Event.Owner;
+        return !button.Option.IsLocked && (killer is null || owner is null || !killer(owner));
     }
 
     private static async Task ClickThroughAncientDialogue(NAncientEventLayout ancientLayout, CancellationToken ct)
@@ -144,6 +224,10 @@ internal static class EventRoomHandlerPatch
             clicks++;
             await Task.Delay(500, ct);
         }
-        await WaitHelper.Until(() => UiHelper.FindAll<NEventOptionButton>(ancientLayout).Any(button => button.IsEnabled && !button.Option.IsLocked), ct, TimeSpan.FromSeconds(10L), "Ancient event options did not become available after dialogue");
+        await WaitHelper.Until(
+            () => UiHelper.FindAll<NEventOptionButton>(ancientLayout).Any(button => button.IsEnabled && !button.Option.IsLocked),
+            ct,
+            TimeSpan.FromSeconds(10),
+            "Ancient event options did not become available after dialogue");
     }
 }

@@ -1815,6 +1815,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
 
+    def test_event_option_wire_format_picks_paels_flesh(self) -> None:
+        observation = {
+            "phase": "event",
+            "player": {"hp": 80, "max_hp": 80},
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "relic_id": "RELIC.PAELS_HORN"},
+                {"type": "event_option", "option_index": 1, "relic_id": "RELIC.PAELS_FLESH"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
+
     def test_event_prefers_energy_over_weaker_relic(self) -> None:
         observation = {
             "phase": "event",
@@ -1861,6 +1872,33 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
+
+    def test_event_option_table_preserves_hardcoded_choices(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "BYRDONIS_NEST",
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "text_key": "BYRDONIS_NEST.LEAVE"},
+                {"type": "event_option", "option_index": 1, "text_key": "BYRDONIS_NEST.TAKE"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 1)
+
+    def test_unknown_event_returns_bridge_fallback(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "UNKNOWN_EVENT",
+            "legal_actions": [{"type": "event_option", "option_index": 0, "text_key": "UNKNOWN_EVENT.CHOICE"}],
+        }
+        self.assertEqual(choose_event(observation)["type"], "event_fallback")
+
+    def test_event_with_only_proceed_option_can_close(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "UNKNOWN_EVENT",
+            "legal_actions": [{"type": "event_option", "option_index": 0, "text_key": "UNKNOWN_EVENT.PROCEED", "is_proceed": True}],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 0)
 
     def test_event_relic_scores_cover_all_ancients(self) -> None:
         pael = {"RELIC.PAELS_CLAW", "RELIC.PAELS_TOOTH", "RELIC.PAELS_GROWTH", "RELIC.PAELS_LEGION",

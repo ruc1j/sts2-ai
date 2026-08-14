@@ -420,6 +420,14 @@ EVENT_RELIC_TIERS_BY_AXIS = {
 }
 _RELIC_TIER_VALUE = {"S": 9, "A": 7, "B": 5, "C": 3, "D": 1}
 
+# Stable event-option keys are intentionally kept separate from the relic tables.  Unknown
+# events return an explicit fallback action so the C# bridge can keep the game's safe random
+# handler; reviewer/decompile results can be added here without changing that fallback.
+EVENT_OPTION_SCORES = {
+    "BYRDONIS_NEST": {"TAKE": 100},
+    "TABLET_OF_TRUTH": {"SMASH": 100},
+}
+
 
 def _relic_axis(deck_ids: set[str]) -> str | None:
     axis = _axis(deck_ids)
@@ -446,27 +454,49 @@ def _event_relic_score(relic: str, axis: str | None) -> int:
 
 
 def choose_event(observation: dict) -> dict:
-    actions = [action for action in observation.get("legal_actions", ()) if action.get("type") == "event_relic"]
+    actions = [
+        action for action in observation.get("legal_actions", ())
+        if action.get("type") in {"event_option", "event_relic"}
+    ]
     if not actions:
         raise ValueError("no event relic actions")
-    block_starved = _block_starved(_deck_list(observation))
-    axis = _relic_axis(_deck_ids(observation))
-    player = observation.get("player", {})
-    hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
-    low_hp = hp <= max_hp // 2
+    relic_actions = [action for action in actions if action.get("relic_id")]
+    if relic_actions:
+        actions = relic_actions
+        block_starved = _block_starved(_deck_list(observation))
+        axis = _relic_axis(_deck_ids(observation))
+        player = observation.get("player", {})
+        hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
+        low_hp = hp <= max_hp // 2
 
-    def score(action: dict) -> int:
-        relic = action.get("relic_id", "")
-        value = _event_relic_score(relic, axis)
-        # Block-starved decks value the block pet even more.
-        if block_starved and relic == "RELIC.PAELS_LEGION":
-            value += 2
-        # At low HP the turn-1 energy burst helps end fights faster.
-        if low_hp and relic in {"RELIC.VERY_HOT_COCOA", "RELIC.PAELS_FLESH"}:
-            value += 1
-        return value
+        def relic_score(action: dict) -> int:
+            relic = action.get("relic_id", "")
+            value = _event_relic_score(relic, axis)
+            if block_starved and relic == "RELIC.PAELS_LEGION":
+                value += 2
+            if low_hp and relic in {"RELIC.VERY_HOT_COCOA", "RELIC.PAELS_FLESH"}:
+                value += 1
+            return value
 
-    return max(actions, key=score)
+        return max(actions, key=relic_score)
+
+    event_id = observation.get("event_id", "")
+
+    def option_score(action: dict) -> int | None:
+        scores = EVENT_OPTION_SCORES.get(event_id)
+        if scores is None:
+            return None
+        text_key = action.get("text_key", "")
+        return scores.get(text_key, scores.get(text_key.rsplit(".", 1)[-1]))
+
+    scored = [(option_score(action), action) for action in actions]
+    known = [(score, action) for score, action in scored if score is not None]
+    if known:
+        return max(known, key=lambda item: (item[0], -item[1].get("option_index", 0)))[1]
+    proceed = next((action for action in actions if action.get("is_proceed")), None)
+    if proceed is not None:
+        return proceed
+    return {"type": "event_fallback"}
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
