@@ -24,6 +24,7 @@ MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Bel
 HEADBUTT, UPPERCUT, TRUE_GRIT, BURNING_PACT = "Headbutt", "Uppercut", "True Grit", "Burning Pact"
 FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE, MANGLE = "Fiend Fire", "Evil Eye", "Brand", "Infernal Blade", "Mangle"
 RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
+PECK = "Peck"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -34,7 +35,7 @@ STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3,
-    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2,
+    BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
@@ -44,7 +45,7 @@ CARD_COST = {
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
-    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
@@ -63,7 +64,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -1379,6 +1380,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     enemy = enemies[int(target)]
     if card == SPITE:
         hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1
+    elif card == PECK:
+        hits = 4 if card_was_upgraded else 3
     else:
         hits = fiend_fire_count if card == FIEND_FIRE else CARD_HITS.get(card, 1)
     if card == PERFECTED_STRIKE:
@@ -1394,7 +1397,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = 7
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card not in {UPPERCUT, SPITE}:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
