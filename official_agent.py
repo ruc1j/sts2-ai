@@ -780,9 +780,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         return use(ids if major_allowed else ids - RESERVED_COMBAT_POTIONS, target_score)
 
     boss_shackling = use_major_aware({"POTION.SHACKLING_POTION"}) if max_enemy_hp >= 100 and incoming > 0 else None
+    boss_skill = use_major_aware({"POTION.SKILL_POTION"}) if max_enemy_hp >= 100 and (boss_context or fallback_boss) else None
     if incoming >= hp:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or boss_skill or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
