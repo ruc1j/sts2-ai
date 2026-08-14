@@ -46,6 +46,8 @@ class OfficialAgentTest(unittest.TestCase):
     def test_maps_rage_and_spite_for_rollouts(self) -> None:
         self.assertEqual(CARD_NAMES["CARD.RAGE"], "Rage")
         self.assertEqual(CARD_NAMES["CARD.SPITE"], "Spite")
+        self.assertEqual(CARD_NAMES["CARD.COLOSSUS"], "Colossus")
+        self.assertEqual(CARD_NAMES["CARD.VOLLEY"], "Volley")
         self.assertEqual(POWER_NAMES["POWER.RAGE_POWER"], "RagePower")
 
     def test_maps_stone_armor_and_feel_no_pain_for_rollouts(self) -> None:

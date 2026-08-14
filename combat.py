@@ -22,7 +22,7 @@ ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
 HEADBUTT, UPPERCUT, TRUE_GRIT, BURNING_PACT = "Headbutt", "Uppercut", "True Grit", "Burning Pact"
 FIEND_FIRE, EVIL_EYE, BRAND, INFERNAL_BLADE = "Fiend Fire", "Evil Eye", "Brand", "Infernal Blade"
-RAGE, SPITE = "Rage", "Spite"
+RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -38,12 +38,12 @@ CARD_COST = {
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
-    HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0,
+    HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
-    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, UPPERCUT: 13, SPITE: 5, VOLLEY: 10,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
@@ -52,7 +52,7 @@ CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
-CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8}
+CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, UPPERCUT: 1}
 # Flat card draw with no other effect - a Skill that just replaces itself with more options.
@@ -62,7 +62,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -74,14 +74,14 @@ POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN}
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE}
@@ -600,6 +600,8 @@ def _enemy_attack_damage(
         damage = damage * 3 // 4
     if _power(player_powers, "VulnerablePower"):
         damage = damage * 3 // 2
+    if _power(player_powers, "ColossusPower") and _power(enemy.powers, "VulnerablePower"):
+        damage //= 2
     repeats = int(attack.get("repeats", 1))
     if enemy.model == TEST_SUBJECT and enemy.move == "MULTI_CLAW_MOVE":
         repeats += sum(move_id == "MULTI_CLAW_MOVE" for move_id in enemy.history)
@@ -708,6 +710,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 damage = damage * 3 // 4
             if _power(player_powers, "VulnerablePower"):
                 damage = damage * 3 // 2
+            if _power(player_powers, "ColossusPower") and _power(enemy.powers, "VulnerablePower"):
+                damage //= 2
             for _ in range(repeats):
                 blocked = min(player_block, damage)
                 player_block -= blocked
@@ -946,7 +950,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 )
         # VulnerablePower/WeakPower.AfterSideTurnEnd tick down after the enemy side, for both
         # player and enemy owners (the decompiled powers gate on side == CombatSide.Enemy).
-        player_powers = _tick_down_power(_tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower")
+        player_powers = _tick_down_power(_tick_down_power(_tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower"), "ColossusPower")
         enemies = [replace(enemy, powers=_tick_down_power(_tick_down_power(enemy.powers, "VulnerablePower"), "WeakPower")) for enemy in enemies]
         combat = replace(combat, enemies=tuple(enemies), player_powers=player_powers)
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
@@ -1071,6 +1075,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             combo_block += 7
     if card == RAGE:
         combo_powers = _add_power(combo_powers, "RagePower", 5 if card_was_upgraded else 3)
+    if card == COLOSSUS:
+        combo_powers = _add_power(combo_powers, "ColossusPower", 1)
     combat = replace(
         combat, played_this_turn=True, player_powers=combo_powers, enemies=tuple(combo_enemies),
         player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
@@ -1110,7 +1116,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat = replace(combat, draw_pile=draw, discard_pile=discard)
     # Enlightenment.OnPlay (reduceOnly): once played, every card costs at most 1 for the rest of
     # the turn. WHIRLWIND's X cost is exempt - it isn't a fixed cost to reduce.
-    if card == WHIRLWIND:
+    if card in {WHIRLWIND, VOLLEY}:
         spent = combat.energy
     else:
         spent = card_cost
@@ -1118,6 +1124,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         spent = 0
     whirlwind_x = combat.energy + (2 if RELIC_CHEMICAL_X in relics else 0)
     whirlwind_damage = 5 * whirlwind_x if card == WHIRLWIND else 0
+    volley_x = whirlwind_x if card == VOLLEY else 0
     energy = combat.energy - spent + (2 if card in {BLOODLETTING, BELIEVE_IN_YOU, PRODUCTION, OFFERING} else 0)
     player_hp = combat.player_hp
     self_damage = SELF_DAMAGE.get(card, 0)
@@ -1172,12 +1179,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card in CARD_BLOCK:
         base = CARD_BLOCK[card]
         if card_was_upgraded:
-            base += 3 if card == EVIL_EYE else 2 if card == TRUE_GRIT else 1
+            base += 3 if card in {EVIL_EYE, COLOSSUS} else 2 if card == TRUE_GRIT else 1
         block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
         if vambrace_double:
             block *= 2
         combat = replace(combat, player_block=combat.player_block + block)
-    if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE}:
+    if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE, COLOSSUS}:
         return combat
     if card == RAGE:
         return combat
@@ -1303,6 +1310,40 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
         gained = _power(enemies[int(target)].powers, "VulnerablePower")
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
+    if card == VOLLEY:
+        damage = 14 if card_was_upgraded else 10
+        damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+        if _power(combat.player_powers, "WeakPower"):
+            damage = damage * 3 // 4
+        if _power(combat.player_powers, "ShrinkPower"):
+            damage = damage * 7 // 10
+        if pen_nib_double:
+            damage *= 2
+        before = tuple(enemies)
+        reflected, hive = 0, 0
+        for _ in range(volley_x):
+            alive = [index for index, candidate in enumerate(enemies) if candidate.alive]
+            if not alive:
+                break
+            hit = rng.choice(alive)
+            before_enemy = enemies[hit]
+            scaled = damage * 3 // 2 if _power(before_enemy.powers, "VulnerablePower") else damage
+            if _power(before_enemy.powers, "SlowPower"):
+                scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
+            enemies[hit] = _damage_enemy(before_enemy, scaled)
+            reflected += _power(before_enemy.powers, "ThornsPower")
+            hive += _power(before_enemy.powers, "PersonalHivePower")
+        for index, (before_enemy, after_enemy) in enumerate(zip(before, enemies)):
+            if not (before_enemy.alive and not after_enemy.alive):
+                continue
+            for partner_index, partner in enumerate(enemies):
+                if partner.alive and _power(partner.powers, "CrabRagePower"):
+                    enemies[partner_index] = replace(partner, block=partner.block + 99, powers=_add_power(_add_power(partner.powers, "CrabRagePower", -1), "StrengthPower", 6))
+            if before_enemy.model == "MONSTER.PHROG_PARASITE":
+                enemies += _spawn_wrigglers(data, rng)
+            elif before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(tuple(enemies), index):
+                enemies[index] = replace(enemies[index], move="DEAD_MOVE")
+        return replace(combat, enemies=tuple(enemies), player_hp=combat.player_hp - reflected, lost_hp_this_turn=combat.lost_hp_this_turn or reflected > 0, draw_pile=combat.draw_pile + (DAZED,) * hive)
     enemy = enemies[int(target)]
     if card == SPITE:
         hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1

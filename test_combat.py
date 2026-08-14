@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
@@ -566,6 +566,24 @@ class CombatTest(unittest.TestCase):
         self.assertEqual((combat.player_block, combat.enemies[0].hp), (3, 94))
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "RagePower"), 0)
+
+    def test_colossus_blocks_and_halves_attacks_from_vulnerable_enemy(self) -> None:
+        vulnerable = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", (), powers=(("VulnerablePower", 1),))
+        combat = step(Combat(80, (COLOSSUS,), (), (), (vulnerable,), energy=1), COLOSSUS, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((combat.player_block, _power(combat.player_powers, "ColossusPower")), (5, 1))
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, _power(after.player_powers, "ColossusPower")), (80, 0))
+
+    def test_colossus_upgrade_adds_three_block(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        after = step(Combat(80, (COLOSSUS,), (), (), (enemy,), upgraded_cards=(COLOSSUS,)), COLOSSUS, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 8)
+
+    def test_volley_spends_energy_for_random_hits(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        normal = step(Combat(80, (VOLLEY,), (), (), (enemy,), energy=3), VOLLEY, DUMMY_DATA, random.Random(0))
+        upgraded = step(Combat(80, (VOLLEY,), (), (), (enemy,), energy=2, upgraded_cards=(VOLLEY,)), VOLLEY, DUMMY_DATA, random.Random(0))
+        self.assertEqual((normal.enemies[0].hp, normal.energy, upgraded.enemies[0].hp, upgraded.energy), (70, 0, 72, 0))
 
     def test_spite_repeats_after_unblocked_damage_and_upgrades_repeat_count(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
