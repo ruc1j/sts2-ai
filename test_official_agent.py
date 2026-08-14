@@ -1038,6 +1038,19 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.FYSH_OIL")
 
+    def test_uses_binding_on_the_first_attacking_boss_turn(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 16},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.POTION_OF_BINDING", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 66, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 302, "intents": [{"damage": 12, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.POTION_OF_BINDING")
+
     def test_uses_major_potion_against_known_boss(self) -> None:
         observation = {
             "legal_actions": [

@@ -824,11 +824,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # rather than a speculative damage potion, even when a high-HP regular still reserves
         # other boss potions.
         fysh = use({"POTION.FYSH_OIL"}) if incoming > 0 and hp <= max(1, (max_hp * 2) // 3) else None
+        binding = use({"POTION.POTION_OF_BINDING"}) if boss_context and incoming > 0 else None
         # Skill Potion is also worth firing on any attacking boss turn: unlike a regular fight,
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
         # turn to spend the generated block card.
         boss_offensive = offensive_now | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
-        return shackling or fysh or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        return shackling or fysh or binding or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None
