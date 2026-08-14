@@ -1075,6 +1075,25 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SKILL_POTION")
 
+    def test_boss_floor_context_uses_act_specific_thresholds(self) -> None:
+        for act, floor, expected in (
+            (1, 16, "POTION.STRENGTH_POTION"), (1, 17, "POTION.SKILL_POTION"),
+            (2, 15, "POTION.STRENGTH_POTION"), (2, 16, "POTION.SKILL_POTION"),
+            (3, 14, "POTION.STRENGTH_POTION"), (3, 15, "POTION.SKILL_POTION"),
+        ):
+            with self.subTest(act=act, floor=floor):
+                observation = {
+                    "run": {"act": act, "floor": floor},
+                    "legal_actions": [
+                        {"type": "potion", "potion_id": "POTION.SKILL_POTION", "target_id": None},
+                        {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                        {"type": "end_turn"},
+                    ],
+                    "player": {"hp": 20, "max_hp": 80},
+                    "enemies": [{"combat_id": 7, "id": "MONSTER.THE_INSATIABLE", "hp": 321, "intents": []}],
+                }
+                self.assertEqual(choose(observation)["potion_id"], expected)
+
     def test_uses_weak_potion_against_lethal_enemy(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.WEAK_POTION", "target_id": 7}],
