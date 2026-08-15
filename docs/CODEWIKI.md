@@ -178,3 +178,40 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 `run_official_autoslay.ps1`は`-AgentScript`を明示しないと`--sts2ai-agent`フラグ自体が付かず、**ゲーム内蔵のAutoSlay AIがコストを無視するような挙動でプレイする**(Pythonエージェントは一切関与しない)。さらに`-AgentMaxCombats`のデフォルトは1で、指定した戦闘数を超えると`CombatBridge.cs`の`ReachedAgentLimit`が働き**2戦目以降は同じくゲーム内蔵AIへ自動的に切り替わる**(実機検証中、「初戦だけコストが減って次戦から減らない」という報告で発覚)。Act単位でエージェントの実力を検証する時は必ず`-AgentScript official_agent.py -AgentMaxCombats 999`のように明示すること——省略すると一見ランが進んでいるように見えても、Python側の改修が何一つ検証されていない。
 
 **戦闘中に自動発動するレリック効果**は元々`combat.py`に一切モデル化されておらず、`CombatBridge.cs`の観測にも`player.Relics`が含まれていなかった(先生からの質問で発覚)。`PlayerCombatState.MaxEnergy`(レリック補正込み)を`max_energy`として観測に追加したのに続き、`player.Relics`も`relics`として追加し、`Combat`に`player_relics`フィールドを新設した。デコンパイルでIroncladRelicPool+SharedRelicPoolの126種を監査し、戦闘関連フックを持つ68種のうち、`TurnNumber <= 1`一発限定の効果(Anchor・Akabekoなど13種)は**初回observationの時点で既に反映済みのため未対応でよい**と判断(searchはturn1を再シミュレートしない)。残る55種のうち、21種はターン跨ぎのロールアウト予測に直結する頻出パターンとして先行実装し、続く34種(BeatingRemnant・RainbowRing・RedSkull・SelfFormingClayなど)は、29種をロールアウトの状態遷移として追加した。BookOfFiveRings・LavaLamp・LuckyFysh・PetrifiedToad・VenerableTeaSetの5種は、初回observation、報酬、ショップ、次戦闘の状態へゲーム本体が反映するため、重複した戦闘状態を持たせずライブ観測を利用する。EventRelicPool(Pael/Orobas/Tezcatara等のAncientイベント専用レリック、約140種)は別系統として未監査である。DemonTongue/CentennialPuzzleは自傷カード(Hemokinesis等)由来の被弾には反応しない近似(FlameBarrierPowerと同じ簡略化方針)である。
+
+## 既知の未モデル領域(2026-08-15 監査)
+
+`data/*trace.jsonl` 247本を集計し、デコンパイルと突き合わせて未モデル要素を洗い出した結果。**同じ調査を繰り返さないための記録**であり、数値は監査時点のもの。
+
+### ポーションが探索に入っていない(構造的な穴・最大の残課題)
+
+`combat.py`にはポーションを使う action が存在しない。`player_potions`はBelt Buckleの判定(`_sync_belt_buckle`)にしか使われておらず、`legal_actions()`も`search()`もポーション使用を選択肢に含めない。したがってポーション判断は`official_agent.choose_potion`のヒューリスティックのみで行われ、「このターンにポーションを切れば耐えられる」という読みが探索に一切入らない。2026-08-15のセッションでポーション方策を10回以上調整したが収穫逓減だったのは、根本的にここが原因である可能性が高い。着手する場合は影響範囲が大きいので独立したセッションで行うこと。
+
+### 探索回数(simulations)を増やしても改善しない
+
+同一初期状態に対しseedのみ12通り変えて`search()`を実行し、1位に選ばれる手のブレを測定した結果:
+
+| encounter | 200 | 500 | 1000 | 2000 |
+|---|---|---|---|---|
+| KNOWLEDGE_DEMON_BOSS (単体) | 100% | 100% | 100% | 100% |
+| KAISER_CRAB_BOSS (複数主敵) | 58% | 75% | 66% | 66% |
+
+複数主敵では回数を10倍にしても選択が安定しない一方、1位と2位の値の差は 0.0130 → 0.0084 → 0.0073 → 0.0039 と単調に縮む。**サンプル不足のノイズではなく、現在の`_step_score`では上位手が本当にほぼ同値**という分解能の問題であり、simsを増やすと真値に収束するだけで選択のブレは解消せず計算時間だけが線形に増える。複数敵戦の対策は探索回数ではなく`choose()`側で対象を絞る方向が正しい(KAISER_CRAB 14戦全敗を受けた multi-primary focus がその実装)。根本解決は`_step_score`に敵ごとの脅威度の差を乗せることだが影響範囲が大きい。
+
+### 対応不要と確認済みのもの(調査時間を使わないこと)
+
+- **`ESCAPE_ARTIST_POWER`**(観測1024件): `EscapeArtistPower.cs`のクラスコメントに `Just a visual timer for when ThievingHopper will escape` と明記。機械的効果は無い。
+- **戦闘外効果のみのレリック**: `YUMMY_COOKIE` `NUTRITIOUS_SOUP` `GOLDEN_COMPASS` `CLAWS` `PAELS_CLAW` `PAELS_WING` `PAELS_TOOTH` `PAELS_GROWTH` はいずれも`AfterObtained`/マップ生成/報酬画面/休憩所のフックだけを持ち、`combat.py`側の対応は不要。ただし`CLAWS`は取得時にデッキのカードを**未モデルの`MAUL`へ変換する**ため、MAULの実装優先度を押し上げる材料にはなる。
+- **`VERY_HOT_COCOA` / `PUMPKIN_CANDLE`**: 前者は`TurnNumber<=1`限定で、ロールアウトのターン遷移は必ず`new_turn>=2`になるため発火余地が無い。後者は`ModifyMaxEnergy`経由で、`PlayerCombatState.MaxEnergy`(`PlayerCombatState.cs:101`)が既にHook適用済みの値を返すため観測`max_energy`に反映済み。**どちらも実装すると二重計上になる**。同じ理由で`PAELS_FLESH`は「ターン3をまたぐ瞬間だけ`max_energy`を+1」という条件付き実装になっている(毎ターン加算するとターン3以降で観測した戦闘が全て+1過大になる)。
+- **カードの定数**: `CARD_NAMES`の91枚全てについて、デコンパイルの`CanonicalVars`と`CARD_COST`/`CARD_DAMAGE`/`CARD_BLOCK`を突き合わせて不一致0件を確認済み(コスト84件・ダメージ30件・ブロック13件の比較)。
+- **敵データ**: `data/enemies_*.json`の102種に対し、trace中に出現した62種は全て定義済みで欠落なし。
+
+### 残っている未モデル(監査時点)
+
+- **カード27種**(取得実績のあるもの): `AGGRESSION`(取得25) `CRIMSON_MANTLE`(17) `CASCADE`(17) `HELLRAISER`(12) `SWORD_BOOMERANG`(11) `DARK_EMBRACE`(10) `STOKE`(9) `FORGOTTEN_RITUAL`(9) ほか。`STOKE`/`CASCADE`/`MAD_SCIENCE`/`MAUL`はいずれもランダムカード生成を伴い、このモデルと相性が悪いため保留継続。
+- **レリック2種**: `PAELS_LEGION`(取得14・pet系でblockトリガ) `TOASTY_MITTENS`(5・turn1の山札操作+Strength)。
+- **敵パワー**: `ARTIFACT_POWER`(観測783、CHOMPER amount=2 / CUBEX_CONSTRUCT / PUNCH_CONSTRUCT。デバフを1スタックにつき1回丸ごと打ち消すため、Bash等のVulnerableを前提にした自軍火力を過大評価している) `IMBALANCED_POWER`(751、BOWLBUG_ROCK。攻撃が完全ブロックされると自分がStunするが`combat.py`にstun概念が無い) `BURROWED_POWER`(532) `SWIPE_POWER`(772、主に報酬側) `HATCH_POWER`(150) `CURL_UP_POWER`(91、LOUSE_PROGENITOR amount=**14**と大きい) `PAPER_CUTS_POWER`(34、最大HP永続減少) `RAMPART_POWER`(26)。
+
+### 高tier未モデルカードは「取るのに使えない」死に札になる
+
+`UNMODELED_REWARDS`(= `CARD_TIERS`にあるが`CARD_NAMES`に無いカード)は`UNMODELED_CAP`で枚数を制限しているが、tierが高いほど報酬で優先されるため**強いカードほど死に札としてデッキに入る**という逆転が起きる。監査時点で`EXPECT_A_FIGHT`は132回提示され59回取得、`UNMOVABLE`は31回提示され26回取得(84%)されながら、いずれも`search()`から見えず一度もプレイされていなかった。新しいカードを実装したら、trace上で実際にプレイされているかまで確認すること。
