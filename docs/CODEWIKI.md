@@ -266,10 +266,10 @@ Dexterityは乗らない(12のまま)。
 および `DexterityPower` の適用漏れとプレイヤー側 `ThornsPower`。
 ポーションは12種を探索へ接続済み(前掲)。
 
-未着手として残っているもの:
+未着手として残っているもの(2026-08-15更新: CRIMSON_MANTLE/HELLRAISER/SWORD_BOOMERANG/
+DARK_EMBRACE/FORGOTTEN_RITUALは同日中に実装済みのためリストから除去):
 
-- **カード**: `CRIMSON_MANTLE`(取得17) `HELLRAISER`(12) `SWORD_BOOMERANG`(11) `DARK_EMBRACE`(10)
-  `FORGOTTEN_RITUAL`(9) `THRASH`(4) ほか。
+- **カード**: `THRASH`(取得4)。
   `STOKE`/`CASCADE`/`MAD_SCIENCE`/`MAUL`はいずれもランダムカード生成を伴い、このモデルと相性が悪いため保留継続。
 - **レリック2種**: `PAELS_LEGION`(取得14・pet系でblockトリガ) `TOASTY_MITTENS`(5・turn1の山札操作+Strength)。
 - **敵パワー**: `IMBALANCED_POWER`(観測751、BOWLBUG_ROCK。攻撃が完全ブロックされると自分がStunするが
