@@ -113,6 +113,7 @@ CARD_NAMES = {
     "CARD.EXPECT_A_FIGHT": "Expect a Fight",
     "CARD.FORGOTTEN_RITUAL": "Forgotten Ritual",
     "CARD.SWORD_BOOMERANG": "Sword Boomerang",
+    "CARD.HELLRAISER": "Hellraiser",
 }
 
 CARD_TIERS = {

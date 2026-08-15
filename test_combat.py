@@ -5,12 +5,12 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
+    DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
+    _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -218,6 +218,34 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(prior.energy, 5)
         blocked = step(replace(base, exhausted_this_turn=True, player_powers=(("NoEnergyGainPower", 1),)), FORGOTTEN_RITUAL, DUMMY_DATA, random.Random(0))
         self.assertEqual(blocked.energy, 2)
+
+    def test_hellraiser_autoplays_a_strike_drawn_at_turn_start_for_free(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (HELLRAISER,), (STRIKE,), (), (enemy,), energy=3)
+        powered = step(combat, HELLRAISER, DUMMY_DATA, random.Random(0))
+        self.assertEqual((_power(powered.player_powers, "HellraiserPower"), powered.energy), (1, 1))
+        after_turn = step(powered, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.enemies[0].hp, after_turn.energy, after_turn.hand), (94, 3, (HELLRAISER,)))
+        self.assertEqual((after_turn.hellraiser_autoplays_this_turn, after_turn.free_cards), (1, ()))
+
+    def test_hellraiser_autoplays_strike_drawn_by_shrug(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (HELLRAISER, SHRUG), (STRIKE,), (), (enemy,), energy=3)
+        combat = step(combat, HELLRAISER, DUMMY_DATA, random.Random(0))
+        after = step(combat, SHRUG, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.player_block, after.energy, after.hand), (94, 8, 0, ()))
+
+    def test_hellraiser_upgrade_lowers_its_cost(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        base = Combat(80, (HELLRAISER,), (), (), (enemy,), energy=1)
+        self.assertNotIn(HELLRAISER, legal_actions(base))
+        self.assertIn(HELLRAISER, legal_actions(replace(base, upgraded_cards=(HELLRAISER,))))
+
+    def test_hellraiser_caps_autoplay_at_nine_per_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 1000, "IDLE_MOVE", ())
+        combat = Combat(80, (), (STRIKE,) * 12, (), (enemy,), player_powers=(("HellraiserPower", 1),))
+        after = _draw_into_combat(combat, 12, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.hellraiser_autoplays_this_turn, after.enemies[0].hp, after.hand.count(STRIKE)), (9, 946, 3))
 
     def test_sword_boomerang_retargets_each_hit(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()))
