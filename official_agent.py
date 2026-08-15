@@ -884,6 +884,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     # spent reactively on any dangerous *regular* fight (e.g. a Wriggler swarm) - sim13 burned
     # Shackling on a normal encounter and had nothing left for the boss that actually needed it.
     debuffs = {"POTION.WEAK_POTION", "POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.POTION_OF_BINDING"}
+    survival_debuffs = {"POTION.WEAK_POTION", "POTION.POTION_OF_BINDING"}
     offensive = {
         "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
@@ -950,7 +951,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     boss_skill = use_major_aware({"POTION.SKILL_POTION"}) if max_enemy_hp >= 100 and (boss_context or fallback_boss) else None
     if incoming >= hp:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or boss_skill or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(survival_debuffs, enemy_damage) or boss_skill or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
@@ -960,14 +961,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(blocking) or use(survival_debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
         if boss_context and boss_skill and hp <= max(1, max_hp // 3):
             return boss_skill
         return use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(blocking) or use(survival_debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if max_enemy_hp >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own

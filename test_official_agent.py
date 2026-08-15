@@ -761,6 +761,45 @@ class OfficialAgentTest(unittest.TestCase):
         ]
         self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
 
+    def test_does_not_use_vulnerable_potion_for_lethal_survival(self) -> None:
+        observation = {
+            "run": {"act": 991, "floor": 992, "room_type": "Monster"},
+            "turn": 4,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.VULNERABLE_POTION", "target_id": 104},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 7, "max_hp": 70},
+            "enemies": [{"combat_id": 104, "id": "MONSTER.C", "hp": 30, "intents": [{"damage": 25, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_uses_weak_potion_for_lethal_survival(self) -> None:
+        observation = {
+            "run": {"act": 993, "floor": 994, "room_type": "Monster"},
+            "turn": 4,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.WEAK_POTION", "target_id": 105},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 7, "max_hp": 70},
+            "enemies": [{"combat_id": 105, "id": "MONSTER.C", "hp": 30, "intents": [{"damage": 25, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.WEAK_POTION")
+
+    def test_keeps_vulnerable_potion_for_offense(self) -> None:
+        observation = {
+            "run": {"act": 995, "floor": 996, "room_type": "Elite"},
+            "turn": 2,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.VULNERABLE_POTION", "target_id": 106},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 106, "id": "MONSTER.C", "hp": 100, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.VULNERABLE_POTION")
+
     def test_buffer_makes_followup_potion_nonurgent(self) -> None:
         observation = {
             "run": {"act": 0, "floor": 4},
