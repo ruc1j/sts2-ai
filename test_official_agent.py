@@ -959,6 +959,7 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_shaped_rock_targets_the_highest_hp_enemy(self) -> None:
         observation = {
+            "run": {"act": 0, "floor": 5, "room_type": "Monster"},
             "legal_actions": [
                 {"type": "potion", "potion_id": "POTION.POTION_SHAPED_ROCK", "target_id": 1},
                 {"type": "potion", "potion_id": "POTION.POTION_SHAPED_ROCK", "target_id": 2},
@@ -967,11 +968,11 @@ class OfficialAgentTest(unittest.TestCase):
             "player": {"hp": 30, "max_hp": 80},
             "hand": [],
             "enemies": [
-                {"combat_id": 1, "hp": 44, "intents": [{"damage": 7, "repeats": 1}]},
-                {"combat_id": 2, "hp": 168, "intents": [{"damage": 8, "repeats": 1}]},
+                {"combat_id": 1, "hp": 12, "intents": [{"damage": 7, "repeats": 1}]},
+                {"combat_id": 2, "hp": 8, "intents": [{"damage": 8, "repeats": 1}]},
             ],
         }
-        self.assertEqual(choose(observation)["target_id"], 2)
+        self.assertEqual(choose(observation)["target_id"], 1)
 
     def test_lethal_incoming_uses_attack_potion_when_no_defense_exists(self) -> None:
         observation = {
@@ -1051,7 +1052,19 @@ class OfficialAgentTest(unittest.TestCase):
             "player": {"hp": 80, "max_hp": 80},
             "enemies": [{"combat_id": 7, "hp": 173, "intents": []}],
         }
-        self.assertEqual(choose(observation)["potion_id"], "POTION.POTION_SHAPED_ROCK")
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_saves_shaped_rock_when_enemy_block_prevents_lethal_damage(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 5, "room_type": "Monster"},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.POTION_SHAPED_ROCK", "target_id": 7},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "hp": 10, "block": 10, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
 
     def test_uses_colorless_potion_proactively_against_high_health_enemy(self) -> None:
         observation = {
@@ -1725,6 +1738,20 @@ class OfficialAgentTest(unittest.TestCase):
         rolled = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
         with patch("official_agent.rollout_choice", return_value=rolled):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.DEFEND_IRONCLAD")
+
+    def test_rollout_allows_blood_wall_self_damage_when_it_blocks(self) -> None:
+        observation = {
+            "player": {"hp": 28, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.BLOOD_WALL", "type": "Skill", "vars": [{"id": "Block", "value": 16}]}],
+            "enemies": [{"combat_id": 1, "hp": 50, "intents": [{"type": "SingleAttackIntent", "damage": 12, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BLOOD_WALL", "hand_index": 0, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][0]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.BLOOD_WALL")
 
     def test_rollout_allows_self_damage_when_incoming_is_not_dangerous(self) -> None:
         observation = {

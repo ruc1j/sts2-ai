@@ -716,7 +716,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
+            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and _card_value(selected, hand, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
                 return selected
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
@@ -791,6 +791,21 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     def use(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         candidates = [action for action in actions if action["potion_id"] in ids]
         return max(candidates, key=lambda action: target_score.get(action.get("target_id"), 0) if target_score else 0, default=None)
+    rock_actions = [action for action in actions if action["potion_id"] == "POTION.POTION_SHAPED_ROCK" and action.get("target_id") in enemy_hp]
+    lethal_rocks = []
+    for action in rock_actions:
+        enemy = next(enemy for enemy in observation.get("enemies", ()) if enemy.get("combat_id") == action.get("target_id"))
+        powers = enemy.get("powers", ())
+        if any(power.get("id") == "POWER.SLIPPERY_POWER" and _number(power.get("amount")) > 0 for power in powers):
+            dealt = 1
+        else:
+            caps = [_number(power.get("amount")) for power in powers if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]
+            dealt = min(15, max(caps)) if caps else 15
+            dealt = max(0, dealt - _number(enemy.get("block")))
+        if dealt >= _number(enemy.get("hp")):
+            lethal_rocks.append(action)
+    if lethal_rocks:
+        return max(lethal_rocks, key=lambda action: enemy_hp[action.get("target_id")])
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     block = _number(player.get("block", 0))
@@ -830,9 +845,9 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     offensive = {
         "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
-        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION", "POTION.POTION_SHAPED_ROCK",
+        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION",
     }
-    known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION"}
+    known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION", "POTION.POTION_SHAPED_ROCK"}
     def unknown_manual() -> dict | None:
         for action in actions:
             potion_id = str(action.get("potion_id", "")).upper()
