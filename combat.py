@@ -116,6 +116,7 @@ RELIC_LIZARD_TAIL, RELIC_LUCKY_FYSH, RELIC_MEAT_ON_THE_BONE = "RELIC.LIZARD_TAIL
 RELIC_MUMMIFIED_HAND, RELIC_ORICHALCUM, RELIC_PARRYING_SHIELD = "RELIC.MUMMIFIED_HAND", "RELIC.ORICHALCUM", "RELIC.PARRYING_SHIELD"
 RELIC_PEN_NIB, RELIC_PERMAFROST, RELIC_PETRIFIED_TOAD = "RELIC.PEN_NIB", "RELIC.PERMAFROST", "RELIC.PETRIFIED_TOAD"
 RELIC_POCKETWATCH, RELIC_RAINBOW_RING, RELIC_RAZOR_TOOTH, RELIC_PAELS_BLOOD = "RELIC.POCKETWATCH", "RELIC.RAINBOW_RING", "RELIC.RAZOR_TOOTH", "RELIC.PAELS_BLOOD"
+RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_VERY_HOT_COCOA = "RELIC.PAELS_FLESH", "RELIC.PAELS_TEARS", "RELIC.VERY_HOT_COCOA"
 RELIC_RED_SKULL, RELIC_REPTILE_TRINKET, RELIC_RIPPLE_BASIN = "RELIC.RED_SKULL", "RELIC.REPTILE_TRINKET", "RELIC.RIPPLE_BASIN"
 RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_STURDY_CLAMP = "RELIC.RUINED_HELMET", "RELIC.SELF_FORMING_CLAY", "RELIC.STURDY_CLAMP"
 RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE = "RELIC.TUNGSTEN_ROD", "RELIC.UNSETTLING_LAMP", "RELIC.VAMBRACE"
@@ -153,6 +154,8 @@ class Combat:
     player_powers: tuple[tuple[str, int], ...] = ()
     energy: int = 3
     max_energy: int = 3
+    # Pael's Tears carries unused energy across the enemy turn as a one-shot bonus.
+    paels_tears_pending: bool = False
     turn: int = 1
     exhaust_pile: tuple[str, ...] = ()
     played_this_turn: bool = False
@@ -976,6 +979,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat = replace(
             combat, player_block=combat.player_block + cloak_clasp_block,
             discard_pile=combat.discard_pile + combat.hand, hand=(),
+            paels_tears_pending=RELIC_PAELS_TEARS in relics and combat.energy > 0,
         )
         plating = _power(combat.player_powers, "PlatingPower")
         if plating:
@@ -1053,6 +1057,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # ended (never fires transitioning into turn 2 - there is no "previous turn" to check).
         if RELIC_ART_OF_WAR in relics and combat.turn > 1 and combat.attacks_played_this_turn == 0:
             extra_energy += 1
+        if RELIC_PAELS_FLESH in relics and new_turn >= 3 and combat.turn < 3:
+            combat = replace(combat, max_energy=combat.max_energy + 1)
+        if RELIC_PAELS_TEARS in relics and combat.paels_tears_pending:
+            extra_energy += 2
         if RELIC_CANDELABRA in relics and new_turn == 2:
             extra_energy += 2
         if RELIC_CHANDELIER in relics and new_turn == 3:
@@ -1084,6 +1092,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(
             combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
+            paels_tears_pending=False,
             attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),

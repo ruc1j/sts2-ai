@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
@@ -353,6 +353,46 @@ class CombatTest(unittest.TestCase):
         )
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(len(after.hand), 6)
+
+    def test_paels_flesh_adds_energy_from_turn_three(self) -> None:
+        combat = Combat(
+            80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            turn=2, player_relics=(RELIC_PAELS_FLESH,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.turn, after.energy), (3, 4))
+
+    def test_paels_flesh_does_not_add_energy_again_after_turn_three(self) -> None:
+        combat = Combat(
+            80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            turn=3, max_energy=4, player_relics=(RELIC_PAELS_FLESH,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.turn, after.energy, after.max_energy), (4, 4, 4))
+
+    def test_paels_flesh_stays_at_observed_max_energy_on_later_turns(self) -> None:
+        combat = Combat(
+            80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            turn=5, max_energy=4, player_relics=(RELIC_PAELS_FLESH,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.turn, after.energy, after.max_energy), (6, 4, 4))
+
+    def test_paels_tears_refunds_unused_energy_on_next_turn(self) -> None:
+        combat = Combat(
+            80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            energy=1, player_relics=(RELIC_PAELS_TEARS,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, after.paels_tears_pending), (5, False))
+
+    def test_paels_tears_does_not_refund_when_energy_is_empty(self) -> None:
+        combat = Combat(
+            80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            energy=0, player_relics=(RELIC_PAELS_TEARS,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 3)
 
     def test_constrict_power_damages_the_player_at_their_own_turn_end(self) -> None:
         combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_powers=(("ConstrictPower", 6),))
