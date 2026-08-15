@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -212,6 +212,53 @@ class CombatTest(unittest.TestCase):
     def test_vambrace_doubles_first_block_card(self) -> None:
         combat = Combat(80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_VAMBRACE,))
         self.assertEqual(step(combat, DEFEND, DUMMY_DATA, random.Random(0)).player_block, 10)
+
+    def test_unmovable_doubles_only_the_first_block_card_each_turn(self) -> None:
+        combat = Combat(
+            80, (DEFEND, SHRUG), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            player_powers=(("UnmovablePower", 1),), energy=3,
+        )
+        first = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        second = step(first, SHRUG, DUMMY_DATA, random.Random(0))
+        self.assertEqual((first.player_block, first.block_cards_this_turn), (10, 1))
+        self.assertEqual((second.player_block, second.block_cards_this_turn), (18, 2))
+        next_turn = step(second, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(next_turn.block_cards_this_turn, 0)
+
+    def test_unmovable_stacks_multiplicatively_with_vambrace(self) -> None:
+        combat = Combat(
+            80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            player_powers=(("UnmovablePower", 1),), player_relics=(RELIC_VAMBRACE,),
+        )
+        after = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 20)
+
+    def test_unmovable_counts_block_cards_played_before_power(self) -> None:
+        combat = Combat(
+            80, (DEFEND, UNMOVABLE, DEFEND), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            energy=4, max_energy=4,
+        )
+        after_first_defend = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        after_power = step(after_first_defend, UNMOVABLE, DUMMY_DATA, random.Random(0))
+        after_second_defend = step(after_power, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_power.player_block, after_power.block_cards_this_turn), (5, 1))
+        self.assertEqual((after_second_defend.player_block, after_second_defend.block_cards_this_turn), (10, 2))
+
+    def test_unmovable_doubles_evil_eye_grants_once_per_card_play(self) -> None:
+        combat = Combat(
+            80, (TREMBLE, EVIL_EYE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            player_powers=(("UnmovablePower", 1),), energy=2,
+        )
+        after_tremble = step(combat, f"{TREMBLE}@0", DUMMY_DATA, random.Random(0))
+        after_evil_eye = step(after_tremble, EVIL_EYE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_evil_eye.player_block, 32)
+        self.assertEqual(after_evil_eye.block_cards_this_turn, 1)
+
+    def test_unmovable_card_costs_one_when_upgraded_and_grants_power(self) -> None:
+        combat = Combat(80, (UNMOVABLE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), energy=1, upgraded_cards=(UNMOVABLE,))
+        self.assertIn(UNMOVABLE, legal_actions(combat))
+        after = step(combat, UNMOVABLE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "UnmovablePower"), 1)
 
     def test_ruined_helmet_doubles_first_received_strength(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{

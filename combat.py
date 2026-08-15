@@ -27,7 +27,7 @@ RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
-ARMAMENTS = "Armaments"
+ARMAMENTS, UNMOVABLE = "Armaments", "Unmovable"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -41,7 +41,7 @@ CARD_COST = {
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
-    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1,
+    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
 }
@@ -76,12 +76,12 @@ ATTACKS = {
 INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE}
+POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -161,6 +161,9 @@ class Combat:
     # to 0 at the start of every player turn, unlike the *_combat counters below.
     attacks_played_this_turn: int = 0
     skills_played_this_turn: int = 0
+    # UnmovablePower doubles the first N block-producing card plays each turn, not each
+    # individual block grant (Evil Eye can grant block twice during one play).
+    block_cards_this_turn: int = 0
     # Every card play, any type - drives SlowPower's damage-taken ramp (Bygone Effigy). Also
     # reset at the start of every player turn.
     cards_played_this_turn: int = 0
@@ -561,6 +564,8 @@ def _effective_cost(combat: Combat, card: str) -> int:
     cost = CARD_COST.get(card, 0)
     if card == BARRICADE and card in combat.upgraded_cards:
         cost = 2
+    if card == UNMOVABLE and card in combat.upgraded_cards:
+        cost = 1
     if card == STOMP:
         # Stomp's BeforeCardPlayed hook lowers its current-turn cost for each completed Attack.
         cost = max(0, cost - combat.attacks_played_this_turn)
@@ -569,6 +574,22 @@ def _effective_cost(combat: Combat, card: str) -> int:
     if combat.enlightened_this_turn and card != WHIRLWIND:
         cost = min(cost, 1)
     return cost
+
+
+def _grant_block(
+    combat: Combat,
+    base: int,
+    *,
+    vambrace_double: bool = False,
+    unmovable_double: bool = False,
+    apply_frail: bool = True,
+) -> Combat:
+    block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
+    if vambrace_double:
+        block *= 2
+    if unmovable_double:
+        block *= 2
+    return replace(combat, player_block=combat.player_block + block)
 
 
 def _mark_test_subject_death(enemy: Enemy) -> Enemy:
@@ -1061,7 +1082,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(
             combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
-            attacks_played_this_turn=0, skills_played_this_turn=0, cards_played_this_turn=0,
+            attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
         )
@@ -1095,6 +1116,13 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     card_cost = 0 if card_is_free else _effective_cost(combat, card)
     if card_is_free:
         free_cards.remove(card)
+    block_card_has_gain = card in BLOCK_CARDS
+    if card == SECOND_WIND:
+        block_card_has_gain = any(card_name not in ATTACKS for card_name in hand)
+    unmovable_amount = _power(combat.player_powers, "UnmovablePower")
+    unmovable_double = block_card_has_gain and combat.block_cards_this_turn < unmovable_amount
+    if block_card_has_gain:
+        combat = replace(combat, block_cards_this_turn=combat.block_cards_this_turn + 1)
     # Card-play-counting relics (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener/
     # Nunchaku/Tuning Fork): all fire off a plain "every Nth attack/skill played" counter, either
     # reset each turn (the four "every 3rd attack" relics, Letter Opener's "every 3rd skill") or
@@ -1161,10 +1189,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == SHRUG:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
         base = 8 + (1 if card_was_upgraded else 0)
-        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
-        if vambrace_double:
-            block *= 2
-        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - (0 if card_is_free else 1), player_block=combat.player_block + block)
+        combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        return replace(combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard + (card,), energy=combat.energy - (0 if card_is_free else 1))
     if card in CARD_DRAW:
         drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, CARD_DRAW[card], rng)
         hand = hand + list(drawn)
@@ -1211,6 +1237,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = _add_power(player_powers, "FlameBarrierPower", 4)
     if card == BARRICADE:
         player_powers = _add_power(player_powers, "BarricadePower", 1)
+    if card == UNMOVABLE:
+        player_powers = _add_power(player_powers, "UnmovablePower", 1)
     if card == PRIMAL_FORCE:
         hand = [GIANT_ROCK if card_name in ATTACKS else card_name for card_name in hand]
     exhaust = card in EXHAUSTS
@@ -1252,10 +1280,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         base = CARD_BLOCK[card]
         if card_was_upgraded:
             base += 4 if card == BLOOD_WALL else 3 if card in {EVIL_EYE, COLOSSUS} else 2 if card == TRUE_GRIT else 0 if card == ARMAMENTS else 1
-        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
-        if vambrace_double:
-            block *= 2
-        combat = replace(combat, player_block=combat.player_block + block)
+        combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
     if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE, COLOSSUS, ARMAMENTS, BLOOD_WALL}:
         return combat
     if card == RAGE:
@@ -1271,10 +1296,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == EVIL_EYE:
         if combat.exhausted_this_turn:
             base = CARD_BLOCK[EVIL_EYE] + (3 if card_was_upgraded else 0)
-            block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
-            if vambrace_double:
-                block *= 2
-            combat = replace(combat, player_block=combat.player_block + block)
+            combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         return combat
     if card == BURNING_PACT:
         if combat.hand:
@@ -1295,36 +1317,30 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, player_powers=_add_power(combat.player_powers, "StrengthPower", 1 + (1 if card_was_upgraded else 0)))
     if card == RELAX:
         base = 15 + (1 if card_was_upgraded else 0)
-        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
-        if vambrace_double:
-            block *= 2
-        return replace(combat, player_block=combat.player_block + block)
+        return _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
     if card == SECOND_WIND:
         # SecondWind.OnPlay: exhausts every non-Attack card still in hand, gaining 5 block
         # (ValueProp.Move, so Frail doesn't reduce it) per card exhausted this way.
         non_attacks = tuple(name for name in combat.hand if name not in ATTACKS)
         remaining = tuple(name for name in combat.hand if name in ATTACKS)
         block = 5 * len(non_attacks)
-        if vambrace_double:
-            block *= 2
-        combat = replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks, player_block=combat.player_block + block)
+        combat = replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks)
+        combat = _grant_block(combat, block, vambrace_double=vambrace_double, unmovable_double=unmovable_double, apply_frail=False)
         return _after_exhaust(combat, non_attacks, rng)
     if card == STONE_ARMOR:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
     if card == FEEL_NO_PAIN:
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE}:
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
         base = 7 + (1 if card_was_upgraded else 0)
-        block = base * 3 // 4 if _power(combat.player_powers, "FrailPower") else base
-        if vambrace_double:
-            block *= 2
         enemy = enemies[int(target)]
         vulnerable = 1 * (2 if lamp_double else 1)
         enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
-        return replace(combat, player_block=combat.player_block + block, enemies=tuple(enemies))
+        combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        return replace(combat, enemies=tuple(enemies))
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
         damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
         if card_was_upgraded:

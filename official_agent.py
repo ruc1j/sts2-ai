@@ -102,6 +102,7 @@ CARD_NAMES = {
     "CARD.BARRICADE": "Barricade",
     "CARD.PYRE": "Pyre",
     "CARD.ARMAMENTS": "Armaments",
+    "CARD.UNMOVABLE": "Unmovable",
 }
 
 CARD_TIERS = {
@@ -205,6 +206,7 @@ POWER_NAMES = {
     "POWER.PAINFUL_STABS_POWER": "PainfulStabsPower",
     "POWER.NEMESIS_POWER": "NemesisPower",
     "POWER.BUFFER_POWER": "BufferPower",
+    "POWER.UNMOVABLE_POWER": "UnmovablePower",
 }
 
 KNOWN_CARD_DAMAGE = {
