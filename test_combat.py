@@ -4,7 +4,7 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DARK_EMBRACE, DAZED, DEFEND,
+    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
@@ -192,6 +192,22 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(_power(after.player_powers, "DarkEmbracePower"), 1)
         self.assertIn(STRIKE, after.hand)
         self.assertIn(RELAX, after.exhaust_pile)
+
+    def test_crimson_mantle_self_damage_and_unpowered_block(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (CRIMSON_MANTLE,), (), (), (enemy,), energy=1, player_powers=(("DexterityPower", 2),))
+        after_play = step(combat, CRIMSON_MANTLE, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_play.player_hp, after_play.player_block, _power(after_play.player_powers, "CrimsonMantlePower")), (80, 0, 8))
+        after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.player_hp, after_turn.player_block, _power(after_turn.player_powers, "CrimsonMantleSelfDamage")), (79, 8, 1))
+
+    def test_crimson_mantle_stacks_and_upgrade_changes_block(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (CRIMSON_MANTLE, CRIMSON_MANTLE), (), (), (enemy,), energy=2, upgraded_cards=(CRIMSON_MANTLE,))
+        after_play = step(combat, CRIMSON_MANTLE, DUMMY_DATA, random.Random(0))
+        after_play = step(after_play, CRIMSON_MANTLE, DUMMY_DATA, random.Random(0))
+        after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.player_hp, after_turn.player_block, _power(after_turn.player_powers, "CrimsonMantlePower"), _power(after_turn.player_powers, "CrimsonMantleSelfDamage")), (78, 20, 20, 2))
 
     def test_armaments_blocks_and_upgrades_hand(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
