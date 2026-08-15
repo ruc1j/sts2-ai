@@ -28,6 +28,7 @@ PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT = "Armaments", "Unmovable", "Expect a Fight"
+POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.FIRE_POTION", "POTION.POTION_SHAPED_ROCK"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -588,7 +589,10 @@ def _grant_block(
     vambrace_double: bool = False,
     unmovable_double: bool = False,
     apply_frail: bool = True,
+    powered: bool = True,
 ) -> Combat:
+    if powered:
+        base += _power(combat.player_powers, "DexterityPower")
     block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
     if vambrace_double:
         block *= 2
@@ -634,6 +638,15 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             actions.append(card)
         else:
             actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
+    for potion in dict.fromkeys(combat.player_potions):
+        if potion == POTION_BLOCK:
+            actions.append(f"potion:{potion}")
+        elif potion in {POTION_FIRE, POTION_SHAPED_ROCK}:
+            actions.extend(
+                f"potion:{potion}@{index}"
+                for index, enemy in enumerate(combat.enemies)
+                if enemy.alive
+            )
     return tuple(actions) + (END_TURN,)
 
 
@@ -670,11 +683,11 @@ def _enemy_attack_damage(
     return max(0, damage * max(1, repeats))
 
 
-def _damage_enemy(enemy: Enemy, damage: int) -> Enemy:
+def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     if _power(enemy.powers, "SlipperyPower"):
         return replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1))
     # Flutter (e.g. Thieving Hopper) halves powered-attack damage and wears off per unblocked hit.
-    flutter = _power(enemy.powers, "FlutterPower")
+    flutter = _power(enemy.powers, "FlutterPower") if powered else 0
     if flutter:
         damage //= 2
     # HardToKill caps every hit at the power amount (Exoskeleton takes at most 9 per attack).
@@ -947,6 +960,16 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
     combat = _sync_belt_buckle(_sync_red_skull(combat))
+    if action.startswith("potion:"):
+        potion, _, target = action.partition(":")[2].partition("@")
+        potions = list(combat.player_potions)
+        potions.remove(potion)
+        combat = _sync_belt_buckle(replace(combat, player_potions=tuple(potions)))
+        if potion == POTION_BLOCK:
+            return _grant_block(combat, 12, apply_frail=False, powered=False)
+        enemies = list(combat.enemies)
+        enemies[int(target)] = _damage_enemy(enemies[int(target)], 20 if potion == POTION_FIRE else 15, powered=False)
+        return replace(combat, enemies=tuple(enemies))
     if action == END_TURN:
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
         # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
