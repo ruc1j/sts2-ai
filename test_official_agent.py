@@ -1714,6 +1714,25 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 1)
 
+    def test_multi_primary_focuses_the_next_attack_on_the_greatest_threat(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 40, "powers": [], "intents": [{"damage": 8, "repeats": 1}]},
+                {"combat_id": 2, "hp": 10, "powers": [], "intents": [{"damage": 16, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
     def test_lethal_prefers_weaker_enemy_when_both_attack(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},

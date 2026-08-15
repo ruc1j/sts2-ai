@@ -637,6 +637,33 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
         return max(aoe, key=lambda action: _card_value(action, hand, "damage"))
 
+    # In multi-primary fights, spreading single-target damage leaves every attacker alive.
+    # Keep lethal and urgent-defense decisions above this light tie-break, then focus the
+    # next attack on the enemy with the largest incoming hit (lowest HP breaks ties).
+    minion_ids = {
+        enemy["combat_id"]
+        for enemy in observation.get("enemies", ())
+        if any(power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))
+    }
+    primary_ids = {combat_id for combat_id in enemy_by_id if combat_id not in minion_ids}
+    focusable = [
+        action
+        for action in cards
+        if action.get("target_id") in primary_ids
+        and _card_value(action, hand, "damage") > 0
+        and not _is_self_damage(action, hand)
+    ]
+    urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
+    if len(primary_ids) > 1 and focusable and not lethal and not urgent:
+        return max(
+            focusable,
+            key=lambda action: (
+                enemy_incoming.get(action["target_id"], 0),
+                -enemy_by_id[action["target_id"]].get("hp", 0),
+                _card_value(action, hand, "damage"),
+            ),
+        )
+
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
@@ -676,7 +703,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return max(defenses, key=lambda action: _card_value(action, hand, "block"))
     # MinionPower enemies (e.g. The Kin's Followers) do not need to die to win the fight -
     # CombatManager only checks primary enemies - so they should not distract focus fire.
-    minion_ids = {enemy["combat_id"] for enemy in observation.get("enemies", ()) if any(power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))}
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
         def score(action: dict) -> tuple[int, int, int, int]:
