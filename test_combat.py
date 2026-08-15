@@ -1189,6 +1189,23 @@ class CombatTest(unittest.TestCase):
         # Bash first so the strikes benefit from Vulnerable.
         self.assertEqual(_greedy_action(combat, hive), f"{BASH}@0")
 
+    def test_greedy_plays_inflame_before_multiple_attacks(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (INFLAME, ANGER, STRIKE), (), (), (enemy,), energy=3)
+        self.assertEqual(_greedy_action(combat, DUMMY_DATA), INFLAME)
+
+    def test_greedy_plays_bloodletting_before_whirlwind(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (BLOODLETTING, WHIRLWIND), (), (), (enemy,), energy=3)
+        self.assertEqual(_greedy_action(combat, DUMMY_DATA), BLOODLETTING)
+
+    def test_search_keeps_setup_before_the_payoff_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        inflame = Combat(80, (INFLAME, ANGER, STRIKE), (), (), (enemy,), energy=3)
+        whirlwind = Combat(80, (BLOODLETTING, WHIRLWIND), (), (), (enemy,), energy=3)
+        self.assertEqual(search(inflame, DUMMY_DATA, simulations=100, seed=0)[0][0], INFLAME)
+        self.assertEqual(search(whirlwind, DUMMY_DATA, simulations=100, seed=0)[0][0], BLOODLETTING)
+
     def test_sail_buffs_teammates_and_self(self) -> None:
         # GetTeammatesOf returns every creature on the same side, including the caster: the
         # real fight trace shows Obscura itself at Strength 3 -> 6 -> 9 as SAIL repeats.

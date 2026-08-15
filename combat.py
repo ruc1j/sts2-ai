@@ -1591,6 +1591,44 @@ def _step_score(combat: Combat, state: Combat, data: dict) -> float:
     return prevented + dealt + threat_reduced + min(blocked, exposed) + upkeep + 0.3 * max(0, drawn)
 
 
+def _projected_attack_value(combat: Combat, card: str) -> int:
+    """Estimate this turn's damage if a setup card has already been played."""
+    alive = sum(enemy.alive for enemy in combat.enemies)
+    strength = _power(combat.player_powers, "StrengthPower")
+    if card == WHIRLWIND:
+        return max(0, combat.energy) * alive * (5 + strength)
+    if card == VOLLEY:
+        return max(0, combat.energy) * (CARD_DAMAGE[VOLLEY] + strength)
+    hits = CARD_HITS.get(card, 1)
+    if card in ALL_ENEMY_DAMAGE:
+        return ALL_ENEMY_DAMAGE[card] * alive * hits + strength * alive * hits
+    return (CARD_DAMAGE.get(card, 0) + strength) * hits
+
+
+def _setup_bonus(combat: Combat, state: Combat, card: str, data: dict) -> int:
+    """Prefer setup before attacks when the same turn can actually spend the payoff."""
+    incoming = sum(_enemy_attack_damage(enemy, data, combat.player_powers) for enemy in combat.enemies if enemy.alive)
+    if incoming >= state.player_hp + state.player_block or _power(state.player_powers, "RingingPower"):
+        return 0
+    if card == BLOODLETTING and WHIRLWIND in state.hand:
+        return _projected_attack_value(state, WHIRLWIND)
+    if card == INFLAME:
+        attacks = sorted(
+            (name for name in state.hand if name in ATTACKS and name != WHIRLWIND),
+            key=lambda name: 0 if name in state.free_cards else _effective_cost(state, name),
+        )
+        energy, selected = state.energy, []
+        for name in attacks:
+            cost = 0 if name in state.free_cards else _effective_cost(state, name)
+            if cost > energy:
+                break
+            selected.append(name)
+            energy -= cost
+        if len(selected) >= 2:
+            return sum(_projected_attack_value(state, name) for name in selected)
+    return 0
+
+
 def _greedy_action(combat: Combat, data: dict) -> str:
     """Pick a card action by prevented damage + damage dealt; block counts against incoming."""
     actions = legal_actions(combat)[:-1]  # exclude End turn
@@ -1608,6 +1646,7 @@ def _greedy_action(combat: Combat, data: dict) -> str:
         # that so they are played before the attacks they boost.
         if card in {BASH, TREMBLE}:
             score += sum(CARD_DAMAGE.get(name, 0) // 2 for name in state.hand if name in ATTACKS and name != card and CARD_COST.get(name, 99) <= state.energy)
+        score += _setup_bonus(combat, state, card, data)
         if score > best_score:
             best, best_score = action, score
     return best if best is not None else END_TURN
@@ -1625,7 +1664,8 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
             # first move (e.g. Defend into a real attack) can lose to noise from 60 turns of
             # rollout whose outcome is dominated by draw/enemy RNG, not by this one decision
             # (observed: VANTOM's Slippery opening scored "End turn" above "Defend").
-            immediate = _step_score(combat, state, data) / 100
+            card = action.partition("@")[0]
+            immediate = (_step_score(combat, state, data) + _setup_bonus(combat, state, card, data)) / 100
             for _ in range(60):
                 if state.terminal:
                     break
