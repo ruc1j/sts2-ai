@@ -21,6 +21,7 @@ CARD_NAMES = {
     "CARD.BASH": "Bash",
     "CARD.ANGER": "Anger",
     "CARD.AGGRESSION": "Aggression",
+    "CARD.DARK_EMBRACE": "Dark Embrace",
     "CARD.BLUDGEON": "Bludgeon",
     "CARD.STOMP": "Stomp",
     "CARD.SHRUG_IT_OFF": "Shrug It Off",
@@ -215,6 +216,7 @@ POWER_NAMES = {
     "POWER.UNMOVABLE_POWER": "UnmovablePower",
     "POWER.NO_ENERGY_GAIN_POWER": "NoEnergyGainPower",
     "POWER.AGGRESSION_POWER": "AggressionPower",
+    "POWER.DARK_EMBRACE_POWER": "DarkEmbracePower",
 }
 
 KNOWN_CARD_DAMAGE = {

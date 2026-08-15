@@ -4,7 +4,7 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
+    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DARK_EMBRACE, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
@@ -183,6 +183,15 @@ class CombatTest(unittest.TestCase):
         after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after_turn.hand.count(STRIKE), 1)
         self.assertEqual(after_turn.upgraded_cards, (STRIKE,))
+
+    def test_dark_embrace_draws_when_a_card_is_exhausted(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (DARK_EMBRACE, RELAX), (STRIKE,), (), (enemy,), energy=5)
+        combat = step(combat, DARK_EMBRACE, DUMMY_DATA, random.Random(0))
+        after = step(combat, RELAX, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "DarkEmbracePower"), 1)
+        self.assertIn(STRIKE, after.hand)
+        self.assertIn(RELAX, after.exhaust_pile)
 
     def test_armaments_blocks_and_upgrades_hand(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
