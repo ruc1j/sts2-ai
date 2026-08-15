@@ -633,33 +633,17 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     )
     potion_already_used = potion_room is not None and potion_room == _POTION_USED_ROOM
     rollout_enabled = bool(enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards))
-    direct_potion = choose_potion(observation, potions)
-    if (
-        (not rollout_enabled or potion_urgent or (direct_potion or {}).get("potion_id") not in ROLLOUT_POTION_IDS)
-        and (not sandpit_critical or potion_urgent)
-        and (
-            potion_context is None
-            or potion_context != _LAST_POTION_CONTEXT
-            or potion_urgent
-        )
-        and (not potion_already_used or potion_lethal)
-        and direct_potion
-    ):
-        if potion_context is not None:
-            _LAST_POTION_CONTEXT = potion_context
-        if potion_room is not None:
-            _POTION_USED_ROOM = potion_room
-        return direct_potion
-    if sandpit_critical and escape:
-        return escape
-    if sandpit_critical:
-        draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
-        if draw_cards:
-            return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))
-    if turn := choose_crab_facing(observation, cards):
-        return turn
-    enemy_by_id = {enemy["combat_id"]: enemy for enemy in observation.get("enemies", ())}
-    enemy_incoming = {enemy["combat_id"]: _intent_incoming(enemy) for enemy in observation.get("enemies", ())}
+
+    enemy_by_id = {
+        enemy.get("combat_id"): enemy
+        for enemy in observation.get("enemies", ())
+        if enemy.get("combat_id") is not None
+    }
+    enemy_incoming = {
+        enemy.get("combat_id"): _intent_incoming(enemy)
+        for enemy in observation.get("enemies", ())
+        if enemy.get("combat_id") is not None
+    }
 
     def damage(action: dict) -> int:
         enemy = enemy_by_id.get(action.get("target_id"))
@@ -675,7 +659,41 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
 
     def is_lethal(action: dict) -> bool:
         enemy = enemy_by_id.get(action.get("target_id"))
-        return bool(enemy and damage(action) - enemy.get("block", 0) >= enemy["hp"])
+        return bool(enemy and damage(action) - enemy.get("block", 0) >= _number(enemy.get("hp")))
+
+    lethal = [action for action in cards if is_lethal(action)]
+    incoming_threats = {combat_id for combat_id, value in enemy_incoming.items() if value > 0}
+    lethal_attacks = [action for action in lethal if not _is_self_damage(action, hand)]
+    all_incoming_threats_lethal = bool(incoming_threats) and all(
+        any(action.get("target_id") == combat_id for action in lethal_attacks)
+        for combat_id in incoming_threats
+    )
+    direct_potion = choose_potion(observation, potions)
+    if (
+        (not rollout_enabled or potion_urgent or (direct_potion or {}).get("potion_id") not in ROLLOUT_POTION_IDS)
+        and (not sandpit_critical or potion_urgent)
+        and (
+            potion_context is None
+            or potion_context != _LAST_POTION_CONTEXT
+            or potion_urgent
+        )
+        and (not potion_already_used or potion_lethal)
+        and not all_incoming_threats_lethal
+        and direct_potion
+    ):
+        if potion_context is not None:
+            _LAST_POTION_CONTEXT = potion_context
+        if potion_room is not None:
+            _POTION_USED_ROOM = potion_room
+        return direct_potion
+    if sandpit_critical and escape:
+        return escape
+    if sandpit_critical:
+        draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
+        if draw_cards:
+            return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))
+    if turn := choose_crab_facing(observation, cards):
+        return turn
 
     # In a multi-enemy fight, a modeled rollout can still favor a single-target line because it
     # undervalues the next combined hit. Prefer an available all-enemy card before rolling out
@@ -684,7 +702,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     hp, max_hp = player.get("hp", 0), player.get("max_hp", player.get("hp", 0))
     incoming = sum(enemy_incoming.values())
     aoe = [action for action in cards if action["card_id"] in ALL_ENEMY_CARDS and not _is_self_damage(action, hand)]
-    lethal = [action for action in cards if is_lethal(action)]
     if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
         return max(aoe, key=lambda action: _card_value(action, hand, "damage"))
 

@@ -927,6 +927,40 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SWIFT_POTION")
 
+    def test_monster_potion_waits_for_lethal_card(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 4, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 19, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 1, "block": 0, "intents": [{"damage": 10, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+
+    def test_monster_potion_remains_for_unfinished_incoming_enemy(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 4, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 8, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.RUBY", "hp": 1, "block": 0, "intents": [{"damage": 5, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.SAPPHIRE", "hp": 20, "block": 0, "intents": [{"damage": 5, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SPEED_POTION")
+
     def test_low_hp_incoming_falls_back_to_regen(self) -> None:
         observation = {
             "legal_actions": [{"type": "potion", "potion_id": "POTION.REGEN_POTION", "target_id": None}],
