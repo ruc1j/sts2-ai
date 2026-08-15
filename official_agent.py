@@ -863,11 +863,13 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     regular_monster = room_type == "Monster"
     elite_or_boss = room_type in {"Elite", "Boss"} or boss_like or boss_context
     high_hp_regular = max_enemy_hp >= 100 and not elite_or_boss
-    major_allowed = (
-        elite_or_boss or (not regular_monster and not high_hp_regular)
-        or incoming >= max(1, (hp * 3 + 3) // 4)
-        or hp <= max(1, max_hp // 3)
-        or (boss_context and _number(run.get("act")) >= 1 and incoming >= max(1, hp // 2))
+    major_allowed = elite_or_boss or (
+        not regular_monster
+        and (
+            not high_hp_regular
+            or incoming >= max(1, (hp * 3 + 3) // 4)
+            or hp <= max(1, max_hp // 3)
+        )
     )
     if max_enemy_hp >= 100 and major_allowed and ((boss_context and hp <= max(1, max_hp // 3)) or (fallback_boss and incoming > 0)):
         offensive_now = offensive_now | {"POTION.SKILL_POTION"}

@@ -796,6 +796,25 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(choose(monster)["type"], "end_turn")
         self.assertEqual(choose(elite)["potion_id"], "POTION.STRENGTH_POTION")
 
+    def test_saves_major_potion_after_defensive_potion_in_monster_room(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 5, "room_type": "Monster"},
+            "turn": 2,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.POWER_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 40, "max_hp": 40, "intents": [{"damage": 20, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+        observation["legal_actions"] = [
+            {"type": "potion", "potion_id": "POTION.POWER_POTION", "target_id": None},
+            {"type": "end_turn"},
+        ]
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_low_hp_multiple_enemies_uses_swift_potion(self) -> None:
         observation = {
             "legal_actions": [
