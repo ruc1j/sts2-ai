@@ -2547,6 +2547,7 @@ class OfficialAgentTest(unittest.TestCase):
         # The Insatiable boss fight used Byrd Swoop / Pillage / Equilibrium; unmodeled cards in
         # hand disabled the turn-1 rollout. All three must now be recognized by the simulator.
         self.assertTrue({"CARD.BYRD_SWOOP", "CARD.PILLAGE", "CARD.EQUILIBRIUM"} <= set(CARD_NAMES))
+        self.assertEqual(CARD_NAMES["CARD.BLOOD_WALL"], "Blood Wall")
 
     def test_rollout_runs_with_one_unknown_card_in_hand(self) -> None:
         # The rollout gate used to require ALL hand cards to be modeled (any unknown card

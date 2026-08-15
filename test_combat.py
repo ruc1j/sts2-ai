@@ -4,7 +4,7 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
+    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
@@ -54,6 +54,13 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(after_turn.player_block, 12)
         self.assertNotIn(BARRICADE, legal_actions(replace(combat, energy=2)))
         self.assertIn(BARRICADE, legal_actions(replace(combat, energy=2, upgraded_cards=(BARRICADE,))))
+
+    def test_blood_wall_trades_two_hp_for_sixteen_block(self) -> None:
+        combat = Combat(20, (BLOOD_WALL,), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), energy=3)
+        after = step(combat, BLOOD_WALL, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block, after.energy), (18, 16, 1))
+        upgraded = step(replace(combat, upgraded_cards=(BLOOD_WALL,)), BLOOD_WALL, DUMMY_DATA, random.Random(0))
+        self.assertEqual((upgraded.player_hp, upgraded.player_block), (18, 20))
 
     def test_buffer_prevents_one_hp_loss_event(self) -> None:
         combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), player_powers=(("BufferPower", 1),))
