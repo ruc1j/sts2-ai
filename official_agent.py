@@ -897,9 +897,16 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     offensive = {
         "POTION.ATTACK_POTION", "POTION.COLORLESS_POTION", "POTION.DISTILLED_CHAOS", "POTION.DUPLICATOR",
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
-        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION",
+        "POTION.SKILL_POTION", "POTION.STRENGTH_POTION", "POTION.GIGANTIFICATION",
     }
-    known = recovery | blocking | debuffs | offensive | {"POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION", "POTION.POTION_SHAPED_ROCK"}
+    economy = {
+        "POTION.CLARITY", "POTION.STABLE_SERUM", "POTION.RADIANT_TINCTURE", "POTION.LIQUID_MEMORIES",
+        "POTION.GAMBLERS_BREW", "POTION.OROBIC_ACID", "POTION.FRUIT_JUICE",
+    }
+    known = recovery | blocking | debuffs | offensive | economy | {
+        "POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION",
+        "POTION.POTION_SHAPED_ROCK", "POTION.BLESSING_OF_THE_FORGE",
+    }
     def unknown_manual() -> dict | None:
         for action in actions:
             potion_id = str(action.get("potion_id", "")).upper()
@@ -995,11 +1002,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
         # turn to spend the generated block card.
         boss_offensive = offensive_safe | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
+        economy_potion = use(economy) if elite_or_boss else None
         # Colorless is a scarce emergency hand: on a long boss, spending it at a merely
         # moderate hit leaves no answer for the next attack cycle (Knowledge Demon killed the
         # run after Colorless at 39/80 HP and incoming 11). Keep it until HP is critical or the
         # current hit is lethal.
-        return shackling or fysh or binding or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
+        return shackling or fysh or binding or economy_potion or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None

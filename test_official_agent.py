@@ -1054,6 +1054,42 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.POWER_POTION")
 
+    def test_does_not_use_economy_potion_for_lethal_monster_hit(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 8, "room_type": "Monster"},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.CLARITY", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 8, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 100, "intents": [{"damage": 12, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_uses_economy_potion_on_nonurgent_boss_turn(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 17, "room_type": "Boss"},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.CLARITY", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 173, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.CLARITY")
+
+    def test_uses_gigantification_as_lethal_offense(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 8, "room_type": "Monster"},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.GIGANTIFICATION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 8, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 100, "intents": [{"damage": 12, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.GIGANTIFICATION")
+
     def test_shaped_rock_targets_the_highest_hp_enemy(self) -> None:
         observation = {
             "run": {"act": 0, "floor": 5, "room_type": "Monster"},
