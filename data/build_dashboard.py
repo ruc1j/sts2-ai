@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan tonight's run_multi_* artifacts and render a battle-record dashboard."""
+"""Scan this session's run traces (any prefix) and render a battle-record dashboard."""
 import glob
 import html
 import json
@@ -16,19 +16,21 @@ FAIL_RE = re.compile(r"\[ERROR\] \[AutoSlay\] Run failed with seed=(\S+): (.+)")
 
 
 def find_tags():
-    tags = set()
-    for path in glob.glob(os.path.join(DATA_DIR, "run_multi_*_trace.jsonl")):
-        if os.path.getmtime(path) >= CUTOFF:
-            tag = os.path.basename(path)[len("run_multi_"):-len("_trace.jsonl")]
-            tags.add(tag)
-    return sorted(tags, key=lambda t: os.path.getmtime(os.path.join(DATA_DIR, f"run_multi_{t}_trace.jsonl")))
+    """Every trace written this session, whatever prefix the run used."""
+    tags = {}
+    for path in glob.glob(os.path.join(DATA_DIR, "*_trace.jsonl")):
+        if os.path.getmtime(path) < CUTOFF:
+            continue
+        tag = os.path.basename(path)[: -len("_trace.jsonl")]
+        tags[tag] = os.path.getmtime(path)
+    return sorted(tags, key=tags.get)
 
 
 def parse_run(tag):
-    log_path = os.path.join(DATA_DIR, f"run_multi_{tag}_log.txt")
-    trace_path = os.path.join(DATA_DIR, f"run_multi_{tag}_trace.jsonl")
+    log_path = os.path.join(DATA_DIR, f"{tag}_log.txt")
+    trace_path = os.path.join(DATA_DIR, f"{tag}_trace.jsonl")
     info = {
-        "tag": tag,
+        "tag": tag.replace("run_multi_", ""),
         "seed": None,
         "furthest": None,
         "outcome": "in_progress",
