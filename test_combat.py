@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -259,6 +259,35 @@ class CombatTest(unittest.TestCase):
         self.assertIn(UNMOVABLE, legal_actions(combat))
         after = step(combat, UNMOVABLE, DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "UnmovablePower"), 1)
+
+    def test_expect_a_fight_gains_energy_for_attacks_in_hand(self) -> None:
+        combat = Combat(
+            80, (EXPECT_A_FIGHT, STRIKE, ANGER, DEFEND), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            energy=2,
+        )
+        after = step(combat, EXPECT_A_FIGHT, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 2)
+        self.assertEqual(_power(after.player_powers, "NoEnergyGainPower"), 1)
+
+    def test_expect_a_fight_is_one_cost_upgraded(self) -> None:
+        combat = Combat(
+            80, (EXPECT_A_FIGHT, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            energy=1, upgraded_cards=(EXPECT_A_FIGHT,),
+        )
+        self.assertIn(EXPECT_A_FIGHT, legal_actions(combat))
+        after = step(combat, EXPECT_A_FIGHT, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 1)
+
+    def test_expect_a_fight_blocks_later_energy_gain_until_turn_end(self) -> None:
+        combat = Combat(
+            80, (EXPECT_A_FIGHT, BLOODLETTING, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+            energy=2,
+        )
+        after_expect = step(combat, EXPECT_A_FIGHT, DUMMY_DATA, random.Random(0))
+        after_bloodletting = step(after_expect, BLOODLETTING, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_bloodletting.energy, 1)
+        after_turn = step(after_bloodletting, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after_turn.player_powers, "NoEnergyGainPower"), 0)
 
     def test_ruined_helmet_doubles_first_received_strength(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{

@@ -27,7 +27,7 @@ RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
-ARMAMENTS, UNMOVABLE = "Armaments", "Unmovable"
+ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT = "Armaments", "Unmovable", "Expect a Fight"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -41,7 +41,7 @@ CARD_COST = {
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
-    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2,
+    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
 }
@@ -81,14 +81,14 @@ POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABL
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE}
@@ -569,6 +569,8 @@ def _effective_cost(combat: Combat, card: str) -> int:
         cost = 2
     if card == UNMOVABLE and card in combat.upgraded_cards:
         cost = 1
+    if card == EXPECT_A_FIGHT and card in combat.upgraded_cards:
+        cost = 1
     if card == STOMP:
         # Stomp's BeforeCardPlayed hook lowers its current-turn cost for each completed Attack.
         cost = max(0, cost - combat.attacks_played_this_turn)
@@ -951,8 +953,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat = replace(
             combat,
             player_powers=_add_power(
-                _add_power(combat.player_powers, "RingingPower", -_power(combat.player_powers, "RingingPower")),
-                "RagePower", -_power(combat.player_powers, "RagePower"),
+                _add_power(
+                    _add_power(combat.player_powers, "RingingPower", -_power(combat.player_powers, "RingingPower")),
+                    "RagePower", -_power(combat.player_powers, "RagePower"),
+                ),
+                "NoEnergyGainPower", -_power(combat.player_powers, "NoEnergyGainPower"),
             ),
             played_this_turn=False,
         )
@@ -1149,6 +1154,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (card_cost >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
     vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and card in BLOCK_CARDS
     lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
+    energy_gain_allowed = not _power(combat.player_powers, "NoEnergyGainPower")
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
     combo_block += helmet_block
     if card in ATTACKS:
@@ -1164,7 +1170,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if alive:
                 hit = rng.choice(alive)
                 combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6)
-        if RELIC_NUNCHAKU in relics and attacks_combat % 10 == 0:
+        if RELIC_NUNCHAKU in relics and attacks_combat % 10 == 0 and energy_gain_allowed:
             combo_energy += 1
     if card in SKILLS:
         if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0:
@@ -1221,7 +1227,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     whirlwind_x = combat.energy + (2 if RELIC_CHEMICAL_X in relics else 0)
     whirlwind_damage = 5 * whirlwind_x if card == WHIRLWIND else 0
     volley_x = whirlwind_x if card == VOLLEY else 0
-    energy = combat.energy - spent + (2 if card in {BLOODLETTING, BELIEVE_IN_YOU, PRODUCTION, OFFERING} else 0)
+    energy = combat.energy - spent + (2 if energy_gain_allowed and card in {BLOODLETTING, BELIEVE_IN_YOU, PRODUCTION, OFFERING} else 0)
+    if card == EXPECT_A_FIGHT and energy_gain_allowed:
+        energy += sum(card_name in ATTACKS for card_name in hand)
     player_hp = combat.player_hp
     self_damage = SELF_DAMAGE.get(card, 0)
     if self_damage:
@@ -1250,6 +1258,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = _add_power(player_powers, "BarricadePower", 1)
     if card == UNMOVABLE:
         player_powers = _add_power(player_powers, "UnmovablePower", 1)
+    if card == EXPECT_A_FIGHT:
+        player_powers = _add_power(player_powers, "NoEnergyGainPower", 1)
     if card == PRIMAL_FORCE:
         hand = [GIANT_ROCK if card_name in ATTACKS else card_name for card_name in hand]
     exhaust = card in EXHAUSTS
@@ -1342,7 +1352,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
     if card == FEEL_NO_PAIN:
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE}:
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:

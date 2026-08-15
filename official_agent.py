@@ -103,6 +103,7 @@ CARD_NAMES = {
     "CARD.PYRE": "Pyre",
     "CARD.ARMAMENTS": "Armaments",
     "CARD.UNMOVABLE": "Unmovable",
+    "CARD.EXPECT_A_FIGHT": "Expect a Fight",
 }
 
 CARD_TIERS = {
@@ -207,6 +208,7 @@ POWER_NAMES = {
     "POWER.NEMESIS_POWER": "NemesisPower",
     "POWER.BUFFER_POWER": "BufferPower",
     "POWER.UNMOVABLE_POWER": "UnmovablePower",
+    "POWER.NO_ENERGY_GAIN_POWER": "NoEnergyGainPower",
 }
 
 KNOWN_CARD_DAMAGE = {

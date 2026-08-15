@@ -527,9 +527,9 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_reward_caps_unmodeled_cards(self) -> None:
         observation = {
-            "player": {"deck": ["CARD.EXPECT_A_FIGHT", "CARD.AGGRESSION"]},
+            "player": {"deck": ["CARD.AGGRESSION", "CARD.CORRUPTION"]},
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.EXPECT_A_FIGHT"},
+                {"type": "card_reward", "card_id": "CARD.AGGRESSION"},
                 {"type": "card_reward", "card_id": "CARD.HELLRAISER"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
