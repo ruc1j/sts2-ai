@@ -674,6 +674,21 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 _card_value(action, hand, "damage"),
             ),
         )
+    # The Kin's Followers are the immediate damage source; keep attacking one during an urgent
+    # turn when no available block card can cover the remaining hit and the player still survives.
+    if len(primary_ids) > 1 and kin_follower_ids and not lethal and urgent and incoming < hp + player.get("block", 0):
+        kin_focusable = [action for action in focusable if action.get("target_id") in kin_follower_ids]
+        remaining = max(0, incoming - player.get("block", 0))
+        best_block = max((_card_value(action, hand, "block") for action in cards), default=0)
+        if kin_focusable and (not remaining or best_block < remaining):
+            return max(
+                kin_focusable,
+                key=lambda action: (
+                    enemy_incoming.get(action["target_id"], 0),
+                    -enemy_by_id[action["target_id"]].get("hp", 0),
+                    _card_value(action, hand, "damage"),
+                ),
+            )
 
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).

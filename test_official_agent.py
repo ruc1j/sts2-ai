@@ -1765,6 +1765,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 1)
 
+    def test_urgent_kin_turn_still_focuses_an_attacking_follower(self) -> None:
+        observation = {
+            "player": {"hp": 30, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.KIN_FOLLOWER", "hp": 20, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 12, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.KIN_PRIEST", "hp": 100, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 1)
+
     def test_lethal_prefers_weaker_enemy_when_both_attack(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
