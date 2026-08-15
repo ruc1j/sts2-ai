@@ -372,3 +372,12 @@ draw_needed(`DRAW_CARDS`)/defense_needed(`DEFENSE_PRIORITY`)のいずれの補�
   コード変更は保留。同一パターンが複数seedで積み重なったら再検討。
 
 テストは338→474件に増加(すべて「修正前コードで実際に失敗する」ことを確認してからコミット)。
+
+**次回セッションへの持ち越し課題:**
+- TEST_SUBJECT第2形態`MultiClawMove`(decompile確認済み): `MultiAttackIntent(MultiClawDamage,
+  () => BaseMultiClawCount + ExtraMultiClawCount)`で、1回攻撃するたびに`ExtraMultiClawCount++`
+  される(累積で反復回数が増え続ける)。D6run(Act3 TEST_SUBJECT敗北)ではT4〜T7で反復3→4→5→6と
+  増加が観測された。CombatBridgeが動的な反復数をintentsへそのまま反映しているかは未確認で、実機
+  でのintents実測による追加検証が必要。
+- D6(29枚デッキ、強防御2枚のみ)を踏まえ、`choose_card_reward`の防御優先(`_block_starved`等)を
+  最小修正する案を検討中。まずテストを書いてから、headlessでの再現runで確認すること。
