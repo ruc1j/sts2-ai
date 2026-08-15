@@ -43,12 +43,21 @@ internal static class PotionChooseCardPatch
 {
     private static bool Prefix(PlayerChoiceContext context, IReadOnlyList<CardModel> cards, bool canSkip, ref Task<CardModel?> __result)
     {
-        if (!CommandLineHelper.HasArg("sts2ai-agent") || context.LastInvolvedModel is not (PowerPotion or ColorlessPotion or AttackPotion or SkillPotion))
+        if (!CommandLineHelper.HasArg("sts2ai-agent"))
             return true;
 
-        CardModel? selected = context.LastInvolvedModel is PowerPotion
-            ? cards.FirstOrDefault(card => card.EnergyCost.GetAmountToSpend() <= (card.Owner.PlayerCombatState?.Energy ?? 0))
-            : cards.FirstOrDefault();
+        var curseCards = cards.All(card => card.Id.ToString() is "CARD.MIND_ROT" or "CARD.SLOTH" or "CARD.DISINTEGRATION" or "CARD.WASTE_AWAY");
+        CardModel? selected = null;
+        if (curseCards && cards.Any(card => card.Id.ToString() == "CARD.SLOTH"))
+            selected = cards.FirstOrDefault(card => card.Id.ToString() != "CARD.SLOTH");
+        else if (curseCards && cards.Any(card => card.Id.ToString() == "CARD.WASTE_AWAY") && cards.Any(card => card.Id.ToString() == "CARD.DISINTEGRATION"))
+            selected = cards.First(card => card.Id.ToString() == "CARD.WASTE_AWAY");
+        else if (context.LastInvolvedModel is PowerPotion)
+            selected = cards.FirstOrDefault(card => card.EnergyCost.GetAmountToSpend() <= (card.Owner.PlayerCombatState?.Energy ?? 0));
+        else if (context.LastInvolvedModel is ColorlessPotion or AttackPotion or SkillPotion)
+            selected = cards.FirstOrDefault();
+        if (selected is null && context.LastInvolvedModel is not (PowerPotion or ColorlessPotion or AttackPotion or SkillPotion))
+            return true;
         __result = Task.FromResult(selected ?? (canSkip ? null : cards.FirstOrDefault()));
         return false;
     }
