@@ -79,10 +79,12 @@ ignored on both sides; the C# wait deadline is 2 minutes, after which the phase 
 
 `official_agent.choose(observation, enemy_data, simulations)` is the single dispatch point — it routes
 on `phase` to `choose_map` / `choose_card_reward` / `choose_shop` / `choose_rest`, and everything else
-is combat. Combat tries, in order: Sandpit escape, Crab facing, potions, `rollout_choice`, lethal
-attacks, Defend, card priority, `end_turn`. Anything the simulator can't model (`KeyError`,
-`ValueError`, `NotImplementedError`, `StopIteration`) falls through to the heuristic tail — that
-fallback is load-bearing, keep it.
+is combat. Combat tries, in order: Sandpit escape, Crab facing, potions, lethal attacks,
+`rollout_choice`, Defend, card priority, `end_turn`. Lethal is checked before `rollout_choice` on
+purpose — greedy rollout can pass up a guaranteed kill for a different move that scores well but
+misses the kill, so a confirmed lethal short-circuits before rollout ever runs. Anything the
+simulator can't model (`KeyError`, `ValueError`, `NotImplementedError`, `StopIteration`) falls
+through to the heuristic tail — that fallback is load-bearing, keep it.
 
 **Two independent simulators.** `combat.py` is the one wired into the live loop: multi-enemy,
 frozen dataclasses (`Enemy`, `Combat`), `search()` runs greedy rollouts (not random) over each first
