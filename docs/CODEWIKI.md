@@ -274,8 +274,7 @@ Dexterityは乗らない(12のまま)。
 - **レリック2種**: `PAELS_LEGION`(取得14・pet系でblockトリガ) `TOASTY_MITTENS`(5・turn1の山札操作+Strength)。
 - **敵パワー**: `IMBALANCED_POWER`(観測751、BOWLBUG_ROCK。攻撃が完全ブロックされると自分がStunするが
   `combat.py`にstun概念が無く要設計) `BURROWED_POWER`(532) `SWIPE_POWER`(772、主に報酬側)
-  `HATCH_POWER`(150) `CURL_UP_POWER`(91、LOUSE_PROGENITOR amount=**14**と大きく、この敵を削り切れると
-  誤判断する要因) `PAPER_CUTS_POWER`(34、最大HP永続減少) `RAMPART_POWER`(26)
+  `HATCH_POWER`(150) `PAPER_CUTS_POWER`(34、最大HP永続減少) `RAMPART_POWER`(26)
   `NemesisPower`/`IntangiblePower`(TEST_SUBJECT第3形態、観測0件)。
 - **ポーション**: `SKILL_POTION`/`ATTACK_POTION`/`POWER_POTION`/`COLORLESS_POTION`/`DISTILLED_CHAOS`/
   `SNECKO_OIL`はランダムカード生成系、`ENTROPIC_BREW`はランダムポーション生成系(空きポーション枠を
@@ -310,6 +309,19 @@ Slumbering Beetle HP19)で同型の「Speed Potion使用直後に即座に敵を
 同一seedを跨いだ検証(9seed中1例が「致死ではないが早すぎる2本消費」の曖昧なケース、他は正当)
 と合わせて、gate自体(1部屋1本+致死例外)は健全だが、この「倒せば要らない」判定の欠落が
 残っていた無駄撃ちの実質的な原因だった。
+
+### LOUSE_PROGENITORのCurlUpPowerが未モデルで削り切れると誤判断していた(2026-08-15、7b5ecbb)
+
+`LouseProgenitor.AfterAddedToRoom`(decompile)は戦闘開始時に自身へ`CurlUpPower(14=CurlBlock)`を
+付与するが、これはroom入場フックで静的なstate machine JSONには出てこない(Torch Head Amalgamの
+`MinionPower`と同じ理由)。`CurlUpPower.AfterDamageReceived`/`AfterCardPlayed`の実体は「Powered
+攻撃カードを受けた後、そのカード全体(複数ヒットでも1回)が解決してから14 Unpowered blockを
+自身へ付与し、CurlUpPowerを消費する」——つまりプレイヤーの最初の有効打の直後に突然14ブロックが
+発生し、後続の攻撃をかなり吸収する。`combat.py`はこれを知らなかったため「このターンでこれだけ
+削れるはず」という見積もりが過大になり、討伐までの想定ターン数を見誤る一因になっていた。
+`initial_combat`でLOUSE_PROGENITORにCurlUpPower(14)を付与し、Attack系カードの全解決経路
+(AllEnemies/SwordBoomerang/Volley/単体)で、カード全体の解決後に一度だけ14 Unpowered blockを
+付与して消費する処理を追加した。
 
 ### 高tier未モデルカードは「取るのに使えない」死に札になる
 
