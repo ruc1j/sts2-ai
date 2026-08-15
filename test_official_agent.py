@@ -761,6 +761,25 @@ class OfficialAgentTest(unittest.TestCase):
         ]
         self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
 
+    def test_monster_dexterity_potions_do_not_stack_same_turn(self) -> None:
+        observation = {
+            "run": {"act": 98, "floor": 99, "room_type": "Monster"},
+            "turn": 4,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 70},
+            "enemies": [{"combat_id": 103, "id": "MONSTER.C", "hp": 30, "intents": [{"damage": 25, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+        observation["legal_actions"] = [
+            {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+            {"type": "end_turn"},
+        ]
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_does_not_use_vulnerable_potion_for_lethal_survival(self) -> None:
         observation = {
             "run": {"act": 991, "floor": 992, "room_type": "Monster"},

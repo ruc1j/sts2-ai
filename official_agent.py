@@ -282,6 +282,7 @@ def _intent_incoming(enemy: dict) -> int:
 
 
 _LAST_POTION_CONTEXT: tuple[object, ...] | None = None
+_LAST_POTION_ID: str | None = None
 _POTION_USED_ROOM: tuple[object, object] | None = None
 ROLLOUT_POTION_IDS = {
     POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK,
@@ -594,7 +595,7 @@ def choose_event(observation: dict) -> dict:
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
-    global _LAST_POTION_CONTEXT, _POTION_USED_ROOM
+    global _LAST_POTION_CONTEXT, _LAST_POTION_ID, _POTION_USED_ROOM
     if observation.get("phase") == "shop":
         return choose_shop(observation)
     if observation.get("phase") == "map":
@@ -622,6 +623,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     potion_room = _potion_room(observation)
     if potion_context is None:
         _LAST_POTION_CONTEXT = None
+        _LAST_POTION_ID = None
+    elif potion_context != _LAST_POTION_CONTEXT:
+        _LAST_POTION_ID = None
     if potion_room is None:
         _POTION_USED_ROOM = None
     potion_lethal = _potion_is_lethal_incoming(observation)
@@ -669,6 +673,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for combat_id in incoming_threats
     )
     direct_potion = choose_potion(observation, potions)
+    dexterity_potions = {"POTION.DEXTERITY_POTION", "POTION.SPEED_POTION"}
+    duplicate_dexterity_potion = (
+        potion_room is not None
+        and potion_context is not None
+        and potion_context == _LAST_POTION_CONTEXT
+        and _LAST_POTION_ID in dexterity_potions
+        and (direct_potion or {}).get("potion_id") in dexterity_potions
+    )
     if (
         (not rollout_enabled or potion_urgent or (direct_potion or {}).get("potion_id") not in ROLLOUT_POTION_IDS)
         and (not sandpit_critical or potion_urgent)
@@ -678,11 +690,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             or potion_urgent
         )
         and (not potion_already_used or potion_lethal)
+        and not duplicate_dexterity_potion
         and not all_incoming_threats_lethal
         and direct_potion
     ):
         if potion_context is not None:
             _LAST_POTION_CONTEXT = potion_context
+            _LAST_POTION_ID = direct_potion.get("potion_id")
         if potion_room is not None:
             _POTION_USED_ROOM = potion_room
         return direct_potion
@@ -803,6 +817,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 if selected.get("type") == "potion":
                     if potion_context is not None:
                         _LAST_POTION_CONTEXT = potion_context
+                        _LAST_POTION_ID = selected.get("potion_id")
                     if potion_room is not None:
                         _POTION_USED_ROOM = potion_room
                 return selected
