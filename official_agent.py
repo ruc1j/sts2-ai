@@ -645,7 +645,12 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         if any(power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))
     }
-    primary_ids = {combat_id for combat_id in enemy_by_id if combat_id not in minion_ids}
+    kin_follower_ids = {
+        enemy["combat_id"]
+        for enemy in observation.get("enemies", ())
+        if enemy.get("id") == "MONSTER.KIN_FOLLOWER"
+    }
+    primary_ids = {combat_id for combat_id in enemy_by_id if combat_id not in minion_ids} | kin_follower_ids
     primary_ids -= {
         enemy["combat_id"]
         for enemy in observation.get("enemies", ())
@@ -663,6 +668,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return max(
             focusable,
             key=lambda action: (
+                action["target_id"] in kin_follower_ids,
                 enemy_incoming.get(action["target_id"], 0),
                 -enemy_by_id[action["target_id"]].get("hp", 0),
                 _card_value(action, hand, "damage"),
