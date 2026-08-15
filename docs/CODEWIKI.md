@@ -278,8 +278,19 @@ Dexterityは乗らない(12のまま)。
   誤判断する要因) `PAPER_CUTS_POWER`(34、最大HP永続減少) `RAMPART_POWER`(26)
   `NemesisPower`/`IntangiblePower`(TEST_SUBJECT第3形態、観測0件)。
 - **ポーション**: `SKILL_POTION`/`ATTACK_POTION`/`POWER_POTION`/`COLORLESS_POTION`/`DISTILLED_CHAOS`/
-  `SNECKO_OIL`/`ENTROPIC_BREW` などランダムカード生成系は対象外のまま。
+  `SNECKO_OIL`はランダムカード生成系、`ENTROPIC_BREW`はランダムポーション生成系(空きポーション枠を
+  埋めるだけで戦闘効果なし)のため、いずれも`ROLLOUT_POTION_IDS`の対象外のまま。
   それ以外の決定的なポーションは順次 `ROLLOUT_POTION_IDS` へ追加すること。
+
+### DEXTERITY_POTIONがブロック札を引く前に消費される可能性(未検証・保留)
+
+`choose_potion`の`incoming >= hp`(真の致死)分岐では、`recovery`(defensive_buffsを含む)が
+`SWIFT_POTION`(3枚ドロー)より先に評価される。手札にブロック札が1枚も無い状態で
+`DEXTERITY_POTION`/`SPEED_POTION`のようなDex加算系を先に撃つと、その効果を活かすブロック札が
+無いまま1本を消費し、後から引く`SWIFT_POTION`の方が先に必要だった可能性がある。2026-08-15、
+F512086A1B(Act2 F10, BOWLBUG_NECTAR+SILK)でDEX→SWIFTの順で発生したが、このrunはその後も継続して
+おり実害(致死)は確認できていない。「ブロック札0枚でincoming>=hpに直面し、SWIFTで引いた札でも
+結局助からなかった」という実例が出るまでは推測で優先順位を変更しないこと。
 
 ### 高tier未モデルカードは「取るのに使えない」死に札になる
 
