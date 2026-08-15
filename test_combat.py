@@ -8,7 +8,7 @@ from combat import (
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
@@ -655,6 +655,31 @@ class CombatTest(unittest.TestCase):
         enemies = (Enemy("MONSTER.DUMMY", 40, "MOVE", ()), Enemy("MONSTER.DUMMY2", 40, "MOVE", ()))
         after = step(Combat(80, (THUNDERCLAP,), (), (), enemies), f"{THUNDERCLAP}@0", {}, random.Random(0))
         self.assertEqual([(e.hp, dict(e.powers)) for e in after.enemies], [(36, {"VulnerablePower": 1}), (36, {"VulnerablePower": 1})])
+
+    def test_artifact_cancels_one_enemy_debuff_and_is_consumed(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("ArtifactPower", 1),))
+        after = step(Combat(80, (TREMBLE, TREMBLE), (), (), (enemy,), energy=2), f"{TREMBLE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].powers, ())
+        after = step(after, f"{TREMBLE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].powers, (("VulnerablePower", 3),))
+
+    def test_artifact_cancels_dominate_strength_chain(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("ArtifactPower", 1), ("VulnerablePower", 2)))
+        after = step(Combat(80, (DOMINATE,), (), (), (enemy,)), f"{DOMINATE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].powers, (("VulnerablePower", 2),))
+        self.assertEqual(after.player_powers, ())
+
+    def test_artifact_follows_uppercut_weak_then_vulnerable_order(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("ArtifactPower", 1),))
+        after = step(Combat(80, (UPPERCUT,), (), (), (enemy,), energy=2), f"{UPPERCUT}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].powers, (("VulnerablePower", 1),))
+
+    def test_unsettling_lamp_doubles_uppercut_debuffs_once(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
+        combat = Combat(80, (UPPERCUT,), (), (), (enemy,), energy=2, player_relics=(RELIC_UNSETTLING_LAMP,))
+        after = step(combat, f"{UPPERCUT}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].powers, (("VulnerablePower", 2), ("WeakPower", 2)))
+        self.assertTrue(after.unsettling_lamp_used)
 
     def test_impervious_and_lift_grant_block_untargeted(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())

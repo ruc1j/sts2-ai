@@ -64,7 +64,7 @@ ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
-CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, UPPERCUT: 1}
+CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5}
 # Flat card draw with no other effect - a Skill that just replaces itself with more options.
 CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE: 1, OFFERING: 3}
 # Cards that require an enemy target because they deal damage (AllEnemies/RandomEnemy attacks
@@ -242,8 +242,17 @@ def _tick_down_power(items: tuple[tuple[str, int], ...], name: str) -> tuple[tup
     return _add_power(items, name, -1) if _power(items, name) > 0 else items
 
 
+def _apply_enemy_debuff(enemy: Enemy, power: str, amount: int) -> Enemy:
+    """Apply a visible debuff, consuming one Artifact stack when present."""
+    if amount <= 0:
+        return enemy
+    if _power(enemy.powers, "ArtifactPower"):
+        return replace(enemy, powers=_add_power(enemy.powers, "ArtifactPower", -1))
+    return replace(enemy, powers=_add_power(enemy.powers, power, amount))
+
+
 BLOCK_CARDS = set(CARD_BLOCK) | {SHRUG, RELAX, TAUNT, SECOND_WIND}
-DEBUFF_CARDS = set(CARD_VULNERABLE_TARGET) | {TAUNT, TREMBLE, THUNDERCLAP, DOMINATE, MOLTEN_FIST}
+DEBUFF_CARDS = set(CARD_VULNERABLE_TARGET) | {TAUNT, TREMBLE, THUNDERCLAP, DOMINATE, MOLTEN_FIST, UPPERCUT}
 
 
 def _sync_red_skull(combat: Combat) -> Combat:
@@ -1417,7 +1426,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         base = 7 + (1 if card_was_upgraded else 0)
         enemy = enemies[int(target)]
         vulnerable = 1 * (2 if lamp_double else 1)
-        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
+        enemies[int(target)] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
         combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         return replace(combat, enemies=tuple(enemies))
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
@@ -1450,7 +1459,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             for index, enemy in enumerate(enemies):
                 if enemy.alive:
                     vulnerable = 2 if lamp_double else 1
-                    enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
+                    enemies[index] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
         for before_index, (before_enemy, after_enemy) in enumerate(zip(before, enemies)):
             if before_enemy.model == "MONSTER.PHROG_PARASITE" and before_enemy.alive and not after_enemy.alive:
                 enemies += _spawn_wrigglers(data, rng)
@@ -1474,14 +1483,15 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == TREMBLE:
         enemy = enemies[int(target)]
         vulnerable = 6 if lamp_double else 3
-        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
+        enemies[int(target)] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
         return replace(combat, enemies=tuple(enemies))
     if card == DOMINATE:
         # Apply 1 Vulnerable, then gain Strength equal to the target's (post-apply) Vulnerable.
         enemy = enemies[int(target)]
         vulnerable = 2 if lamp_double else 1
-        enemies[int(target)] = replace(enemy, powers=_add_power(enemy.powers, "VulnerablePower", vulnerable))
-        gained = _power(enemies[int(target)].powers, "VulnerablePower")
+        artifact = _power(enemy.powers, "ArtifactPower")
+        enemies[int(target)] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
+        gained = 0 if artifact else _power(enemies[int(target)].powers, "VulnerablePower")
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     if card == VOLLEY:
         damage = 14 if card_was_upgraded else 10
@@ -1563,7 +1573,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card == MOLTEN_FIST and enemies[int(target)].alive:
         vulnerable = _power(enemy.powers, "VulnerablePower")
         if vulnerable:
-            enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable * (2 if lamp_double else 1)))
+            enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], "VulnerablePower", vulnerable * (2 if lamp_double else 1))
     if card == MANGLE and enemies[int(target)].alive:
         amount = 15 if card_was_upgraded else 10
         enemies[int(target)] = replace(
@@ -1588,13 +1598,15 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
     if card in CARD_VULNERABLE_TARGET:
         vulnerable = CARD_VULNERABLE_TARGET[card] * (2 if lamp_double else 1)
-        enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable))
+        enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], "VulnerablePower", vulnerable)
     if card == UPPERCUT:
-        if card_was_upgraded:
-            vulnerable = 1 * (2 if lamp_double else 1)
-            enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "VulnerablePower", vulnerable))
         weak = 1 + (1 if card_was_upgraded else 0)
-        enemies[int(target)] = replace(enemies[int(target)], powers=_add_power(enemies[int(target)].powers, "WeakPower", weak * (2 if lamp_double else 1)))
+        enemy = _apply_enemy_debuff(enemies[int(target)], "WeakPower", weak * (2 if lamp_double else 1))
+        vulnerable = 1 * (2 if lamp_double else 1)
+        enemy = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
+        if card_was_upgraded:
+            enemy = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
+        enemies[int(target)] = enemy
     if card == HEADBUTT and combat.discard_pile:
         discard = list(combat.discard_pile)
         selected = discard.pop(rng.randrange(len(discard)))
