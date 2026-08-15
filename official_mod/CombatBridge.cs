@@ -48,9 +48,7 @@ internal static class PotionChooseCardPatch
 
         var curseCards = cards.All(card => card.Id.ToString() is "CARD.MIND_ROT" or "CARD.SLOTH" or "CARD.DISINTEGRATION" or "CARD.WASTE_AWAY");
         CardModel? selected = null;
-        if (curseCards && cards.Any(card => card.Id.ToString() == "CARD.SLOTH"))
-            selected = cards.FirstOrDefault(card => card.Id.ToString() != "CARD.SLOTH");
-        else if (curseCards && cards.Any(card => card.Id.ToString() == "CARD.WASTE_AWAY") && cards.Any(card => card.Id.ToString() == "CARD.DISINTEGRATION"))
+        if (curseCards && cards.Any(card => card.Id.ToString() == "CARD.WASTE_AWAY") && cards.Any(card => card.Id.ToString() == "CARD.DISINTEGRATION"))
             selected = cards.First(card => card.Id.ToString() == "CARD.WASTE_AWAY");
         else if (context.LastInvolvedModel is PowerPotion)
             selected = cards.FirstOrDefault(card => card.EnergyCost.GetAmountToSpend() <= (card.Owner.PlayerCombatState?.Energy ?? 0));
