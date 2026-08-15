@@ -761,7 +761,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             # a negligible 24/408 dent), and "danger" here triggers on 2+ enemies alone, so it
             # can fire at full HP with nothing actually wrong yet. Unknown potions are only
             # considered below when HP or incoming damage is already dangerous.
-            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("FAIRY", "REVIV", "SNECKO", "FOUL")):
+            if potion_id and potion_id not in known and not any(marker in potion_id for marker in ("BOTTLED", "FAIRY", "REVIV", "SNECKO", "FOUL")):
                 return action
         return None
     danger = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
@@ -775,12 +775,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     run = observation.get("run") or {}
     boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
     boss_context = boss_slot or (boss_floor is not None and _number(run.get("floor")) >= boss_floor)
-    # A non-attacking boss turn is the worst time to gamble on random cards: keep Colorless
-    # for the next attack even when HP is already critical.  Otherwise reserve it through
-    # every non-lethal turn above the critical threshold as well.
-    reserve_boss_colorless = boss_context and (
-        incoming <= 0 or (hp > max(1, max_hp // 3) and incoming < hp)
-    )
+    # A non-lethal boss turn is the worst time to gamble on random cards: keep Colorless for
+    # the next attack cycle, even when HP is already critical.  Spend it only when the current
+    # incoming damage is actually lethal.
+    reserve_boss_colorless = boss_context and incoming < hp
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     fallback_boss = not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100
     boss_like = boss_slot or fallback_boss

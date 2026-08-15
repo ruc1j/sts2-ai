@@ -1098,6 +1098,18 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_saves_colorless_potion_on_a_critical_nonlethal_boss_attack(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 16},
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.COLORLESS_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 17, "max_hp": 80},
+            "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 149, "intents": [{"damage": 11, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_saves_colorless_potion_on_a_critical_nonattacking_boss_turn(self) -> None:
         observation = {
             "run": {"act": 1, "floor": 16},
@@ -1335,6 +1347,14 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"type": "potion", "potion_id": "POTION.FAIRY_IN_A_BOTTLE", "target_id": None}, {"type": "end_turn"}],
             "player": {"hp": 10, "max_hp": 80},
             "enemies": [],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_does_not_manually_use_bottled_potential_when_dangerous(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.BOTTLED_POTENTIAL", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 17, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "hp": 60, "intents": [{"damage": 20, "repeats": 1}]}],
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
