@@ -110,6 +110,24 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_rollout_cannot_choose_nonblocking_play_on_lethal_incoming(self) -> None:
+        observation = {
+            "seq": 1,
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 10, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack"},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill"},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 30, "intents": [{"damage": 10, "repeats": 1}]}],
+        }
+        with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=1)["card_id"], "CARD.DEFEND_IRONCLAD")
+
     def test_map_route_prefers_boss_reachable_path(self) -> None:
         # The col-1 branch dead-ends at a Treasure, so the planner follows the col-0 branch to the boss.
         observation = {

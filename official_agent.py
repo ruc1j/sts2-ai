@@ -640,10 +640,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
+            # The rollout can miss a live enemy intent when its move/power is only partially
+            # modeled. Never spend the last HP on a non-blocking, non-lethal play.
+            rollout_is_unsafe = incoming >= hp and _card_value(selected, hand, "block") <= 0 and not is_lethal(selected)
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not (_is_self_damage(selected, hand) and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
+            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
                 return selected
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
