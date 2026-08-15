@@ -253,11 +253,27 @@ Dexterityは乗らない(12のまま)。
 - **カードの定数**: `CARD_NAMES`の91枚全てについて、デコンパイルの`CanonicalVars`と`CARD_COST`/`CARD_DAMAGE`/`CARD_BLOCK`を突き合わせて不一致0件を確認済み(コスト84件・ダメージ30件・ブロック13件の比較)。
 - **敵データ**: `data/enemies_*.json`の102種に対し、trace中に出現した62種は全て定義済みで欠落なし。
 
-### 残っている未モデル(監査時点)
+### 残っている未モデル(2026-08-15セッション終了時点)
 
-- **カード27種**(取得実績のあるもの): `AGGRESSION`(取得25) `CRIMSON_MANTLE`(17) `CASCADE`(17) `HELLRAISER`(12) `SWORD_BOOMERANG`(11) `DARK_EMBRACE`(10) `STOKE`(9) `FORGOTTEN_RITUAL`(9) ほか。`STOKE`/`CASCADE`/`MAD_SCIENCE`/`MAUL`はいずれもランダムカード生成を伴い、このモデルと相性が悪いため保留継続。
+同日中に実装済みとなったもの: カード `UNMOVABLE` `EXPECT_A_FIGHT` `BLOOD_WALL` `AGGRESSION` `Armaments`、
+レリック `PAELS_BLOOD` `PAELS_FLESH` `PAELS_TEARS`、敵パワー `ARTIFACT_POWER` `BufferPower`、
+および `DexterityPower` の適用漏れとプレイヤー側 `ThornsPower`。
+ポーションは12種を探索へ接続済み(前掲)。
+
+未着手として残っているもの:
+
+- **カード**: `CRIMSON_MANTLE`(取得17) `HELLRAISER`(12) `SWORD_BOOMERANG`(11) `DARK_EMBRACE`(10)
+  `FORGOTTEN_RITUAL`(9) `THRASH`(4) ほか。
+  `STOKE`/`CASCADE`/`MAD_SCIENCE`/`MAUL`はいずれもランダムカード生成を伴い、このモデルと相性が悪いため保留継続。
 - **レリック2種**: `PAELS_LEGION`(取得14・pet系でblockトリガ) `TOASTY_MITTENS`(5・turn1の山札操作+Strength)。
-- **敵パワー**: `ARTIFACT_POWER`(観測783、CHOMPER amount=2 / CUBEX_CONSTRUCT / PUNCH_CONSTRUCT。デバフを1スタックにつき1回丸ごと打ち消すため、Bash等のVulnerableを前提にした自軍火力を過大評価している) `IMBALANCED_POWER`(751、BOWLBUG_ROCK。攻撃が完全ブロックされると自分がStunするが`combat.py`にstun概念が無い) `BURROWED_POWER`(532) `SWIPE_POWER`(772、主に報酬側) `HATCH_POWER`(150) `CURL_UP_POWER`(91、LOUSE_PROGENITOR amount=**14**と大きい) `PAPER_CUTS_POWER`(34、最大HP永続減少) `RAMPART_POWER`(26)。
+- **敵パワー**: `IMBALANCED_POWER`(観測751、BOWLBUG_ROCK。攻撃が完全ブロックされると自分がStunするが
+  `combat.py`にstun概念が無く要設計) `BURROWED_POWER`(532) `SWIPE_POWER`(772、主に報酬側)
+  `HATCH_POWER`(150) `CURL_UP_POWER`(91、LOUSE_PROGENITOR amount=**14**と大きく、この敵を削り切れると
+  誤判断する要因) `PAPER_CUTS_POWER`(34、最大HP永続減少) `RAMPART_POWER`(26)
+  `NemesisPower`/`IntangiblePower`(TEST_SUBJECT第3形態、観測0件)。
+- **ポーション**: `SKILL_POTION`/`ATTACK_POTION`/`POWER_POTION`/`COLORLESS_POTION`/`DISTILLED_CHAOS`/
+  `SNECKO_OIL`/`ENTROPIC_BREW` などランダムカード生成系は対象外のまま。
+  それ以外の決定的なポーションは順次 `ROLLOUT_POTION_IDS` へ追加すること。
 
 ### 高tier未モデルカードは「取るのに使えない」死に札になる
 
