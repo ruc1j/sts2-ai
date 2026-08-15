@@ -1098,7 +1098,7 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
-    def test_uses_colorless_potion_at_critical_boss_hp(self) -> None:
+    def test_saves_colorless_potion_on_a_critical_nonattacking_boss_turn(self) -> None:
         observation = {
             "run": {"act": 1, "floor": 16},
             "legal_actions": [
@@ -1108,7 +1108,7 @@ class OfficialAgentTest(unittest.TestCase):
             "player": {"hp": 20, "max_hp": 80},
             "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 157, "intents": []}],
         }
-        self.assertEqual(choose(observation)["potion_id"], "POTION.COLORLESS_POTION")
+        self.assertEqual(choose(observation)["type"], "end_turn")
 
     def test_uses_major_potion_against_known_boss(self) -> None:
         observation = {

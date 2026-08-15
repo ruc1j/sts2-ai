@@ -775,7 +775,12 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     run = observation.get("run") or {}
     boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
     boss_context = boss_slot or (boss_floor is not None and _number(run.get("floor")) >= boss_floor)
-    reserve_boss_colorless = boss_context and hp > max(1, max_hp // 3) and incoming < hp
+    # A non-attacking boss turn is the worst time to gamble on random cards: keep Colorless
+    # for the next attack even when HP is already critical.  Otherwise reserve it through
+    # every non-lethal turn above the critical threshold as well.
+    reserve_boss_colorless = boss_context and (
+        incoming <= 0 or (hp > max(1, max_hp // 3) and incoming < hp)
+    )
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     fallback_boss = not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100
     boss_like = boss_slot or fallback_boss
