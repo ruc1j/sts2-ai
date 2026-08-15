@@ -937,6 +937,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     }
     known = recovery | blocking | debuffs | offensive | economy | {
         "POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION",
+        "POTION.FORTIFIER",
         "POTION.POTION_SHAPED_ROCK", "POTION.BLESSING_OF_THE_FORGE",
     }
     def unknown_manual() -> dict | None:
