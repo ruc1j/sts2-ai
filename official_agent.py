@@ -688,6 +688,30 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
         return max(aoe, key=lambda action: _card_value(action, hand, "damage"))
 
+    # Queen's Torch Head Amalgam is marked as a secondary minion, but it is the only enemy
+    # dealing damage while the Queen buffs/defends.  Focus it before the generic minion rule
+    # hides it from target selection; lethal attacks and the AOE branch above still win first.
+    queen_present = any(enemy.get("id") == "MONSTER.QUEEN" for enemy in observation.get("enemies", ()))
+    queen_minion_ids = {
+        enemy["combat_id"]
+        for enemy in observation.get("enemies", ())
+        if queen_present and enemy.get("id") == "MONSTER.TORCH_HEAD_AMALGAM"
+    }
+    queen_focusable = [
+        action
+        for action in cards
+        if action.get("target_id") in queen_minion_ids
+        and _card_value(action, hand, "damage") > 0
+        and not _is_self_damage(action, hand)
+    ]
+    if queen_focusable and not lethal:
+        urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
+        defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
+        remaining = max(0, incoming - _number(player.get("block")))
+        best_block = max((_card_value(action, hand, "block") for action in defenses), default=0)
+        if not urgent or best_block < remaining:
+            return max(queen_focusable, key=lambda action: _card_value(action, hand, "damage"))
+
     # In multi-primary fights, spreading single-target damage leaves every attacker alive.
     # Keep lethal and urgent-defense decisions above this light tie-break, then focus the
     # next attack on the enemy with the largest incoming hit (lowest HP breaks ties).
