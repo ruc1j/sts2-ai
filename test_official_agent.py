@@ -815,6 +815,25 @@ class OfficialAgentTest(unittest.TestCase):
         ]
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_saves_second_potion_in_same_monster_room_across_turns(self) -> None:
+        observation = {
+            "run": {"act": 77, "floor": 88, "room_type": "Monster"},
+            "turn": 3,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 26, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 40, "intents": [{"damage": 10, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SPEED_POTION")
+        observation["turn"] = 4
+        observation["legal_actions"] = [
+            {"type": "potion", "potion_id": "POTION.POWER_POTION", "target_id": None},
+            {"type": "end_turn"},
+        ]
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_low_hp_multiple_enemies_uses_swift_potion(self) -> None:
         observation = {
             "legal_actions": [

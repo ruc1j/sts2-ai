@@ -268,6 +268,7 @@ def _intent_incoming(enemy: dict) -> int:
 
 
 _LAST_POTION_CONTEXT: tuple[object, ...] | None = None
+_POTION_USED_ROOM: tuple[object, object] | None = None
 
 
 def _potion_context(observation: dict) -> tuple[object, ...] | None:
@@ -277,6 +278,13 @@ def _potion_context(observation: dict) -> tuple[object, ...] | None:
     if not isinstance(run, dict) or run.get("act") is None or run.get("floor") is None or turn is None or not enemies:
         return None
     return (run["act"], run["floor"], turn, enemies)
+
+
+def _potion_room(observation: dict) -> tuple[object, object] | None:
+    run = observation.get("run")
+    if not isinstance(run, dict) or run.get("room_type") != "Monster" or run.get("act") is None or run.get("floor") is None:
+        return None
+    return (run["act"], run["floor"])
 
 
 def _potion_is_lethal_incoming(observation: dict) -> bool:
@@ -568,7 +576,7 @@ def choose_event(observation: dict) -> dict:
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
-    global _LAST_POTION_CONTEXT
+    global _LAST_POTION_CONTEXT, _POTION_USED_ROOM
     if observation.get("phase") == "shop":
         return choose_shop(observation)
     if observation.get("phase") == "map":
@@ -593,8 +601,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     potion_context = _potion_context(observation)
+    potion_room = _potion_room(observation)
     if potion_context is None:
         _LAST_POTION_CONTEXT = None
+    if potion_room is None:
+        _POTION_USED_ROOM = None
     potion_lethal = _potion_is_lethal_incoming(observation)
     potion_hp = _number((observation.get("player") or {}).get("hp"))
     potion_max_hp = _number((observation.get("player") or {}).get("max_hp"), potion_hp)
@@ -602,6 +613,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     potion_urgent = potion_lethal or (
         sandpit_critical and (potion_hp <= max(1, potion_max_hp // 3) or potion_threatening)
     )
+    potion_already_used = potion_room is not None and potion_room == _POTION_USED_ROOM
     if (
         (not sandpit_critical or potion_urgent)
         and (
@@ -609,10 +621,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             or potion_context != _LAST_POTION_CONTEXT
             or potion_urgent
         )
+        and (not potion_already_used or potion_lethal)
         and (potion := choose_potion(observation, potions))
     ):
         if potion_context is not None:
             _LAST_POTION_CONTEXT = potion_context
+        if potion_room is not None:
+            _POTION_USED_ROOM = potion_room
         return potion
     if sandpit_critical and escape:
         return escape
