@@ -775,7 +775,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     run = observation.get("run") or {}
     boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
     boss_context = boss_slot or (boss_floor is not None and _number(run.get("floor")) >= boss_floor)
-    reserve_boss_colorless = boss_context and hp > max(1, max_hp // 3) and incoming < max(1, hp // 2)
+    reserve_boss_colorless = boss_context and hp > max(1, max_hp // 3) and incoming < hp
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     fallback_boss = not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100
     boss_like = boss_slot or fallback_boss
@@ -788,6 +788,9 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     )
     if max_enemy_hp >= 100 and major_allowed and ((boss_context and hp <= max(1, max_hp // 3)) or (fallback_boss and incoming > 0)):
         offensive_now = offensive_now | {"POTION.SKILL_POTION"}
+    # On a long boss, keep Colorless through every non-lethal turn above critical HP, including
+    # the early incoming>=HP/2 branch; the next attack cycle can be worse than the current hit.
+    offensive_safe = offensive_now - ({"POTION.COLORLESS_POTION"} if reserve_boss_colorless else set())
 
     def use_major_aware(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         allowed = ids if major_allowed else ids - RESERVED_COMBAT_POTIONS
@@ -799,7 +802,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     boss_skill = use_major_aware({"POTION.SKILL_POTION"}) if max_enemy_hp >= 100 and (boss_context or fallback_boss) else None
     if incoming >= hp:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or boss_skill or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware({"POTION.LUCKY_TONIC", "POTION.GHOST_IN_A_JAR"} | blocking) or use(debuffs, enemy_damage) or boss_skill or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or energy or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2 and (len(enemy_hp) >= 2 or incoming >= hp // 2):
         if len(enemy_hp) >= 2:
             explosive = use({"POTION.EXPLOSIVE_AMPOULE"})
@@ -809,15 +812,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             energy = use({"POTION.ENERGY_POTION"})
             if energy:
                 return energy
-        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if hp <= max_hp // 2:
         if boss_context and boss_skill and hp <= max(1, max_hp // 3):
             return boss_skill
-        low_hp_offensive = offensive_now - ({"POTION.COLORLESS_POTION"} if reserve_boss_colorless else set())
-        return use_major_aware(recovery) or boss_shackling or use_major_aware(low_hp_offensive, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
-        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_now, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+        return use_major_aware(blocking) or use(debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     if max_enemy_hp >= 100:
         # Boss-length fights: ShacklingPotionPower subclasses TemporaryStrengthPower, whose
         # AfterSideTurnEnd removes the -7 Strength (and itself) once the AFFECTED CREATURE's own
@@ -834,15 +836,11 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # Skill Potion is also worth firing on any attacking boss turn: unlike a regular fight,
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
         # turn to spend the generated block card.
-        boss_offensive = offensive_now | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
-        if boss_context and hp > max(1, (max_hp * 2) // 3):
-            boss_offensive -= {"POTION.COLORLESS_POTION"}
+        boss_offensive = offensive_safe | ({"POTION.SKILL_POTION"} if incoming > 0 else set())
         # Colorless is a scarce emergency hand: on a long boss, spending it at a merely
         # moderate hit leaves no answer for the next attack cycle (Knowledge Demon killed the
         # run after Colorless at 39/80 HP and incoming 11). Keep it until HP is critical or the
-        # current hit is already half the remaining HP.
-        if reserve_boss_colorless:
-            boss_offensive -= {"POTION.COLORLESS_POTION"}
+        # current hit is lethal.
         return shackling or fysh or binding or use_major_aware(boss_offensive) or use({"POTION.VULNERABLE_POTION", "POTION.POISON_POTION", "POTION.FIRE_POTION"}, enemy_hp) or (unknown_manual() if danger else None)
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
