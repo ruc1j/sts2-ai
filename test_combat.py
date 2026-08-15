@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -103,6 +103,51 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (DEFEND,), (), (), (enemy,), energy=1, player_relics=(RELIC_BELT_BUCKLE,))
         after = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
         self.assertEqual((_power(after.player_powers, "DexterityPower"), after.player_block), (2, 7))
+
+    def test_ship_in_a_bottle_grants_block_now_and_next_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (), (), (), (enemy,), player_potions=(POTION_SHIP,))
+        after_potion = step(combat, f"potion:{POTION_SHIP}", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_potion.player_block, _power(after_potion.player_powers, "BlockNextTurnPower")), (10, 10))
+        after_turn = step(after_potion, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.player_block, _power(after_turn.player_powers, "BlockNextTurnPower")), (10, 0))
+
+    def test_explosive_ampoule_hits_all_enemies_unpowered(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()))
+        combat = Combat(80, (), (), (), enemies, player_potions=(POTION_EXPLOSIVE,))
+        after = step(combat, f"potion:{POTION_EXPLOSIVE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual([enemy.hp for enemy in after.enemies], [10, 10])
+
+    def test_fixed_potions_apply_their_observed_player_effects(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        cases = (
+            (POTION_STRENGTH, "StrengthPower", 2),
+            (POTION_DEXTERITY, "DexterityPower", 2),
+            (POTION_FYSH, "StrengthPower", 1),
+        )
+        for potion, power, amount in cases:
+            after = step(Combat(80, (), (), (), (enemy,), player_potions=(potion,)), f"potion:{potion}", DUMMY_DATA, random.Random(0))
+            self.assertEqual(_power(after.player_powers, power), amount)
+        fysh = step(Combat(80, (), (), (), (enemy,), player_potions=(POTION_FYSH,)), f"potion:{POTION_FYSH}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(fysh.player_powers, "DexterityPower"), 1)
+
+    def test_energy_blood_heart_and_bronze_potions(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        energy = step(Combat(80, (), (), (), (enemy,), energy=1, player_potions=(POTION_ENERGY,)), f"potion:{POTION_ENERGY}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(energy.energy, 3)
+        blood = step(Combat(40, (), (), (), (enemy,), player_potions=(POTION_BLOOD,)), f"potion:{POTION_BLOOD}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(blood.player_hp, 56)
+        heart = step(Combat(80, (), (), (), (enemy,), player_potions=(POTION_HEART,)), f"potion:{POTION_HEART}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(heart.player_powers, "PlatingPower"), 7)
+        bronze = step(Combat(80, (), (), (), (enemy,), player_potions=(POTION_BRONZE,)), f"potion:{POTION_BRONZE}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(bronze.player_powers, "ThornsPower"), 3)
+
+    def test_liquid_bronze_reflects_powered_enemy_attacks(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "HIT_MOVE", ())
+        combat = Combat(80, (), (), (), (enemy,), player_potions=(POTION_BRONZE,))
+        after_potion = step(combat, f"potion:{POTION_BRONZE}", ATTACKING_DUMMY_DATA, random.Random(0))
+        after_turn = step(after_potion, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.player_hp, after_turn.enemies[0].hp), (70, 17))
 
     def test_buffer_prevents_one_hp_loss_event(self) -> None:
         combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),), player_powers=(("BufferPower", 1),))

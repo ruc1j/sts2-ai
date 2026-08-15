@@ -8,7 +8,11 @@ import time
 import traceback
 from dataclasses import replace
 
-from combat import Combat, Enemy, POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK, _resolve_move, search
+from combat import (
+    Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
+    POTION_STRENGTH, _resolve_move, search,
+)
 
 
 CARD_NAMES = {
@@ -269,7 +273,10 @@ def _intent_incoming(enemy: dict) -> int:
 
 _LAST_POTION_CONTEXT: tuple[object, ...] | None = None
 _POTION_USED_ROOM: tuple[object, object] | None = None
-ROLLOUT_POTION_IDS = {POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK}
+ROLLOUT_POTION_IDS = {
+    POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK,
+    POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE,
+}
 
 
 def _potion_context(observation: dict) -> tuple[object, ...] | None:
@@ -837,13 +844,24 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     run = observation.get("run") or {}
     room_type = str(run.get("room_type") or "")
     # Ordinary Monster rooms are the most common source of potion depletion. Preserve potions
-    # unless the hit is lethal, HP is critical, or the incoming damage is already overwhelming;
-    # Elite/Boss rooms keep the full policy below.
-    if room_type == "Monster" and not (
-        incoming >= hp
-        or hp <= max(1, max_hp // 3)
-        or incoming >= max(1, (hp * 3 + 3) // 4)
-    ):
+    # unless the effective hit is lethal, or HP is critical and the next hit is substantial;
+    # Elite/Boss rooms keep the full policy below.  Do not spend a potion merely because a
+    # low-HP monster has a harmless intent or because existing block already covers the hit.
+    effective_incoming = max(0, incoming - block)
+    if any(power.get("id") == "POWER.BUFFER_POWER" and _number(power.get("amount")) > 0 for power in player.get("powers", ())):
+        effective_incoming = max(
+            0,
+            effective_incoming
+            - max(
+                (max(0, _number(intent.get("damage"))) for enemy in observation.get("enemies", ()) for intent in enemy.get("intents") or ()),
+                default=0,
+            ),
+        )
+    monster_emergency = effective_incoming >= hp or (
+        hp <= max(1, max_hp // 3)
+        and effective_incoming >= max(1, (hp + 1) // 2)
+    )
+    if room_type == "Monster" and not monster_emergency:
         return None
     lucky = use({"POTION.LUCKY_TONIC"})
     if lucky and incoming > 0 and hp - incoming <= max_hp // 4:

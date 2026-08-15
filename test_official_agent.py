@@ -824,7 +824,7 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
             "player": {"hp": 26, "max_hp": 80},
-            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 40, "intents": [{"damage": 10, "repeats": 1}]}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 40, "intents": [{"damage": 14, "repeats": 1}]}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.SPEED_POTION")
         observation["turn"] = 4
@@ -832,6 +832,45 @@ class OfficialAgentTest(unittest.TestCase):
             {"type": "potion", "potion_id": "POTION.POWER_POTION", "target_id": None},
             {"type": "end_turn"},
         ]
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_saves_potion_for_nonlethal_monster_threat(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 5, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.BLOCK_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 40, "max_hp": 80, "block": 0},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 100, "intents": [{"damage": 30, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_saves_potion_when_existing_block_covers_monster_hit(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 5, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.BLOCK_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80, "block": 12},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 100, "intents": [{"damage": 10, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_saves_potion_when_buffer_covers_monster_hit(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 6, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.BLOCK_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80, "block": 0, "powers": [{"id": "POWER.BUFFER_POWER", "amount": 1}]},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 100, "intents": [{"damage": 10, "repeats": 1}]}],
+        }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
     def test_low_hp_multiple_enemies_uses_swift_potion(self) -> None:
@@ -2795,7 +2834,7 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["potion_id"], POTION_BLOCK)
         self.assertEqual(searched.call_args.args[0].player_potions, (POTION_BLOCK,))
 
-    def test_rollout_keeps_non_modeled_fysh_oil_direct_path(self) -> None:
+    def test_rollout_can_conserve_modeled_fysh_oil(self) -> None:
         data = {"monsters": [{
             "id": "MONSTER.DUMMY",
             "values": {},
@@ -2816,7 +2855,10 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation, data, 1)["potion_id"], "POTION.FYSH_OIL")
+        self.assertEqual(choose(observation)["potion_id"], "POTION.FYSH_OIL")
+        with patch("official_agent.search", return_value=(("End turn", 0.0),)) as searched:
+            self.assertEqual(choose(observation, data, 1)["type"], "end_turn")
+        self.assertEqual(searched.call_args.args[0].player_potions, ("POTION.FYSH_OIL",))
 
     def test_rollout_ignores_relic_summoned_player_pets(self) -> None:
         # Pael's Legion and Byrdpip are relic-summoned player pets (not real enemies, no

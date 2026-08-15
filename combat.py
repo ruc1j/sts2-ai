@@ -28,7 +28,9 @@ PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT = "Armaments", "Unmovable", "Expect a Fight"
-POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.FIRE_POTION", "POTION.POTION_SHAPED_ROCK"
+POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
+POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
+POTION_BLOOD, POTION_HEART, POTION_BRONZE = "POTION.BLOOD_POTION", "POTION.HEART_OF_IRON", "POTION.LIQUID_BRONZE"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -639,9 +641,9 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         else:
             actions.extend(f"{card}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     for potion in dict.fromkeys(combat.player_potions):
-        if potion == POTION_BLOCK:
+        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE}:
             actions.append(f"potion:{potion}")
-        elif potion in {POTION_FIRE, POTION_SHAPED_ROCK}:
+        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK}:
             actions.extend(
                 f"potion:{potion}@{index}"
                 for index, enemy in enumerate(combat.enemies)
@@ -796,6 +798,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 player_block -= blocked
                 unblocked = damage - blocked
                 damage_events.append(unblocked)
+                if _power(player_powers, "ThornsPower") and enemy.alive:
+                    enemy = _damage_enemy(enemy, _power(player_powers, "ThornsPower"), powered=False)
             # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
             # once per attack (approximated the same way as the symmetric enemy-side ThornsPower,
             # not per individual repeat hit).
@@ -967,8 +971,35 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         combat = _sync_belt_buckle(replace(combat, player_potions=tuple(potions)))
         if potion == POTION_BLOCK:
             return _grant_block(combat, 12, apply_frail=False, powered=False)
+        if potion == POTION_SHIP:
+            return replace(
+                _grant_block(combat, 10, apply_frail=False, powered=False),
+                player_powers=_add_power(combat.player_powers, "BlockNextTurnPower", 10),
+            )
+        if potion == POTION_STRENGTH:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "StrengthPower", 2))
+        if potion == POTION_DEXTERITY:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "DexterityPower", 2))
+        if potion == POTION_FYSH:
+            return replace(
+                combat,
+                player_powers=_add_power(_add_power(combat.player_powers, "StrengthPower", 1), "DexterityPower", 1),
+            )
+        if potion == POTION_ENERGY:
+            if _power(combat.player_powers, "NoEnergyGainPower"):
+                return combat
+            return replace(combat, energy=combat.energy + 2)
+        if potion == POTION_BLOOD:
+            return replace(combat, player_hp=min(combat.player_max_hp, combat.player_hp + combat.player_max_hp * 20 // 100))
+        if potion == POTION_HEART:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 7))
+        if potion == POTION_BRONZE:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "ThornsPower", 3))
         enemies = list(combat.enemies)
-        enemies[int(target)] = _damage_enemy(enemies[int(target)], 20 if potion == POTION_FIRE else 15, powered=False)
+        if potion == POTION_EXPLOSIVE:
+            enemies = [_damage_enemy(enemy, 10, powered=False) if enemy.alive else enemy for enemy in enemies]
+        else:
+            enemies[int(target)] = _damage_enemy(enemies[int(target)], 20 if potion == POTION_FIRE else 15, powered=False)
         return replace(combat, enemies=tuple(enemies))
     if action == END_TURN:
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
@@ -1074,6 +1105,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
         # upcoming turn). new_turn is the turn number the player is about to begin.
         new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
+        block_next = _power(player_powers, "BlockNextTurnPower")
+        if block_next:
+            extra_block += block_next
+            player_powers = _add_power(player_powers, "BlockNextTurnPower", -block_next)
         if RELIC_BRIMSTONE in relics:
             player_powers = _add_power(player_powers, "StrengthPower", 2)
             enemies = [replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1)) if enemy.alive else enemy for enemy in enemies]
