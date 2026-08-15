@@ -1552,13 +1552,19 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.WEAK_POTION")
 
-    def test_uses_entropic_brew_when_low(self) -> None:
+    def test_does_not_manually_use_entropic_brew_when_low(self) -> None:
+        # EntropicBrew (decompiled) only refills open potion slots with new random potions - it
+        # has no heal/block/damage effect, so unlike a real recovery potion it does nothing to
+        # help survive a low-HP turn and must not be burned reactively as one.
         observation = {
-            "legal_actions": [{"type": "potion", "potion_id": "POTION.ENTROPIC_BREW", "target_id": None}],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.ENTROPIC_BREW", "target_id": None},
+                {"type": "end_turn"},
+            ],
             "player": {"hp": 30, "max_hp": 80},
             "enemies": [],
         }
-        self.assertEqual(choose(observation)["potion_id"], "POTION.ENTROPIC_BREW")
+        self.assertEqual(choose(observation)["type"], "end_turn")
 
     def test_does_not_manually_use_fairy(self) -> None:
         observation = {

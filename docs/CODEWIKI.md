@@ -212,8 +212,14 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 `IsPoweredAttack()`のチェックを持つ)。一方`HardToKillPower`(ModifyDamageCap)と`SlipperyPower`
 (ModifyHpLostAfterOsty)はチェックを持たず全ダメージに効くので適用する。この使い分けのため
 `_damage_enemy`に`powered`フラグがある。残りのdeterministicなポーションは順次追加すること。
-`SKILL_POTION`/`ATTACK_POTION`/`POWER_POTION`/`COLORLESS_POTION`/`DISTILLED_CHAOS`/`SNECKO_OIL`/
-`ENTROPIC_BREW`などランダムなカードを生成するものは、MAD_SCIENCE/CASCADEと同じ理由で対象外。
+`SKILL_POTION`/`ATTACK_POTION`/`POWER_POTION`/`COLORLESS_POTION`/`DISTILLED_CHAOS`/`SNECKO_OIL`は
+ランダムなカードを生成するため、MAD_SCIENCE/CASCADEと同じ理由で対象外。
+`ENTROPIC_BREW`はカードではなく**空いたポーション枠を新規ランダムポーションで埋める**効果
+(decompile確認、カード生成ではない)。対象外な理由も同じくランダム性だが、それとは別に
+`choose_potion`の分類ミスが実害を出していた: `recovery`(healing/defensive_buffs)に含めていたため
+戦闘中の緊急分岐で選ばれてしまい、そのターンの生存には何も寄与しないまま1枠を消費し、直後に
+本当に必要な防御ポーションが2本目として使われる、という「無駄撃ちの二本消費」に見える挙動を
+引き起こしていた(2026-08-15、`economy`へ再分類して修正)。
 
 ### DexterityPowerが蓄積されるだけで一度も読まれていなかった
 

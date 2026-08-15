@@ -888,7 +888,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         "POTION.DEXTERITY_POTION", "POTION.SPEED_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION",
         "POTION.LIQUID_BRONZE", "POTION.FYSH_OIL", "POTION.HEART_OF_IRON",
     }
-    recovery = healing | defensive_buffs | {"POTION.ENTROPIC_BREW"}
+    recovery = healing | defensive_buffs
     # Shackling is deliberately excluded from `debuffs` below: its -7 Strength lasts the whole
     # fight, so it is reserved for the >=100 HP boss-length branch further down rather than
     # spent reactively on any dangerous *regular* fight (e.g. a Wriggler swarm) - sim13 burned
@@ -900,9 +900,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         "POTION.EXPLOSIVE_AMPOULE", "POTION.FIRE_POTION", "POTION.FLEX_POTION", "POTION.POWER_POTION",
         "POTION.SKILL_POTION", "POTION.STRENGTH_POTION", "POTION.GIGANTIFICATION",
     }
+    # EntropicBrew (decompiled): refills open potion slots with new random potions - it has no
+    # combat effect of its own (no heal, no block, no damage), so it belongs with the other
+    # non-defensive economy potions, not with `recovery`. Miscategorizing it as recovery let it
+    # fire in emergency branches where it does nothing to survive the current turn, burning a
+    # potion slot alongside the real defensive potion that followed it.
     economy = {
         "POTION.CLARITY", "POTION.STABLE_SERUM", "POTION.RADIANT_TINCTURE", "POTION.LIQUID_MEMORIES",
-        "POTION.GAMBLERS_BREW", "POTION.OROBIC_ACID", "POTION.FRUIT_JUICE",
+        "POTION.GAMBLERS_BREW", "POTION.OROBIC_ACID", "POTION.FRUIT_JUICE", "POTION.ENTROPIC_BREW",
     }
     known = recovery | blocking | debuffs | offensive | economy | {
         "POTION.ENERGY_POTION", "POTION.SWIFT_POTION", "POTION.LUCKY_TONIC", "POTION.SHACKLING_POTION",
