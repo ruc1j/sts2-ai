@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, POWER_NAMES, RELIC_SCORES, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, POWER_NAMES, POTION_BLOCK, RELIC_SCORES, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 from combat import BURN, DAZED, INFECTION, TOXIC
 
 
@@ -2744,6 +2744,79 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation, data, 200)
         self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
         self.assertIn("simulations", action)
+
+    def test_rollout_keeps_potions_empty_when_no_potion_is_allowed(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0, "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": ""}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.search", return_value=[("End turn", 0.0)]) as searched:
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(searched.call_args.args[0].player_potions, ())
+        self.assertEqual(_rollout_allowed_potions(observation, observation["legal_actions"]), ())
+
+    def test_rollout_can_choose_an_allowed_block_potion(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "run": {"act": 77, "floor": 99, "room_type": "Monster"},
+            "turn": 2,
+            "player": {"hp": 20, "max_hp": 80, "block": 0, "energy": 3, "powers": {}, "relics": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "potions": [{"id": POTION_BLOCK}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0, "powers": [], "intents": [{"damage": 10, "repeats": 1}], "move": "IDLE_MOVE", "history": [], "slot": ""}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "potion", "potion_id": POTION_BLOCK, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.search", return_value=(
+            ("potion:" + POTION_BLOCK, 1.0),
+        )) as searched:
+            action = choose(observation, data, 1)
+        self.assertEqual(action["potion_id"], POTION_BLOCK)
+        self.assertEqual(searched.call_args.args[0].player_potions, (POTION_BLOCK,))
+
+    def test_rollout_keeps_non_modeled_fysh_oil_direct_path(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "run": {"act": 1, "floor": 16, "room_type": "Boss"},
+            "turn": 2,
+            "player": {"hp": 45, "max_hp": 80, "block": 0, "energy": 3, "powers": [], "relics": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "potions": [{"id": "POTION.FYSH_OIL"}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 123, "max_hp": 123, "block": 0, "powers": [], "intents": [{"damage": 15, "repeats": 1}], "move": "IDLE_MOVE", "history": [], "slot": ""}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "potion", "potion_id": "POTION.FYSH_OIL", "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation, data, 1)["potion_id"], "POTION.FYSH_OIL")
 
     def test_rollout_ignores_relic_summoned_player_pets(self) -> None:
         # Pael's Legion and Byrdpip are relic-summoned player pets (not real enemies, no

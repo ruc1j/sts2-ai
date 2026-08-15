@@ -8,7 +8,7 @@ import time
 import traceback
 from dataclasses import replace
 
-from combat import Combat, Enemy, _resolve_move, search
+from combat import Combat, Enemy, POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK, _resolve_move, search
 
 
 CARD_NAMES = {
@@ -269,6 +269,7 @@ def _intent_incoming(enemy: dict) -> int:
 
 _LAST_POTION_CONTEXT: tuple[object, ...] | None = None
 _POTION_USED_ROOM: tuple[object, object] | None = None
+ROLLOUT_POTION_IDS = {POTION_BLOCK, POTION_FIRE, POTION_SHAPED_ROCK}
 
 
 def _potion_context(observation: dict) -> tuple[object, ...] | None:
@@ -614,21 +615,24 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         sandpit_critical and (potion_hp <= max(1, potion_max_hp // 3) or potion_threatening)
     )
     potion_already_used = potion_room is not None and potion_room == _POTION_USED_ROOM
+    rollout_enabled = bool(enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards))
+    direct_potion = choose_potion(observation, potions)
     if (
-        (not sandpit_critical or potion_urgent)
+        (not rollout_enabled or potion_urgent or (direct_potion or {}).get("potion_id") not in ROLLOUT_POTION_IDS)
+        and (not sandpit_critical or potion_urgent)
         and (
             potion_context is None
             or potion_context != _LAST_POTION_CONTEXT
             or potion_urgent
         )
         and (not potion_already_used or potion_lethal)
-        and (potion := choose_potion(observation, potions))
+        and direct_potion
     ):
         if potion_context is not None:
             _LAST_POTION_CONTEXT = potion_context
         if potion_room is not None:
             _POTION_USED_ROOM = potion_room
-        return potion
+        return direct_potion
     if sandpit_critical and escape:
         return escape
     if sandpit_critical:
@@ -722,7 +726,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
 
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
-    if enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards):
+    if rollout_enabled:
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
             # The rollout can miss a live enemy intent when its move/power is only partially
@@ -732,6 +736,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
             if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and _card_value(selected, hand, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
+                if selected.get("type") == "potion":
+                    if potion_context is not None:
+                        _LAST_POTION_CONTEXT = potion_context
+                    if potion_room is not None:
+                        _POTION_USED_ROOM = potion_room
                 return selected
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
@@ -966,6 +975,17 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if not hand:
         return use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
     return unknown_manual() if danger else None
+
+
+def _rollout_allowed_potions(observation: dict, actions: list[dict]) -> tuple[str, ...]:
+    candidates = [action for action in actions if action.get("type") == "potion" and action.get("potion_id") in ROLLOUT_POTION_IDS]
+    if not candidates:
+        return ()
+    room = _potion_room(observation)
+    if room is not None and room == _POTION_USED_ROOM and not _potion_is_lethal_incoming(observation):
+        return ()
+    selected = choose_potion(observation, candidates)
+    return (selected["potion_id"],) if selected else ()
 
 
 def _deck_list(observation: dict) -> list[str]:
@@ -1507,6 +1527,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         if card.get("upgrade", 0) > 0
     )
     upgraded_card_ids = tuple(dict.fromkeys(upgraded_card_ids))
+    allowed_potions = _rollout_allowed_potions(observation, actions)
     state = Combat(
         player_hp=observation["player"]["hp"],
         hand=tuple(CARD_NAMES.get(card["id"], card["id"]) for card in observation["hand"]),
@@ -1521,7 +1542,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         exhaust_pile=tuple(CARD_NAMES.get(card, card) for card in observation.get("exhaust_pile", ())),
         player_relics=tuple(observation["player"].get("relics", ())),
         player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
-        player_potions=tuple(potion["id"] for potion in observation.get("potions", ()) if potion),
+        player_potions=allowed_potions,
         # The bridge exposes Lizard Tail but not its one-shot-used flag; below half HP, assume
         # it has already fired so rollouts never count on a second resurrection.
         lizard_tail_used=(
@@ -1541,6 +1562,16 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
         selected = next(action for action in actions if action["type"] == "end_turn")
+        return selected | {"simulations": simulations, "search_value": value}
+    if best.startswith("potion:"):
+        potion, _, target = best[len("potion:"):].partition("@")
+        target_id = observation["enemies"][int(target)]["combat_id"] if target else None
+        selected = next(
+            action for action in actions
+            if action.get("type") == "potion"
+            and action.get("potion_id") == potion
+            and action.get("target_id") == target_id
+        )
         return selected | {"simulations": simulations, "search_value": value}
     name, _, target = best.partition("@")
     model = next(model for model, short in CARD_NAMES.items() if short == name)
