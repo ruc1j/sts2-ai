@@ -1545,7 +1545,21 @@ def choose_card_reward(observation: dict) -> dict:
         1 if strike_axis and perfected < 2 and action["card_id"] in STRIKE_TAGGED_REWARDS else 0,
         1 if action["card_id"] not in deck_ids else 0,
     ))
-    if core.get(selected["card_id"]) or priority.get(selected["card_id"], 0):
+    selected_id = selected["card_id"]
+    selected_tier = tier_score.get(CARD_TIERS.get(selected_id, "D"), 0)
+    selected_supported = bool(
+        core.get(selected_id)
+        or _boss_card_bonus(observation, selected_id)
+        or strong_defense_bonus(selected_id)
+        or (draw_needed and selected_id in DRAW_CARDS)
+        or (defense_needed and selected_id in DEFENSE_PRIORITY)
+    )
+    # Once the deck has enough cards to cover the early fights, a plain B/C/D-tier pick only
+    # dilutes the draw. Keep cards that solve the current axis or a measured defense/draw
+    # shortage, but use the reward's Skip alternative for everything else.
+    if len(deck_list) >= 15 and selected_tier <= tier_score["B"] and not selected_supported:
+        return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
+    if selected_supported or priority.get(selected["card_id"], 0):
         return selected
     attacks = [action for action in actions if cards.get(action["card_id"], {}).get("type") == "Attack"]
     if attacks:

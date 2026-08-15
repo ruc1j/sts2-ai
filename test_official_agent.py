@@ -2667,6 +2667,29 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
+    def test_reward_skips_low_tier_card_in_a_large_deck_without_a_shortage(self) -> None:
+        observation = {
+            "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 5},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.CINDER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+
+    def test_reward_keeps_low_tier_card_for_large_deck_defense_or_draw_shortage(self) -> None:
+        deck = [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 5
+        for card_id in ("CARD.TRUE_GRIT", "CARD.FINESSE"):
+            with self.subTest(card_id=card_id):
+                observation = {
+                    "player": {"deck": deck},
+                    "legal_actions": [
+                        {"type": "card_reward", "card_id": card_id},
+                        {"type": "card_reward_alternative", "option_id": "Skip"},
+                    ],
+                }
+                self.assertEqual(choose_card_reward(observation)["card_id"], card_id)
+
     def test_reward_defense_does_not_override_core(self) -> None:
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
