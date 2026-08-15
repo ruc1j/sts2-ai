@@ -712,6 +712,12 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if not urgent or best_block < remaining:
             return max(queen_focusable, key=lambda action: _card_value(action, hand, "damage"))
 
+    if lethal:
+        killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
+        # Never let stochastic rollout trade a guaranteed kill for a different target; this is
+        # especially important when a dangerous minion can be finished immediately.
+        return max(killers, key=lambda action: (enemy_incoming.get(action["target_id"], 0), -enemy_by_id[action["target_id"]].get("hp", 0), _card_value(action, hand, "damage")))
+
     # In multi-primary fights, spreading single-target damage leaves every attacker alive.
     # Keep lethal and urgent-defense decisions above this light tie-break, then focus the
     # next attack on the enemy with the largest incoming hit (lowest HP breaks ties).
@@ -786,10 +792,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         except (KeyError, ValueError, NotImplementedError, StopIteration):
             pass
 
-    if lethal:
-        killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
-        # Finish off the enemy that is about to attack first, then the weakest one.
-        return max(killers, key=lambda action: (enemy_incoming.get(action["target_id"], 0), -enemy_by_id[action["target_id"]].get("hp", 0), _card_value(action, hand, "damage")))
     incoming = sum(enemy_incoming.values())
     player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 0)

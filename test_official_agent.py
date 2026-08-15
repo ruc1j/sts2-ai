@@ -1934,6 +1934,24 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 1)
 
+    def test_rollout_cannot_override_lethal_attack(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "hp": 5, "block": 0, "intents": [{"damage": 20, "repeats": 1}]},
+                {"combat_id": 2, "hp": 40, "block": 0, "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][1]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["target_id"], 1)
+
     def test_multi_primary_focuses_the_next_attack_on_the_greatest_threat(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
