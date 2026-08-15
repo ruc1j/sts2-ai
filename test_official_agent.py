@@ -761,6 +761,41 @@ class OfficialAgentTest(unittest.TestCase):
         ]
         self.assertEqual(choose(observation)["potion_id"], "POTION.REGEN_POTION")
 
+    def test_buffer_makes_followup_potion_nonurgent(self) -> None:
+        observation = {
+            "run": {"act": 0, "floor": 4},
+            "turn": 3,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.LUCKY_TONIC", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.HEART_OF_IRON", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80, "powers": []},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.C", "hp": 30, "intents": [{"damage": 25, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.LUCKY_TONIC")
+        observation["legal_actions"] = [
+            {"type": "potion", "potion_id": "POTION.HEART_OF_IRON", "target_id": None},
+            {"type": "end_turn"},
+        ]
+        observation["player"]["powers"] = [{"id": "POWER.BUFFER_POWER", "amount": 1}]
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_saves_potions_in_monster_room_but_not_elite_room(self) -> None:
+        base = {
+            "turn": 1,
+            "player": {"hp": 60, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 123, "max_hp": 123, "intents": []}],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        monster = {**base, "run": {"act": 0, "floor": 5, "room_type": "Monster"}}
+        elite = {**base, "run": {"act": 0, "floor": 5, "room_type": "Elite"}}
+        self.assertEqual(choose(monster)["type"], "end_turn")
+        self.assertEqual(choose(elite)["potion_id"], "POTION.STRENGTH_POTION")
+
     def test_low_hp_multiple_enemies_uses_swift_potion(self) -> None:
         observation = {
             "legal_actions": [

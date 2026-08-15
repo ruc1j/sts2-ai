@@ -276,8 +276,19 @@ def _potion_context(observation: dict) -> tuple[object, ...] | None:
 
 
 def _potion_is_lethal_incoming(observation: dict) -> bool:
-    hp = _number((observation.get("player") or {}).get("hp"))
-    return sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ())) >= hp
+    player = observation.get("player") or {}
+    hp = _number(player.get("hp"))
+    incoming = sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ()))
+    incoming = max(0, incoming - _number(player.get("block")))
+    hits = [
+        max(0, _number(intent.get("damage")))
+        for enemy in observation.get("enemies", ())
+        for intent in enemy.get("intents") or ()
+        for _ in range(max(1, _number(intent.get("repeats"), 1)))
+    ]
+    if any(power.get("id") == "POWER.BUFFER_POWER" and _number(power.get("amount")) > 0 for power in player.get("powers", ())):
+        incoming = max(0, incoming - max(hits, default=0))
+    return incoming >= hp
 
 
 def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
@@ -780,6 +791,17 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     block = _number(player.get("block", 0))
     incoming = sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ()))
+    run = observation.get("run") or {}
+    room_type = str(run.get("room_type") or "")
+    # Ordinary Monster rooms are the most common source of potion depletion. Preserve potions
+    # unless the hit is lethal, HP is critical, or the incoming damage is already overwhelming;
+    # Elite/Boss rooms keep the full policy below.
+    if room_type == "Monster" and not (
+        incoming >= hp
+        or hp <= max(1, max_hp // 3)
+        or incoming >= max(1, (hp * 3 + 3) // 4)
+    ):
+        return None
     lucky = use({"POTION.LUCKY_TONIC"})
     if lucky and incoming > 0 and hp - incoming <= max_hp // 4:
         return lucky
@@ -829,7 +851,6 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     hand = observation.get("hand") or ()
     has_slot = any(enemy.get("slot") for enemy in observation.get("enemies", ()))
     boss_slot = any(str(enemy.get("slot")).lower() == "boss" for enemy in observation.get("enemies", ()))
-    run = observation.get("run") or {}
     boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
     boss_context = boss_slot or (boss_floor is not None and _number(run.get("floor")) >= boss_floor)
     # A non-lethal boss turn is the worst time to gamble on random cards: keep Colorless for
@@ -839,9 +860,11 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     max_enemy_hp = max(enemy_max_hp.values(), default=0)
     fallback_boss = not has_slot and not any(enemy.get("id") for enemy in observation.get("enemies", ())) and max_enemy_hp >= 100
     boss_like = boss_slot or fallback_boss
-    high_hp_regular = max_enemy_hp >= 100 and not boss_like
+    regular_monster = room_type == "Monster"
+    elite_or_boss = room_type in {"Elite", "Boss"} or boss_like or boss_context
+    high_hp_regular = max_enemy_hp >= 100 and not elite_or_boss
     major_allowed = (
-        not high_hp_regular
+        elite_or_boss or (not regular_monster and not high_hp_regular)
         or incoming >= max(1, (hp * 3 + 3) // 4)
         or hp <= max(1, max_hp // 3)
         or (boss_context and _number(run.get("act")) >= 1 and incoming >= max(1, hp // 2))
@@ -855,7 +878,9 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     def use_major_aware(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         allowed = ids if major_allowed else ids - RESERVED_COMBAT_POTIONS
         if not major_allowed and incoming >= max(1, hp // 2):
-            allowed |= ids & {"POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE"}
+            allowed |= ids & (blocking | defensive_buffs | {"POTION.LUCKY_TONIC"})
+        if not major_allowed and hp <= max(1, max_hp // 3):
+            allowed |= ids & (blocking | defensive_buffs | {"POTION.LUCKY_TONIC"})
         return use(allowed, target_score)
 
     boss_shackling = use_major_aware({"POTION.SHACKLING_POTION"}) if max_enemy_hp >= 100 and incoming > 0 else None

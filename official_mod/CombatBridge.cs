@@ -168,7 +168,12 @@ internal static class CombatBridge
             terminal = false,
             phase = "combat",
             turn = player.PlayerCombatState.TurnNumber,
-            run = new { act = run.CurrentActIndex, floor = run.ActFloor },
+            run = new
+            {
+                act = run.CurrentActIndex,
+                floor = run.ActFloor,
+                room_type = run.CurrentRoom?.RoomType.ToString(),
+            },
             player = new
             {
                 hp = player.Creature.CurrentHp,
