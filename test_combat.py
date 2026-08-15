@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _enemy_attack_damage, _resolve_move, _step_score, _summon,
 )
 
@@ -208,6 +208,26 @@ class CombatTest(unittest.TestCase):
         after_play = step(after_play, CRIMSON_MANTLE, DUMMY_DATA, random.Random(0))
         after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual((after_turn.player_hp, after_turn.player_block, _power(after_turn.player_powers, "CrimsonMantlePower"), _power(after_turn.player_powers, "CrimsonMantleSelfDamage")), (78, 20, 20, 2))
+
+    def test_forgotten_ritual_gains_energy_only_after_prior_exhaust(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        base = Combat(80, (FORGOTTEN_RITUAL,), (), (), (enemy,), energy=3)
+        no_exhaust = step(base, FORGOTTEN_RITUAL, DUMMY_DATA, random.Random(0))
+        self.assertEqual((no_exhaust.energy, no_exhaust.exhausted_this_turn, no_exhaust.exhaust_pile), (2, True, (FORGOTTEN_RITUAL,)))
+        prior = step(replace(base, exhausted_this_turn=True), FORGOTTEN_RITUAL, DUMMY_DATA, random.Random(0))
+        self.assertEqual(prior.energy, 5)
+        blocked = step(replace(base, exhausted_this_turn=True, player_powers=(("NoEnergyGainPower", 1),)), FORGOTTEN_RITUAL, DUMMY_DATA, random.Random(0))
+        self.assertEqual(blocked.energy, 2)
+
+    def test_sword_boomerang_retargets_each_hit(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()))
+        combat = Combat(80, (SWORD_BOOMERANG,), (), (), enemies, energy=1)
+        self.assertIn(SWORD_BOOMERANG, legal_actions(combat))
+        self.assertNotIn(f"{SWORD_BOOMERANG}@0", legal_actions(combat))
+        after = step(combat, SWORD_BOOMERANG, DUMMY_DATA, random.Random(0))
+        self.assertEqual([enemy.hp for enemy in after.enemies], [97, 94])
+        upgraded = step(replace(combat, upgraded_cards=(SWORD_BOOMERANG,)), SWORD_BOOMERANG, DUMMY_DATA, random.Random(0))
+        self.assertEqual(sum(100 - enemy.hp for enemy in upgraded.enemies), 12)
 
     def test_armaments_blocks_and_upgrades_hand(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())

@@ -111,6 +111,8 @@ CARD_NAMES = {
     "CARD.ARMAMENTS": "Armaments",
     "CARD.UNMOVABLE": "Unmovable",
     "CARD.EXPECT_A_FIGHT": "Expect a Fight",
+    "CARD.FORGOTTEN_RITUAL": "Forgotten Ritual",
+    "CARD.SWORD_BOOMERANG": "Sword Boomerang",
 }
 
 CARD_TIERS = {
@@ -247,6 +249,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.PECK": 6,
     "CARD.EXTERMINATE": 12,
     "CARD.SETUP_STRIKE": 7,
+    "CARD.SWORD_BOOMERANG": 9,
 }
 # Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
 ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
