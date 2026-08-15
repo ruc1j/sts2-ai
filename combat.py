@@ -27,7 +27,7 @@ RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
-ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT = "Armaments", "Unmovable", "Expect a Fight"
+ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION = "Armaments", "Unmovable", "Expect a Fight", "Aggression"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
 POTION_BLOOD, POTION_HEART, POTION_BRONZE = "POTION.BLOOD_POTION", "POTION.HEART_OF_IRON", "POTION.LIQUID_BRONZE"
@@ -44,7 +44,7 @@ CARD_COST = {
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
-    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2,
+    FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
 }
@@ -79,12 +79,12 @@ ATTACKS = {
 INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE}
+POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -1159,11 +1159,26 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         if RELIC_PAELS_BLOOD in relics:
             extra_draw += 1
         draw_count = max(0, 5 + extra_draw - _power(player_powers, "MindRotPower"))
-        drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, draw_count, rng)
+        hand = list(combat.hand)
+        discard = list(combat.discard_pile)
+        aggression = _power(player_powers, "AggressionPower")
+        if aggression:
+            candidates = [index for index, card in enumerate(discard) if card in ATTACKS]
+            selected_indices = rng.sample(candidates, min(aggression, len(candidates)))
+            selected = [discard[index] for index in selected_indices]
+            for index in sorted(selected_indices, reverse=True):
+                discard.pop(index)
+            hand.extend(selected)
+            upgraded = tuple(card for card in selected if card not in combat.upgraded_cards)
+            upgraded_cards = tuple(dict.fromkeys(combat.upgraded_cards + upgraded))
+        else:
+            upgraded_cards = combat.upgraded_cards
+        drawn, draw, discard = _draw(combat.draw_pile, tuple(discard), draw_count, rng)
         retained_block = combat.player_block if _power(player_powers, "BarricadePower") else min(combat.player_block, 10) if RELIC_STURDY_CLAMP in relics else 0
         return replace(
-            combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
+            combat, hand=tuple(hand) + drawn, draw_pile=draw, discard_pile=discard, player_block=retained_block + extra_block,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
+            upgraded_cards=upgraded_cards,
             paels_tears_pending=False,
             attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
@@ -1311,6 +1326,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     player_powers = combat.player_powers
     if card == RUPTURE:
         player_powers = _add_power(player_powers, "RupturePower", 1)
+    if card == AGGRESSION:
+        player_powers = _add_power(player_powers, "AggressionPower", 1)
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
@@ -1419,7 +1436,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
     if card == FEEL_NO_PAIN:
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT}:
+    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:

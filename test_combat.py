@@ -4,7 +4,7 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
+    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
@@ -164,6 +164,25 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(after_card.max_energy, 4)
         after_turn = step(after_card, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual((after_turn.max_energy, after_turn.energy), (4, 4))
+
+    def test_aggression_recovers_and_upgrades_a_discarded_attack_next_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (AGGRESSION,), (), (STRIKE, DEFEND), (enemy,), energy=1)
+        after_play = step(combat, AGGRESSION, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after_play.player_powers, "AggressionPower"), 1)
+        after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertIn(STRIKE, after_turn.hand)
+        self.assertEqual(after_turn.upgraded_cards, (STRIKE,))
+
+    def test_aggression_recovers_only_available_attacks_when_stacked(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (AGGRESSION, AGGRESSION), (), (STRIKE, DEFEND), (enemy,), energy=2)
+        after_play = step(combat, AGGRESSION, DUMMY_DATA, random.Random(0))
+        after_play = step(after_play, AGGRESSION, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after_play.player_powers, "AggressionPower"), 2)
+        after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_turn.hand.count(STRIKE), 1)
+        self.assertEqual(after_turn.upgraded_cards, (STRIKE,))
 
     def test_armaments_blocks_and_upgrades_hand(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())

@@ -525,7 +525,7 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.HELLRAISER")
 
-    def test_reward_caps_unmodeled_cards(self) -> None:
+    def test_reward_allows_modeled_aggression(self) -> None:
         observation = {
             "player": {"deck": ["CARD.AGGRESSION", "CARD.CORRUPTION"]},
             "legal_actions": [
@@ -534,7 +534,7 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.AGGRESSION")
 
     def test_reward_takes_anger_for_the_normal_fights(self) -> None:
         observation = {
