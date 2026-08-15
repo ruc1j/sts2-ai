@@ -805,6 +805,19 @@ class CombatTest(unittest.TestCase):
         after = step(combat, f"{GIANT_ROCK}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 21)  # 16 damage is capped at 9 per hit
 
+    def test_louse_curl_up_blocks_after_the_whole_attack_card(self) -> None:
+        enemy = Enemy("MONSTER.LOUSE_PROGENITOR", 100, "MOVE", (), powers=(("CurlUpPower", 14),))
+        combat = Combat(80, (TWIN_STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{TWIN_STRIKE}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].block, after.enemies[0].powers), (90, 14, ()))
+
+    def test_louse_progenitor_starts_curled(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        combat = initial_combat(hive, "ENCOUNTER.LOUSE_PROGENITOR_NORMAL", random.Random(0))
+        louse = combat.enemies[0]
+        self.assertEqual(_power(louse.powers, "CurlUpPower"), 14)
+
     def test_plow_power_strips_strength_and_stuns_below_threshold(self) -> None:
         enemy = Enemy("MONSTER.CEREMONIAL_BEAST", 160, "PLOW_MOVE", (), powers=(("PlowPower", 150), ("StrengthPower", 6)))
         combat = Combat(80, (GIANT_ROCK,), (), (), (enemy,))

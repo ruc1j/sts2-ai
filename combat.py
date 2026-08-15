@@ -552,6 +552,11 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
         elif enemy.model == "MONSTER.EXOSKELETON":
             # Granted by Exoskeleton.AfterAddedToRoom in code (not exported in the state machine JSON).
             enemy = replace(enemy, powers=enemy.powers + (("HardToKillPower", 9),))
+        elif enemy.model == "MONSTER.LOUSE_PROGENITOR":
+            # CurlUpPower is granted by LouseProgenitor.AfterAddedToRoom (not exported).  The
+            # block is applied after the first powered attack card finishes resolving; see
+            # _apply_curl_up below.
+            enemy = replace(enemy, powers=enemy.powers + (("CurlUpPower", int(values.get("CurlBlock", 14))),))
         elif enemy.model in {"MONSTER.KIN_FOLLOWER", "MONSTER.TORCH_HEAD_AMALGAM"}:
             # AfterAddedToRoom unconditionally grants MinionPower (OwnerIsSecondaryEnemy), not
             # exported in the state machine JSON. CombatManager only requires primary enemies
@@ -766,6 +771,27 @@ def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
         powers = _add_power(powers, "PlowPower", -plow)
         return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers, move="STUN_MOVE")
     return _mark_test_subject_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers))
+
+
+def _apply_curl_up(before: tuple[Enemy, ...], enemies: list[Enemy], card: str) -> None:
+    """Resolve Louse Progenitor's one-shot block after a powered attack card."""
+    if card not in ATTACKS:
+        return
+    for index, old in enumerate(before):
+        current = enemies[index]
+        amount = _power(old.powers, "CurlUpPower")
+        if (
+            old.model == "MONSTER.LOUSE_PROGENITOR"
+            and old.alive
+            and current.alive
+            and current.hp < old.hp
+            and amount > 0
+        ):
+            enemies[index] = replace(
+                current,
+                block=current.block + amount,
+                powers=_add_power(current.powers, "CurlUpPower", -amount),
+            )
 
 
 def _decimillipede_teammates_dead(enemies: tuple[Enemy, ...], index: int) -> bool:
@@ -1560,6 +1586,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # holder inserts Amount Dazed cards into the draw pile at a random position - since
         # _draw() already pops randomly from draw_pile, appending is equivalent.
         hive = sum(_power(enemy.powers, "PersonalHivePower") for enemy in before if enemy.alive)
+        _apply_curl_up(tuple(before), enemies, card)
         combat = _apply_player_damage(combat, reflected)
         return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
@@ -1607,6 +1634,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 enemies += _spawn_wrigglers(data, rng)
             elif before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(tuple(enemies), index):
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
+        _apply_curl_up(before, enemies, card)
         combat = _apply_player_damage(combat, reflected)
         return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == VOLLEY:
@@ -1642,8 +1670,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 enemies += _spawn_wrigglers(data, rng)
             elif before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(tuple(enemies), index):
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
+        _apply_curl_up(before, enemies, card)
         combat = _apply_player_damage(combat, reflected)
         return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
+    before = tuple(enemies)
     enemy = enemies[int(target)]
     if card == SPITE:
         hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1
@@ -1761,6 +1791,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     # PersonalHivePower.AfterDamageReceived (Entomancer): every powered attack against a holder
     # inserts Amount Dazed cards into the draw pile at a random position.
     hive = _power(enemy.powers, "PersonalHivePower")
+    _apply_curl_up(before, enemies, card)
     combat = replace(combat, player_powers=player_powers)
     combat = _apply_player_damage(combat, reflected)
     return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
