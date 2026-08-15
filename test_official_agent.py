@@ -766,19 +766,20 @@ class OfficialAgentTest(unittest.TestCase):
             "run": {"act": 98, "floor": 99, "room_type": "Monster"},
             "turn": 4,
             "legal_actions": [
-                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
                 {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+                {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
                 {"type": "end_turn"},
             ],
             "player": {"hp": 20, "max_hp": 70},
             "enemies": [{"combat_id": 103, "id": "MONSTER.C", "hp": 30, "intents": [{"damage": 25, "repeats": 1}]}],
         }
-        self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SPEED_POTION")
         observation["legal_actions"] = [
-            {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+            {"type": "potion", "potion_id": "POTION.DEXTERITY_POTION", "target_id": None},
             {"type": "end_turn"},
         ]
         self.assertEqual(choose(observation)["type"], "end_turn")
+        self.assertEqual(_rollout_allowed_potions(observation, observation["legal_actions"]), ())
 
     def test_does_not_use_vulnerable_potion_for_lethal_survival(self) -> None:
         observation = {

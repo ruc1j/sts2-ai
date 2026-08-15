@@ -1086,6 +1086,15 @@ def _rollout_allowed_potions(observation: dict, actions: list[dict]) -> tuple[st
     if room is not None and room == _POTION_USED_ROOM and not _potion_is_lethal_incoming(observation):
         return ()
     selected = choose_potion(observation, candidates)
+    dexterity_potions = {"POTION.DEXTERITY_POTION", "POTION.SPEED_POTION"}
+    if (
+        selected
+        and room is not None
+        and _potion_context(observation) == _LAST_POTION_CONTEXT
+        and _LAST_POTION_ID in dexterity_potions
+        and selected.get("potion_id") in dexterity_potions
+    ):
+        return ()
     return (selected["potion_id"],) if selected else ()
 
 
