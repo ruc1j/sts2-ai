@@ -183,9 +183,56 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 
 `data/*trace.jsonl` 247本を集計し、デコンパイルと突き合わせて未モデル要素を洗い出した結果。**同じ調査を繰り返さないための記録**であり、数値は監査時点のもの。
 
-### ポーションが探索に入っていない(構造的な穴・最大の残課題)
+### ポーションを探索へ接続した(2026-08-15に着手・部分的に完了)
 
-`combat.py`にはポーションを使う action が存在しない。`player_potions`はBelt Buckleの判定(`_sync_belt_buckle`)にしか使われておらず、`legal_actions()`も`search()`もポーション使用を選択肢に含めない。したがってポーション判断は`official_agent.choose_potion`のヒューリスティックのみで行われ、「このターンにポーションを切れば耐えられる」という読みが探索に一切入らない。2026-08-15のセッションでポーション方策を10回以上調整したが収穫逓減だったのは、根本的にここが原因である可能性が高い。着手する場合は影響範囲が大きいので独立したセッションで行うこと。
+もともと`combat.py`にはポーションを使う action が無く、`player_potions`はBelt Buckleの判定にしか
+使われていなかった。ポーション判断は`official_agent.choose_potion`のヒューリスティックのみで行われ、
+「このターンにポーションを切れば耐えられる」という読みが探索に一切入っていなかった。同日のセッションで
+ポーション方策を10回以上調整しても収穫逓減だった一因がこれである。
+
+現在は次の設計で接続済み(`015207d` / `cfea287`):
+
+- **責務の分離**: `official_agent`が「そのポーションを今この戦闘で使ってよいか」を決め(既存の温存方策を流用)、
+  `combat.py`が「いつ・どれを・どの敵に」使うかを探索で決める。全所持ポーションを素朴に開放してはならない。
+  ロールアウトの`Combat`は1戦闘で完結するモデルで「次のボスまで温存する」価値を持てないため、必ず初戦で使い切る。
+- `official_agent._rollout_allowed_potions`が`choose_potion`を候補限定で呼び、**許可された1本だけ**を
+  `Combat.player_potions`へ渡す。許可集合が空なら`player_potions=()`となり接続前と完全に同一挙動になる。
+- `legal_actions()`は`potion:<POTION_ID>`(対象が要るものは`@敵index`)を返し、`step()`が効果を適用して
+  `player_potions`から1本除去する。ポーションはエナジーを消費せず、`played_this_turn`も更新せず、
+  カードプレイ系リレック(Kunai/Shuriken/Nunchaku等)も発火させない——いずれも実機どおり。
+- `choose()`の直接ポーション経路は、`choose_potion`が**`ROLLOUT_POTION_IDS`以外**を選んだ場合は
+  従来どおり即座に返す。ここを「rollout有効なら常に探索へ委譲」にすると、探索が扱えない十数種の
+  ポーション(Shackling/Fysh/Binding/Colorless等)が**直接経路でも探索でも使われなくなる**回帰が起きる
+  (実際にレビューで検出した。ユニットテストの多くが`choose()`を`enemy_data`無しで呼んでおり
+  435件全て緑のまま素通りした——ポーション経路の回帰テストは必ず`choose(observation, enemy_data, simulations)`
+  の形でrollout有効の経路を通すこと)。
+
+実装済みは`BLOCK_POTION`(12ブロック) `FIRE_POTION`(20ダメージ) `POTION_SHAPED_ROCK`(15ダメージ)の3種のみ。
+いずれも`ValueProp.Unpowered`で、**Strength/Vulnerable/Flutterは乗らない**(`VulnerablePower`と`FlutterPower`は
+`IsPoweredAttack()`のチェックを持つ)。一方`HardToKillPower`(ModifyDamageCap)と`SlipperyPower`
+(ModifyHpLostAfterOsty)はチェックを持たず全ダメージに効くので適用する。この使い分けのため
+`_damage_enemy`に`powered`フラグがある。残りのdeterministicなポーションは順次追加すること。
+`SKILL_POTION`/`ATTACK_POTION`/`POWER_POTION`/`COLORLESS_POTION`/`DISTILLED_CHAOS`/`SNECKO_OIL`/
+`ENTROPIC_BREW`などランダムなカードを生成するものは、MAD_SCIENCE/CASCADEと同じ理由で対象外。
+
+### DexterityPowerが蓄積されるだけで一度も読まれていなかった
+
+`_grant_block`に`powered`フラグを追加してDexterityを加算するまで、`combat.py`は`DexterityPower`を
+`_add_power`で**付与するだけで一度も読み出していなかった**(比較: `StrengthPower`は25箇所で読まれている)。
+Belt Buckle(+2)、Kunai(3攻撃ごと+1)、および`DEXTERITY_POTION`(使用77回) `SPEED_POTION`(60回)
+`FYSH_OIL`(52回)の計189回ぶんが、シミュレータ上では完全に無効だった。ポーション温存の調整が
+効かなかった一因である可能性が高い。
+
+実機の適用順は**Dexterity加算 → Frail乗算**(`ModifyBlockAdditive`が加算、`FrailPower`が乗算)で、
+Vambrace/Unmovableの2倍はさらにその後。`Dex3 + Vambrace + Shrug(8)`は`(8+3)*2 = 22`であり
+`8*2+3 = 19`ではない。Block Potionは`Unpowered`で`IsPoweredCardOrMonsterMoveBlock()`が偽になるため
+Dexterityは乗らない(12のまま)。
+
+**同種の穴を機械的に探す方法**: `_add_power(...)`と`powers=(("XxxPower", n),)`の付与箇所から
+パワー名を抽出し、`_power(...)`/`_tick_down_power(...)`の読み出し側と突き合わせる。
+2026-08-15時点で付与36種のうち未読は`NemesisPower`のみ(TEST_SUBJECT第3形態。1ターンおきに
+`IntangiblePower`を付与し被ダメージを1に固定するが、trace 247本で観測0件のため優先度は低い。
+`IntangiblePower`自体も未モデル)。新しいパワーを追加したらこの突き合わせを再実行すること。
 
 ### 探索回数(simulations)を増やしても改善しない
 
