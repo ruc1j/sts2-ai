@@ -646,6 +646,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if any(power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))
     }
     primary_ids = {combat_id for combat_id in enemy_by_id if combat_id not in minion_ids}
+    primary_ids -= {
+        enemy["combat_id"]
+        for enemy in observation.get("enemies", ())
+        if str(enemy.get("id", "")).startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
+    }
     focusable = [
         action
         for action in cards

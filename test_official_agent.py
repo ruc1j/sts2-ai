@@ -1733,6 +1733,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 2)
 
+    def test_focus_skips_reviving_decimillipede_segments(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_FRONT", "hp": 40, "powers": [], "intents": [{"damage": 20, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_MIDDLE", "hp": 10, "powers": [], "intents": [{"damage": 1, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
     def test_lethal_prefers_weaker_enemy_when_both_attack(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
