@@ -506,3 +506,34 @@ CombatBridgeの型判定バグは存在しない。`combat.py`側にも既に`TE
 **次回セッションへの持ち越し課題:**
 - D6(29枚デッキ、強防御2枚のみ)を踏まえ、`choose_card_reward`の防御優先(`_block_starved`等)を
   最小修正する案を検討中。まずテストを書いてから、headlessでの再現runで確認すること。
+
+## 2026-08-23セッション: 修正前ベースライン計測(researcher R5)
+
+leader/coder/researcher/reviewerの4人体制でAct3安定攻略に向けた改善ループを開始する前に、既存の
+`data/*_trace.jsonl`(307件、202 unique seed)からベースライン値を計測した。以降の変更が実際に改善に
+繋がったかは、単一seedの成功ではなくこの基準値との比較で判断すること。
+
+**Act到達率(unique seed基準、202 seed中):**
+- Act1止まり: 115 seed
+- Act2到達(max Act>=2、Act1 clear相当): 87 seed = 43.1%
+- Act3到達(max Act>=3、Act2 clear相当): 2 seed = 0.99%
+- Act3 Boss clear: 0 seed = 0%
+- Act3到達2 seed(D6A1F8C3E5, C8D6B5E318)はいずれもF15 Bossで死亡し、重複runでも到達が安定していない。
+
+**到達floor(unique seed deepest envelope):** mean 21.25, median 17, range 1-48
+(Act1 offset 0 / Act2 offset 17 / Act3 offset 33の通し番号、Act3 F15 = 48)
+
+**死因(unique envelope 199 seed中、死亡195):** Boss 116, Elite 37, Monster 27, Unknown 15
+**死亡floor上位:** Act1 F17=80 seed, Act2 F16=33 seed, Act2 F8=11 seed, Act2 F14=8 seed, Act2 F6=7 seed
+
+**残りHP(最後のcombat_end、302 trace):** hp=0が294件、正のHPで終わったcombat_endは8件のみ
+(mean 1.45, median 0)。ほぼ全滅かギリギリの僅差負けかの二極ではなく、大半が完全な全滅。
+
+**運用系シグナル(バグとゲーム内死亡を分離するための参考値、改善対象ではあるが別系列):**
+- `reason=invalid_event_action`: 290 rows / 105 files / 40 unique seed(未登録event policyの既知gap)
+- 実行ログの`Watchdog timeout`: 151/202 unique seed、`Rewards screen did not appear`: 52/202
+- combat card action 43,874件中`simulations:null`(heuristic fallback)は5,332件 = 12.15%
+
+**このベースラインの位置づけ**: 2026-08-23セッション開始時点(commit d1c3c64まで)の実力。同セッション中に
+実施したCreatureCmd.Kill/HexPower/GainBlock target等の修正の効果は、今後の複数seed実機runの結果を
+このベースラインと比較して判定すること。単一runでの改善断定は禁止(このCODEWIKIの他セクション参照)。
