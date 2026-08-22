@@ -61,6 +61,33 @@ class OfficialAgentTest(unittest.TestCase):
             },
         )
 
+    def test_soar_power_normalizes_from_official_id_for_rollout_state(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY", "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "turn": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 40, "block": 0,
+                "powers": [{"id": "POWER.SOAR_POWER", "amount": 1}],
+                "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["powers"] = dict(state.enemies[0].powers)
+            return [("End turn", 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["powers"], {"SoarPower": 1})
+
     def test_waterfall_steam_power_uses_official_id_in_rollout_state(self) -> None:
         with open("data/enemies_underdocks.json", encoding="utf-8-sig") as file:
             data = json.load(file)

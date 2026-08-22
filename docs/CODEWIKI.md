@@ -374,6 +374,13 @@ lethalと判定し、実際には倒せない対象を選ぶ可能性があっ�
 半減してから`HardToKillPower`のhit単位capを適用するよう修正し、2体のraw observationで
 Soar対象ではない確実なlethalを選ぶ回帰テストを追加した。
 
+### SoarPower公式IDのrollout_choice経路を回帰テストで固定(2026-08-23)
+
+`test_combat.py`の既存Soarテストは`POWER_NAMES`の結果を直接`Enemy`へ注入していたため、
+`official_agent.rollout_choice()`が公式観測の`POWER.SOAR_POWER`を`SoarPower`へ変換する経路は
+検証していなかった。公式敵powerのrollout fixtureへ`POWER.SOAR_POWER`を追加し、捕捉した
+`Combat.enemies[0].powers`に`SoarPower`が残ることを固定した。
+
 ### choose_card_rewardの「最高値0ならSkip」が実質死んでいた(2026-08-15、fd5e2cf)
 
 最終returnは`core.get(...) or priority.get(...)`で判定していたが、`priority`は`CARD_TIERS`の
