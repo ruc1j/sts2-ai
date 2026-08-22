@@ -48,6 +48,15 @@ class OfficialAgentTraceTest(unittest.TestCase):
         self.assertIn("decision_source = action.DecisionSource", bridge)
         self.assertIn("decision_reason = action.DecisionReason", bridge)
 
+    def test_phase_bridges_propagate_decision_source(self) -> None:
+        for name in ("MapBridge", "RewardBridge", "RestBridge", "ShopBridge", "EventBridge"):
+            source = Path(f"official_mod/{name}.cs").read_text(encoding="utf-8")
+            with self.subTest(bridge=name):
+                self.assertIn('JsonPropertyName("decision_source")', source)
+                self.assertIn('JsonPropertyName("decision_reason")', source)
+                self.assertIn("decision_source = action.DecisionSource", source)
+                self.assertIn("decision_reason = action.DecisionReason", source)
+
 
 if __name__ == "__main__":
     unittest.main()

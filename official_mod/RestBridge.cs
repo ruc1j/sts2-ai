@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
 using MegaCrit.Sts2.Core.AutoSlay.Helpers;
@@ -30,7 +31,13 @@ internal static class RestSiteRoomHandlerPatch
 
 internal static class RestBridge
 {
-    private sealed record RestAction(int Seq, string Type, int Index, string OptionId) : IAgentAction;
+    private sealed record RestAction(
+        int Seq,
+        string Type,
+        int Index,
+        string OptionId,
+        [property: JsonPropertyName("decision_source")] string? DecisionSource,
+        [property: JsonPropertyName("decision_reason")] string? DecisionReason) : IAgentAction;
 
     public static async Task Run(CancellationToken ct)
     {
@@ -58,7 +65,7 @@ internal static class RestBridge
         var action = await AgentIo.AwaitAction<RestAction>(seq, ct);
         if (action.Type != "rest" || action.Index < 0 || action.Index >= buttons.Length || buttons[action.Index].Option.OptionId != action.OptionId)
             throw new InvalidOperationException($"illegal rest action: {action.Index} {action.OptionId}");
-        AgentIo.Trace(new { seq, phase = "rest", action.Type, action.Index, option_id = action.OptionId, hp = player.Creature.CurrentHp });
+        AgentIo.Trace(new { seq, phase = "rest", action.Type, action.Index, option_id = action.OptionId, hp = player.Creature.CurrentHp, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
         using var selector = action.OptionId == "SMITH"
             ? CardSelectCmd.PushSelector(new SmithCardSelector(player.Deck.Cards.Select(card => card.Id.ToString()), run.CurrentActIndex, run.ActFloor))
             : null;

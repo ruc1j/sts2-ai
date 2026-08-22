@@ -33,7 +33,9 @@ internal static class EventRoomHandlerPatch
         string Type,
         [property: JsonPropertyName("option_index")] int? OptionIndex,
         [property: JsonPropertyName("text_key")] string? TextKey,
-        [property: JsonPropertyName("relic_id")] string? RelicId) : IAgentAction;
+        [property: JsonPropertyName("relic_id")] string? RelicId,
+        [property: JsonPropertyName("decision_source")] string? DecisionSource,
+        [property: JsonPropertyName("decision_reason")] string? DecisionReason) : IAgentAction;
 
     private static bool Prefix(Rng random, CancellationToken ct, ref Task __result)
     {
@@ -132,21 +134,21 @@ internal static class EventRoomHandlerPatch
         }
         catch (TimeoutException)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "agent_timeout" });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "agent_timeout", decision_source = (string?)null, decision_reason = (string?)null });
             return EventChoiceResult.Fallback;
         }
 
         if (action.Type != "event_option" || action.OptionIndex is not int optionIndex ||
             optionIndex < 0 || optionIndex >= indexed.Length)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action" });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
         var selected = indexed[optionIndex].Button;
         if (!eligible.Any(item => item.Index == optionIndex) || selected.Option.TextKey != action.TextKey ||
             selected.Option.Relic?.Id.ToString() != action.RelicId)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action" });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
 
@@ -158,6 +160,8 @@ internal static class EventRoomHandlerPatch
             option_index = optionIndex,
             text_key = selected.Option.TextKey,
             relic_id = selected.Option.Relic?.Id.ToString(),
+            decision_source = action.DecisionSource,
+            decision_reason = action.DecisionReason,
         });
         var previous = indexed.Where(item => !item.Button.Option.IsLocked).Select(item => item.Button).ToHashSet();
         await UiHelper.Click(selected);
@@ -186,7 +190,7 @@ internal static class EventRoomHandlerPatch
         }
         catch (TimeoutException)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "event_did_not_advance" });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "event_did_not_advance", decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
 

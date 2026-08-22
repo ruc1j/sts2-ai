@@ -263,6 +263,8 @@ internal static class CombatBridge
 internal interface IAgentAction
 {
     int Seq { get; }
+    string? DecisionSource { get; }
+    string? DecisionReason { get; }
 }
 
 internal static class AgentIo

@@ -48,7 +48,9 @@ internal static class ShopBridge
         [property: JsonPropertyName("potion_index")] int? PotionIndex,
         [property: JsonPropertyName("potion_id")] string? PotionId,
         [property: JsonPropertyName("item_id")] string? ItemId,
-        [property: JsonPropertyName("id")] string? Id) : IAgentAction;
+        [property: JsonPropertyName("id")] string? Id,
+        [property: JsonPropertyName("decision_source")] string? DecisionSource,
+        [property: JsonPropertyName("decision_reason")] string? DecisionReason) : IAgentAction;
 
     private sealed record ShopSlotRef(NMerchantSlot Slot, int SlotIndex, int ItemIndex, string Id);
 
@@ -73,8 +75,8 @@ internal static class ShopBridge
         catch (TimeoutException)
         {
             // An agent that does not know phase=shop must not buy anything.
-            action = new ShopAction(seq, "skip", null, null, null, null, null, null, null, null, null, null);
-            AgentIo.Trace(new { seq, phase = "shop", action = "skip", reason = "agent_timeout", deck = player.Deck.Cards.Select(card => card.Id.ToString()) });
+            action = new ShopAction(seq, "skip", null, null, null, null, null, null, null, null, null, null, null, null);
+            AgentIo.Trace(new { seq, phase = "shop", action = "skip", reason = "agent_timeout", deck = player.Deck.Cards.Select(card => card.Id.ToString()), decision_source = (string?)null, decision_reason = (string?)null });
         }
 
         try
@@ -249,7 +251,7 @@ internal static class ShopBridge
         var deckIds = player.Deck.Cards.Select(card => card.Id.ToString()).ToArray();
         if (action.Type == "skip")
         {
-            AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", deck = deckIds });
+            AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return;
         }
 
@@ -275,11 +277,11 @@ internal static class ShopBridge
             if (selected is not null && selected.Slot.Entry is MerchantCardEntry entry && entry.IsStocked && entry.EnoughGold)
             {
                 bool purchased = await entry.OnTryPurchaseWrapper(room.Inventory.Inventory);
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "buy_card", card_id = selected.Id, slot_index = selected.SlotIndex, purchased, deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "buy_card", card_id = selected.Id, slot_index = selected.SlotIndex, purchased, deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             else
             {
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_card_action", deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_card_action", deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             return;
         }
@@ -290,11 +292,11 @@ internal static class ShopBridge
             if (selected is not null && selected.Slot.Entry is MerchantRelicEntry entry && entry.IsStocked && entry.EnoughGold)
             {
                 bool purchased = await entry.OnTryPurchaseWrapper(room.Inventory.Inventory);
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "buy_relic", relic_id = selected.Id, slot_index = selected.SlotIndex, purchased, deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "buy_relic", relic_id = selected.Id, slot_index = selected.SlotIndex, purchased, deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             else
             {
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_relic_action", deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_relic_action", deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             return;
         }
@@ -305,11 +307,11 @@ internal static class ShopBridge
             if (selected is not null && selected.Slot.Entry is MerchantPotionEntry entry && entry.IsStocked && entry.EnoughGold)
             {
                 bool purchased = await entry.OnTryPurchaseWrapper(room.Inventory.Inventory);
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "buy_potion", potion_id = selected.Id, slot_index = selected.SlotIndex, purchased, deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "buy_potion", potion_id = selected.Id, slot_index = selected.SlotIndex, purchased, deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             else
             {
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_potion_action", deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_potion_action", deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             return;
         }
@@ -330,17 +332,17 @@ internal static class ShopBridge
             {
                 using var selector = CardSelectCmd.PushSelector(new ExactCardSelector(card));
                 bool purchased = await removalEntry.OnTryPurchaseWrapper(room.Inventory.Inventory);
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "remove", card_index = cardIndex, card_id = card.Id.ToString(), purchased, deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "remove", card_index = cardIndex, card_id = card.Id.ToString(), purchased, deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             else
             {
-                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_remove_action", deck = deckIds });
+                AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "invalid_remove_action", deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             }
             return;
         }
 
         // Unknown shop actions are always a no-op; the inventory is still closed below.
-        AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "unsupported_shop_action", requested = action.Type, deck = deckIds });
+        AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "skip", reason = "unsupported_shop_action", requested = action.Type, deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
         await Task.CompletedTask;
     }
 

@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.AutoSlay.Handlers.Screens;
 using MegaCrit.Sts2.Core.Context;
@@ -30,7 +31,9 @@ internal static class MapBridge
         int Seq,
         string Type,
         int Col,
-        int Row) : IAgentAction;
+        int Row,
+        [property: JsonPropertyName("decision_source")] string? DecisionSource,
+        [property: JsonPropertyName("decision_reason")] string? DecisionReason) : IAgentAction;
 
     public static async Task Run(CancellationToken ct)
     {
@@ -94,7 +97,7 @@ internal static class MapBridge
         var selected = legal.FirstOrDefault(point => point.coord.col == action.Col && point.coord.row == action.Row);
         if (action.Type != "map" || selected is null)
             throw new InvalidOperationException($"illegal map action: {action.Col},{action.Row}");
-        AgentIo.Trace(new { seq, phase = "map", seed = run.Rng.StringSeed, action.Type, col = action.Col, row = action.Row, point_type = selected.PointType.ToString() });
+        AgentIo.Trace(new { seq, phase = "map", seed = run.Rng.StringSeed, action.Type, col = action.Col, row = action.Row, point_type = selected.PointType.ToString(), decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
 
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         void OnEntered() => entered.TrySetResult();

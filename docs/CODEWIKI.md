@@ -755,6 +755,10 @@ main例外fallbackを計装済み。C#ブリッジ側のAgentAction/trace伝播�
 `decision_reason`の存在を検証する。従来の`data/official_agent_trace.jsonl`は計装前のlegacy fixtureとして
 sourceなしを明示的に許容する。C#受信recordのJSON名とtrace projectionも同テストで固定する。
 
+**phase伝播(2026-08-23)**: Map/Reward/Rest/Shop/Eventの各action recordが共通の
+`DecisionSource`/`DecisionReason`を受信し、成功・検証失敗・timeoutのphase traceへ明示的に出力する。
+`test_official_trace.py`で5 bridgeのJSON名とprojectionを固定する。
+
 ### 修正後16本runの中間集計(researcher、2026-08-23) — 明確な改善も悪化も未確認
 
 本日のバグ修正一式(SteamEruption連鎖、Crab facing lethal優先、AoE lethal盲点、self-damage回避、
