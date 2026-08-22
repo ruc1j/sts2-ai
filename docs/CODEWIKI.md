@@ -901,3 +901,21 @@ KIN follower policy自体(T1-T6でFollower 2体を撃破済み)が明確に誤�
 デッキ火力不足や高難度設計と判断しコード変更は保留」という過去の判断を裏付ける方向。E/F/M(resource/
 defense不足・高分散)が主候補、C/D(search/target policy)は副次候補でバグ確定ではない。A/B/Kの直接証拠
 なし。n=1なのでKIN_PRIESTへのコード変更はまだ行わない。追加seedが出たら同様の分析を繰り返すこと。
+
+### VANTOM decision_source分析(researcher、leader_val3/17/20-22/25/27/29/40、2026-08-23) — 構造的バグなし
+
+leaderの実機run群にVANTOMが9回登場(別seed)し、Crusher+Rocketの前例を踏まえ同じ手法で確認した。
+**結論: Crusher+Rocketのような「専用pre-rollout関数がlethalを無視する」構造は確認できなかった。**
+
+- VANTOM戦の勝敗: 9本中4勝5敗(44.44%勝率)。official_agent.pyにVANTOM専用のpre-rollout direct分岐は
+  無く(汎用potion/Sandpit/Crab facing/AoE/lethal/Rage/multi-primary分岐のみ)、SlipperyPowerの扱いも
+  VANTOM専用ではない汎用処理。
+- 修正前baseline(83 trace/52 unique seed)のnull率8.94%に対し今回9本は15.11%とやや高いが、標本が
+  非同一(baselineはseed重複run含む)でregressionとは断定しない。
+- StopIteration(val21で11件、val25で1件)はAoE/target変換修正(ab1793b)より前のtraceで、修正後の
+  val27/29/40ではVANTOM戦のStopIterationはゼロ。修正が効いていることを確認(ただし勝率への寄与は
+  seed非対応のため未分離)。
+
+**結論**: 主分類はM(高難度/高分散)またはE/F(低HP・防御/資源不足)候補。現n=9では因果断定不可、
+コード変更は保留。KIN_PRIESTと合わせ、「Crusher+Rocketは本物のバグだったが、KIN_PRIEST/VANTOMは
+単に手強いボス」という切り分けがdecision_sourceベースで進んでいる。
