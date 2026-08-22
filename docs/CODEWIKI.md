@@ -750,6 +750,11 @@ test_official_trace.pyで新traceにdecision_sourceが存在することを確�
 **実装状況(2026-08-23)**: Python側は`choose()`のphase/combat direct/rollout/fallbackと
 main例外fallbackを計装済み。C#ブリッジ側のAgentAction/trace伝播も実装済み。
 
+**end-to-end回帰(2026-08-23)**: `data/decision_source_trace.jsonl`は実機runのcombat traceから
+抽出した新fixtureで、`test_official_trace.py`が全combat actionの`decision_source`必須と
+`decision_reason`の存在を検証する。従来の`data/official_agent_trace.jsonl`は計装前のlegacy fixtureとして
+sourceなしを明示的に許容する。C#受信recordのJSON名とtrace projectionも同テストで固定する。
+
 ### 修正後16本runの中間集計(researcher、2026-08-23) — 明確な改善も悪化も未確認
 
 本日のバグ修正一式(SteamEruption連鎖、Crab facing lethal優先、AoE lethal盲点、self-damage回避、

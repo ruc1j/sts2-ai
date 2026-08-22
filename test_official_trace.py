@@ -1,6 +1,7 @@
 import json
 import unittest
 from itertools import pairwise
+from pathlib import Path
 
 
 class OfficialAgentTraceTest(unittest.TestCase):
@@ -24,7 +25,28 @@ class OfficialAgentTraceTest(unittest.TestCase):
         self.assertTrue(combat["card_id"].startswith("CARD."))
         self.assertEqual(combat["simulations"], 1000)
         self.assertIsInstance(combat["search_value"], float)
+        self.assertNotIn("decision_source", combat)  # legacy fixture captured before instrumentation
         self.assertEqual(trace[-1]["phase"], "card_reward")
+
+    def test_new_combat_trace_requires_decision_source(self) -> None:
+        # This compact fixture is a real combat-trace excerpt captured after the bridge
+        # instrumentation landed; the full pre-instrumentation fixture above stays legacy.
+        with open("data/decision_source_trace.jsonl", encoding="utf-8") as file:
+            trace = [json.loads(line) for line in file]
+        combat = [item for item in trace if item.get("phase") == "combat"]
+        self.assertTrue(combat)
+        for item in combat:
+            self.assertIsInstance(item.get("decision_source"), str)
+            self.assertTrue(item["decision_source"])
+            self.assertIn("decision_reason", item)
+        fallback = next(item for item in combat if item["decision_source"] == "heuristic_fallback")
+        self.assertEqual(fallback["decision_reason"], "rollout_disabled_no_known_card")
+
+        bridge = Path("official_mod/CombatBridge.cs").read_text(encoding="utf-8")
+        self.assertIn('JsonPropertyName("decision_source")', bridge)
+        self.assertIn('JsonPropertyName("decision_reason")', bridge)
+        self.assertIn("decision_source = action.DecisionSource", bridge)
+        self.assertIn("decision_reason = action.DecisionReason", bridge)
 
 
 if __name__ == "__main__":
