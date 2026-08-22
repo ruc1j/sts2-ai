@@ -768,3 +768,29 @@ main例外fallbackを計装済み。C#ブリッジ側のAgentAction/trace伝播�
 **結論**: decision_source計装(上記設計メモ)を実装する必要性が明確になった。coderへ実装依頼済み
 (2026-08-23、SoarPower関連の高優先度修正の後)。実装後、追加seedでKIN_PRIEST/Crusher+Rocketの
 direct policy寄与とrollout寄与を分離して再評価すること。
+
+### GIANT_ROCKクラッシュ: Duplicator+Primal Forceのエンジン側相互作用バグ(researcher、2026-08-23)
+
+実機run(data/leader_val19_log.txt:196-208、seed=632B291F86)で、通常の敗北ではなくCombatBridge経由の
+game action実行中に例外でrunが停止した(P0候補として調査)。
+
+**確定FACT(v0.107.1 sts2.dll decompile確認済み)**: POTION.DUPLICATOR使用直後にCARD.PRIMAL_FORCEを
+プレイすると、DuplicationPowerによりPrimalForce.OnPlayが2回実行される。1回目の実行で手札の変換可能な
+Attackを全てCARD.GIANT_ROCKへ変換するが、2回目の実行(Duplicator由来のreplay)でも、1回目に生成された
+GiantRockが「変換可能なAttack」の条件を満たしてしまい、再度Transformしようとする。この生成直後のカードは
+UI上のhand nodeを持たないため、`NCard.FindOnTable(original, Hand)`がnullを返し、
+`CardCmd.Transform`が"Couldn't get hand node for original card..."例外を投げてクラッシュする。
+
+**分類**: 主にK(未対応/危険なゲーム機構)+ B(engine/UI同期のedge case)。CombatBridge.cs自体は
+正当なaction(TryManualPlay/TryManualUse)を呼んでいるだけで、Bridge側のバグ(A)ではない。副次的に
+B/K: combat.pyはDuplicatorを未モデル化(searchがこの組み合わせの危険性を評価・回避できない)。
+
+**再現性**: 過去のdata/*_trace.jsonl全件+今回のrunの中で、Duplicator+PrimalForceが同一runに揃うのは
+data/leader_val19_trace.jsonlとdata/run_multi_mm_trace.jsonlの2件のみ。run_multi_mmではDuplicatorが
+別カード(Strike)で先に消費されており衝突していないため無事完走。**この正確な組み合わせでのクラッシュは
+現時点でこの1件のみ観測**、複数seed再現はまだ無い。
+
+**推奨対応(researcher提案)**: ゲームエンジン自体(MegaCritの`CardCmd.cs`)は自分たちでは修正できないため、
+(1) policy側でDuplicator使用直後にPrimalForceを選ばないよう回避するガードを追加する(coderへ依頼済み)、
+(2) 別途combat.pyでDuplicatorを正しくモデル化し、searchがこの組み合わせ自体を自然に避けられるようにする
+(優先度は(1)より下、余力があれば)。EventBridgeのfallbackでこのクラッシュを揉み消す対応はしないこと。
