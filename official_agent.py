@@ -749,6 +749,23 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         # especially important when a dangerous minion can be finished immediately.
         return max(killers, key=lambda action: (enemy_incoming.get(action["target_id"], 0), -enemy_by_id[action["target_id"]].get("hp", 0), _card_value(action, hand, "damage")))
 
+    # Rage (Whenever you play an Attack this turn, gain Block) only pays off for attacks played
+    # AFTER it - a D6 live trace played Anger/Strike/Defend first and Rage last, forfeiting the
+    # whole turn's Rage block. Force Rage ahead of an attack whenever one is still affordable
+    # afterward, but only once every survival-critical branch above has already had first pick.
+    rage = next((action for action in cards if action["card_id"] == "CARD.RAGE"), None)
+    if rage:
+        remaining_energy = _number(player.get("energy")) - _number(hand.get(rage.get("hand_index"), {}).get("cost"), 1)
+        attack_after_rage = any(
+            action.get("card_id") != "CARD.RAGE"
+            and not _is_self_damage(action, hand)
+            and _card_value(action, hand, "damage") > 0
+            and _number(hand.get(action.get("hand_index"), {}).get("cost"), 1) <= remaining_energy
+            for action in cards
+        )
+        if attack_after_rage:
+            return rage
+
     # In multi-primary fights, spreading single-target damage leaves every attacker alive.
     # Keep lethal and urgent-defense decisions above this light tie-break, then focus the
     # next attack on the enemy with the largest incoming hit (lowest HP breaks ties).

@@ -110,6 +110,42 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_rage_played_before_an_affordable_attack(self) -> None:
+        # D6 live trace (turn1 Act1 boss): Rage was played after Anger/Strike/Defend, forfeiting
+        # the whole turn's Rage block since it only applies to Attacks played after it.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.RAGE", "cost": 1, "type": "Skill"},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack"},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.RAGE", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 30, "block": 0, "powers": [], "intents": [], "move": "IDLE", "history": []}],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.RAGE")
+
+    def test_rage_not_forced_when_no_attack_is_affordable_after_it(self) -> None:
+        # Rage costs 1 and Strike costs 2 here, so playing Rage would leave only 1 energy - not
+        # enough for the Strike - meaning Rage alone would just end the turn. Don't force it.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 2, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.RAGE", "cost": 1, "type": "Skill"},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "cost": 2, "type": "Attack"},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.RAGE", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 30, "block": 0, "powers": [], "intents": [], "move": "IDLE", "history": []}],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+
     def test_rollout_cannot_choose_nonblocking_play_on_lethal_incoming(self) -> None:
         observation = {
             "seq": 1,
