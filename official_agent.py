@@ -714,9 +714,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if potion_room is not None:
             _POTION_USED_ROOM = potion_room
         return direct_potion
-    if sandpit_critical and escape:
-        return escape
-    if sandpit_critical:
+    if sandpit_critical and not lethal:
+        if escape:
+            return escape
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
         if draw_cards:
             return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))

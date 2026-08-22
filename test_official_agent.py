@@ -1887,6 +1887,28 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
 
+    def test_lethal_attack_precedes_sandpit_escape(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.FRANTIC_ESCAPE", "type": "Skill"},
+            ],
+            "enemies": [{
+                "combat_id": 1,
+                "hp": 5,
+                "block": 0,
+                "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 1}],
+                "intents": [],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+
     def test_uses_potion_before_sandpit_escape_when_incoming_is_lethal(self) -> None:
         observation = {
             "player": {"hp": 10, "max_hp": 80},
