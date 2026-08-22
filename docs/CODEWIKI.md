@@ -357,6 +357,15 @@ Louse Progenitorの`CurlUpPower`は`combat.py`に実装済みだったが、`POW
 `SoarPower`へ正規化する`POWER_NAMES`エントリと、powered/unpoweredおよび公式ID経路の
 回帰テストも追加した。
 
+### player側power 4件の公式ID正規化漏れを修正(2026-08-23)
+
+`BarricadePower`、`BlockNextTurnPower`、`ColossusPower`、`HellraiserPower`は
+`combat.py`が内部名で参照している実在のplayer側powerだが、`POWER_NAMES`に
+`POWER.BARRICADE_POWER`、`POWER.BLOCK_NEXT_TURN_POWER`、`POWER.COLOSSUS_POWER`、
+`POWER.HELLRAISER_POWER`の変換が無かった。公式観測を`rollout_choice`へ渡すと生のIDが
+`player_powers`に残り、`_power`の完全一致読み取りが失敗するため、4件のマッピングを追加し、
+公式IDからrollout stateへの正規化経路を固定する回帰テストを追加した。
+
 ### choose_card_rewardの「最高値0ならSkip」が実質死んでいた(2026-08-15、fd5e2cf)
 
 最終returnは`core.get(...) or priority.get(...)`で判定していたが、`priority`は`CARD_TIERS`の
