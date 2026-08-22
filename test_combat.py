@@ -878,6 +878,7 @@ class CombatTest(unittest.TestCase):
         combat = initial_combat(data, "ENCOUNTER.OVICOPTER_NORMAL", rng)
         combat = step(combat, END_TURN, data, rng)
         self.assertEqual(sum(enemy.model == "MONSTER.TOUGH_EGG" for enemy in combat.enemies), 3)
+        self.assertNotIn("MinionPower", dict(combat.player_powers))
         combat = step(combat, END_TURN, data, rng)
         eggs = [enemy for enemy in combat.enemies if enemy.model == "MONSTER.TOUGH_EGG"]
         self.assertTrue(all(19 <= enemy.hp <= 22 for enemy in eggs))
@@ -1573,6 +1574,16 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (DEFEND,), (), (), (boss, minion)), END_TURN, hive, random.Random(0))
         self.assertEqual(after.enemies[1].powers, (("IllusionPower", 1), ("MinionPower", 1), ("StrengthPower", 3)))
         self.assertEqual(after.enemies[0].powers, (("StrengthPower", 3),))
+
+    def test_spectral_knight_hex_applies_to_player_from_glory_json(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        spec = next(monster for monster in glory["monsters"] if monster["id"] == "MONSTER.SPECTRAL_KNIGHT")
+        enemy = Enemy(
+            "MONSTER.SPECTRAL_KNIGHT", 93, "HEX", tuple(sorted(spec["values"].items()))
+        )
+        after = step(Combat(80, (), (), (), (enemy,)), END_TURN, glory, random.Random(0))
+        self.assertEqual((after.enemies[0].move, _power(after.player_powers, "HexPower")), ("SOUL_SLASH", 2))
 
     def test_dominate_applies_vulnerable_and_gains_strength(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))

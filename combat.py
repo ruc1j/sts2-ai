@@ -908,7 +908,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 continue
             if effect["target"] == "base.Creature":
                 enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
-            elif effect["target"] == "targets":
+            # HexMove uses the singular "target" for the player; Ovicopter uses the same
+            # exporter alias for a newly summoned egg, so do not treat every "target" as player-side.
+            elif effect["target"] == "targets" or (
+                effect["target"] == "target" and effect["model"] == "HexPower"
+            ):
                 if (
                     effect["model"] == "StrengthPower" and amount > 0
                     and RELIC_RUINED_HELMET in combat.player_relics and not ruined_helmet_used
