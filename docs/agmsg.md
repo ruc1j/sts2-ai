@@ -103,7 +103,25 @@ Error: Failed to resume session ...: thread <id> already has an active writer (c
    nudge文の例: 「leaderからinboxに新タスクが届いています。`~/.agents/skills/agmsg/scripts/inbox.sh
    sts2-ai <name>` を実行して確認し、実行してください。以降もタスク完了後は毎回同じコマンドで
    inboxを再確認してください(monitorブリッジ未設定のため自動通知が来ません)。」
-4. 成功したかは `ps -o pid,time -p <pid>` のCPU時間が伸びているかで簡易確認できる(数秒待って再実行)。
+
+   **注意**: `do script ... in window` はcodexのTUI入力欄に文字を流し込むだけで、実際のEnter押下として
+   認識されないことがある(codex側が忙しくなくアイドル状態だと特に起きやすい)。文字が入力欄に残ったまま
+   送信されていない=CPU時間が全く伸びない、という状態になる。念のため直後に明示的なReturnキー押下を
+   System Events で送ること:
+   ```bash
+   osascript <<APPLESCRIPT
+   tell application "Terminal"
+       activate
+       set index of window id <window-id> to 1
+   end tell
+   delay 0.3
+   tell application "System Events" to tell process "Terminal" to keystroke return
+   APPLESCRIPT
+   ```
+   対象windowが既にbusy(処理中)なら不要(そこへ余分なReturnを送ると新しい空ターンを積んでしまう恐れが
+   あるので、busyな窓には打たない)。
+4. 成功したかは `ps -o pid,time -p <pid>` のCPU時間が伸びているかで確認する(数秒待って再実行、伸びて
+   いなければStep3のReturn押下からやり直す)。
 
 **再spawnして良いのは**、対象プロセスが実際に終了している(`ps`にPIDが出ない)場合のみ。その場合は
 `--boot-prompt`に次のタスクを直接書いて通常どおりspawnすればresumeで前回の文脈ごと戻ってくる。
