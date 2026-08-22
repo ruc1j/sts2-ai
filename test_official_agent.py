@@ -2020,6 +2020,45 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 7)
 
+    def test_lethal_attack_precedes_crab_facing_change(self) -> None:
+        observation = {
+            "player": {"powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.BASH", "type": "Attack", "vars": [{"id": "Damage", "value": 8}]},
+            ],
+            "enemies": [
+                {"combat_id": 7, "hp": 50, "block": 0, "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}], "intents": [{"damage": 12, "repeats": 1}]},
+                {"combat_id": 8, "hp": 6, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 7},
+                {"type": "card", "card_id": "CARD.BASH", "hand_index": 1, "target_id": 8},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 8)
+
+    def test_crab_facing_chooses_highest_damage_attack(self) -> None:
+        observation = {
+            "player": {"powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.BASH", "type": "Attack", "vars": [{"id": "Damage", "value": 8}]},
+            ],
+            "enemies": [{
+                "combat_id": 7, "hp": 50, "block": 0,
+                "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}],
+                "intents": [{"damage": 12, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 7},
+                {"type": "card", "card_id": "CARD.BASH", "hand_index": 1, "target_id": 7},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.BASH")
+
     def test_uses_defensive_potion_before_crab_facing_when_incoming_is_dangerous(self) -> None:
         observation = {
             "player": {

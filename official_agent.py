@@ -709,7 +709,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
         if draw_cards:
             return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))
-    if turn := choose_crab_facing(observation, cards):
+    if not lethal and (turn := choose_crab_facing(observation, cards)):
         return turn
 
     # In a multi-enemy fight, a modeled rollout can still favor a single-target line because it
@@ -902,7 +902,13 @@ def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
     if direction == facing:
         return None
     hand = {card["index"]: card for card in observation.get("hand", ())}
-    return next((action for action in cards if action.get("target_id") == target_id and hand.get(action.get("hand_index"), {}).get("type") == "Attack"), None)
+    candidates = [
+        action
+        for action in cards
+        if action.get("target_id") == target_id
+        and hand.get(action.get("hand_index"), {}).get("type") == "Attack"
+    ]
+    return max(candidates, key=lambda action: _card_value(action, hand, "damage"), default=None)
 
 
 def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
