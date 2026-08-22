@@ -529,6 +529,15 @@ WaterfallのEXPLODE観測にある正のintent damageを`SteamEruptionDamage`へ
 petがいると別敵へ使用するか`StopIteration`になった。`compact_to_observation_index`で対応を保持し、両方のtarget
 変換を同じ対応表へ統一した。先頭pet+実敵2体のカード/ポーション選択を回帰テストで固定した。
 
+### Vantom戦のAoE rollout StopIteration(2026-08-23)
+
+`rollout_choice`の内部シミュレータはAoEカードとExplosive Ampouleを便宜上`@敵index`で表すが、
+公式Bridgeの合法actionは全体対象のため`target_id=null`になる。従来のtarget変換は常に敵CombatIdを
+探していたため、VantomのSlipperyPower=4でBASHを選ぶ直前にrolloutがAoE/potionを選ぶと、公式actionを
+見つけられず`StopIteration`へ落ちていた。AoEカードとExplosive Ampouleはtargetless actionへ変換し、
+Vantom+Slipperyの実機文脈を含む回帰テストでカード・ポーション両経路を固定した。Slipperyのblock消費修正
+自体が例外を発生させた根拠はなく、時系列上の併発だった。
+
 ### Rageの防御比較(2026-08-23)
 
 Rageは攻撃後に3 block（アップグレード時5）を得るため、incomingが無いターンでは攻撃前の使用を優先できる。

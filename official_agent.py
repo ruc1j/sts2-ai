@@ -1871,7 +1871,11 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         return selected | {"simulations": simulations, "search_value": value}
     if best.startswith("potion:"):
         potion, _, target = best[len("potion:"):].partition("@")
-        target_id = observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
+        target_id = (
+            None
+            if potion == POTION_EXPLOSIVE
+            else observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
+        )
         selected = next(
             action for action in actions
             if action.get("type") == "potion"
@@ -1888,7 +1892,11 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             target_index = int(target) + (int(target) >= played_index)
             selected = selected | {"upgrade_hand_index": target_index}
         return selected | {"simulations": simulations, "search_value": value}
-    target_id = observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
+    target_id = (
+        None
+        if model in ALL_ENEMY_CARDS
+        else observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
+    )
     selected = next(action for action in actions if action.get("card_id") == model and action.get("target_id") == target_id)
     return selected | {"simulations": simulations, "search_value": value}
 

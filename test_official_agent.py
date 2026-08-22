@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 from combat import BURN, DAZED, END_TURN, INFECTION, TOXIC, step
 
 
@@ -3723,6 +3723,34 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.search", return_value=[("potion:" + POTION_FIRE + "@1", 2.0)]):
             action = rollout_choice(observation, observation["legal_actions"], data, 1)
         self.assertEqual((action["target_id"], action["simulations"], action["search_value"]), (12, 1, 2.0))
+
+    def test_rollout_maps_vantom_targetless_aoe_actions(self) -> None:
+        with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 117,
+            "run": {"act": 1, "floor": 16, "room_type": "Boss"},
+            "turn": 3,
+            "player": {"hp": 78, "max_hp": 85, "block": 0, "energy": 2, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.THUNDERCLAP"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "potions": [{"id": POTION_EXPLOSIVE}],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.VANTOM", "hp": 169, "block": 0,
+                "powers": [{"id": "POWER.SLIPPERY_POWER", "amount": 4}],
+                "intents": [{"damage": 26, "repeats": 1}], "move": "DISMEMBER_MOVE",
+                "history": ["INK_BLOT_MOVE", "INKY_LANCE_MOVE"], "slot": "",
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.THUNDERCLAP", "hand_index": 0, "target_id": None},
+                {"type": "potion", "potion_id": POTION_EXPLOSIVE, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        for best in ("Thunderclap@0", "potion:" + POTION_EXPLOSIVE + "@0"):
+            with self.subTest(best=best), patch("official_agent.search", return_value=[(best, 1.0)]):
+                action = rollout_choice(observation, observation["legal_actions"], data, 1)
+            self.assertIsNone(action["target_id"])
 
     def test_rollout_marks_minion_enemies_secondary(self) -> None:
         data = {"monsters": [{
