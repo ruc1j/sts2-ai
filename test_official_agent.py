@@ -2061,6 +2061,28 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 8)
 
+    def test_targetless_aoe_lethal_precedes_crab_facing_change(self) -> None:
+        observation = {
+            "player": {"powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
+            "hand": [
+                {"index": 0, "id": "CARD.HOWL_FROM_BEYOND", "type": "Attack", "vars": [{"id": "Damage", "value": 16}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [{
+                "combat_id": 7,
+                "hp": 10,
+                "block": 0,
+                "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}],
+                "intents": [{"damage": 20, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.HOWL_FROM_BEYOND", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 7},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.HOWL_FROM_BEYOND")
+
     def test_crab_facing_chooses_highest_damage_attack(self) -> None:
         observation = {
             "player": {"powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},

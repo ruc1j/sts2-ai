@@ -9,7 +9,7 @@ import traceback
 from dataclasses import replace
 
 from combat import (
-    Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    ALL_ENEMY_DAMAGE, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
     POTION_STRENGTH, SELF_DAMAGE, _resolve_move, search,
 )
@@ -663,21 +663,38 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if enemy.get("combat_id") is not None
     }
 
-    def damage(action: dict) -> int:
-        enemy = enemy_by_id.get(action.get("target_id"))
-        if not enemy:
+    def damage(action: dict, enemy: dict | None = None) -> int:
+        if enemy is None:
+            enemy = enemy_by_id.get(action.get("target_id"))
+        if enemy is None:
             return 0
         # Slippery enemies reduce every hit to 1 until the power is spent.
         if any(power.get("id") == "POWER.SLIPPERY_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
             return 1
         value = _card_value(action, hand, "damage")
+        if value <= 0:
+            value = ALL_ENEMY_DAMAGE.get(CARD_NAMES.get(action.get("card_id")), 0)
         # HardToKill (e.g. Exoskeleton) caps every hit at the power amount.
         caps = [_number(power.get("amount")) for power in enemy.get("powers", ()) if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]
         return min(value, max(caps)) if caps else value
 
+    def lethal_targets(action: dict) -> tuple[dict, ...]:
+        target_id = action.get("target_id")
+        if target_id is None and action.get("card_id") in ALL_ENEMY_CARDS:
+            targets = enemy_by_id.values()
+        elif target_id in enemy_by_id:
+            targets = (enemy_by_id[target_id],)
+        else:
+            return ()
+        return tuple(
+            enemy
+            for enemy in targets
+            if _number(enemy.get("hp")) > 0
+            and damage(action, enemy) - _number(enemy.get("block")) >= _number(enemy.get("hp"))
+        )
+
     def is_lethal(action: dict) -> bool:
-        enemy = enemy_by_id.get(action.get("target_id"))
-        return bool(enemy and damage(action) - enemy.get("block", 0) >= _number(enemy.get("hp")))
+        return bool(lethal_targets(action))
 
     lethal = [action for action in cards if is_lethal(action)]
     incoming_threats = {combat_id for combat_id, value in enemy_incoming.items() if value > 0}
@@ -761,7 +778,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
         # Never let stochastic rollout trade a guaranteed kill for a different target; this is
         # especially important when a dangerous minion can be finished immediately.
-        return max(killers, key=lambda action: (enemy_incoming.get(action["target_id"], 0), -enemy_by_id[action["target_id"]].get("hp", 0), _card_value(action, hand, "damage")))
+        def lethal_key(action: dict) -> tuple[int, int, int, int]:
+            targets = lethal_targets(action)
+            return (
+                sum(enemy_incoming.get(enemy.get("combat_id"), 0) for enemy in targets),
+                len(targets),
+                -min((_number(enemy.get("hp")) for enemy in targets), default=0),
+                max((damage(action, enemy) for enemy in targets), default=0),
+            )
+        return max(killers, key=lethal_key)
 
     # Rage (Whenever you play an Attack this turn, gain Block) only pays off for attacks played
     # AFTER it - a D6 live trace played Anger/Strike/Defend first and Rage last, forfeiting the
