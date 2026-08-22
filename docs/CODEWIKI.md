@@ -880,3 +880,24 @@ F(デッキ構築)/G-I(map routing含む)/M(不可避)のどれが支配的か�
 **次のステップ(researcher提案、優先度順)**: (1) defense acquisition/path-rest riskの確認、
 (2) enemy intent/incoming damageと候補カードのblockをtraceに追加し、unsafe拒否が「正しい判断」か
 「search見誤り」かを分離、(3) potion/reward policyはこの5本だけでは変更しない。
+
+### KIN_PRIEST decision_source分析(researcher、leader_val37、2026-08-23) — 従来の「高難度」判断を裏付け
+
+decision_source完成後、初めて実機でKIN_PRIEST戦(data/leader_val37_trace.jsonl、seed=A9AACB9F62)に
+遭遇した。turn11(HP2→0)で敗北。この1本(n=1)でのdecision_source内訳:
+
+- rollout_success 13件(30.23%)、heuristic_fallback 15件(rollout_disabled_no_playable_card 10 +
+  rollout_rejected_unsafe 5)、kin_follower_direct 5 + kin_follower_urgent_direct 5(合計10件、
+  T1-T4のFollower集中攻撃)、direct_potion 3、lethal_direct 2。generic_multi_primary_focus_directは
+  0件(前回発見した誤ラベル問題とは無関係な純粋なKIN戦であることを確認)。
+
+**重要な事実**: unsafe拒否5件はT5/T7/T10(HP15またはHP10)に発生し、**死亡した最終ターンT11
+(HP2→0)には発生していない**。T11はFlame Barrier+Defendがrollout_successで選ばれた後、通常の
+end_turnで死亡している。つまりこの1戦に関する限り、安全ガード拒否が直接の死因だったとは言えない。
+HPはT1開始51→T4開始15まで急落し、その後T9まで15を維持、T10で10、T11開始で2という推移で、
+KIN follower policy自体(T1-T6でFollower 2体を撃破済み)が明確に誤っていた証拠もない。
+
+**結論**: この1本の実データは、CLAUDE.md/CODEWIKIに以前から記載されていた「KIN_PRIEST等での僅差負けは
+デッキ火力不足や高難度設計と判断しコード変更は保留」という過去の判断を裏付ける方向。E/F/M(resource/
+defense不足・高分散)が主候補、C/D(search/target policy)は副次候補でバグ確定ではない。A/B/Kの直接証拠
+なし。n=1なのでKIN_PRIESTへのコード変更はまだ行わない。追加seedが出たら同様の分析を繰り返すこと。
