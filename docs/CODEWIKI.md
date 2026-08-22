@@ -481,6 +481,13 @@ ABOUT_TO_BLOW後のEXPLODE観測をrolloutへ渡すと動的ダメージが0へ�
 WaterfallのEXPLODE観測にある正のintent damageを`SteamEruptionDamage`へ引き継ぎ、JSON駆動の公式観測再構築
 テストで15ダメージ後のKillを固定した。
 
+### rollout_choiceのpet除外後target index補正(2026-08-23)
+
+`rollout_choice`はPael's Legion/Byrdpipをシミュレータの敵配列から除外するため、検索結果のcompactな敵indexと
+公式観測の敵indexが一致しない。従来はカード・ポーションのtarget変換で観測配列を直接参照しており、先頭や途中に
+petがいると別敵へ使用するか`StopIteration`になった。`compact_to_observation_index`で対応を保持し、両方のtarget
+変換を同じ対応表へ統一した。先頭pet+実敵2体のカード/ポーション選択を回帰テストで固定した。
+
 ## 2026-08-15セッションまとめ(このセッション区切りでの終了時点)
 
 先生の「ポーションを雑魚で使いすぎ」という指摘を起点に、reviewer/developer間でheadless実行と実trace検証を

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 from combat import BURN, DAZED, END_TURN, INFECTION, TOXIC, step
 
 
@@ -3283,6 +3283,58 @@ class OfficialAgentTest(unittest.TestCase):
         }
         action = rollout_choice(observation, observation["legal_actions"], data, 200)
         self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
+
+    def test_rollout_maps_card_target_after_skipping_leading_pet(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 1,
+            "turn": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [
+                {"combat_id": 99, "id": "MONSTER.PAELS_LEGION", "hp": 9999, "block": 0, "powers": [], "intents": [], "move": "NOTHING_MOVE", "history": [], "slot": ""},
+                {"combat_id": 11, "id": "MONSTER.SPECTRAL_KNIGHT", "hp": 30, "block": 0, "powers": [], "intents": [], "move": "HEX", "history": [], "slot": "left"},
+                {"combat_id": 12, "id": "MONSTER.MAGI_KNIGHT", "hp": 30, "block": 0, "powers": [], "intents": [], "move": "POWER_SHIELD_MOVE", "history": [], "slot": "right"},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 11},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 12},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.search", return_value=[("Strike@1", 1.0)]):
+            action = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual((action["target_id"], action["simulations"], action["search_value"]), (12, 1, 1.0))
+
+    def test_rollout_maps_potion_target_after_skipping_leading_pet(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 1,
+            "run": {"act": 1, "floor": 2, "room_type": "Monster"},
+            "turn": 1,
+            "player": {"hp": 20, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "potions": [{"id": POTION_FIRE}],
+            "enemies": [
+                {"combat_id": 99, "id": "MONSTER.PAELS_LEGION", "hp": 9999, "block": 0, "powers": [], "intents": [], "move": "NOTHING_MOVE", "history": [], "slot": ""},
+                {"combat_id": 11, "id": "MONSTER.SPECTRAL_KNIGHT", "hp": 30, "block": 0, "powers": [], "intents": [], "move": "HEX", "history": [], "slot": "left"},
+                {"combat_id": 12, "id": "MONSTER.MAGI_KNIGHT", "hp": 10, "block": 0, "powers": [], "intents": [{"damage": 20, "repeats": 1}], "move": "POWER_SHIELD_MOVE", "history": [], "slot": "right"},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 11},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 12},
+                {"type": "potion", "potion_id": POTION_FIRE, "target_id": 11},
+                {"type": "potion", "potion_id": POTION_FIRE, "target_id": 12},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.search", return_value=[("potion:" + POTION_FIRE + "@1", 2.0)]):
+            action = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual((action["target_id"], action["simulations"], action["search_value"]), (12, 1, 2.0))
 
     def test_rollout_marks_minion_enemies_secondary(self) -> None:
         data = {"monsters": [{

@@ -1648,7 +1648,8 @@ def choose_rest(observation: dict) -> dict:
 def rollout_choice(observation: dict, actions: list[dict], data: dict, simulations: int) -> dict:
     specs = {monster["id"]: monster for monster in data["monsters"]}
     enemies = []
-    for observed in observation["enemies"]:
+    compact_to_observation_index = []
+    for observation_index, observed in enumerate(observation["enemies"]):
         # Pael's Legion and Byrdpip are relic-summoned player pets (9999 HP, no health bar,
         # NOTHING_MOVE forever), not real combat targets; neither has an entry in the exported
         # monster data and would otherwise crash every rollout in any fight where the player
@@ -1684,6 +1685,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             # reaches this enemy's turn. Re-resolve back through the monster's own initial state.
             enemy = replace(enemy, move=_resolve_move(enemy, spec, random.Random(observation["seq"]), spec["initial_state"]))
         enemies.append(enemy)
+        compact_to_observation_index.append(observation_index)
     upgraded_card_ids = list(observation["player"].get("upgraded_cards") or ())
     upgraded_card_ids.extend(
         card["id"] for card in observation.get("hand", ())
@@ -1728,7 +1730,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         return selected | {"simulations": simulations, "search_value": value}
     if best.startswith("potion:"):
         potion, _, target = best[len("potion:"):].partition("@")
-        target_id = observation["enemies"][int(target)]["combat_id"] if target else None
+        target_id = observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
         selected = next(
             action for action in actions
             if action.get("type") == "potion"
@@ -1745,7 +1747,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             target_index = int(target) + (int(target) >= played_index)
             selected = selected | {"upgrade_hand_index": target_index}
         return selected | {"simulations": simulations, "search_value": value}
-    target_id = observation["enemies"][int(target)]["combat_id"] if target else None
+    target_id = observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
     selected = next(action for action in actions if action.get("card_id") == model and action.get("target_id") == target_id)
     return selected | {"simulations": simulations, "search_value": value}
 
