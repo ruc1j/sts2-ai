@@ -728,7 +728,7 @@ crab_facing_direct、aoe_threat_direct、queen_minion_direct、lethal_direct、r
 rage_direct、kin_follower_direct、kin_follower_urgent_direct)、rollout系(rollout_success、
 heuristic_fallback〈細分化するならheuristic_block/card/end_turn〉、agent_exception_fallback)。
 
-**decision_reason固定値**(fallback時に併記): rollout_disabled_no_data/no_simulations/no_known_card、
+**decision_reason固定値**(fallback時に併記): rollout_disabled_no_data/no_simulations/no_playable_card、
 rollout_rejected_unsafe(incoming>=hpかつ非block・非lethal)、rollout_rejected_self_damage、
 rollout_exception_key_error/value_error/not_implemented/stop_iteration。
 
@@ -811,7 +811,7 @@ PrimalForce再実行をpolicy側で確実に回避する。`test_official_agent.
 ### decision_source最初の分析で判明した誤解(researcher、2026-08-23)
 
 decision_source計装導入直後、run20のtraceで`heuristic_fallback`(50件)の内訳が
-`rollout_disabled_no_known_card`45件・`rollout_rejected_unsafe`5件だったのを見て、leaderは「未知カード
+`rollout_disabled_no_playable_card`45件・`rollout_rejected_unsafe`5件だったのを見て、leaderは「未知カード
 1枚がそのターン全体のrolloutを無効化している」という仮説を立てたが、**researcherの検証でこれは誤りと
 判明した**。
 
@@ -819,9 +819,9 @@ decision_source計装導入直後、run20のtraceで`heuristic_fallback`(50件)�
 (合法カードaction自体が0件、つまり出せるカードが無いだけの通常のターン終了)。実際にrunでplayされた
 全カードIDはCARD_NAMESに登録済みで、未知カードは一切関与していなかった。
 
-**教訓**: `rollout_disabled_no_known_card`というラベル名自体が誤解を招く命名。実態は「現在legalな
-known cardが無い(エネルギー切れ含む)」であり、「未知カードが原因でrolloutを諦めた」という意味ではない。
-これは計測対象のバグではなくラベル名の問題(計器の側の誤り)。次にこの計装を触る時は、ラベルを
-`rollout_disabled_no_playable_card`や`end_turn_no_energy`等へ改名し、hand/energyの診断情報も足すことを
-検討すること。単一runの表面的なラベル名だけで仮説を立てず、必ずtraceの中身(このケースでは直前カードの
-energy消費)まで検証してから結論を出すこと。
+**教訓**: 旧`rollout_disabled_no_known_card`はラベル名自体が誤解を招く命名だったため、
+`rollout_disabled_no_playable_card`へ改名した。実態は「現在legalなknown cardが無い(エネルギー切れ含む)」
+であり、「未知カードが原因でrolloutを諦めた」という意味ではない。これは計測対象のバグではなく
+ラベル名の問題(計器の側の誤り)。`end_turn_no_energy`等への細分化やhand/energyの診断情報追加は別途検討する。
+単一runの表面的なラベル名だけで仮説を立てず、必ずtraceの中身(このケースでは直前カードのenergy消費)まで
+検証してから結論を出すこと。

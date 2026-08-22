@@ -697,7 +697,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     elif not simulations:
         rollout_reason = "rollout_disabled_no_simulations"
     elif not any(card["card_id"] in CARD_NAMES for card in cards):
-        rollout_reason = "rollout_disabled_no_known_card"
+        rollout_reason = "rollout_disabled_no_playable_card"
     else:
         rollout_reason = None
     rollout_enabled = rollout_reason is None and not duplicator_primal_force_guard

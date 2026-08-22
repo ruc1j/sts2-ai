@@ -40,7 +40,7 @@ class OfficialAgentTraceTest(unittest.TestCase):
             self.assertTrue(item["decision_source"])
             self.assertIn("decision_reason", item)
         fallback = next(item for item in combat if item["decision_source"] == "heuristic_fallback")
-        self.assertEqual(fallback["decision_reason"], "rollout_disabled_no_known_card")
+        self.assertEqual(fallback["decision_reason"], "rollout_disabled_no_playable_card")
 
         bridge = Path("official_mod/CombatBridge.cs").read_text(encoding="utf-8")
         self.assertIn('JsonPropertyName("decision_source")', bridge)
