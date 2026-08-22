@@ -953,6 +953,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         elif command == "CreatureCmd.Add":
             count = 3 if enemy.model == "MONSTER.OVICOPTER" and move_id == "LAY_EGGS_MOVE" else 1
             enemies.extend(_summon(effect["model"], data, rng) for _ in range(count))
+        elif command == "CreatureCmd.Kill" and effect.get("arguments") == ["base.Creature"]:
+            # CreatureCmd.Kill zeroes current HP, then the monster move finishes.  Keep the
+            # dead snapshot until the normal terminal/removal check after the move, matching
+            # MonsterModel.PerformMove's post-move cleanup.
+            enemy = replace(enemy, hp=0)
         elif command in {"CreatureCmd.Kill", "CreatureCmd.SetMaxAndCurrentHp"}:
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
     if enemy.model == "MONSTER.BOWLBUG_ROCK":

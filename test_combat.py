@@ -1585,6 +1585,17 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (), (), (), (enemy,)), END_TURN, glory, random.Random(0))
         self.assertEqual((after.enemies[0].move, _power(after.player_powers, "HexPower")), ("SOUL_SLASH", 2))
 
+    def test_creature_kill_explodes_gas_bomb_and_waterfall_giant_from_json(self) -> None:
+        with open("data/enemies_underdocks.json", encoding="utf-8-sig") as file:
+            underdocks = json.load(file)
+        specs = {monster["id"]: monster for monster in underdocks["monsters"]}
+        for model, hp in (("MONSTER.GAS_BOMB", 7), ("MONSTER.WATERFALL_GIANT", 240)):
+            spec = specs[model]
+            enemy = Enemy(model, hp, "EXPLODE_MOVE", tuple(sorted(spec["values"].items())))
+            after = step(Combat(80, (), (), (), (enemy,)), END_TURN, underdocks, random.Random(0))
+            self.assertEqual(after.enemies[0].hp, 0)
+            self.assertTrue(after.terminal)
+
     def test_dominate_applies_vulnerable_and_gains_strength(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
         after = step(Combat(80, (DOMINATE,), (), (), (enemy,)), f"{DOMINATE}@0", {}, random.Random(0))
