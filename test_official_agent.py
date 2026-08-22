@@ -1192,6 +1192,36 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
 
+    def test_monster_potion_waits_for_targetless_aoe_lethal_card(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 5, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.SPEED_POTION", "target_id": None},
+                {"type": "card", "card_id": "CARD.HOWL_FROM_BEYOND", "hand_index": 0, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 19, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.HOWL_FROM_BEYOND", "type": "Attack", "vars": [{"id": "Damage", "value": 16}]}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 10, "block": 0, "intents": [{"damage": 10, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.HOWL_FROM_BEYOND")
+
+    def test_potion_is_suppressed_by_lethal_card_without_incoming(self) -> None:
+        observation = {
+            "run": {"act": 1, "floor": 6, "room_type": "Monster"},
+            "turn": 1,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.FIRE_POTION", "target_id": 1},
+                {"type": "card", "card_id": "CARD.HOWL_FROM_BEYOND", "hand_index": 0, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.HOWL_FROM_BEYOND", "type": "Attack", "vars": [{"id": "Damage", "value": 16}]}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.RUBY", "hp": 10, "block": 0, "intents": []}],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.HOWL_FROM_BEYOND")
+
     def test_monster_potion_remains_for_unfinished_incoming_enemy(self) -> None:
         observation = {
             "run": {"act": 1, "floor": 4, "room_type": "Monster"},

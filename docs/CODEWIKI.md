@@ -637,3 +637,7 @@ CombatBridgeは`TargetType.AllEnemies`カードのlegal actionを`target_id=null
 参照するlethal判定では`Howl From Beyond`等の確定キルを見落としていた。`lethal_targets()`でtargetlessの
 `ALL_ENEMY_CARDS`は全敵を判定対象にし、各敵のSlippery／HardToKill／blockを含む実効ダメージで、1体以上を
 倒せるカードをlethal候補へ追加した。lethal候補の選択キーもtargetless actionを扱えるよう修正した。
+
+同じ`lethal_targets()`をpotion抑制ゲートにも使い、非自傷lethal候補がincoming中の全脅威を倒せる場合は
+potionを温存するようにした。incomingが無い局面でも即時kill可能ならpotionを使わず、targetless AoEの
+combat_idも正しく脅威集合へ展開する。

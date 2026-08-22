@@ -699,9 +699,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     lethal = [action for action in cards if is_lethal(action)]
     incoming_threats = {combat_id for combat_id, value in enemy_incoming.items() if value > 0}
     lethal_attacks = [action for action in lethal if not _is_self_damage(action, hand)]
-    all_incoming_threats_lethal = bool(incoming_threats) and all(
-        any(action.get("target_id") == combat_id for action in lethal_attacks)
-        for combat_id in incoming_threats
+    lethal_target_ids = {
+        enemy.get("combat_id")
+        for action in lethal_attacks
+        for enemy in lethal_targets(action)
+        if enemy.get("combat_id") is not None
+    }
+    potion_lethal_now = bool(lethal_attacks) and (
+        not incoming_threats or incoming_threats <= lethal_target_ids
     )
     direct_potion = choose_potion(observation, potions)
     dexterity_potions = {"POTION.DEXTERITY_POTION", "POTION.SPEED_POTION"}
@@ -722,7 +727,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         )
         and (not potion_already_used or potion_lethal)
         and not duplicate_dexterity_potion
-        and not all_incoming_threats_lethal
+        and not potion_lethal_now
         and direct_potion
     ):
         if potion_context is not None:
