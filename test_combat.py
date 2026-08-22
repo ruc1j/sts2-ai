@@ -4,7 +4,7 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
+    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
     DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
@@ -1696,6 +1696,38 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(after.enemies[0].move, "HEADBUTT_MOVE")
         self.assertEqual(_power(after.enemies[0].powers, "OffBalancePower"), 0)
         self.assertEqual(after.player_hp, 65)
+
+    def test_tunneler_burrow_break_stuns_and_clears_burrowed_power(self) -> None:
+        # BurrowedPower.AfterBlockBroken: breaking all 32 Block in one hit immediately stuns
+        # Tunneler to DIZZY_MOVE and removes BurrowedPower (data/enemies_hive.json MONSTER.TUNNELER).
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        enemy = Enemy("MONSTER.TUNNELER", 87, "BELOW_MOVE", (), block=32, powers=(("BurrowedPower", 1),))
+        combat = Combat(80, (BLUDGEON,), (), (), (enemy,))
+        after = step(combat, f"{BLUDGEON}@0", hive, random.Random(0))  # Bludgeon deals exactly 32
+        self.assertEqual(
+            (after.enemies[0].move, after.enemies[0].block, _power(after.enemies[0].powers, "BurrowedPower")),
+            ("DIZZY_MOVE", 0, 0),
+        )
+
+    def test_tunneler_dizzy_move_returns_to_bite(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        enemy = Enemy("MONSTER.TUNNELER", 87, "DIZZY_MOVE", ())
+        combat = Combat(80, (), (), (), (enemy,))
+        after = step(combat, END_TURN, hive, random.Random(0))
+        self.assertEqual(after.enemies[0].move, "BITE_MOVE")
+
+    def test_tunneler_partial_hit_keeps_burrowed_power_and_block(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        enemy = Enemy("MONSTER.TUNNELER", 87, "BELOW_MOVE", (), block=32, powers=(("BurrowedPower", 1),))
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", hive, random.Random(0))  # Strike deals 6, well short of 32
+        self.assertEqual(
+            (after.enemies[0].move, after.enemies[0].block, _power(after.enemies[0].powers, "BurrowedPower")),
+            ("BELOW_MOVE", 26, 1),
+        )
 
 
 if __name__ == "__main__":

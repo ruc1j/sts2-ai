@@ -775,6 +775,13 @@ def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
         powers = _add_power(powers, "StrengthPower", -_power(powers, "StrengthPower"))
         powers = _add_power(powers, "PlowPower", -plow)
         return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers, move="STUN_MOVE")
+    burrowed = _power(powers, "BurrowedPower")
+    if burrowed and enemy.block > 0 and enemy.block - blocked == 0:
+        # BurrowedPower.AfterBlockBroken (Tunneler): once a hit reduces its Burrow block to zero
+        # (including overkill damage, not just an exact match), it immediately stuns into
+        # DIZZY_MOVE and strips BurrowedPower; AfterRemoved's "clear remaining Block" is a no-op
+        # here since this only fires when no Block remains, never a partial hit that leaves some.
+        return _mark_test_subject_death(replace(enemy, block=0, hp=hp, powers=_add_power(powers, "BurrowedPower", -burrowed), move="DIZZY_MOVE"))
     return _mark_test_subject_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers))
 
 
