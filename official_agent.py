@@ -222,6 +222,7 @@ POWER_NAMES = {
     "POWER.AGGRESSION_POWER": "AggressionPower",
     "POWER.DARK_EMBRACE_POWER": "DarkEmbracePower",
     "POWER.CRIMSON_MANTLE_POWER": "CrimsonMantlePower",
+    "POWER.BURROWED_POWER": "BurrowedPower",
 }
 
 KNOWN_CARD_DAMAGE = {

@@ -1729,6 +1729,23 @@ class CombatTest(unittest.TestCase):
             ("BELOW_MOVE", 26, 1),
         )
 
+    def test_tunneler_burrowed_power_normalizes_from_official_id(self) -> None:
+        # Regression: POWER_NAMES lacked "POWER.BURROWED_POWER" -> "BurrowedPower", so a real
+        # official observation (which reports the power under its "POWER.BURROWED_POWER" id, not
+        # the internal name) normalized to the wrong string and this whole stun transition never
+        # fired outside of tests that injected "BurrowedPower" directly.
+        from official_agent import POWER_NAMES
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        normalized = POWER_NAMES.get("POWER.BURROWED_POWER", "POWER.BURROWED_POWER")
+        enemy = Enemy("MONSTER.TUNNELER", 87, "BELOW_MOVE", (), block=32, powers=((normalized, 1),))
+        combat = Combat(80, (BLUDGEON,), (), (), (enemy,))
+        after = step(combat, f"{BLUDGEON}@0", hive, random.Random(0))  # Bludgeon deals exactly 32
+        self.assertEqual(
+            (after.enemies[0].move, after.enemies[0].block, _power(after.enemies[0].powers, "BurrowedPower")),
+            ("DIZZY_MOVE", 0, 0),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
