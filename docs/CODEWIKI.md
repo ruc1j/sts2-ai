@@ -861,3 +861,22 @@ WRIGGLER等の通常戦でも発火)に付いている過度に広いラベル�
 1. 分割実装済み。KIN_PRIESTが実際に出現するseedで追加run→decision_source比率を再測定。
 2. traceにincoming intents/block/rejected候補/fallback選択を追加すれば、rejectされた安全ガードの
    反実仮想比較が可能になる(将来課題、優先度低)。
+
+### Act1序盤早期死亡パターン(researcher、leader_val30-34、2026-08-23) — コード変更は保留
+
+leader_val30〜34の5本中3本(val31/33/34)がAct1序盤(F5〜F14)で早期死亡していたため調査したが、
+**単一原因は特定できず、コード変更は行わない**。
+
+**FACT**: 3本とも「前戦後に低HPのまま複数敵戦へ突入し、デッキの強防御カードが不足していた」という
+共通パターン。val33/val34は死亡前にRestSiteを一度も踏んでおらず、val31もElite戦後にRestSiteなしで
+次のMonster戦に入っていた。unsafe/self-damage系のrollout拒否も3本全てで反復しているが、これが
+「正しい安全側判断」なのか「search/simulatorの見誤り」なのかは現traceだけでは切り分け不能。
+potionの温存が共通原因という証拠は無し(n=2で使用タイミングもまちまち)。
+
+**結論**: 高分散(弱い防御構成のデッキで休憩無しに連続して複数敵と戦う)が主因の可能性が高いが、
+F(デッキ構築)/G-I(map routing含む)/M(不可避)のどれが支配的かは未確定。C(combat search)は
+併発候補。A(不正action)/B(simulator mismatch)の直接証拠はなし。
+
+**次のステップ(researcher提案、優先度順)**: (1) defense acquisition/path-rest riskの確認、
+(2) enemy intent/incoming damageと候補カードのblockをtraceに追加し、unsafe拒否が「正しい判断」か
+「search見誤り」かを分離、(3) potion/reward policyはこの5本だけでは変更しない。
