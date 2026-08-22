@@ -820,6 +820,27 @@ class CombatTest(unittest.TestCase):
         after = step(combat, "Anger@0", {}, random.Random(0))
         self.assertEqual((after.enemies[0].hp, after.enemies[0].powers), (19, (("SlipperyPower", 7),)))
 
+    def test_slippery_does_not_consume_on_fully_blocked_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), block=6, powers=(("SlipperyPower", 8),))
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].block, after.enemies[0].powers), (20, 0, (("SlipperyPower", 8),)))
+
+    def test_slippery_caps_unpowered_damage_after_block(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), block=2, powers=(("SlipperyPower", 8),))
+        combat = Combat(80, (), (), (), (enemy,), player_potions=(POTION_FIRE,))
+        after = step(combat, f"potion:{POTION_FIRE}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].block, after.enemies[0].powers), (19, 0, (("SlipperyPower", 7),)))
+
+    def test_slippery_consumes_after_soar_reduced_damage(self) -> None:
+        enemy = Enemy(
+            "MONSTER.DUMMY", 20, "MOVE", (), block=2,
+            powers=(("SlipperyPower", 8), ("SoarPower", 1)),
+        )
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.enemies[0].block, after.enemies[0].powers), (19, 0, (("SlipperyPower", 7), ("SoarPower", 1))))
+
     def test_hard_to_kill_caps_each_hit(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 30, "MOVE", (), powers=(("HardToKillPower", 9),))
         combat = Combat(80, (GIANT_ROCK,), (), (), (enemy,))

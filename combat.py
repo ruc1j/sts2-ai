@@ -762,8 +762,7 @@ def _enemy_attack_damage(
 
 
 def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
-    if _power(enemy.powers, "SlipperyPower"):
-        return _mark_enemy_death(replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1)))
+    slippery = _power(enemy.powers, "SlipperyPower")
     # SoarPower halves powered attacks against its owner; potions, relics, and powers pass
     # powered=False and are unaffected.
     if powered and _power(enemy.powers, "SoarPower"):
@@ -779,6 +778,11 @@ def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     blocked = min(enemy.block, damage)
     unblocked = damage - blocked
     powers = enemy.powers
+    # SlipperyPower.ModifyHpLostAfterOsty runs after Block is consumed: cap only the remaining
+    # HP loss to one, and decrement the counter only when at least one damage got through.
+    if slippery and unblocked > 0:
+        unblocked = 1
+        powers = _add_power(powers, "SlipperyPower", -1)
     if flutter and unblocked > 0:
         powers = _add_power(powers, "FlutterPower", -1)
     hp = enemy.hp - unblocked

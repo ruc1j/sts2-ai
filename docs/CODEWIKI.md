@@ -381,6 +381,14 @@ Soar対象ではない確実なlethalを選ぶ回帰テストを追加した。
 検証していなかった。公式敵powerのrollout fixtureへ`POWER.SOAR_POWER`を追加し、捕捉した
 `Combat.enemies[0].powers`に`SoarPower`が残ることを固定した。
 
+### SlipperyPowerのblock消費後capを修正(2026-08-23)
+
+公式`SlipperyPower.ModifyHpLostAfterOsty`は、攻撃ダメージを先にBlockへ適用した後の
+非Blockダメージだけを1へcapし、`AfterDamageReceived`で実ダメージが通った時だけstackを1減らす。
+従来の`_damage_enemy`は早期returnでBlockを消費せずHPを1だけ減らしていたため、Slippery中の
+敵がBlockを保持したままになっていた。Soar/Flutter等のpowered修飾、unpoweredポーション、
+全Block、Soar併用の回帰テストを追加し、共通ダメージパイプラインへ組み込んだ。
+
 ### choose_card_rewardの「最高値0ならSkip」が実質死んでいた(2026-08-15、fd5e2cf)
 
 最終returnは`core.get(...) or priority.get(...)`で判定していたが、`priority`は`CARD_TIERS`の
