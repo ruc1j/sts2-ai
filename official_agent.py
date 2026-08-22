@@ -674,6 +674,16 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         _LAST_POTION_ID = None
     if potion_room is None:
         _POTION_USED_ROOM = None
+    duplicator_primal_force_guard = (
+        potion_context is not None
+        and potion_context == _LAST_POTION_CONTEXT
+        and _LAST_POTION_ID == "POTION.DUPLICATOR"
+    )
+    if duplicator_primal_force_guard:
+        # Duplicator replays PrimalForce.OnPlay; the replay tries to transform generated
+        # Giant Rocks again and the engine crashes because those cards have no hand node.
+        actions = [action for action in actions if action.get("card_id") != "CARD.PRIMAL_FORCE"]
+        cards = [action for action in cards if action.get("card_id") != "CARD.PRIMAL_FORCE"]
     potion_lethal = _potion_is_lethal_incoming(observation)
     potion_hp = _number((observation.get("player") or {}).get("hp"))
     potion_max_hp = _number((observation.get("player") or {}).get("max_hp"), potion_hp)
@@ -690,7 +700,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         rollout_reason = "rollout_disabled_no_known_card"
     else:
         rollout_reason = None
-    rollout_enabled = rollout_reason is None
+    rollout_enabled = rollout_reason is None and not duplicator_primal_force_guard
 
     enemy_by_id = {
         enemy.get("combat_id"): enemy

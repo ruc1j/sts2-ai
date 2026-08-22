@@ -1040,6 +1040,31 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(choose(observation)["potion_id"], "POTION.DEXTERITY_POTION")
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_avoids_primal_force_after_duplicator_same_turn(self) -> None:
+        observation = {
+            "run": {"act": 98, "floor": 97, "room_type": "Boss"},
+            "turn": 4,
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.PRIMAL_FORCE", "hand_index": 0, "target_id": None},
+                {"type": "potion", "potion_id": "POTION.DUPLICATOR", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 20, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.PRIMAL_FORCE", "type": "Skill", "cost": 0, "vars": []}],
+            "enemies": [{
+                "combat_id": 104, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [],
+                "intents": [{"damage": 20, "repeats": 1}],
+            }],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.DUPLICATOR")
+        observation["legal_actions"] = [
+            {"type": "card", "card_id": "CARD.PRIMAL_FORCE", "hand_index": 0, "target_id": None},
+            {"type": "end_turn"},
+        ]
+        action = choose(observation)
+        self.assertEqual(action["type"], "end_turn")
+        self.assertNotEqual(action.get("card_id"), "CARD.PRIMAL_FORCE")
+
     def test_lethal_danger_can_use_another_potion_same_turn(self) -> None:
         observation = {
             "run": {"act": 98, "floor": 98},
