@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, POWER_NAMES, POTION_BLOCK, RELIC_SCORES, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 from combat import BURN, DAZED, INFECTION, TOXIC
 
 
@@ -505,6 +505,61 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
+    def test_colossus_is_defense_priority_but_not_strong_block(self) -> None:
+        # D6 fix: Colossus (5 block) should count as a defense pick, but stay out of
+        # STRONG_BLOCK_CARDS since it is barely better than Defend.
+        self.assertIn("CARD.COLOSSUS", DEFENSE_PRIORITY)
+        self.assertNotIn("CARD.COLOSSUS", STRONG_BLOCK_CARDS)
+
+    def _d6_shortage_deck(self) -> list[dict]:
+        # 16 cards, 1 strong block (Taunt) - the D6 loss (29 cards, 1 strong block) in miniature,
+        # sized at the >= 16 boundary the shortage check uses.
+        return [
+            *({"id": "CARD.STRIKE_IRONCLAD", "cost": 1} for _ in range(5)),
+            *({"id": "CARD.DEFEND_IRONCLAD", "cost": 1} for _ in range(4)),
+            {"id": "CARD.BASH", "cost": 2}, {"id": "CARD.BLUDGEON", "cost": 3},
+            {"id": "CARD.PRIMAL_FORCE", "cost": 0}, {"id": "CARD.POMMEL_STRIKE", "cost": 1},
+            {"id": "CARD.AGGRESSION", "cost": 1}, {"id": "CARD.TAUNT", "cost": 1},
+            {"id": "CARD.COLOSSUS", "cost": 1},
+        ]
+
+    def test_reward_skips_off_axis_pick_when_deck_lacks_strong_block(self) -> None:
+        # D6 (Act3 TEST_SUBJECT loss): a large deck stuck on 1 strong block kept taking A/S-tier
+        # off-axis attacks (Anger, Headbutt, Dark Embrace, Expect a Fight) because their tier
+        # cleared the B-tier-only Skip check below. With deck>=16 and <3 strong blocks, an
+        # unsupported pick must be skipped regardless of tier.
+        observation = {
+            "player": {"deck": self._d6_shortage_deck()},
+            "cards": [{"id": "CARD.ANGER", "rarity": "Common", "cost": 0}],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+
+    def test_reward_still_takes_supported_picks_when_deck_lacks_strong_block(self) -> None:
+        # Same shortage as above, but core/DEFENSE_PRIORITY/DRAW_CARDS/Colossus picks must still
+        # win over the off-axis Anger, not fall through to Skip.
+        cases = {
+            "defense": ("CARD.SHRUG_IT_OFF", {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1}),
+            "colossus": ("CARD.COLOSSUS", {"id": "CARD.COLOSSUS", "rarity": "Uncommon", "cost": 1}),
+            "draw": ("CARD.DRUM_OF_BATTLE", {"id": "CARD.DRUM_OF_BATTLE", "rarity": "Uncommon", "cost": 1}),
+            "core": ("CARD.INFLAME", {"id": "CARD.INFLAME", "rarity": "Rare", "cost": 1}),
+        }
+        for label, (expected_id, card) in cases.items():
+            with self.subTest(label):
+                observation = {
+                    "player": {"deck": self._d6_shortage_deck()},
+                    "cards": [{"id": "CARD.ANGER", "rarity": "Common", "cost": 0}, card],
+                    "legal_actions": [
+                        {"type": "card_reward", "card_id": "CARD.ANGER"},
+                        {"type": "card_reward", "card_id": expected_id},
+                        {"type": "card_reward_alternative", "option_id": "Skip"},
+                    ],
+                }
+                self.assertEqual(choose_card_reward(observation)["card_id"], expected_id)
 
     def test_reward_skips_unsupported_cards(self) -> None:
         observation = {

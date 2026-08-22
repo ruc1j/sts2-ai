@@ -1414,7 +1414,7 @@ UNMODELED_CAP = 2
 DEFENSE_PRIORITY = {
     "CARD.IMPERVIOUS", "CARD.SHRUG_IT_OFF", "CARD.FLAME_BARRIER",
     "CARD.BLOOD_WALL", "CARD.SECOND_WIND", "CARD.STONE_ARMOR", "CARD.TAUNT",
-    "CARD.IRON_WAVE", "CARD.TRUE_GRIT",
+    "CARD.IRON_WAVE", "CARD.TRUE_GRIT", "CARD.COLOSSUS",
 }
 
 # Blocks of 8+ that can actually hold off Act 2's 28-36 hits. Taunt is included despite its
@@ -1578,6 +1578,14 @@ def choose_card_reward(observation: dict) -> dict:
         or (draw_needed and selected_id in DRAW_CARDS)
         or (defense_needed and selected_id in DEFENSE_PRIORITY)
     )
+    # A 16+ card deck with under 3 strong blocks (D6: 29 cards, 1 strong block) cannot afford to
+    # keep taking off-axis A/S-tier attacks (Anger, Headbutt, Dark Embrace, Expect a Fight) just
+    # because their tier clears the B-tier-only check below - skip anything that isn't core, a
+    # defense pick, or a draw pick, regardless of tier, until the block shortage is resolved.
+    if strong_block_shortage and not (
+        core.get(selected_id) or selected_id in DEFENSE_PRIORITY or selected_id in DRAW_CARDS
+    ):
+        return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     # Once the deck has enough cards to cover the early fights, a plain B/C/D-tier pick only
     # dilutes the draw. Keep cards that solve the current axis or a measured defense/draw
     # shortage, but use the reward's Skip alternative for everything else.
