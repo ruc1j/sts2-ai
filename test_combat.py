@@ -10,7 +10,7 @@ from combat import (
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _resolve_move, _step_score, _summon,
+    _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1623,6 +1623,19 @@ class CombatTest(unittest.TestCase):
             )
             after = step(Combat(80, (STRIKE,), (), (), (enemy,)), f"{STRIKE}@0", underdocks, random.Random(0))
             self.assertEqual((after.enemies[0].hp, after.enemies[0].move, _power(after.enemies[0].powers, "SteamEruptionPower"), after.terminal), (999999999, "ABOUT_TO_BLOW_MOVE", 3, False))
+
+    def test_guardbot_gives_block_to_fabricator_from_glory_json(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        specs = {monster["id"]: monster for monster in glory["monsters"]}
+        fabricator = specs["MONSTER.FABRICATOR"]
+        guardbot = specs["MONSTER.GUARDBOT"]
+        enemies = (
+            Enemy("MONSTER.FABRICATOR", 150, "DISINTEGRATE_MOVE", tuple(sorted(fabricator["values"].items()))),
+            Enemy("MONSTER.GUARDBOT", 16, "GUARD_MOVE", tuple(sorted(guardbot["values"].items()))),
+        )
+        after = _enemy_turn(Combat(80, (), (), (), enemies), 1, glory, random.Random(0))
+        self.assertEqual((after.enemies[0].block, after.enemies[1].block), (15, 0))
 
     def test_dominate_applies_vulnerable_and_gains_strength(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))

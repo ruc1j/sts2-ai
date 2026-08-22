@@ -955,7 +955,14 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         ):
             enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], -_power(enemy.powers, effect["model"])))
         elif command == "CreatureCmd.GainBlock":
-            enemy = replace(enemy, block=enemy.block + _amount(effect["amount"], values))
+            amount = _amount(effect["amount"], values)
+            if effect.get("target") == "item":
+                # Guardbot's GuardMove resolves item to every alive Fabricator in the room.
+                for mate_index, mate in enumerate(enemies):
+                    if mate.alive and mate.model == "MONSTER.FABRICATOR":
+                        enemies[mate_index] = replace(mate, block=mate.block + amount)
+            else:
+                enemy = replace(enemy, block=enemy.block + amount)
         elif command == "CreatureCmd.Heal":
             enemy = replace(enemy, hp=enemy.hp + _amount(effect["arguments"][1], values))
         elif command == "CreatureCmd.Escape":
