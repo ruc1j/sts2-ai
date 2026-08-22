@@ -126,6 +126,14 @@ Error: Failed to resume session ...: thread <id> already has an active writer (c
 **再spawnして良いのは**、対象プロセスが実際に終了している(`ps`にPIDが出ない)場合のみ。その場合は
 `--boot-prompt`に次のタスクを直接書いて通常どおりspawnすればresumeで前回の文脈ごと戻ってくる。
 
+**leader自身が`inbox.sh <team> <name>`で他役割の未読を「確認」すると、その場で既読化されてしまう。**
+`inbox.sh`は呼び出し時に指定した`<name>`本人としてinboxを既読にする副作用がある。leaderが単なる
+状況確認のつもりで`inbox.sh sts2-ai coder`を実行すると、実際のcoderプロセスがまだそのメッセージを
+一度も見ていなくても、次に同じコマンドを叩いた時には「No new messages」になってしまい、
+「届いているはず」という誤った安心につながる。**leaderが他役割のinboxを覗きたいだけの時は、
+`history.sh sts2-ai <team>`(全体履歴)や、直接そのメッセージをsend.shした自分の送信ログを見ること。
+`inbox.sh`はその役割本人(またはnudgeでその役割になりきって動くとき)だけが呼ぶべきコマンド。**
+
 **「タスク完了後に自分でinboxを再確認せよ」という指示は継続ループにならない。** boot-promptや
 send.shのメッセージ末尾に「完了したらinbox.shで確認してから待機」と書いておくと、そのタスクの最後に
 一度だけinboxを見てはくれる(unread以外なら"ready, 待機中"のような報告を返す)が、そこで本当に
