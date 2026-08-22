@@ -1598,9 +1598,12 @@ def choose_card_reward(observation: dict) -> dict:
     # A 16+ card deck with under 3 strong blocks (D6: 29 cards, 1 strong block) cannot afford to
     # keep taking off-axis A/S-tier attacks (Anger, Headbutt, Dark Embrace, Expect a Fight) just
     # because their tier clears the B-tier-only check below - skip anything that isn't core, a
-    # defense pick, or a draw pick, regardless of tier, until the block shortage is resolved.
+    # defense pick, or a needed draw pick, regardless of tier, until the block shortage is
+    # resolved. Gate the draw exemption on draw_needed (<2 draw cards already) - otherwise a
+    # deck that already has 2+ draw cards keeps taking more of them (D6: 3+ Battle Trance, 24
+    # cards, 0 strong blocks) since every one of them slipped past this skip unconditionally.
     if strong_block_shortage and not (
-        core.get(selected_id) or selected_id in DEFENSE_PRIORITY or selected_id in DRAW_CARDS
+        core.get(selected_id) or selected_id in DEFENSE_PRIORITY or (draw_needed and selected_id in DRAW_CARDS)
     ):
         return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     # Once the deck has enough cards to cover the early fights, a plain B/C/D-tier pick only

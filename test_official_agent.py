@@ -597,6 +597,29 @@ class OfficialAgentTest(unittest.TestCase):
                 }
                 self.assertEqual(choose_card_reward(observation)["card_id"], expected_id)
 
+    def test_reward_draw_pick_exemption_respects_draw_needed_under_block_shortage(self) -> None:
+        # D6 rerun (Act2 boss loss, turn3 Byrd Swoop->Iron Wave->Strike->Rage): the
+        # strong_block_shortage skip exempted every DRAW_CARDS pick unconditionally, so a deck
+        # already past _draw_starved's <2 threshold kept taking more Battle Trance (ended at 3+
+        # copies, 24 cards, 0 strong blocks). The exemption must gate on draw_needed instead.
+        base_deck = self._d6_shortage_deck()  # 16 cards, 1 strong block, 1 draw card (Pommel Strike)
+        observation = {
+            "player": {"deck": base_deck},
+            "cards": [{"id": "CARD.BATTLE_TRANCE", "rarity": "Uncommon", "cost": 0}],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        with self.subTest("one_draw_card_still_taken"):
+            self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.BATTLE_TRANCE")
+        observation_with_two_draw_cards = {
+            **observation,
+            "player": {"deck": base_deck + [{"id": "CARD.DRUM_OF_BATTLE", "cost": 1}]},
+        }
+        with self.subTest("two_draw_cards_now_skipped"):
+            self.assertEqual(choose_card_reward(observation_with_two_draw_cards)["option_id"], "Skip")
+
     def test_reward_skips_unsupported_cards(self) -> None:
         observation = {
             "cards": [{"id": "CARD.UNKNOWN", "rarity": "Uncommon"}],
