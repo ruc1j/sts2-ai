@@ -12,10 +12,31 @@ agmsg はエージェント間のメッセージング基盤。スクリプト�
 - `researcher` (codex) — trace/results/logsの分析、敗因のFACT/HYPOTHESIS分離担当。
 - `reviewer` (codex) — coderの差分・既存コードの独立レビュー。coderの自己申告(「テストpassしました」等)
   を鵜呑みにしない。
+- `log-monitor` (hermes) — 実機run終了後の戦闘ログ/traceを読み、気づいた点をleaderへ報告する係。
+  下記「log-monitor(hermes)の呼び出し方」参照。
 - 配信モード: `monitor`に設定されているが、**codexのmonitorブリッジは別途シェル関数のセットアップが
   必要で、このプロジェクトでは有効化されていない**(下記「codexピアへのメッセージ配信」参照)。
 - 全員が同一の git worktree を共有している(別プロセスだが同じチェックアウト)。他人が編集中の
   ファイルに気づいたら、まず「誰の差分か」を確認してから触ること。
+
+## log-monitor(hermes)の呼び出し方
+
+hermesはcodexよりさらに制約が強く、agmsgのinboxを監視できない(`delivery.sh`は`off`のみ対応)し、
+spawn.shで対話セッションとして起動することもできない(#279、初期プロンプト付きで起動するモードが無い)。
+**send.sh/inbox.shのやり取りに参加させることはできず、leaderが`mcp__omlx__run_hermes`ツールで
+毎回one-shot呼び出しする必要がある。**
+
+```
+mcp__omlx__run_hermes(prompt="data/leader_valN_log.txt と data/leader_valN_trace.jsonl を読んで
+気づいた点を報告してください。可能なら ~/.agents/skills/agmsg/scripts/send.sh sts2-ai log-monitor
+leader \"<内容>\" でleaderにも送ってください。")
+```
+
+- **実機run(`run_official_autoslay.ps1`)が終了するたびに毎回呼ぶこと。** hermes自身は新しいrunの完了を
+  知る手段が無いので、leaderが能動的に呼ばないと何も分析されない。
+- ツールの戻り値がそのままhermesの分析結果。send.shでの送信は団体としての記録用の補助であり、
+  leaderは戻り値を直接読んで判断してよい(inbox.shで二次確認する必要はない)。
+- 1回の呼び出しは同期的(タイムアウトはデフォルト120秒、必要なら`timeout`パラメータで延長)。
 
 ## 基本コマンド
 
