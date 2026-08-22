@@ -341,6 +341,13 @@ Slumbering Beetle HP19)で同型の「Speed Potion使用直後に即座に敵を
 `test_combat.py`に`POWER_NAMES.get(...)`経由で名前を正規化してから`Enemy`を構築する回帰テスト
 (`test_tunneler_burrowed_power_normalizes_from_official_id`)を追加した。
 
+### CurlUpPowerの公式ID正規化漏れを修正(2026-08-23)
+
+Louse Progenitorの`CurlUpPower`は`combat.py`に実装済みだったが、`POWER_NAMES`に
+`"POWER.CURL_UP_POWER": "CurlUpPower"`が無く、実機の公式ID経路では最初の攻撃後に14 blockを
+付与する処理が発火しなかった。公式IDから内部名へ正規化するエントリを追加し、同経路の回帰テストを
+`test_combat.py`に追加した。
+
 ### choose_card_rewardの「最高値0ならSkip」が実質死んでいた(2026-08-15、fd5e2cf)
 
 最終returnは`core.get(...) or priority.get(...)`で判定していたが、`priority`は`CARD_TIERS`の

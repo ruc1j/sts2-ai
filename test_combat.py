@@ -811,6 +811,16 @@ class CombatTest(unittest.TestCase):
         after = step(combat, f"{TWIN_STRIKE}@0", {}, random.Random(0))
         self.assertEqual((after.enemies[0].hp, after.enemies[0].block, after.enemies[0].powers), (90, 14, ()))
 
+    def test_louse_curl_up_normalizes_from_official_id(self) -> None:
+        # Regression: CombatBridge reports POWER.CURL_UP_POWER, while combat.py checks the
+        # normalized CurlUpPower name when the first attack triggers the curl block.
+        from official_agent import POWER_NAMES
+        normalized = POWER_NAMES.get("POWER.CURL_UP_POWER", "POWER.CURL_UP_POWER")
+        enemy = Enemy("MONSTER.LOUSE_PROGENITOR", 136, "BITE_MOVE", (), powers=((normalized, 14),))
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", self.data, random.Random(0))
+        self.assertEqual((after.enemies[0].block, after.enemies[0].powers), (14, ()))
+
     def test_louse_progenitor_starts_curled(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

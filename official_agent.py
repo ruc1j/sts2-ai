@@ -184,6 +184,7 @@ POWER_NAMES = {
     "POWER.BACK_ATTACK_LEFT_POWER": "BackAttackLeftPower",
     "POWER.BACK_ATTACK_RIGHT_POWER": "BackAttackRightPower",
     "POWER.CRAB_RAGE_POWER": "CrabRagePower",
+    "POWER.CURL_UP_POWER": "CurlUpPower",
     "POWER.FLUTTER_POWER": "FlutterPower",
     "POWER.SURROUNDED_POWER": "SurroundedPower",
     "POWER.ILLUSION_POWER": "IllusionPower",
