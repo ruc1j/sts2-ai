@@ -2059,6 +2059,42 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.BASH")
 
+    def test_crab_facing_avoids_self_damage_when_safe_attack_exists(self) -> None:
+        observation = {
+            "player": {"hp": 2, "max_hp": 80, "powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.HEMOKINESIS", "type": "Attack", "vars": [{"id": "Damage", "value": 15}]},
+            ],
+            "enemies": [{
+                "combat_id": 7, "hp": 100, "block": 0,
+                "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}],
+                "intents": [{"damage": 30, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 7},
+                {"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 1, "target_id": 7},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+
+    def test_crab_facing_rejects_self_damage_that_would_kill_player(self) -> None:
+        observation = {
+            "player": {"hp": 2, "max_hp": 80, "powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},
+            "hand": [{"index": 0, "id": "CARD.HEMOKINESIS", "type": "Attack", "vars": [{"id": "Damage", "value": 15}]}],
+            "enemies": [{
+                "combat_id": 7, "hp": 100, "block": 0,
+                "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}],
+                "intents": [{"damage": 30, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 0, "target_id": 7},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
     def test_uses_defensive_potion_before_crab_facing_when_incoming_is_dangerous(self) -> None:
         observation = {
             "player": {

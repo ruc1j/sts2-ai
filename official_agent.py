@@ -11,7 +11,7 @@ from dataclasses import replace
 from combat import (
     Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
-    POTION_STRENGTH, _resolve_move, search,
+    POTION_STRENGTH, SELF_DAMAGE, _resolve_move, search,
 )
 
 
@@ -351,6 +351,17 @@ def _is_self_damage(action: dict, hand: dict[int, dict]) -> bool:
         any(marker in str(variable.get("id", "")).lower().replace("_", "") for marker in ("selfdamage", "hploss", "healthloss"))
         for variable in card.get("vars") or ()
     )
+
+
+def _self_damage_value(action: dict, hand: dict[int, dict]) -> int:
+    card = hand.get(action.get("hand_index"), {})
+    observed = [
+        _number(variable.get("value"))
+        for variable in card.get("vars") or ()
+        if any(marker in str(variable.get("id", "")).lower().replace("_", "") for marker in ("selfdamage", "hploss", "healthloss"))
+    ]
+    card_name = CARD_NAMES.get(action.get("card_id") or card.get("id"), "")
+    return max(observed, default=SELF_DAMAGE.get(card_name, 0))
 
 
 # Relic choices from Ancient events (e.g. PAEL at Act 2 start). Scores are tuned to the
@@ -908,6 +919,12 @@ def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
         if action.get("target_id") == target_id
         and hand.get(action.get("hand_index"), {}).get("type") == "Attack"
     ]
+    safe_candidates = [action for action in candidates if not _is_self_damage(action, hand)]
+    if safe_candidates:
+        candidates = safe_candidates
+    else:
+        hp = _number(observation.get("player", {}).get("hp"))
+        candidates = [action for action in candidates if _self_damage_value(action, hand) < hp]
     return max(candidates, key=lambda action: _card_value(action, hand, "damage"), default=None)
 
 
