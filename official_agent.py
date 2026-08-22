@@ -755,7 +755,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     # Rage (Whenever you play an Attack this turn, gain Block) only pays off for attacks played
     # AFTER it - a D6 live trace played Anger/Strike/Defend first and Rage last, forfeiting the
     # whole turn's Rage block. Force Rage ahead of an attack whenever one is still affordable
-    # afterward, but only once every survival-critical branch above has already had first pick.
+    # afterward, unless an incoming hit exceeds its base block and a stronger defense is ready.
     rage = next((action for action in cards if action["card_id"] == "CARD.RAGE"), None)
     if rage:
         remaining_energy = _number(player.get("energy")) - _number(hand.get(rage.get("hand_index"), {}).get("cost"), 1)
@@ -767,6 +767,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             for action in cards
         )
         if attack_after_rage:
+            # combat.py models Rage as 3 block per attack (5 when upgraded).
+            rage_block = 5 if _number(hand.get(rage.get("hand_index"), {}).get("upgrade")) else 3
+            remaining = max(0, incoming - _number(player.get("block")))
+            defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
+            best_defense = max(defenses, key=lambda action: _card_value(action, hand, "block"), default=None)
+            if best_defense and remaining > rage_block and _card_value(best_defense, hand, "block") > rage_block:
+                return best_defense
             return rage
 
     # In multi-primary fights, spreading single-target damage leaves every attacker alive.

@@ -488,6 +488,13 @@ WaterfallのEXPLODE観測にある正のintent damageを`SteamEruptionDamage`へ
 petがいると別敵へ使用するか`StopIteration`になった。`compact_to_observation_index`で対応を保持し、両方のtarget
 変換を同じ対応表へ統一した。先頭pet+実敵2体のカード/ポーション選択を回帰テストで固定した。
 
+### Rageの防御比較(2026-08-23)
+
+Rageは攻撃後に3 block（アップグレード時5）を得るため、incomingが無いターンでは攻撃前の使用を優先できる。
+従来は攻撃が1枚でも後続可能ならincoming量を見ずにRageを返し、Defendの5 blockで軽減できる4以上の攻撃や致死攻撃にも
+Rageを選んでいた。現在のplayer blockを差し引いた実効incomingがRageのblockを超える場合は、Rageよりblock量の大きい
+防御札を優先する。incoming 0/4/8/12、致死量、低HPの回帰テストを追加した。
+
 ## 2026-08-15セッションまとめ(このセッション区切りでの終了時点)
 
 先生の「ポーションを雑魚で使いすぎ」という指摘を起点に、reviewer/developer間でheadless実行と実trace検証を
