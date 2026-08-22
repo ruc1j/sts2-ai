@@ -126,6 +126,14 @@ Error: Failed to resume session ...: thread <id> already has an active writer (c
 **再spawnして良いのは**、対象プロセスが実際に終了している(`ps`にPIDが出ない)場合のみ。その場合は
 `--boot-prompt`に次のタスクを直接書いて通常どおりspawnすればresumeで前回の文脈ごと戻ってくる。
 
+**「タスク完了後に自分でinboxを再確認せよ」という指示は継続ループにならない。** boot-promptや
+send.shのメッセージ末尾に「完了したらinbox.shで確認してから待機」と書いておくと、そのタスクの最後に
+一度だけinboxを見てはくれる(unread以外なら"ready, 待機中"のような報告を返す)が、そこで本当に
+待機に入り、以後は二度と自発的にinboxを見ない。「次のタスクが来たら自動で拾ってくれる」と期待して
+send.shだけで済ませず、待機に入ったタイミングごとに毎回上記のnudge手順(do script + 明示的Return)を
+実行すること。Terminalウィンドウのタイトルにスピナー(⠋⠧⠹等)が出ていなければアイドル=nudgeが必要、
+の合図として使える(`tell application "Terminal" to get name of every window`で確認)。
+
 ## 実運用上の注意
 
 - **長文・複雑なメッセージ**は、まずスクラッチファイルに heredoc で書き出してから
