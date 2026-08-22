@@ -1612,6 +1612,18 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, underdocks, random.Random(0))
         self.assertEqual((combat.player_hp, combat.enemies[0].hp, combat.enemies[0].alive, combat.terminal), (65, 0, False, True))
 
+    def test_waterfall_lethal_player_attack_enters_about_to_blow(self) -> None:
+        with open("data/enemies_underdocks.json", encoding="utf-8-sig") as file:
+            underdocks = json.load(file)
+        spec = next(monster for monster in underdocks["monsters"] if monster["id"] == "MONSTER.WATERFALL_GIANT")
+        for move in ("PRESSURIZE_MOVE", "RAM_MOVE"):
+            enemy = Enemy(
+                "MONSTER.WATERFALL_GIANT", 5, move, tuple(sorted(spec["values"].items())),
+                powers=(("SteamEruptionPower", 3),),
+            )
+            after = step(Combat(80, (STRIKE,), (), (), (enemy,)), f"{STRIKE}@0", underdocks, random.Random(0))
+            self.assertEqual((after.enemies[0].hp, after.enemies[0].move, _power(after.enemies[0].powers, "SteamEruptionPower"), after.terminal), (999999999, "ABOUT_TO_BLOW_MOVE", 3, False))
+
     def test_dominate_applies_vulnerable_and_gains_strength(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
         after = step(Combat(80, (DOMINATE,), (), (), (enemy,)), f"{DOMINATE}@0", {}, random.Random(0))

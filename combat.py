@@ -676,6 +676,18 @@ def _mark_test_subject_death(enemy: Enemy) -> Enemy:
     return enemy
 
 
+def _mark_enemy_death(enemy: Enemy) -> Enemy:
+    if (
+        enemy.model == "MONSTER.WATERFALL_GIANT"
+        and enemy.hp <= 0
+        and _power(enemy.powers, "SteamEruptionPower")
+    ):
+        # SteamEruptionPower.AfterDeath prevents removal and forces the giant into its
+        # infinite-HP ABOUT_TO_BLOW state instead of ending combat.
+        return replace(enemy, hp=999999999, move="ABOUT_TO_BLOW_MOVE")
+    return _mark_test_subject_death(enemy)
+
+
 def legal_actions(combat: Combat) -> tuple[str, ...]:
     if combat.terminal:
         return ()
@@ -751,7 +763,7 @@ def _enemy_attack_damage(
 
 def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     if _power(enemy.powers, "SlipperyPower"):
-        return replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1))
+        return _mark_enemy_death(replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1)))
     # Flutter (e.g. Thieving Hopper) halves powered-attack damage and wears off per unblocked hit.
     flutter = _power(enemy.powers, "FlutterPower") if powered else 0
     if flutter:
@@ -774,15 +786,15 @@ def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     if plow and unblocked > 0 and hp <= plow:
         powers = _add_power(powers, "StrengthPower", -_power(powers, "StrengthPower"))
         powers = _add_power(powers, "PlowPower", -plow)
-        return replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers, move="STUN_MOVE")
+        return _mark_enemy_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers, move="STUN_MOVE"))
     burrowed = _power(powers, "BurrowedPower")
     if burrowed and enemy.block > 0 and enemy.block - blocked == 0:
         # BurrowedPower.AfterBlockBroken (Tunneler): once a hit reduces its Burrow block to zero
         # (including overkill damage, not just an exact match), it immediately stuns into
         # DIZZY_MOVE and strips BurrowedPower; AfterRemoved's "clear remaining Block" is a no-op
         # here since this only fires when no Block remains, never a partial hit that leaves some.
-        return _mark_test_subject_death(replace(enemy, block=0, hp=hp, powers=_add_power(powers, "BurrowedPower", -burrowed), move="DIZZY_MOVE"))
-    return _mark_test_subject_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers))
+        return _mark_enemy_death(replace(enemy, block=0, hp=hp, powers=_add_power(powers, "BurrowedPower", -burrowed), move="DIZZY_MOVE"))
+    return _mark_enemy_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers))
 
 
 def _apply_curl_up(before: tuple[Enemy, ...], enemies: list[Enemy], card: str) -> None:
@@ -969,15 +981,17 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             # CreatureCmd.Kill zeroes current HP, then the monster move finishes.  Keep the
             # dead snapshot until the normal terminal/removal check after the move, matching
             # MonsterModel.PerformMove's post-move cleanup.
-            if enemy.model == "MONSTER.WATERFALL_GIANT" and _power(enemy.powers, "SteamEruptionPower"):
-                # SteamEruptionPower.AfterDeath keeps the owner in combat and immediately
-                # forces ABOUT_TO_BLOW with an effectively infinite current HP.
-                enemy = replace(enemy, hp=999999999)
+            enemy = _mark_enemy_death(replace(enemy, hp=0))
+            if enemy.model == "MONSTER.WATERFALL_GIANT" and enemy.move == "ABOUT_TO_BLOW_MOVE":
                 forced_move = "ABOUT_TO_BLOW_MOVE"
-            else:
-                enemy = replace(enemy, hp=0)
         elif command in {"CreatureCmd.Kill", "CreatureCmd.SetMaxAndCurrentHp"}:
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
+    if (
+        enemy.model == "MONSTER.WATERFALL_GIANT"
+        and move_id != "ABOUT_TO_BLOW_MOVE"
+        and enemy.move == "ABOUT_TO_BLOW_MOVE"
+    ):
+        forced_move = "ABOUT_TO_BLOW_MOVE"
     if enemy.model == "MONSTER.BOWLBUG_ROCK":
         if move_id == "HEADBUTT_MOVE" and damage_events and not sum(damage_events):
             # ImbalancedPower.AfterDamageGiven: a fully-blocked Headbutt sets IsOffBalance, which
