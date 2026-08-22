@@ -834,3 +834,30 @@ decision_source計装導入直後、run20のtraceで`heuristic_fallback`(50件)�
 ラベル名の問題(計器の側の誤り)。`end_turn_no_energy`等への細分化やhand/energyの診断情報追加は別途検討する。
 単一runの表面的なラベル名だけで仮説を立てず、必ずtraceの中身(このケースでは直前カードのenergy消費)まで
 検証してから結論を出すこと。
+
+### decision_source本格分析(researcher、leader_val20-29、2026-08-23) — KIN_PRIEST検証不能、別のラベル誤り発見
+
+decision_source完成後の10 run(1,423 combat action)を集計。**この10本にはKIN_PRIEST/KIN_FOLLOWER戦が
+1回も出現しなかった(n=0)**。したがって以前から懸案だったKIN_PRIESTのdirect policy寄与とrollout寄与の
+分離は、このサンプルでは検証不能(仮説の支持も反証もできない)。
+
+**新たなラベル誤り発見**: `kin_follower_direct`(139件)は名前に反してKIN限定ではなく、
+official_agent.py:882-910の「複数の同等な主敵をまとめて集中攻撃する」汎用分岐(NIBBIT/TWIG_SLIME_M/
+WRIGGLER等の通常戦でも発火)に付いている過度に広いラベルだった。`kin_follower_ids`が空でも発火するため。
+次にKIN専用の分析をする前に、`generic_multi_primary_focus_direct`と`kin_follower_direct`(kin_follower_ids
+必須)へ分割すること。
+
+**rollout_rejected_unsafe(41件)**: player HP<=20の局面に集中(35/41)、loss併発が多い(31/41)が、
+12/41はその後winしている。「危険な局面のシグナル」ではあるが、「安全ガードが勝ち筋を潰した」証拠には
+まだならない(rejectされた候補自体がtraceに残らないため反実仮想検証不可)。
+
+**rollout_exception_stop_iteration(20件)**: 大半(18件)がval21に集中しており、これは既にcoderが
+修正済みのAoEカード/Explosive Ampoule target形式変換漏れ(commit ab1793b)で説明がつく可能性が高い
+(val21はab1793bより前のrun)。val25/val28の残り2件も同一バグ由来と推定される。新規のStopIteration原因
+ではない可能性が高いが、今後のrunで再発しないか引き続き確認すること。
+
+**次のステップ(researcher提案)**:
+1. `kin_follower_direct`を`generic_multi_primary_focus_direct`と分割(low優先度、coderへ)。
+2. KIN_PRIESTが実際に出現するseedで追加run→decision_source比率を再測定。
+3. traceにincoming intents/block/rejected候補/fallback選択を追加すれば、rejectされた安全ガードの
+   反実仮想比較が可能になる(将来課題、優先度低)。
