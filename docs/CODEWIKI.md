@@ -366,6 +366,14 @@ Louse Progenitorの`CurlUpPower`は`combat.py`に実装済みだったが、`POW
 `player_powers`に残り、`_power`の完全一致読み取りが失敗するため、4件のマッピングを追加し、
 公式IDからrollout stateへの正規化経路を固定する回帰テストを追加した。
 
+### choose()のSoarPower越しlethal事前評価を修正(2026-08-23)
+
+`choose()`内の`damage()`/`lethal_targets()`は`rollout_choice()`より前に実行されるが、
+`POWER.SOAR_POWER`を考慮していなかった。そのためSoar中の敵へのカード攻撃を実ダメージのまま
+lethalと判定し、実際には倒せない対象を選ぶ可能性があった。poweredカードの各hitをSoarで
+半減してから`HardToKillPower`のhit単位capを適用するよう修正し、2体のraw observationで
+Soar対象ではない確実なlethalを選ぶ回帰テストを追加した。
+
 ### choose_card_rewardの「最高値0ならSkip」が実質死んでいた(2026-08-15、fd5e2cf)
 
 最終returnは`core.get(...) or priority.get(...)`で判定していたが、`priority`は`CARD_TIERS`の
@@ -723,3 +731,22 @@ rollout_exception_key_error/value_error/not_implemented/stop_iteration。
 **テスト案**: 既存KINテストにsource検証を追加(kin_follower_direct/urgent双方、simulations=1000でも
 sourceが残ること)、Crab direct/lethal direct/rollout成功/rollout例外→fallbackの各1ケース、
 test_official_trace.pyで新traceにdecision_sourceが存在することを確認(旧traceはlegacy_unknown扱い)。
+
+### 修正後16本runの中間集計(researcher、2026-08-23) — 明確な改善も悪化も未確認
+
+本日のバグ修正一式(SteamEruption連鎖、Crab facing lethal優先、AoE lethal盲点、self-damage回避、
+多段ヒット評価、SoarPower、POWER_NAMES複数件)適用後、leaderが回した実機run16本(leader_val1〜16)の
+中間集計。**改善したと断定しないこと。悪化したとも断定しないこと。n=16は判定に不十分。**
+
+- 16/16敗北。Act2到達5/16(31.25%、baseline 43.1%)、Act3到達0/16(baselineも0.99%)。名目上低いが
+  seed集合が非同一でregressionとは断定不可。
+- 修正対象の敵で実際にrunに出現したのはCRUSHER+ROCKETのみ(2戦2敗、null率73.81%、baseline 52.72%より
+  高い)。WATERFALL_GIANT/SPECTRAL_KNIGHT/MAGI_KNIGHT/QUEEN/GUARDBOTは今回のrunに一度も出現せず、
+  修正の効果はまだ測定できていない。
+- 全体のnull率は32.30%(baseline 12.15%)と上昇しているが、decision_source計装が無いため、これが
+  「新しいdirect分岐が単に計測上nullを増やしただけ」なのか「実際の性能劣化」なのか区別できない。
+- KIN_PRIESTは7戦1勝6敗(baseline 26/81≈32%勝率)で、こちらもn不足のため断定不可だが引き続き反復注視。
+
+**結論**: decision_source計装(上記設計メモ)を実装する必要性が明確になった。coderへ実装依頼済み
+(2026-08-23、SoarPower関連の高優先度修正の後)。実装後、追加seedでKIN_PRIEST/Crusher+Rocketの
+direct policy寄与とrollout寄与を分離して再評価すること。
