@@ -2581,7 +2581,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation)["target_id"], 2)
+        action = choose(observation)
+        self.assertEqual(action["target_id"], 2)
+        self.assertEqual(action["decision_source"], "generic_multi_primary_focus_direct")
 
     def test_queen_boss_focuses_torch_head_amalgam(self) -> None:
         observation = {

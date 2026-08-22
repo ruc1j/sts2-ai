@@ -901,6 +901,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     ]
     urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
     if len(primary_ids) > 1 and focusable and not lethal and not urgent:
+        source = "kin_follower_direct" if kin_follower_ids else "generic_multi_primary_focus_direct"
         return _tag_action(
             max(
                 focusable,
@@ -911,7 +912,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                     card_value(action, "damage"),
                 ),
             ),
-            "kin_follower_direct",
+            source,
         )
     # The Kin's Followers are the immediate damage source; keep attacking one during an urgent
     # turn when no available block card can cover the remaining hit and the player still survives.

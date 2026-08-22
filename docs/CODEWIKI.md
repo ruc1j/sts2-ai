@@ -734,7 +734,7 @@ heuristic fallback」に分離するための計装案。KIN_PRIEST調査のP1�
 **decision_source候補**(choose()のreturn地点順):
 phase系(phase_shop/map/card_reward/rest/event)、combat pre-rollout系(direct_potion、sandpit_escape/draw、
 crab_facing_direct、aoe_threat_direct、queen_minion_direct、lethal_direct、rage_defense_direct、
-rage_direct、kin_follower_direct、kin_follower_urgent_direct)、rollout系(rollout_success、
+rage_direct、generic_multi_primary_focus_direct、kin_follower_direct、kin_follower_urgent_direct)、rollout系(rollout_success、
 heuristic_fallback〈細分化するならheuristic_block/card/end_turn〉、agent_exception_fallback)。
 
 **decision_reason固定値**(fallback時に併記): rollout_disabled_no_data/no_simulations/no_playable_card、
@@ -845,7 +845,8 @@ decision_source完成後の10 run(1,423 combat action)を集計。**この10本�
 official_agent.py:882-910の「複数の同等な主敵をまとめて集中攻撃する」汎用分岐(NIBBIT/TWIG_SLIME_M/
 WRIGGLER等の通常戦でも発火)に付いている過度に広いラベルだった。`kin_follower_ids`が空でも発火するため。
 次にKIN専用の分析をする前に、`generic_multi_primary_focus_direct`と`kin_follower_direct`(kin_follower_ids
-必須)へ分割すること。
+必須)へ分割すること。対応として、通常の複数主敵では前者、KIN followerを含む場合だけ後者を付与するよう
+`official_agent.py`を修正し、両ケースの回帰 assertionを追加した。
 
 **rollout_rejected_unsafe(41件)**: player HP<=20の局面に集中(35/41)、loss併発が多い(31/41)が、
 12/41はその後winしている。「危険な局面のシグナル」ではあるが、「安全ガードが勝ち筋を潰した」証拠には
@@ -857,7 +858,6 @@ WRIGGLER等の通常戦でも発火)に付いている過度に広いラベル�
 ではない可能性が高いが、今後のrunで再発しないか引き続き確認すること。
 
 **次のステップ(researcher提案)**:
-1. `kin_follower_direct`を`generic_multi_primary_focus_direct`と分割(low優先度、coderへ)。
-2. KIN_PRIESTが実際に出現するseedで追加run→decision_source比率を再測定。
-3. traceにincoming intents/block/rejected候補/fallback選択を追加すれば、rejectされた安全ガードの
+1. 分割実装済み。KIN_PRIESTが実際に出現するseedで追加run→decision_source比率を再測定。
+2. traceにincoming intents/block/rejected候補/fallback選択を追加すれば、rejectされた安全ガードの
    反実仮想比較が可能になる(将来課題、優先度低)。
