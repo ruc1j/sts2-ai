@@ -798,3 +798,21 @@ data/leader_val19_trace.jsonlとdata/run_multi_mm_trace.jsonlの2件のみ。run
 **対応(2026-08-23)**: `choose()`は同一`potion_context`で直前に`POTION.DUPLICATOR`を使用した場合、
 `CARD.PRIMAL_FORCE`のactionを除外し、そのターンのrolloutも無効化する。これによりDuplicator由来の
 PrimalForce再実行をpolicy側で確実に回避する。`test_official_agent.py`に連続actionの回帰テストを追加した。
+
+### decision_source最初の分析で判明した誤解(researcher、2026-08-23)
+
+decision_source計装導入直後、run20のtraceで`heuristic_fallback`(50件)の内訳が
+`rollout_disabled_no_known_card`45件・`rollout_rejected_unsafe`5件だったのを見て、leaderは「未知カード
+1枚がそのターン全体のrolloutを無効化している」という仮説を立てたが、**researcherの検証でこれは誤りと
+判明した**。
+
+45件全てが`type=end_turn`で、直前のカードaction群がちょうどそのターンのエネルギーを使い切っていた
+(合法カードaction自体が0件、つまり出せるカードが無いだけの通常のターン終了)。実際にrunでplayされた
+全カードIDはCARD_NAMESに登録済みで、未知カードは一切関与していなかった。
+
+**教訓**: `rollout_disabled_no_known_card`というラベル名自体が誤解を招く命名。実態は「現在legalな
+known cardが無い(エネルギー切れ含む)」であり、「未知カードが原因でrolloutを諦めた」という意味ではない。
+これは計測対象のバグではなくラベル名の問題(計器の側の誤り)。次にこの計装を触る時は、ラベルを
+`rollout_disabled_no_playable_card`や`end_turn_no_energy`等へ改名し、hand/energyの診断情報も足すことを
+検討すること。単一runの表面的なラベル名だけで仮説を立てず、必ずtraceの中身(このケースでは直前カードの
+energy消費)まで検証してから結論を出すこと。
