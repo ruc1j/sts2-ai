@@ -330,7 +330,7 @@ def _after_exhaust(combat: Combat, cards: tuple[str, ...], rng: random.Random, d
     enemies = list(combat.enemies)
     if RELIC_CHARONS_ASHES in relics:
         for _ in cards:
-            enemies = [_damage_enemy(enemy, 3) if enemy.alive else enemy for enemy in enemies]
+            enemies = [_damage_enemy(enemy, 3, powered=False) if enemy.alive else enemy for enemy in enemies]
         combat = replace(combat, enemies=tuple(enemies))
     draw_n = _power(combat.player_powers, "DarkEmbracePower") * len(cards)
     if draw_n:
@@ -764,6 +764,10 @@ def _enemy_attack_damage(
 def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     if _power(enemy.powers, "SlipperyPower"):
         return _mark_enemy_death(replace(enemy, hp=enemy.hp - 1, powers=_add_power(enemy.powers, "SlipperyPower", -1)))
+    # SoarPower halves powered attacks against its owner; potions, relics, and powers pass
+    # powered=False and are unaffected.
+    if powered and _power(enemy.powers, "SoarPower"):
+        damage //= 2
     # Flutter (e.g. Thieving Hopper) halves powered-attack damage and wears off per unblocked hit.
     flutter = _power(enemy.powers, "FlutterPower") if powered else 0
     if flutter:
@@ -920,7 +924,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             # not per individual repeat hit).
             flame_barrier = _power(player_powers, "FlameBarrierPower")
             if flame_barrier:
-                enemy = _damage_enemy(enemy, flame_barrier)
+                enemy = _damage_enemy(enemy, flame_barrier, powered=False)
         elif command == "PowerCmd.Apply":
             try:
                 amount = _amount(effect["amount"], values)
@@ -1213,7 +1217,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # turn; the live bridge exposes it as a player power, so include it in rollouts.
         combat = _apply_player_damage(combat, _power(combat.player_powers, "DisintegrationPower"))
         if screaming_flagon:
-            combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20) if enemy.alive else enemy for enemy in combat.enemies))
+            combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20, powered=False) if enemy.alive else enemy for enemy in combat.enemies))
         # ConstrictPower.AfterSideTurnEnd (Slithering Strangler): CreatureCmd.Damage for the
         # current stack amount every time the player's own turn ends - a block-respecting DOT
         # that stacks +3 every CONSTRICT cast and never decays on its own. Previously stored via
@@ -1237,7 +1241,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if alive:
                 hit = rng.choice(alive)
                 enemies = list(combat.enemies)
-                enemies[hit] = _damage_enemy(enemies[hit], 6)
+                enemies[hit] = _damage_enemy(enemies[hit], 6, powered=False)
                 combat = replace(combat, enemies=tuple(enemies))
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
@@ -1284,9 +1288,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             player_powers = _add_power(player_powers, "StrengthPower", 2)
             enemies = [replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1)) if enemy.alive else enemy for enemy in enemies]
         if RELIC_MERCURY_HOURGLASS in relics:
-            enemies = [_damage_enemy(enemy, 3) if enemy.alive else enemy for enemy in enemies]
+            enemies = [_damage_enemy(enemy, 3, powered=False) if enemy.alive else enemy for enemy in enemies]
         if RELIC_STONE_CALENDAR in relics and new_turn == 7:
-            enemies = [_damage_enemy(enemy, 52) if enemy.alive else enemy for enemy in enemies]
+            enemies = [_damage_enemy(enemy, 52, powered=False) if enemy.alive else enemy for enemy in enemies]
         # ArtOfWar.AfterEnergyReset: +1 energy if no attack was played on the turn that just
         # ended (never fires transitioning into turn 2 - there is no "previous turn" to check).
         if RELIC_ART_OF_WAR in relics and combat.turn > 1 and combat.attacks_played_this_turn == 0:
@@ -1414,12 +1418,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             alive = [i for i, enemy in enumerate(combo_enemies) if enemy.alive]
             if alive:
                 hit = rng.choice(alive)
-                combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6)
+                combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6, powered=False)
         if RELIC_NUNCHAKU in relics and attacks_combat % 10 == 0 and energy_gain_allowed:
             combo_energy += 1
     if card in SKILLS:
         if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0:
-            combo_enemies = [_damage_enemy(enemy, 5) if enemy.alive else enemy for enemy in combo_enemies]
+            combo_enemies = [_damage_enemy(enemy, 5, powered=False) if enemy.alive else enemy for enemy in combo_enemies]
         if RELIC_TUNING_FORK in relics and skills_combat % 10 == 0:
             combo_block += 7
     if card == RAGE:

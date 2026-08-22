@@ -793,6 +793,27 @@ class CombatTest(unittest.TestCase):
         after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 36)  # 6 damage * 0.7 = 4 (int division)
 
+    def test_soar_halves_powered_attack_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("SoarPower", 1),))
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 37)  # SoarPower halves the powered 6-damage Strike.
+
+    def test_soar_does_not_reduce_unpowered_potion_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("SoarPower", 1),))
+        combat = Combat(80, (), (), (), (enemy,), player_potions=(POTION_FIRE,))
+        after = step(combat, f"potion:{POTION_FIRE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 20)
+
+    def test_soar_power_normalizes_from_official_id(self) -> None:
+        from official_agent import POWER_NAMES
+
+        normalized = POWER_NAMES.get("POWER.SOAR_POWER", "POWER.SOAR_POWER")
+        enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=((normalized, 1),))
+        combat = Combat(80, (STRIKE,), (), (), (enemy,))
+        after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 37)
+
     def test_slippery_reduces_an_attack_to_one_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", (), powers=(("SlipperyPower", 8),))
         combat = Combat(80, (ANGER,), (), (), (enemy,))

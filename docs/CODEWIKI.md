@@ -348,6 +348,15 @@ Louse Progenitorの`CurlUpPower`は`combat.py`に実装済みだったが、`POW
 付与する処理が発火しなかった。公式IDから内部名へ正規化するエントリを追加し、同経路の回帰テストを
 `test_combat.py`に追加した。
 
+### SoarPowerのpowered attack軽減と公式ID正規化(2026-08-23)
+
+公式`SoarPower`は対象自身が受ける`ValueProp.IsPoweredAttack()`だけを
+`DamageDecrease=50`で半減する。カード攻撃は対象だが、ポーション・レリック・power由来の
+`ValueProp.Unpowered`ダメージは対象外である。`combat.py`の`_damage_enemy(..., powered=...)`
+にSoar判定を追加し、カード攻撃だけを半減するようにした。実機の`POWER.SOAR_POWER`を
+`SoarPower`へ正規化する`POWER_NAMES`エントリと、powered/unpoweredおよび公式ID経路の
+回帰テストも追加した。
+
 ### choose_card_rewardの「最高値0ならSkip」が実質死んでいた(2026-08-15、fd5e2cf)
 
 最終returnは`core.get(...) or priority.get(...)`で判定していたが、`priority`は`CARD_TIERS`の
