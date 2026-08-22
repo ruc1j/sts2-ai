@@ -234,7 +234,10 @@ internal static class CombatBridge
     private static object Intent(AbstractIntent intent, IReadOnlyList<Creature> targets, Creature owner)
     {
         if (intent is AttackIntent attack)
-            return new { type = intent.IntentType.ToString(), damage = attack.GetSingleDamage(targets, owner), repeats = attack.Repeats };
+        {
+            int rawDamage = Math.Max(0, (int)(attack.DamageCalc?.Invoke() ?? 0m));
+            return new { type = intent.IntentType.ToString(), damage = attack.GetSingleDamage(targets, owner), raw_damage = rawDamage, repeats = attack.Repeats };
+        }
         return new { type = intent.IntentType.ToString(), damage = 0, repeats = 0 };
     }
 

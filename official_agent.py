@@ -1666,9 +1666,15 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         spec = specs[observed["id"]]
         values = dict(spec["values"])
         if observed["id"] == "MONSTER.WATERFALL_GIANT" and observed["move"] == "EXPLODE_MOVE":
-            intent = next((intent for intent in observed.get("intents", ()) if _number(intent.get("damage")) > 0), None)
+            intent = next(
+                (
+                    intent for intent in observed.get("intents", ())
+                    if _number(intent.get("raw_damage"), _number(intent.get("damage"))) > 0
+                ),
+                None,
+            )
             if intent is not None:
-                values["SteamEruptionDamage"] = int(intent["damage"])
+                values["SteamEruptionDamage"] = _number(intent.get("raw_damage"), _number(intent.get("damage")))
         enemy = Enemy(
             model=observed["id"],
             hp=observed["hp"],

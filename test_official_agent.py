@@ -57,12 +57,15 @@ class OfficialAgentTest(unittest.TestCase):
         observation = {
             "seq": 2,
             "turn": 3,
-            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "player": {
+                "hp": 80, "max_hp": 80, "block": 0, "energy": 3,
+                "powers": [{"id": "POWER.VULNERABLE_POWER", "amount": 1}],
+            },
             "hand": [], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
             "enemies": [{
                 "combat_id": 2, "id": "MONSTER.WATERFALL_GIANT", "hp": 999999999, "block": 0,
                 "powers": [],
-                "intents": [{"type": "DeathBlowIntent", "damage": 15, "repeats": 1}],
+                "intents": [{"type": "DeathBlowIntent", "damage": 22, "raw_damage": 15, "repeats": 1}],
                 "move": "EXPLODE_MOVE", "history": ["ABOUT_TO_BLOW_MOVE"], "slot": "boss",
             }],
             "legal_actions": [{"type": "end_turn"}],
@@ -77,7 +80,7 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.search", side_effect=capture):
             selected = rollout_choice(observation, observation["legal_actions"], data, 1)
         self.assertEqual(captured["values"]["SteamEruptionDamage"], 15)
-        self.assertEqual((captured["after"].player_hp, captured["after"].enemies[0].hp, captured["after"].terminal), (65, 0, True))
+        self.assertEqual((captured["after"].player_hp, captured["after"].enemies[0].hp, captured["after"].terminal), (58, 0, True))
         self.assertEqual((selected["simulations"], selected["search_value"]), (1, 0.0))
 
     def test_maps_insatiable_sandpit_power_for_rollouts(self) -> None:
