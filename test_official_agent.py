@@ -597,6 +597,24 @@ class OfficialAgentTest(unittest.TestCase):
                 }
                 self.assertEqual(choose_card_reward(observation)["card_id"], expected_id)
 
+    def test_reward_takes_strong_block_pick_when_deck_lacks_strong_block(self) -> None:
+        # The score's strong_defense_bonus must also be honored by the final shortage gate.
+        for card_id in ("CARD.EQUILIBRIUM", "CARD.EVIL_EYE", "CARD.ULTIMATE_DEFEND"):
+            with self.subTest(card_id):
+                observation = {
+                    "player": {"deck": self._d6_shortage_deck()},
+                    "cards": [
+                        {"id": "CARD.ANGER", "rarity": "Common", "cost": 0},
+                        {"id": card_id, "rarity": "Uncommon", "cost": 1},
+                    ],
+                    "legal_actions": [
+                        {"type": "card_reward", "card_id": "CARD.ANGER"},
+                        {"type": "card_reward", "card_id": card_id},
+                        {"type": "card_reward_alternative", "option_id": "Skip"},
+                    ],
+                }
+                self.assertEqual(choose_card_reward(observation)["card_id"], card_id)
+
     def test_reward_draw_pick_exemption_respects_draw_needed_under_block_shortage(self) -> None:
         # D6 rerun (Act2 boss loss, turn3 Byrd Swoop->Iron Wave->Strike->Rage): the
         # strong_block_shortage skip exempted every DRAW_CARDS pick unconditionally, so a deck

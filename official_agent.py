@@ -1604,7 +1604,10 @@ def choose_card_reward(observation: dict) -> dict:
     # deck that already has 2+ draw cards keeps taking more of them (D6: 3+ Battle Trance, 24
     # cards, 0 strong blocks) since every one of them slipped past this skip unconditionally.
     if strong_block_shortage and not (
-        core.get(selected_id) or selected_id in DEFENSE_PRIORITY or (draw_needed and selected_id in DRAW_CARDS)
+        core.get(selected_id)
+        or strong_defense_bonus(selected_id)
+        or selected_id in DEFENSE_PRIORITY
+        or (draw_needed and selected_id in DRAW_CARDS)
     ):
         return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     # Once the deck has enough cards to cover the early fights, a plain B/C/D-tier pick only
