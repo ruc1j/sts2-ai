@@ -646,6 +646,13 @@ combat_idも正しく脅威集合へ展開する。
 Attackカードがある脅威だけをincoming比較に含めるようにした。これにより同方向の強い攻撃や、攻撃手段の
 無い敵が、実際にfacingを直せる脅威を隠さない。
 
+### 多段ヒットカードのdamage評価（2026-08-23）
+
+`_card_value()`はDynamicVarsの`Damage`を1ヒット分として返していたため、Twin Strikeは5としてStrike(6)
+より低く、Whirlwindも5として固定全体攻撃より低く評価されていた。Twin Strikeは2ヒット、Whirlwindは
+現在のXエネルギー回数（Chemical X込み）を掛け、実際の合計ダメージで比較するようにした。合計値化後も
+Slippery／HardToKillは各ヒット単位で処理し、既存の敵power近似を維持している。
+
 ### KIN_PRIEST敗因調査(researcher、2026-08-23) — コード変更は保留
 
 leaderの実機run4本連続(val4/5/6/9)がKIN_PRIEST戦で全敗し、該当ターンのsimulations:null率が77.01%と

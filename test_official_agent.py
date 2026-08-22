@@ -2164,6 +2164,45 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.BASH")
 
+    def test_crab_facing_counts_twin_strike_hits(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "energy": 1, "powers": [{"id": "POWER.SURROUNDED_POWER", "facing": "Right"}]},
+            "hand": [
+                {"index": 0, "id": "CARD.TWIN_STRIKE", "type": "Attack", "vars": [{"id": "Damage", "value": 5}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [{
+                "combat_id": 7, "hp": 100, "block": 0,
+                "powers": [{"id": "POWER.BACK_ATTACK_LEFT_POWER", "amount": 1}],
+                "intents": [{"damage": 20, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.TWIN_STRIKE", "hand_index": 0, "target_id": 7},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 7},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.TWIN_STRIKE")
+
+    def test_aoe_selection_counts_whirlwind_energy_hits(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 4, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.WHIRLWIND", "type": "Attack", "vars": [{"id": "Damage", "value": 5}]},
+                {"index": 1, "id": "CARD.HOWL_FROM_BEYOND", "type": "Attack", "vars": [{"id": "Damage", "value": 16}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 100, "block": 0, "powers": [], "intents": [{"damage": 25, "repeats": 1}]},
+                {"combat_id": 2, "hp": 100, "block": 0, "powers": [], "intents": [{"damage": 25, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.WHIRLWIND", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.HOWL_FROM_BEYOND", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.WHIRLWIND")
+
     def test_crab_facing_avoids_self_damage_when_safe_attack_exists(self) -> None:
         observation = {
             "player": {"hp": 2, "max_hp": 80, "powers": [{"id": "POWER.SURROUNDED_POWER", "amount": 1, "facing": "Right"}]},

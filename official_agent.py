@@ -235,7 +235,7 @@ KNOWN_CARD_DAMAGE = {
     "CARD.STOMP": 12,
     "CARD.DISMANTLE": 8,
     "CARD.IRON_WAVE": 5,
-    "CARD.TWIN_STRIKE": 10,
+    "CARD.TWIN_STRIKE": 5,
     "CARD.CINDER": 18,
     "CARD.HEMOKINESIS": 15,
     "CARD.UNRELENTING": 14,
@@ -254,7 +254,10 @@ KNOWN_CARD_DAMAGE = {
     "CARD.EXTERMINATE": 12,
     "CARD.SETUP_STRIKE": 7,
     "CARD.SWORD_BOOMERANG": 9,
+    "CARD.WHIRLWIND": 5,
 }
+# These cards expose their canonical damage per hit; _card_value applies the live hit count.
+CARD_HIT_COUNTS = {"CARD.TWIN_STRIKE": 2}
 # Dynamic damage cards still need to count as attacks when a reward also offers a strong block.
 ATTACK_REWARD_CARDS = set(KNOWN_CARD_DAMAGE) | {"CARD.ASHEN_STRIKE", "CARD.PERFECTED_STRIKE"}
 KNOWN_CARD_BLOCK = {
@@ -325,7 +328,13 @@ def _potion_is_lethal_incoming(observation: dict) -> bool:
     return incoming >= hp
 
 
-def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
+def _card_hit_count(card_id: str | None, energy: int | None = None) -> int:
+    if card_id == "CARD.WHIRLWIND":
+        return _number(energy, 1) if energy is not None else 1
+    return CARD_HIT_COUNTS.get(card_id, 1)
+
+
+def _card_value(action: dict, hand: dict[int, dict], metric: str, energy: int | None = None) -> int:
     card_id = action.get("card_id")
     card = hand.get(action.get("hand_index"), {})
     values = []
@@ -337,10 +346,12 @@ def _card_value(action: dict, hand: dict[int, dict], metric: str) -> int:
         value = _number(variable.get("value"))
         (calculated if "calculated" in name else values).append(value)
     if calculated:
-        return max(calculated)
-    if values:
-        return max(values)
-    return (KNOWN_CARD_DAMAGE if metric == "damage" else KNOWN_CARD_BLOCK).get(card_id, 0)
+        value = max(calculated)
+    elif values:
+        value = max(values)
+    else:
+        value = (KNOWN_CARD_DAMAGE if metric == "damage" else KNOWN_CARD_BLOCK).get(card_id, 0)
+    return value * _card_hit_count(card_id, energy) if metric == "damage" else value
 
 
 def _is_self_damage(action: dict, hand: dict[int, dict]) -> bool:
@@ -631,6 +642,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     cards = [action for action in actions if action["type"] == "card" and action["card_id"] != "CARD.THE_GAMBIT"]
     potions = [action for action in actions if action["type"] == "potion"]
     hand = {card.get("index"): card for card in observation.get("hand", ()) if card.get("index") is not None}
+    player = observation.get("player", {})
+    card_energy = _number(player.get("energy"))
+    if "RELIC.CHEMICAL_X" in (player.get("relics") or ()):
+        card_energy += 2
+
+    def card_value(action: dict, metric: str) -> int:
+        return _card_value(action, hand, metric, card_energy)
+
     sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
     escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
     potion_context = _potion_context(observation)
@@ -668,15 +687,18 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             enemy = enemy_by_id.get(action.get("target_id"))
         if enemy is None:
             return 0
+        hits = _card_hit_count(action.get("card_id"), card_energy)
         # Slippery enemies reduce every hit to 1 until the power is spent.
         if any(power.get("id") == "POWER.SLIPPERY_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
-            return 1
-        value = _card_value(action, hand, "damage")
+            return hits
+        value = card_value(action, "damage")
         if value <= 0:
             value = ALL_ENEMY_DAMAGE.get(CARD_NAMES.get(action.get("card_id")), 0)
         # HardToKill (e.g. Exoskeleton) caps every hit at the power amount.
         caps = [_number(power.get("amount")) for power in enemy.get("powers", ()) if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]
-        return min(value, max(caps)) if caps else value
+        if caps and hits:
+            return min(value // hits, max(caps)) * hits
+        return value
 
     def lethal_targets(action: dict) -> tuple[dict, ...]:
         target_id = action.get("target_id")
@@ -741,19 +763,18 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             return escape
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
         if draw_cards:
-            return max(draw_cards, key=lambda action: (_card_value(action, hand, "block"), _card_value(action, hand, "damage")))
+            return max(draw_cards, key=lambda action: (card_value(action, "block"), card_value(action, "damage")))
     if not lethal and (turn := choose_crab_facing(observation, cards)):
         return turn
 
     # In a multi-enemy fight, a modeled rollout can still favor a single-target line because it
     # undervalues the next combined hit. Prefer an available all-enemy card before rolling out
     # when that combined threat is already large; lethal single-target attacks remain untouched.
-    player = observation.get("player", {})
     hp, max_hp = player.get("hp", 0), player.get("max_hp", player.get("hp", 0))
     incoming = sum(enemy_incoming.values())
     aoe = [action for action in cards if action["card_id"] in ALL_ENEMY_CARDS and not _is_self_damage(action, hand)]
     if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
-        return max(aoe, key=lambda action: _card_value(action, hand, "damage"))
+        return max(aoe, key=lambda action: card_value(action, "damage"))
 
     # Queen's Torch Head Amalgam is marked as a secondary minion, but it is the only enemy
     # dealing damage while the Queen buffs/defends.  Focus it before the generic minion rule
@@ -768,16 +789,16 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         action
         for action in cards
         if action.get("target_id") in queen_minion_ids
-        and _card_value(action, hand, "damage") > 0
+        and card_value(action, "damage") > 0
         and not _is_self_damage(action, hand)
     ]
     if queen_focusable and not lethal:
         urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
-        defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
+        defenses = [action for action in cards if card_value(action, "block") > 0]
         remaining = max(0, incoming - _number(player.get("block")))
-        best_block = max((_card_value(action, hand, "block") for action in defenses), default=0)
+        best_block = max((card_value(action, "block") for action in defenses), default=0)
         if not urgent or best_block < remaining:
-            return max(queen_focusable, key=lambda action: _card_value(action, hand, "damage"))
+            return max(queen_focusable, key=lambda action: card_value(action, "damage"))
 
     if lethal:
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
@@ -803,7 +824,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         attack_after_rage = any(
             action.get("card_id") != "CARD.RAGE"
             and not _is_self_damage(action, hand)
-            and _card_value(action, hand, "damage") > 0
+            and card_value(action, "damage") > 0
             and _number(hand.get(action.get("hand_index"), {}).get("cost"), 1) <= remaining_energy
             for action in cards
         )
@@ -811,9 +832,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # combat.py models Rage as 3 block per attack (5 when upgraded).
             rage_block = 5 if _number(hand.get(rage.get("hand_index"), {}).get("upgrade")) else 3
             remaining = max(0, incoming - _number(player.get("block")))
-            defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
-            best_defense = max(defenses, key=lambda action: _card_value(action, hand, "block"), default=None)
-            if best_defense and remaining > rage_block and _card_value(best_defense, hand, "block") > rage_block:
+            defenses = [action for action in cards if card_value(action, "block") > 0]
+            best_defense = max(defenses, key=lambda action: card_value(action, "block"), default=None)
+            if best_defense and remaining > rage_block and card_value(best_defense, "block") > rage_block:
                 return best_defense
             return rage
 
@@ -840,7 +861,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         action
         for action in cards
         if action.get("target_id") in primary_ids
-        and _card_value(action, hand, "damage") > 0
+        and card_value(action, "damage") > 0
         and not _is_self_damage(action, hand)
     ]
     urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
@@ -851,7 +872,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 action["target_id"] in kin_follower_ids,
                 enemy_incoming.get(action["target_id"], 0),
                 -enemy_by_id[action["target_id"]].get("hp", 0),
-                _card_value(action, hand, "damage"),
+                card_value(action, "damage"),
             ),
         )
     # The Kin's Followers are the immediate damage source; keep attacking one during an urgent
@@ -859,14 +880,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if len(primary_ids) > 1 and kin_follower_ids and not lethal and urgent and incoming < hp + player.get("block", 0):
         kin_focusable = [action for action in focusable if action.get("target_id") in kin_follower_ids]
         remaining = max(0, incoming - player.get("block", 0))
-        best_block = max((_card_value(action, hand, "block") for action in cards), default=0)
+        best_block = max((card_value(action, "block") for action in cards), default=0)
         if kin_focusable and (not remaining or best_block < remaining):
             return max(
                 kin_focusable,
                 key=lambda action: (
                     enemy_incoming.get(action["target_id"], 0),
                     -enemy_by_id[action["target_id"]].get("hp", 0),
-                    _card_value(action, hand, "damage"),
+                    card_value(action, "damage"),
                 ),
             )
 
@@ -877,11 +898,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             selected = rollout_choice(observation, actions, enemy_data, simulations)
             # The rollout can miss a live enemy intent when its move/power is only partially
             # modeled. Never spend the last HP on a non-blocking, non-lethal play.
-            rollout_is_unsafe = incoming >= hp and _card_value(selected, hand, "block") <= 0 and not is_lethal(selected)
+            rollout_is_unsafe = incoming >= hp and card_value(selected, "block") <= 0 and not is_lethal(selected)
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and _card_value(selected, hand, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
+            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
                 if selected.get("type") == "potion":
                     if potion_context is not None:
                         _LAST_POTION_CONTEXT = potion_context
@@ -906,9 +927,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             cards = safe_cards
         elif cards:
             return next(action for action in actions if action["type"] == "end_turn")
-    defenses = [action for action in cards if _card_value(action, hand, "block") > 0]
+    defenses = [action for action in cards if card_value(action, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
-        return max(defenses, key=lambda action: _card_value(action, hand, "block"))
+        return max(defenses, key=lambda action: card_value(action, "block"))
     # MinionPower enemies (e.g. The Kin's Followers) do not need to die to win the fight -
     # CombatManager only checks primary enemies - so they should not distract focus fire.
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
@@ -932,6 +953,10 @@ def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
     if facing not in {"Left", "Right"}:
         return None
     hand = {card["index"]: card for card in observation.get("hand", ())}
+    player = observation.get("player", {})
+    card_energy = _number(player.get("energy"))
+    if "RELIC.CHEMICAL_X" in (player.get("relics") or ()):
+        card_energy += 2
     attack_targets = {
         action.get("target_id")
         for action in cards
@@ -958,7 +983,7 @@ def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
     else:
         hp = _number(observation.get("player", {}).get("hp"))
         candidates = [action for action in candidates if _self_damage_value(action, hand) < hp]
-    return max(candidates, key=lambda action: _card_value(action, hand, "damage"), default=None)
+    return max(candidates, key=lambda action: _card_value(action, hand, "damage", card_energy), default=None)
 
 
 def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
