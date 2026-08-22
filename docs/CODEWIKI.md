@@ -444,13 +444,22 @@ Skipしていた。最終ゲートにも同じstrong-defense判定を適用し�
 - KIN_PRIEST/Ceremonial Beast/Knowledge Demonでの僅差負けは、デッキ火力不足や既存の高難度設計と判断し
   コード変更は保留。同一パターンが複数seedで積み重なったら再検討。
 
+### TEST_SUBJECTのMultiAttackIntentはCombatBridgeで動的反復数を返す(2026-08-23)
+
+ゲーム v0.107.1 (`release_info.json` commit `59260271`)の`sts2.dll`をILSpyで確認した。
+`MultiAttackIntent`は`AttackIntent`の派生クラスで、`Repeats` overrideは固定値ではなく
+`_repeatCalc?.Invoke() ?? _repeat`を毎回評価する。`TestSubject.MultiClawMove`は
+`new MultiAttackIntent(MultiClawDamage, () => MultiClawTotalCount)`を生成し、攻撃後に
+`ExtraMultiClawCount++`するため、復活後の反復数は3→4→5→6と増える。
+
+したがって`official_mod/CombatBridge.cs:234-238`の`intent is AttackIntent attack`は
+`MultiAttackIntent`にも一致し、`attack.GetSingleDamage(...)`と現在値の`attack.Repeats`を
+そのまま観測へ出す。非攻撃Intentだけが`damage=0,repeats=0`のelse側に入るため、疑われた
+CombatBridgeの型判定バグは存在しない。`combat.py`側にも既に`TEST_SUBJECT`の履歴回数を加算する
+処理があり、修正・回帰テストは不要。前掲の未検証持ち越し課題は誤検知としてクローズした。
+
 テストは338→474件に増加(すべて「修正前コードで実際に失敗する」ことを確認してからコミット)。
 
 **次回セッションへの持ち越し課題:**
-- TEST_SUBJECT第2形態`MultiClawMove`(decompile確認済み): `MultiAttackIntent(MultiClawDamage,
-  () => BaseMultiClawCount + ExtraMultiClawCount)`で、1回攻撃するたびに`ExtraMultiClawCount++`
-  される(累積で反復回数が増え続ける)。D6run(Act3 TEST_SUBJECT敗北)ではT4〜T7で反復3→4→5→6と
-  増加が観測された。CombatBridgeが動的な反復数をintentsへそのまま反映しているかは未確認で、実機
-  でのintents実測による追加検証が必要。
 - D6(29枚デッキ、強防御2枚のみ)を踏まえ、`choose_card_reward`の防御優先(`_block_starved`等)を
   最小修正する案を検討中。まずテストを書いてから、headlessでの再現runで確認すること。
