@@ -925,9 +925,18 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             try:
                 amount = _amount(effect["amount"], values)
             except (ValueError, KeyError):
-                # Unmodeled interactions (e.g. Thieving Hopper's swipe that steals a card)
-                # carry no numeric amount; skip them, they do not change HP.
-                continue
+                if (
+                    enemy.model == "MONSTER.QUEEN"
+                    and move_id == "BURN_BRIGHT_FOR_ME_MOVE"
+                    and effect.get("target") == "item"
+                    and effect.get("model") == "StrengthPower"
+                ):
+                    # BurnBrightForMeMove keeps this local value out of the exported values map.
+                    amount = 1
+                else:
+                    # Unmodeled interactions (e.g. Thieving Hopper's swipe that steals a card)
+                    # carry no numeric amount; skip them, they do not change HP.
+                    continue
             if effect["target"] == "base.Creature":
                 enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
             # HexMove uses the singular "target" for the player; Ovicopter uses the same
@@ -942,6 +951,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                     amount *= 2
                     ruined_helmet_used = True
                 player_powers = _add_power(player_powers, effect["model"], amount)
+            elif effect["target"] == "item" and enemy.model == "MONSTER.QUEEN":
+                # Queen's BurnBrightForMeMove targets every living teammate except the Queen.
+                for mate_index, mate in enumerate(enemies):
+                    if mate_index != index and mate.alive:
+                        enemies[mate_index] = replace(mate, powers=_add_power(mate.powers, effect["model"], amount))
             elif "TeammatesOf" in effect["target"]:
                 # GetTeammatesOf = GetCreaturesOnSide(side): every creature on the same side,
                 # including the caster (e.g. Obscura's SAIL buffs itself as well as its minions).

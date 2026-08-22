@@ -1637,6 +1637,19 @@ class CombatTest(unittest.TestCase):
         after = _enemy_turn(Combat(80, (), (), (), enemies), 1, glory, random.Random(0))
         self.assertEqual((after.enemies[0].block, after.enemies[1].block), (15, 0))
 
+    def test_queen_burn_bright_buffs_torch_head_amalgam_from_glory_json(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        specs = {monster["id"]: monster for monster in glory["monsters"]}
+        queen = specs["MONSTER.QUEEN"]
+        amalgam = specs["MONSTER.TORCH_HEAD_AMALGAM"]
+        enemies = (
+            Enemy("MONSTER.TORCH_HEAD_AMALGAM", 199, "TACKLE_MOVE", tuple(sorted(amalgam["values"].items())), primary=False),
+            Enemy("MONSTER.QUEEN", 400, "BURN_BRIGHT_FOR_ME_MOVE", tuple(sorted(queen["values"].items()))),
+        )
+        after = _enemy_turn(Combat(80, (), (), (), enemies), 1, glory, random.Random(0))
+        self.assertEqual((_power(after.enemies[0].powers, "StrengthPower"), after.enemies[1].block), (1, 20))
+
     def test_dominate_applies_vulnerable_and_gains_strength(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 2),))
         after = step(Combat(80, (DOMINATE,), (), (), (enemy,)), f"{DOMINATE}@0", {}, random.Random(0))

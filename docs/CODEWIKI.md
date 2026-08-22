@@ -457,6 +457,14 @@ commandのtargetを見ずcaster自身へblockを足していたため、Guardbot
 逆転が起きていた。target=itemを同室のaliveなFabricatorへ解決し、FabricatorNormalのJSON駆動テストで
 Fabricator=15、Guardbot=0を固定した。
 
+### QueenのBurnBrightForMe target=item解決(2026-08-23)
+
+`MONSTER.QUEEN`の`BURN_BRIGHT_FOR_ME_MOVE`は、公式`BurnBrightForMeMove`でQueen以外の同side
+teammate（通常はTorch Head Amalgam）へ`StrengthPower(1)`を付与し、その後Queen自身へBlock20を与える。
+従来の`PowerCmd.Apply`はtarget=itemを無視し、さらにローカル変数`strengthAmount`が静的valuesに無いため、
+Strength付与全体を黙って捨てていた。Queen専用のitem対象解決と、decompileで確認したamount=1を追加し、
+JSON駆動テストでAmalgam Strength=1、Queen Block=20を固定した。
+
 ### SteamEruptionPowerの公式ID正規化漏れ(2026-08-23)
 
 Waterfall GiantのSteamEruption死亡フックは`SteamEruptionPower`という内部名で判定するが、
