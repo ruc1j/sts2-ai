@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
-from combat import BURN, DAZED, INFECTION, TOXIC, step
+from combat import BURN, DAZED, END_TURN, INFECTION, TOXIC, step
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -50,6 +50,35 @@ class OfficialAgentTest(unittest.TestCase):
             (999999999, "ABOUT_TO_BLOW_MOVE", False),
         )
         self.assertEqual((selected["target_id"], selected["simulations"]), (2, 1))
+
+    def test_rollout_preserves_waterfall_steam_damage_from_observed_explode_intent(self) -> None:
+        with open("data/enemies_underdocks.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 2,
+            "turn": 3,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{
+                "combat_id": 2, "id": "MONSTER.WATERFALL_GIANT", "hp": 999999999, "block": 0,
+                "powers": [],
+                "intents": [{"type": "DeathBlowIntent", "damage": 15, "repeats": 1}],
+                "move": "EXPLODE_MOVE", "history": ["ABOUT_TO_BLOW_MOVE"], "slot": "boss",
+            }],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        captured = {}
+
+        def capture(state, enemy_data, _simulations, _seed):
+            captured["values"] = dict(state.enemies[0].values)
+            captured["after"] = step(state, END_TURN, enemy_data, random.Random(0))
+            return [(END_TURN, 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            selected = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["values"]["SteamEruptionDamage"], 15)
+        self.assertEqual((captured["after"].player_hp, captured["after"].enemies[0].hp, captured["after"].terminal), (65, 0, True))
+        self.assertEqual((selected["simulations"], selected["search_value"]), (1, 0.0))
 
     def test_maps_insatiable_sandpit_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.SANDPIT_POWER"], "SandpitPower")
