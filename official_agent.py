@@ -931,18 +931,21 @@ def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
     facing = next((power.get("facing") for power in observation.get("player", {}).get("powers", ()) if power["id"] == "POWER.SURROUNDED_POWER"), None)
     if facing not in {"Left", "Right"}:
         return None
+    hand = {card["index"]: card for card in observation.get("hand", ())}
+    attack_targets = {
+        action.get("target_id")
+        for action in cards
+        if hand.get(action.get("hand_index"), {}).get("type") == "Attack"
+    }
     threats = []
     for enemy in observation.get("enemies", ()):
         direction = "Left" if any(power["id"] == "POWER.BACK_ATTACK_LEFT_POWER" for power in enemy.get("powers", ())) else "Right" if any(power["id"] == "POWER.BACK_ATTACK_RIGHT_POWER" for power in enemy.get("powers", ())) else None
         incoming = sum(intent.get("damage", 0) * max(1, intent.get("repeats", 1)) for intent in enemy.get("intents") or ())
-        if direction and incoming:
+        if direction and direction != facing and incoming and enemy.get("combat_id") in attack_targets:
             threats.append((incoming, direction, enemy["combat_id"]))
     if not threats:
         return None
     _, direction, target_id = max(threats)
-    if direction == facing:
-        return None
-    hand = {card["index"]: card for card in observation.get("hand", ())}
     candidates = [
         action
         for action in cards

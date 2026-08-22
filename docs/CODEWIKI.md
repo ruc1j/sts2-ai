@@ -642,6 +642,10 @@ CombatBridgeは`TargetType.AllEnemies`カードのlegal actionを`target_id=null
 potionを温存するようにした。incomingが無い局面でも即時kill可能ならpotionを使わず、targetless AoEの
 combat_idも正しく脅威集合へ展開する。
 
+`choose_crab_facing()`は、現在のfacingと同じ方向の脅威を候補から除外し、さらに対象combat_idへのlegalな
+Attackカードがある脅威だけをincoming比較に含めるようにした。これにより同方向の強い攻撃や、攻撃手段の
+無い敵が、実際にfacingを直せる脅威を隠さない。
+
 ### KIN_PRIEST敗因調査(researcher、2026-08-23) — コード変更は保留
 
 leaderの実機run4本連続(val4/5/6/9)がKIN_PRIEST戦で全敗し、該当ターンのsimulations:null率が77.01%と
@@ -660,3 +664,37 @@ leaderの実機run4本連続(val4/5/6/9)がKIN_PRIEST戦で全敗し、該当タ
 traceへ出す計装と、follower優先policy vs rollout/Priest集中のA/Bテストが必要(researcher提案のP1)。
 次にこの調査を再開する時はまずそこから着手すること。単一の高null率サンプルだけで「意図的な設計判断」を
 上書きしない。
+
+### decision_source計装 設計メモ(researcher、2026-08-23、未実装)
+
+`simulations:null`を「意図したpre-rollout direct return」「rollout成功後の安全処理」「rollout例外後の
+heuristic fallback」に分離するための計装案。KIN_PRIEST調査のP1で必要になった。次にfallback原因を
+本格的に切り分ける時はここから着手すること。
+
+**スキーマ(V1)**: 全combat actionに`decision_source`(固定enum文字列)必須、`decision_reason`は任意
+(rollout拒否/例外の理由だけ、メッセージ本文やstack traceは含めない)。
+
+**decision_source候補**(choose()のreturn地点順):
+phase系(phase_shop/map/card_reward/rest/event)、combat pre-rollout系(direct_potion、sandpit_escape/draw、
+crab_facing_direct、aoe_threat_direct、queen_minion_direct、lethal_direct、rage_defense_direct、
+rage_direct、kin_follower_direct、kin_follower_urgent_direct)、rollout系(rollout_success、
+heuristic_fallback〈細分化するならheuristic_block/card/end_turn〉、agent_exception_fallback)。
+
+**decision_reason固定値**(fallback時に併記): rollout_disabled_no_data/no_simulations/no_known_card、
+rollout_rejected_unsafe(incoming>=hpかつ非block・非lethal)、rollout_rejected_self_damage、
+rollout_exception_key_error/value_error/not_implemented/stop_iteration。
+
+**実装フック(低コスト想定)**:
+1. official_agent.pyにtop-level helper `_tag_action(action, source, reason=None)` を追加。
+2. choose()の早期phase return、および各combat pre-rollout return地点をこのhelperで包む
+   (choose_crab_facing自体やrollout_choiceの探索ロジックは変更不要)。
+3. rollout部だけstatus/reasonのローカル変数を持ち、安全ガード拒否/例外をtagへ伝播。
+4. main広域例外fallックは choose() 外なので個別に agent_exception_fallback を付与。
+
+**C#ブリッジ側の変更も必要**(Pythonのaction JSONへ足すだけではtraceに残らない):
+- official_mod/CombatBridge.csのAgentAction recordにnullable DecisionSource/DecisionReasonを追加。
+- AgentIo.Trace出力にも同フィールドを追加(JsonOptionsの既定無視に依存せず明示的に)。
+
+**テスト案**: 既存KINテストにsource検証を追加(kin_follower_direct/urgent双方、simulations=1000でも
+sourceが残ること)、Crab direct/lethal direct/rollout成功/rollout例外→fallbackの各1ケース、
+test_official_trace.pyで新traceにdecision_sourceが存在することを確認(旧traceはlegacy_unknown扱い)。
