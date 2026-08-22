@@ -624,18 +624,26 @@ def choose_event(observation: dict) -> dict:
     return {"type": "event_fallback"}
 
 
+def _tag_action(action: dict, source: str, reason: str | None = None) -> dict:
+    tagged = dict(action)
+    tagged["decision_source"] = source
+    if reason is not None:
+        tagged["decision_reason"] = reason
+    return tagged
+
+
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
     global _LAST_POTION_CONTEXT, _LAST_POTION_ID, _POTION_USED_ROOM
     if observation.get("phase") == "shop":
-        return choose_shop(observation)
+        return _tag_action(choose_shop(observation), "phase_shop")
     if observation.get("phase") == "map":
-        return choose_map(observation)
+        return _tag_action(choose_map(observation), "phase_map")
     if observation.get("phase") == "card_reward":
-        return choose_card_reward(observation)
+        return _tag_action(choose_card_reward(observation), "phase_card_reward")
     if observation.get("phase") == "rest":
-        return choose_rest(observation)
+        return _tag_action(choose_rest(observation), "phase_rest")
     if observation.get("phase") == "event":
-        return choose_event(observation)
+        return _tag_action(choose_event(observation), "phase_event")
     actions = observation["legal_actions"]
     # TheGambitPower (decompiled): 50 block for 0 cost, but the very next unblocked hit taken
     # while it's active - this turn or any later turn, it has no self-expiry - kills the player
@@ -674,7 +682,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         sandpit_critical and (potion_hp <= max(1, potion_max_hp // 3) or potion_threatening)
     )
     potion_already_used = potion_room is not None and potion_room == _POTION_USED_ROOM
-    rollout_enabled = bool(enemy_data and simulations and any(card["card_id"] in CARD_NAMES for card in cards))
+    if not enemy_data:
+        rollout_reason = "rollout_disabled_no_data"
+    elif not simulations:
+        rollout_reason = "rollout_disabled_no_simulations"
+    elif not any(card["card_id"] in CARD_NAMES for card in cards):
+        rollout_reason = "rollout_disabled_no_known_card"
+    else:
+        rollout_reason = None
+    rollout_enabled = rollout_reason is None
 
     enemy_by_id = {
         enemy.get("combat_id"): enemy
@@ -766,15 +782,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             _LAST_POTION_ID = direct_potion.get("potion_id")
         if potion_room is not None:
             _POTION_USED_ROOM = potion_room
-        return direct_potion
+        return _tag_action(direct_potion, "direct_potion")
     if sandpit_critical and not lethal:
         if escape:
-            return escape
+            return _tag_action(escape, "sandpit_escape")
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
         if draw_cards:
-            return max(draw_cards, key=lambda action: (card_value(action, "block"), card_value(action, "damage")))
+            return _tag_action(max(draw_cards, key=lambda action: (card_value(action, "block"), card_value(action, "damage"))), "sandpit_draw")
     if not lethal and (turn := choose_crab_facing(observation, cards)):
-        return turn
+        return _tag_action(turn, "crab_facing_direct")
 
     # In a multi-enemy fight, a modeled rollout can still favor a single-target line because it
     # undervalues the next combined hit. Prefer an available all-enemy card before rolling out
@@ -783,7 +799,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     incoming = sum(enemy_incoming.values())
     aoe = [action for action in cards if action["card_id"] in ALL_ENEMY_CARDS and not _is_self_damage(action, hand)]
     if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
-        return max(aoe, key=lambda action: card_value(action, "damage"))
+        return _tag_action(max(aoe, key=lambda action: card_value(action, "damage")), "aoe_threat_direct")
 
     # Queen's Torch Head Amalgam is marked as a secondary minion, but it is the only enemy
     # dealing damage while the Queen buffs/defends.  Focus it before the generic minion rule
@@ -807,7 +823,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         remaining = max(0, incoming - _number(player.get("block")))
         best_block = max((card_value(action, "block") for action in defenses), default=0)
         if not urgent or best_block < remaining:
-            return max(queen_focusable, key=lambda action: card_value(action, "damage"))
+            return _tag_action(max(queen_focusable, key=lambda action: card_value(action, "damage")), "queen_minion_direct")
 
     if lethal:
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
@@ -821,7 +837,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 -min((_number(enemy.get("hp")) for enemy in targets), default=0),
                 max((damage(action, enemy) for enemy in targets), default=0),
             )
-        return max(killers, key=lethal_key)
+        return _tag_action(max(killers, key=lethal_key), "lethal_direct")
 
     # Rage (Whenever you play an Attack this turn, gain Block) only pays off for attacks played
     # AFTER it - a D6 live trace played Anger/Strike/Defend first and Rage last, forfeiting the
@@ -844,8 +860,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             defenses = [action for action in cards if card_value(action, "block") > 0]
             best_defense = max(defenses, key=lambda action: card_value(action, "block"), default=None)
             if best_defense and remaining > rage_block and card_value(best_defense, "block") > rage_block:
-                return best_defense
-            return rage
+                return _tag_action(best_defense, "rage_defense_direct")
+            return _tag_action(rage, "rage_direct")
 
     # In multi-primary fights, spreading single-target damage leaves every attacker alive.
     # Keep lethal and urgent-defense decisions above this light tie-break, then focus the
@@ -875,14 +891,17 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     ]
     urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
     if len(primary_ids) > 1 and focusable and not lethal and not urgent:
-        return max(
-            focusable,
-            key=lambda action: (
-                action["target_id"] in kin_follower_ids,
-                enemy_incoming.get(action["target_id"], 0),
-                -enemy_by_id[action["target_id"]].get("hp", 0),
-                card_value(action, "damage"),
+        return _tag_action(
+            max(
+                focusable,
+                key=lambda action: (
+                    action["target_id"] in kin_follower_ids,
+                    enemy_incoming.get(action["target_id"], 0),
+                    -enemy_by_id[action["target_id"]].get("hp", 0),
+                    card_value(action, "damage"),
+                ),
             ),
+            "kin_follower_direct",
         )
     # The Kin's Followers are the immediate damage source; keep attacking one during an urgent
     # turn when no available block card can cover the remaining hit and the player still survives.
@@ -891,13 +910,16 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         remaining = max(0, incoming - player.get("block", 0))
         best_block = max((card_value(action, "block") for action in cards), default=0)
         if kin_focusable and (not remaining or best_block < remaining):
-            return max(
-                kin_focusable,
-                key=lambda action: (
-                    enemy_incoming.get(action["target_id"], 0),
-                    -enemy_by_id[action["target_id"]].get("hp", 0),
-                    card_value(action, "damage"),
+            return _tag_action(
+                max(
+                    kin_focusable,
+                    key=lambda action: (
+                        enemy_incoming.get(action["target_id"], 0),
+                        -enemy_by_id[action["target_id"]].get("hp", 0),
+                        card_value(action, "damage"),
+                    ),
                 ),
+                "kin_follower_urgent_direct",
             )
 
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
@@ -918,9 +940,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                         _LAST_POTION_ID = selected.get("potion_id")
                     if potion_room is not None:
                         _POTION_USED_ROOM = potion_room
-                return selected
-        except (KeyError, ValueError, NotImplementedError, StopIteration):
-            pass
+                return _tag_action(selected, "rollout_success")
+            rollout_reason = "rollout_rejected_unsafe" if rollout_is_unsafe else "rollout_rejected_self_damage"
+        except (KeyError, ValueError, NotImplementedError, StopIteration) as error:
+            rollout_reason = {
+                KeyError: "rollout_exception_key_error",
+                ValueError: "rollout_exception_value_error",
+                NotImplementedError: "rollout_exception_not_implemented",
+                StopIteration: "rollout_exception_stop_iteration",
+            }[type(error)]
 
     incoming = sum(enemy_incoming.values())
     player = observation.get("player", {})
@@ -935,10 +963,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if safe_cards:
             cards = safe_cards
         elif cards:
-            return next(action for action in actions if action["type"] == "end_turn")
+            return _tag_action(next(action for action in actions if action["type"] == "end_turn"), "heuristic_fallback", rollout_reason)
     defenses = [action for action in cards if card_value(action, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
-        return max(defenses, key=lambda action: card_value(action, "block"))
+        return _tag_action(max(defenses, key=lambda action: card_value(action, "block")), "heuristic_fallback", rollout_reason)
     # MinionPower enemies (e.g. The Kin's Followers) do not need to die to win the fight -
     # CombatManager only checks primary enemies - so they should not distract focus fire.
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
@@ -953,8 +981,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 (action.get("target_id") not in minion_ids) if attack else 0,
                 -enemy_by_id[action["target_id"]].get("hp", 0) if attack else 0,
             )
-        return max(cards, key=score)
-    return next(action for action in actions if action["type"] == "end_turn")
+        return _tag_action(max(cards, key=score), "heuristic_fallback", rollout_reason)
+    return _tag_action(next(action for action in actions if action["type"] == "end_turn"), "heuristic_fallback", rollout_reason)
 
 
 def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
@@ -1893,7 +1921,7 @@ def main() -> None:
                         file.write(traceback.format_exc())
                 action = next((action for action in observation.get("legal_actions", ()) if action["type"] == "end_turn"), None)
                 if action:
-                    atomic_write(args.action, action | {"seq": observation["seq"]})
+                    atomic_write(args.action, action | {"seq": observation["seq"], "decision_source": "agent_exception_fallback"})
                     last_seq = observation["seq"]
         time.sleep(0.025)
 

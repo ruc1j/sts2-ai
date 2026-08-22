@@ -747,6 +747,9 @@ rollout_exception_key_error/value_error/not_implemented/stop_iteration。
 sourceが残ること)、Crab direct/lethal direct/rollout成功/rollout例外→fallbackの各1ケース、
 test_official_trace.pyで新traceにdecision_sourceが存在することを確認(旧traceはlegacy_unknown扱い)。
 
+**実装状況(2026-08-23)**: Python側は`choose()`のphase/combat direct/rollout/fallbackと
+main例外fallbackを計装済み。C#ブリッジ側のAgentAction/trace伝播は別コミットで実装する。
+
 ### 修正後16本runの中間集計(researcher、2026-08-23) — 明確な改善も悪化も未確認
 
 本日のバグ修正一式(SteamEruption連鎖、Crab facing lethal優先、AoE lethal盲点、self-damage回避、

@@ -2189,7 +2189,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation)["target_id"], 8)
+        action = choose(observation)
+        self.assertEqual(action["target_id"], 8)
+        self.assertEqual(action["decision_source"], "lethal_direct")
 
     def test_targetless_aoe_lethal_precedes_crab_facing_change(self) -> None:
         observation = {
@@ -2231,7 +2233,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation)["card_id"], "CARD.BASH")
+        action = choose(observation)
+        self.assertEqual(action["card_id"], "CARD.BASH")
+        self.assertEqual(action["decision_source"], "crab_facing_direct")
 
     def test_crab_facing_counts_twin_strike_hits(self) -> None:
         observation = {
@@ -2600,7 +2604,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation)["target_id"], 1)
+        action = choose(observation)
+        self.assertEqual(action["target_id"], 1)
+        self.assertEqual(action["decision_source"], "kin_follower_direct")
 
     def test_urgent_kin_turn_still_focuses_an_attacking_follower(self) -> None:
         observation = {
@@ -2616,7 +2622,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation)["target_id"], 1)
+        action = choose(observation)
+        self.assertEqual(action["target_id"], 1)
+        self.assertEqual(action["decision_source"], "kin_follower_urgent_direct")
 
     def test_lethal_prefers_weaker_enemy_when_both_attack(self) -> None:
         observation = {
@@ -2807,7 +2815,9 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "skip"},
             ],
         }
-        self.assertEqual(choose(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+        action = choose(observation)
+        self.assertEqual(action["card_id"], "CARD.PERFECTED_STRIKE")
+        self.assertEqual(action["decision_source"], "phase_shop")
 
     def test_shop_uses_known_boss_axis(self) -> None:
         observation = {
@@ -3569,7 +3579,23 @@ class OfficialAgentTest(unittest.TestCase):
         )) as searched:
             action = choose(observation, data, 1)
         self.assertEqual(action["potion_id"], POTION_BLOCK)
+        self.assertEqual(action["decision_source"], "rollout_success")
         self.assertEqual(searched.call_args.args[0].player_potions, (POTION_BLOCK,))
+
+    def test_rollout_exception_tags_heuristic_fallback(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 50, "block": 0, "powers": [], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", side_effect=KeyError("test")):
+            action = choose(observation, {"monsters": []}, 1)
+        self.assertEqual(action["decision_source"], "heuristic_fallback")
+        self.assertEqual(action["decision_reason"], "rollout_exception_key_error")
 
     def test_rollout_can_conserve_modeled_fysh_oil(self) -> None:
         data = {"monsters": [{
