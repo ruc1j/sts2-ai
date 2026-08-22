@@ -849,6 +849,13 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     enemies = list(combat.enemies)
     damage_events: list[int] = []
     ruined_helmet_used = combat.ruined_helmet_used
+    forced_move: str | None = None
+    if enemy.model == "MONSTER.WATERFALL_GIANT" and move_id == "ABOUT_TO_BLOW_MOVE":
+        # SteamEruptionPower.AfterDeath stores the eruption amount before removing the power.
+        eruption = _power(enemy.powers, "SteamEruptionPower")
+        if eruption:
+            values["SteamEruptionDamage"] = eruption
+            enemy = replace(enemy, values=tuple(sorted(values.items())))
     attack_intent = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
     # PHEROMONE_SPIT_MOVE's real effect is an if/else in SpitMove's method body (grow
     # PersonalHivePower+Strength while PersonalHivePower < 3, else Strength alone) that the
@@ -870,8 +877,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         if command == "DamageCmd.Attack":
             # TaintedPower.ModifyDamageAdditive: flat bonus to every powered attack against the
             # player while it's up (see step()'s SKILLS handling for how it's granted/cleared).
+            base_damage = int(attack_intent["damage"])
+            if enemy.model == "MONSTER.WATERFALL_GIANT" and move_id == "EXPLODE_MOVE":
+                base_damage = _amount(effect["amount"], values)
             damage = (
-                int(attack_intent["damage"])
+                base_damage
                 + _power(enemy.powers, "StrengthPower")
                 + _power(player_powers, "TaintedPower")
             )
@@ -928,7 +938,9 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                         enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
                     elif mate.alive:
                         enemies[mate_index] = replace(mate, powers=_add_power(mate.powers, effect["model"], amount))
-        elif command == "PowerCmd.Remove" and effect.get("target") == "base.Creature":
+        elif command == "PowerCmd.Remove" and (
+            effect.get("target") == "base.Creature" or effect.get("arguments") == ["base.Creature"]
+        ):
             enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], -_power(enemy.powers, effect["model"])))
         elif command == "CreatureCmd.GainBlock":
             enemy = replace(enemy, block=enemy.block + _amount(effect["amount"], values))
@@ -957,7 +969,13 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             # CreatureCmd.Kill zeroes current HP, then the monster move finishes.  Keep the
             # dead snapshot until the normal terminal/removal check after the move, matching
             # MonsterModel.PerformMove's post-move cleanup.
-            enemy = replace(enemy, hp=0)
+            if enemy.model == "MONSTER.WATERFALL_GIANT" and _power(enemy.powers, "SteamEruptionPower"):
+                # SteamEruptionPower.AfterDeath keeps the owner in combat and immediately
+                # forces ABOUT_TO_BLOW with an effectively infinite current HP.
+                enemy = replace(enemy, hp=999999999)
+                forced_move = "ABOUT_TO_BLOW_MOVE"
+            else:
+                enemy = replace(enemy, hp=0)
         elif command in {"CreatureCmd.Kill", "CreatureCmd.SetMaxAndCurrentHp"}:
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
     if enemy.model == "MONSTER.BOWLBUG_ROCK":
@@ -979,7 +997,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         values = _dict(enemy.values)
         enemy = replace(enemy, hp=rng.randint(values["HatchlingMinHp"], values["HatchlingMaxHp"]))
     enemy = replace(enemy, history=enemy.history + (enemy.move,))
-    enemy = replace(enemy, move=_resolve_move(enemy, spec, rng, move.get("next"), tuple(enemies)))
+    enemy = replace(enemy, move=forced_move or _resolve_move(enemy, spec, rng, move.get("next"), tuple(enemies)))
     if enemy.model == "MONSTER.THE_INSATIABLE" and move_id == "LIQUIFY_GROUND_MOVE":
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 4))
         draw += (FRANTIC_ESCAPE,) * 3
