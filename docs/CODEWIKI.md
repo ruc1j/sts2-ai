@@ -748,7 +748,7 @@ sourceが残ること)、Crab direct/lethal direct/rollout成功/rollout例外�
 test_official_trace.pyで新traceにdecision_sourceが存在することを確認(旧traceはlegacy_unknown扱い)。
 
 **実装状況(2026-08-23)**: Python側は`choose()`のphase/combat direct/rollout/fallbackと
-main例外fallbackを計装済み。C#ブリッジ側のAgentAction/trace伝播は別コミットで実装する。
+main例外fallbackを計装済み。C#ブリッジ側のAgentAction/trace伝播も実装済み。
 
 ### 修正後16本runの中間集計(researcher、2026-08-23) — 明確な改善も悪化も未確認
 

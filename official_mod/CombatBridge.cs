@@ -73,7 +73,9 @@ internal static class CombatBridge
         [property: JsonPropertyName("potion_index")] int? PotionIndex,
         [property: JsonPropertyName("potion_id")] string? PotionId,
         [property: JsonPropertyName("simulations")] int? Simulations,
-        [property: JsonPropertyName("search_value")] double? SearchValue) : IAgentAction;
+        [property: JsonPropertyName("search_value")] double? SearchValue,
+        [property: JsonPropertyName("decision_source")] string? DecisionSource,
+        [property: JsonPropertyName("decision_reason")] string? DecisionReason) : IAgentAction;
 
     public static async Task Run(CancellationToken ct)
     {
@@ -92,7 +94,7 @@ internal static class CombatBridge
             int seq = AgentIo.NextSequence();
             var action = await Exchange(run, player, seq, ct);
             var combat = CombatManager.Instance.DebugOnlyGetState()!;
-            AgentIo.Trace(new { seq = action.Seq, phase = "combat", turn = player.PlayerCombatState!.TurnNumber, player_hp = player.Creature.CurrentHp, action.Type, hand_index = action.HandIndex, upgrade_hand_index = action.UpgradeHandIndex, card_id = action.CardId, potion_index = action.PotionIndex, potion_id = action.PotionId, potions = player.Potions.Select(potion => potion.Id.ToString()), target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue, enemies = combat.Enemies.Select(enemy => new { id = enemy.ModelId.ToString(), hp = enemy.CurrentHp, powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }) }) });
+            AgentIo.Trace(new { seq = action.Seq, phase = "combat", turn = player.PlayerCombatState!.TurnNumber, player_hp = player.Creature.CurrentHp, action.Type, hand_index = action.HandIndex, upgrade_hand_index = action.UpgradeHandIndex, card_id = action.CardId, potion_index = action.PotionIndex, potion_id = action.PotionId, potions = player.Potions.Select(potion => potion.Id.ToString()), target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue, decision_source = action.DecisionSource, decision_reason = action.DecisionReason, enemies = combat.Enemies.Select(enemy => new { id = enemy.ModelId.ToString(), hp = enemy.CurrentHp, powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }) }) });
             using var selector = CreateUpgradeSelector(player, action);
             if (action.Type == "end_turn")
             {
