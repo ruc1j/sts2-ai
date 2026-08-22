@@ -602,3 +602,25 @@ rollout_status(disabled/pre_policy/success/unsafe_rejected/exception)/exception_
 次回以降このfallback原因を直接集計できる(現observation自体には既に:177-216で情報があるので、追加は
 trace出力側のdecision metadataに限定される)。優先度は現状の実バグ修正より低いが、次にfallback原因を
 調べる時はまずこれを実装してから分析すること。
+
+### CRUSHER+ROCKET("Crab facing")戦17 unique seed全敗 — choose_crab_facing()のlethal無視(2026-08-23)
+
+researcherがR5 baseline(307 trace)を敵ID組で横断集計したところ、MONSTER.CRUSHER+MONSTER.ROCKETの
+combatは19 trace/17 unique seedで**全19件がcombat_end won=false**という異常値を検出した。leaderの
+実機run(data/leader_val2_trace.jsonl、seed FFCEFE5314)でも同ボスに敗北し再現した(4件目)。
+
+該当戦のcard actionはsimulations:nullの比率が52.72%で、baseline全loss平均21.92%の倍以上。HP>20に
+絞っても52.86%対15.76%で、低HP時の安全ガード拒否だけでは説明できない。
+
+leaderがコードを直接確認したところ、official_agent.py:712 `choose_crab_facing()`が671行目で計算済みの
+`lethal`/`all_incoming_threats_lethal`を一切参照せずに呼ばれていることを確認した。この関数(889-905行目)は
+facingが脅威方向と逆であれば、`next()`で見つかった最初のAttackカードを無条件に返す——確定した致死攻撃が
+別の敵に対して存在していても無視し、防御(Block)の要否も一切考慮しない。lethal判定より前でこの分岐が
+returnするため、致死チャンスや必要な防御を機械的に潰しうる構造的な優先順位バグ。
+
+過去に同型の「boss全敗パターン」はKAISER_CRAB_BOSS(複数主敵、14戦全敗)で確認され、multi-primary focus
+実装で対処した実績がある(このファイル内の該当節参照)。CRUSHER+ROCKETも同様に、単一seedの過学習ではなく
+再現性のある構造的欠陥として扱う。
+
+coderへ修正依頼済み(2026-08-23): lethal優先の尊重、facing修正カード選択の質改善(最初の一致ではなく
+`_card_value`で最良を選ぶ)。防御不足時の分岐は影響範囲が大きいため後回し候補。
