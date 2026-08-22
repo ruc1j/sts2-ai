@@ -2696,6 +2696,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 2)
 
+    def test_lethal_accounts_for_soar_power(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.OWL_MAGISTRATE", "hp": 5, "block": 0, "powers": [{"id": "POWER.SOAR_POWER", "amount": 1}], "intents": [{"damage": 20, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.DUMMY", "hp": 6, "block": 0, "powers": [], "intents": [{"damage": 1, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["target_id"], 2)
+
     def test_rest_heals_near_boss(self) -> None:
         observation = {
             "run": {"act": 1, "floor": 14},

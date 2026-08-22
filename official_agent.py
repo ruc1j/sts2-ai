@@ -699,6 +699,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         value = card_value(action, "damage")
         if value <= 0:
             value = ALL_ENEMY_DAMAGE.get(CARD_NAMES.get(action.get("card_id")), 0)
+        # SoarPower halves each powered card hit before HardToKill caps it.  Keep this in the
+        # heuristic too, otherwise the pre-rollout lethal gate can select a false kill.
+        if any(power.get("id") == "POWER.SOAR_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
+            value = (value // hits // 2) * hits
         # HardToKill (e.g. Exoskeleton) caps every hit at the power amount.
         caps = [_number(power.get("amount")) for power in enemy.get("powers", ()) if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]
         if caps and hits:
