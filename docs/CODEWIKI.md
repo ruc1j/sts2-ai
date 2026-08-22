@@ -641,3 +641,22 @@ CombatBridgeは`TargetType.AllEnemies`カードのlegal actionを`target_id=null
 同じ`lethal_targets()`をpotion抑制ゲートにも使い、非自傷lethal候補がincoming中の全脅威を倒せる場合は
 potionを温存するようにした。incomingが無い局面でも即時kill可能ならpotionを使わず、targetless AoEの
 combat_idも正しく脅威集合へ展開する。
+
+### KIN_PRIEST敗因調査(researcher、2026-08-23) — コード変更は保留
+
+leaderの実機run4本連続(val4/5/6/9)がKIN_PRIEST戦で全敗し、該当ターンのsimulations:null率が77.01%と
+異常に高かったため、Crusher+Rocketと同じ「pre-rollout policy欠陥」を疑い調査した。
+
+**Crusher+Rocketとの違い(重要)**: official_agent.py:823-871のKIN_FOLLOWER優先direct returnは実在するが、
+これは既知・意図的な設計であり、test_official_agent.py:2450-2480で明示的にテスト済み、CODEWIKI:69でも
+「follower優先とPriest集中のsearch差はノイズ内」と既に記録されている。Crab facingのような未検証の
+隠れたバグではない。
+
+**baseline(307 trace, KIN_PRIEST戦82件)でnullとlossは相関しない**: win側のnull率30.67% > loss側26.12%で、
+「nullが死因」という仮説を支持しない。直近4本の77%は明確な異常値だが、n=4のサンプルで高難度・低HP到達
+(resource/defense不足)との因果を分離できていない。
+
+**結論(2026-08-23時点)**: コード変更は行わない。原因分離にはdecision_source(kin_follower_direct等)を
+traceへ出す計装と、follower優先policy vs rollout/Priest集中のA/Bテストが必要(researcher提案のP1)。
+次にこの調査を再開する時はまずそこから着手すること。単一の高null率サンプルだけで「意図的な設計判断」を
+上書きしない。
