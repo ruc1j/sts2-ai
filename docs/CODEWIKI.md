@@ -457,6 +457,14 @@ commandのtargetを見ずcaster自身へblockを足していたため、Guardbot
 逆転が起きていた。target=itemを同室のaliveなFabricatorへ解決し、FabricatorNormalのJSON駆動テストで
 Fabricator=15、Guardbot=0を固定した。
 
+### SteamEruptionPowerの公式ID正規化漏れ(2026-08-23)
+
+Waterfall GiantのSteamEruption死亡フックは`SteamEruptionPower`という内部名で判定するが、
+`official_agent.py`の`POWER_NAMES`に`POWER.STEAM_ERUPTION_POWER`が未登録だった。そのため実機観測を
+`rollout_choice`へ渡すと生IDがEnemy.powersへ残り、`_power`が0を返して、5118b13のABOUT_TO_BLOW遷移が
+公式経路では発火しなかった。公式IDマッピングを追加し、`rollout_choice`で観測を再構築してから致死Strikeを
+simulatorへ通す回帰テストで、正規化後のpower保持とABOUT_TO_BLOW遷移を固定した。
+
 ## 2026-08-15セッションまとめ(このセッション区切りでの終了時点)
 
 先生の「ポーションを雑魚で使いすぎ」という指摘を起点に、reviewer/developer間でheadless実行と実trace検証を

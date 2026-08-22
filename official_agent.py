@@ -224,6 +224,7 @@ POWER_NAMES = {
     "POWER.DARK_EMBRACE_POWER": "DarkEmbracePower",
     "POWER.CRIMSON_MANTLE_POWER": "CrimsonMantlePower",
     "POWER.BURROWED_POWER": "BurrowedPower",
+    "POWER.STEAM_ERUPTION_POWER": "SteamEruptionPower",
 }
 
 KNOWN_CARD_DAMAGE = {
