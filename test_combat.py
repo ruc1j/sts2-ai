@@ -1667,6 +1667,36 @@ class CombatTest(unittest.TestCase):
             combat = step(combat, END_TURN, hive, rng)
         self.assertGreaterEqual(_power(combat.enemies[0].powers, "CurseOfKnowledgeCounter"), 3)
 
+    def test_bowlbug_rock_fully_blocked_headbutt_triggers_dizzy(self) -> None:
+        # ImbalancedPower.AfterDamageGiven -> POST_HEADBUTT (data/enemies_hive.json): a Headbutt
+        # that lands fully blocked sets IsOffBalance, routing into DIZZY_MOVE instead of repeating.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        enemy = Enemy("MONSTER.BOWLBUG_ROCK", 45, "HEADBUTT_MOVE", (("IsOffBalance", False),))
+        combat = Combat(80, (), (), (), (enemy,), player_block=20)  # >= Headbutt's 15 damage
+        after = step(combat, END_TURN, hive, random.Random(0))
+        self.assertEqual(after.enemies[0].move, "DIZZY_MOVE")
+        self.assertEqual(_power(after.enemies[0].powers, "OffBalancePower"), 1)
+
+    def test_bowlbug_rock_dizzy_move_clears_off_balance_and_resumes_headbutt(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        enemy = Enemy("MONSTER.BOWLBUG_ROCK", 45, "DIZZY_MOVE", (("IsOffBalance", False),), powers=(("OffBalancePower", 1),))
+        combat = Combat(80, (), (), (), (enemy,))
+        after = step(combat, END_TURN, hive, random.Random(0))
+        self.assertEqual(after.enemies[0].move, "HEADBUTT_MOVE")
+        self.assertEqual(_power(after.enemies[0].powers, "OffBalancePower"), 0)
+
+    def test_bowlbug_rock_unblocked_headbutt_keeps_repeating(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        enemy = Enemy("MONSTER.BOWLBUG_ROCK", 45, "HEADBUTT_MOVE", (("IsOffBalance", False),))
+        combat = Combat(80, (), (), (), (enemy,))  # no block: Headbutt lands unblocked
+        after = step(combat, END_TURN, hive, random.Random(0))
+        self.assertEqual(after.enemies[0].move, "HEADBUTT_MOVE")
+        self.assertEqual(_power(after.enemies[0].powers, "OffBalancePower"), 0)
+        self.assertEqual(after.player_hp, 65)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -427,6 +427,11 @@ def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -
         match = re.search(r"(<|>=)\s*(\d+)", expression)
         threshold, counter = int(match.group(2)), _power(enemy.powers, "CurseOfKnowledgeCounter")
         result = counter < threshold if match.group(1) == "<" else counter >= threshold
+    elif expression.lstrip("!") == "IsOffBalance":
+        # ImbalancedPower.AfterDamageGiven: Bowlbug Rock's IsOffBalance flips true once its
+        # Headbutt lands fully blocked. The exported value is a static False (not runtime state),
+        # so this reads the synthetic power _enemy_turn sets/clears around HEADBUTT_MOVE/DIZZY_MOVE.
+        result = _power(enemy.powers, "OffBalancePower") > 0
     elif expression in {"runtime", "HasAmalgamDied"} and enemy.model == "MONSTER.QUEEN":
         # Queen's exporter leaves the custom post-move predicate as "runtime".  Its only
         # runtime input is whether the Torch Head Amalgam is still alive; derive both branches
@@ -435,7 +440,7 @@ def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -
         result = amalgam_alive if expression == "runtime" else not amalgam_alive
     elif expression.lstrip("!") in values:
         # A bare formation-level flag (like IsFront/IsAlone but without the "base.Creature."
-        # prefix), e.g. Bowlbug Rock's POST_HEADBUTT branch on IsOffBalance.
+        # prefix).
         result = bool(values[expression.lstrip("!")])
     else:
         raise NotImplementedError(f"condition: {expression}")
@@ -939,6 +944,15 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             enemies.extend(_summon(effect["model"], data, rng) for _ in range(count))
         elif command in {"CreatureCmd.Kill", "CreatureCmd.SetMaxAndCurrentHp"}:
             raise NotImplementedError(f"effect: {spec['class']}.{move['id']} {command}")
+    if enemy.model == "MONSTER.BOWLBUG_ROCK":
+        if move_id == "HEADBUTT_MOVE" and damage_events and not sum(damage_events):
+            # ImbalancedPower.AfterDamageGiven: a fully-blocked Headbutt sets IsOffBalance, which
+            # POST_HEADBUTT (data/enemies_hive.json) reads via _condition to route into DIZZY_MOVE
+            # next instead of repeating Headbutt.
+            enemy = replace(enemy, powers=_add_power(enemy.powers, "OffBalancePower", 1))
+        elif move_id == "DIZZY_MOVE":
+            # DizzyMove clears IsOffBalance back to false once it executes.
+            enemy = replace(enemy, powers=_add_power(enemy.powers, "OffBalancePower", -_power(enemy.powers, "OffBalancePower")))
     if move_id == "SNORE_MOVE":
         # SlumberPower.AfterSideTurnEnd decrements once per enemy turn and forces an immediate
         # wake-up (not a "next move" transition) once it reaches 0, so this must land before the
