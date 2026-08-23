@@ -2822,6 +2822,34 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.THUNDERCLAP")
 
+    def test_nonurgent_three_enemy_aoe_defers_to_rollout(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.THUNDERCLAP", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 4}]},
+                {"index": 1, "id": "CARD.INFLAME", "type": "Power", "cost": 1},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []},
+                {"combat_id": 2, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []},
+                {"combat_id": 3, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.THUNDERCLAP", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 1, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 2},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 3},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][1]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["card_id"], "CARD.INFLAME")
+        self.assertEqual(action["decision_source"], "rollout_success")
+
     def test_multi_enemy_threat_does_not_choose_unsafe_aoe_over_block(self) -> None:
         observation = {
             "player": {"hp": 10, "max_hp": 80, "block": 0},

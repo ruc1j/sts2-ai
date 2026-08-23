@@ -823,7 +823,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         and aoe
         and not lethal
         and (incoming < hp + current_block or not defense_can_survive)
-        and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2))
+        and incoming >= max(1, hp // 2)
     ):
         return _tag_action(max(aoe, key=lambda action: card_value(action, "damage")), "aoe_threat_direct")
 
