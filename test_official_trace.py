@@ -48,6 +48,13 @@ class OfficialAgentTraceTest(unittest.TestCase):
         self.assertIn("decision_source = action.DecisionSource", bridge)
         self.assertIn("decision_reason = action.DecisionReason", bridge)
 
+    def test_combat_end_does_not_count_game_over_overlay_as_win(self) -> None:
+        bridge = Path("official_mod/CombatBridge.cs").read_text(encoding="utf-8")
+        self.assertIn("using MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;", bridge)
+        self.assertIn("using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;", bridge)
+        self.assertIn("bool gameOver = NOverlayStack.Instance?.Peek() is NGameOverScreen;", bridge)
+        self.assertIn("won = player.Creature.CurrentHp > 0 && !gameOver", bridge)
+
     def test_phase_bridges_propagate_decision_source(self) -> None:
         for name in ("MapBridge", "RewardBridge", "RestBridge", "ShopBridge", "EventBridge"):
             source = Path(f"official_mod/{name}.cs").read_text(encoding="utf-8")

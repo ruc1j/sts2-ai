@@ -16,6 +16,8 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Potions;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes;
+using MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
+using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.TestSupport;
@@ -129,7 +131,9 @@ internal static class CombatBridge
             }
             await RunManager.Instance.ActionExecutor.FinishedExecutingActions();
         }
-        AgentIo.Trace(new { seq = AgentIo.NextSequence(), phase = "combat_end", won = player.Creature.CurrentHp > 0, hp = player.Creature.CurrentHp });
+        // Feed can heal after Thorns has already opened the terminal game-over screen.
+        bool gameOver = NOverlayStack.Instance?.Peek() is NGameOverScreen;
+        AgentIo.Trace(new { seq = AgentIo.NextSequence(), phase = "combat_end", won = player.Creature.CurrentHp > 0 && !gameOver, hp = player.Creature.CurrentHp });
         if (CommandLineHelper.GetValue("stop-after-agent") == "1" && CombatRoomHandlerPatch.ReachedAgentLimit)
         {
             int seq = AgentIo.NextSequence();

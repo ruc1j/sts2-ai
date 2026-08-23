@@ -1044,27 +1044,31 @@ NotImplementedError(4ターン目以降毎回rolloutクラッシュ、docs/CODEW
 苦戦(M: unavoidable/high variance)の可能性が高く、現時点でコード変更は不要と判断。追加seedで
 KNOWLEDGE_DEMON遭遇が増えたら勝率を確認する。
 
-### 2026-08-23 val81: trace上"won=true"だが実ゲームは敗北という疑わしいmismatchを発見(調査中、未確定)
+### 2026-08-23 val81: trace上"won=true"だが実ゲームは敗北するmismatchを修正
 
 data/leader_val81_trace.jsonl:371(seed=123F5E65EF)。Act2 F13 Monster room、SPINY_TOAD
 (THORNS_POWER=5)戦の`combat_end`が`{"won":true,"hp":3}`を記録。しかしdata/leader_val81_log.txt:
 385-402では、この戦闘終了直後にAutoSlay watchdogが37.4秒でstuck検出し、State Dumpのoverlayは
-`NGameOverScreen`(ゲームオーバー画面)——実際には敗北している。さらにこの戦闘だけlog.txt上に
-"Player 1 playing card"行が1つも無い(他の全floorでは複数出る)のに対し、pythonのtraceにはUppercut/
-Feed等の一連の行動が記録されている食い違いもある。
+`NGameOverScreen`(ゲームオーバー画面)——実際には敗北している。`leader_val81_log.txt`全体には
+"Player 1 playing card"の完全一致行が見当たらず、このartifact単独では他floorとの差は検証できない一方、
+pythonのtraceにはUppercut/Feed等の一連の行動が記録されている。
 
-HYPOTHESIS(未検証): official_mod/CombatBridge.cs:132の`won = player.Creature.CurrentHp > 0`は、
-直前のwhileループが`CombatManager.Instance.IsInProgress`のfalse化を検知した直後に1回だけHPを
-読んでいる。敵全滅によるIsInProgress falseと、ThornsPower反射等でプレイヤーが同時に致死ダメージを
-受けるタイミングとの間にゲームエンジン側の非同期処理順序のズレがあれば、死亡直前の一瞬(HP>0)を
-誤ってwon=trueとして記録しうる。combat.py側のThornsPower reflect自体は既にモデル化済み(combat.py:
-924-925,1673-1752,1879-1925)なのでsimulatorのスコアリングではなくbridgeの勝敗判定タイミングを
-疑っている。
+**確定FACT(decompile、v0.107.1 macOS版sts2.dll)**: これは`IsInProgress`の単純な読み取り競合ではなく、
+`Feed`と`ThornsPower`の入れ子処理で一時的に死亡したプレイヤーを後続のFeed効果が回復させる順序が原因だった。
+`ThornsPower.BeforeDamageReceived`は`CreatureCmd.Damage`で攻撃者へ5点を反射し、val81の最終ターンでは
+HP5のプレイヤーがこの反射で一度HP0になる。この時点で`CreatureCmd.Kill`が`LoseCombat()`を呼び、
+`RunManager.OnEnded(false)`と`NRun.ShowGameOverScreen()`(`NGameOverScreen`)を実行する。その後、外側の
+`Feed.OnPlay`は殺害成功を検出して`CreatureCmd.GainMaxHp(3)`を実行し、`Heal`がプレイヤーのHPを3へ戻す。
+`Heal`は`IsEnding`中でもプレイヤーには適用されるため、ゲームオーバー画面が表示されたままHPだけが正数になる。
+したがって現行bridgeの`won = player.Creature.CurrentHp > 0`は、実際の敗北を勝利として記録していた。
+combat.py側のThorns反射モデルはこの原因ではない。
 
-もしこれが実在するバグなら、trace由来の勝敗集計(researcherがこれまで積み上げてきたKIN_PRIEST/
-VANTOM等のwin/loss統計を含む)の一部が静かに誤っている可能性があり、影響範囲は大きい。coderへ
-調査(decompile確認、他run横断でのパターン再現確認、バグ確定時は最小修正)を依頼した(2026-08-23、
-send.sh経由)。n=1、断定はしていない。
+**横断確認**: `leader_val1`〜`leader_val101`のtrace/logを対応付け、最後の`combat_end`が`won=true`で、対応logの
+State Dumpが`NGameOverScreen`になっている組み合わせはval81のみだった。`Watchdog`単独は通常runにも出るため、
+それだけではmismatchの根拠にしていない。
+
+**対応(2026-08-23)**: `CombatBridge.Run`の`combat_end`判定で、HPが正数でもoverlay最上段が`NGameOverScreen`
+なら`won=false`とする。`test_official_trace.py`にこのC#配線を固定する回帰テストを追加した。simulator側の変更はない。
 
 ### 2026-08-23 val83: Act2 Boss KNOWLEDGE_DEMON、2戦目も敗北(0/2)
 
