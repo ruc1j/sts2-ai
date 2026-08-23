@@ -94,9 +94,56 @@ internal static class CombatBridge
                 break;
 
             int seq = AgentIo.NextSequence();
-            var action = await Exchange(run, player, seq, ct);
+            var (action, legal) = await Exchange(run, player, seq, ct);
             var combat = CombatManager.Instance.DebugOnlyGetState()!;
-            AgentIo.Trace(new { seq = action.Seq, phase = "combat", turn = player.PlayerCombatState!.TurnNumber, player_hp = player.Creature.CurrentHp, action.Type, hand_index = action.HandIndex, upgrade_hand_index = action.UpgradeHandIndex, card_id = action.CardId, potion_index = action.PotionIndex, potion_id = action.PotionId, potions = player.Potions.Select(potion => potion.Id.ToString()), target_id = action.TargetId, simulations = action.Simulations, search_value = action.SearchValue, decision_source = action.DecisionSource, decision_reason = action.DecisionReason, enemies = combat.Enemies.Select(enemy => new { id = enemy.ModelId.ToString(), hp = enemy.CurrentHp, powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }) }) });
+            var traceHand = player.PlayerCombatState!.Hand.Cards;
+            AgentIo.Trace(new
+            {
+                seq = action.Seq,
+                phase = "combat",
+                turn = player.PlayerCombatState.TurnNumber,
+                player_hp = player.Creature.CurrentHp,
+                player = new
+                {
+                    block = player.Creature.Block,
+                    energy = player.PlayerCombatState.Energy,
+                    max_energy = player.PlayerCombatState.MaxEnergy,
+                },
+                action.Type,
+                hand_index = action.HandIndex,
+                upgrade_hand_index = action.UpgradeHandIndex,
+                card_id = action.CardId,
+                potion_index = action.PotionIndex,
+                potion_id = action.PotionId,
+                potions = player.Potions.Select(potion => potion.Id.ToString()),
+                target_id = action.TargetId,
+                simulations = action.Simulations,
+                search_value = action.SearchValue,
+                decision_source = action.DecisionSource,
+                decision_reason = action.DecisionReason,
+                hand = traceHand.Select((card, index) => new
+                {
+                    index,
+                    id = card.Id.ToString(),
+                    cost = card.EnergyCost.GetWithModifiers(CostModifiers.All),
+                    upgrade = card.CurrentUpgradeLevel,
+                    type = card.Type.ToString(),
+                    rarity = card.Rarity.ToString(),
+                    pool = card.Pool.Id.ToString(),
+                    vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
+                    target = card.TargetType.ToString(),
+                }),
+                enemies = combat.Enemies.Select(enemy => new
+                {
+                    id = enemy.ModelId.ToString(),
+                    hp = enemy.CurrentHp,
+                    block = enemy.Block,
+                    move = enemy.Monster?.NextMove.Id,
+                    intents = enemy.Monster?.NextMove.Intents.Select(intent => Intent(intent, combat.PlayerCreatures, enemy)),
+                    powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }),
+                }),
+                legal_actions = legal,
+            });
             using var selector = CreateUpgradeSelector(player, action);
             if (action.Type == "end_turn")
             {
@@ -143,7 +190,7 @@ internal static class CombatBridge
         }
     }
 
-    private static async Task<AgentAction> Exchange(RunState run, MegaCrit.Sts2.Core.Entities.Players.Player player, int seq, CancellationToken ct)
+    private static async Task<(AgentAction Action, List<object> Legal)> Exchange(RunState run, MegaCrit.Sts2.Core.Entities.Players.Player player, int seq, CancellationToken ct)
     {
         var combat = CombatManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("combat state unavailable");
         var hand = player.PlayerCombatState!.Hand.Cards;
@@ -222,7 +269,7 @@ internal static class CombatBridge
             }),
             legal_actions = legal,
         });
-        return await AgentIo.AwaitAction<AgentAction>(seq, ct);
+        return (await AgentIo.AwaitAction<AgentAction>(seq, ct), legal);
     }
 
     private static IDisposable? CreateUpgradeSelector(MegaCrit.Sts2.Core.Entities.Players.Player player, AgentAction action)

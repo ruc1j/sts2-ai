@@ -55,6 +55,22 @@ class OfficialAgentTraceTest(unittest.TestCase):
         self.assertIn("bool gameOver = NOverlayStack.Instance?.Peek() is NGameOverScreen;", bridge)
         self.assertIn("won = player.Creature.CurrentHp > 0 && !gameOver", bridge)
 
+    def test_combat_trace_contains_pre_action_state(self) -> None:
+        bridge = Path("official_mod/CombatBridge.cs").read_text(encoding="utf-8")
+        for field in (
+            "block = player.Creature.Block",
+            "energy = player.PlayerCombatState.Energy",
+            "max_energy = player.PlayerCombatState.MaxEnergy",
+            "hand = hand.Select((card, index)",
+            "block = enemy.Block",
+            "move = enemy.Monster?.NextMove.Id",
+            "intents = enemy.Monster?.NextMove.Intents.Select(intent => Intent(intent, combat.PlayerCreatures, enemy))",
+            "legal_actions = legal",
+        ):
+            with self.subTest(field=field):
+                self.assertIn(field, bridge)
+        self.assertIn("var (action, legal) = await Exchange(run, player, seq, ct);", bridge)
+
     def test_phase_bridges_propagate_decision_source(self) -> None:
         for name in ("MapBridge", "RewardBridge", "RestBridge", "ShopBridge", "EventBridge"):
             source = Path(f"official_mod/{name}.cs").read_text(encoding="utf-8")
