@@ -1342,3 +1342,39 @@ CARD_NAMES/POWER_NAMESにも登録。test_combat.pyにThorns/Vulnerableとの相
 留保: CombatBridgeの観測はInfernoPower量のみを送りInfernoSelfDamageの累積値自体は伝わらないため、
 観測復元経由でのrollout再開(mid-turn再構成)では自傷回数を完全復元できない可能性がある(新規play
 経路は正確)。実機での次回KNOWLEDGE_DEMON等の遭遇時に注視する。
+
+### 2026-08-23 先生の指摘(「カードの順番が怪しい、次ターンを考えていないのでは」)からreviewerが
+直行分岐3件の設計問題を確認(TOP3、medium、未修正)
+
+先生の指摘を受けて依頼した監査で、reviewerが具体的な再現手順付きで3件報告。
+
+TRACE FACT: leader_val*_trace.jsonl 108ファイル・combat 18,545件のうちdecision_source付き15,010件
+(19ファイル3,535件は旧形式のため除外)。**rollout_success 53.56%、heuristic_fallback 25.42%、
+direct合計21.01%**(lethal 9.15%、非lethal direct 11.87%)。run単位のdirect比率は中央値20.9%
+(範囲10.4-35.0%)——約5戦闘中1戦闘分の判断がrolloutを経由しない直行ヒューリスティックという計測。
+
+TOP3(いずれもseverity medium、現行combat.py rolloutとの選択差を合成局面で再現済み、実機勝率への
+影響は未測定=HYPOTHESIS):
+
+1. **generic_multi_primary_focus_direct/kin_follower_direct**(official_agent.py:888-927):
+   `len(primary_ids)>1 and focusable and not lethal and not urgent`だけで発火——満HP・incoming0の
+   通常局面でも対象。Inflame等のセットアップやdrawによる同ターン後続コンボを見ない。再現: HP80/80、
+   2体各HP100・incoming0、hand=Inflame/Strike/Angerの局面でchoose()はStrikeを選ぶが、同一観測の
+   rollout_choiceはInflame(search_value=1.96)を選ぶ。
+2. **aoe_threat_direct**(808-824): `len(enemy_by_id)>=3`単独がincoming量に関わらずdirectを許可。
+   満HP・incoming0でも非lethal AoEがあれば発火。再現: HP80/80、3体各HP100・incoming0、
+   hand=Thunderclap/Inflame/Strikeの局面でThunderclapを選ぶが、rollout_choiceはInflame
+   (search_value=2.06)を選ぶ。
+3. **rage_direct**(864-886): Rage+支払い可能なAttackが1枚あるだけで、incoming/HP/block価値を
+   見ずに発火。再現: HP80/80、敵1体incoming0、hand=Rage/Perfected Strike/Strikeの局面でRageを
+   選ぶが、rollout_choiceはPerfected Strike(search_value=1.90)を選ぶ——incoming0ならRageのblock
+   に価値が無く、単純に総ダメージが減る。
+
+他の監査対象(direct_potion、sandpit_escape/draw、crab_facing_direct、queen_minion_direct、
+lethal_direct、kin_follower_urgent_direct)は現時点で具体的な悪化例なし、または既知のIllusionPower
+懸念(val87/88)はまだ確定issueに昇格しないとreviewerが明記(合成局面ではrolloutも同じ選択をする
+ケースがあったため)。
+
+RECOMMENDED: 大規模書き換えはせず、各直行分岐に「urgent(HP低下または実際のincomingあり)でない
+限りrolloutへ渡す」形のgateを追加し、各分岐に最小回帰testを追加。その後実機traceで発火頻度・Act3
+結果を継続観測する方針。coderが次に空き次第、この3件の修正を依頼する。
