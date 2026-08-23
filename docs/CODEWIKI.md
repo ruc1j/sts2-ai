@@ -1253,3 +1253,16 @@ CARD.MANGLE(Strength -10、upgrade時-15、decompile準拠)の2カードに限�
 軽減後の被弾量を再計算し、その値で致死判定する。対象外カードの挙動は不変。regression test追加、
 python3 -m unittest discover 530件通過(leader独立検証済み)。C#変更なし。TASK3(hp<=0敵のstale
 intent除外)へ継続を依頼した。
+
+### 2026-08-23 TASK3修正完了(commit f4d6aea、leader検証済み): 死亡済み敵のstale intentを脅威計算
+から除外、reviewer3件レビュー全て対応完了
+
+`_intent_incoming`にhpキー存在かつhp<=0なら0を返す早期returnを追加、`_potion_is_lethal_incoming`も
+生存中の敵のみに絞り込み。hpフィールドが無いfixtureは従来通りintentを信頼する後方互換を維持
+(実機observationには常にhpが含まれるため実害なし)。C#/CombatBridge側は変更せず、dead intentの
+シリアライズ自体は残るがPython集計側で無害化する設計。regression test追加、python3 -m unittest
+discover 531件通過(leader独立検証済み)。
+
+これでreviewerが発見した3件(aoe_threat_direct自滅・UPPERCUT/MANGLE軽減未評価・死亡敵stale
+intent)すべて修正完了。3件ともC#変更なし・小さくcommit分割・leader独立検証(python3 -m unittest
+discover)済み。次はresearcherのKIN_PRIEST F仮説(強防御カード確保policy)対応をcoderへ依頼する。
