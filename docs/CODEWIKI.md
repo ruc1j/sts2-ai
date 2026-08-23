@@ -1084,3 +1084,26 @@ combat.pyの`played_this_turn`/`RingingPower`判定(combat.py:694-695)は現在�
 巻き戻りは無いことを確認した。3敗とも致命的な過大評価の兆候(search_valueが終始楽観的なまま死ぬ、
 等)は見られず、通常の苦戦パターンの範囲内。修正前の水準に戻っている証拠はないため、コード変更は
 不要と判断。n=3の小サンプルでの偏りの可能性が高いが、念のため追加seedでの継続観測対象とする。
+
+### 2026-08-23 val87/val88: FOGMOG+EYE_WITH_TEETH戦で`lethal_direct`がIllusionPower持ちミニオンを
+反復討伐、FOGMOGのStrengthが放置される疑い(未確認、次の調査候補)
+
+data/leader_val87_trace.jsonl・leader_val88_trace.jsonl(いずれも敗北)。両方ともFOGMOG+
+EYE_WITH_TEETH(ILLUSION_POWER持ち、敵ターン終了後に最大HPで復活——docs/CODEWIKI.md:61で既知の
+意図された仕様)の組み合わせで、`lethal_direct`が毎ターンのようにEYE_WITH_TEETHへの確定討伐を
+選択し続けている。val88では turn11〜13 の3ターンにわたりFOGMOGのHPが17のまま一切変化せず、
+Strengthだけが6→7と積み上がっていた。
+
+official_agent.py:842-850の`lethal_key`(738行目`lethal_targets`と合わせて確認)は
+(合計incoming, target数, 最も低いHP, 最大ダメージ)でソートしており、対象がIllusionPowerを
+持つか(=討伐しても復活して恒久的な価値が無いか)を一切考慮していない。一方`_greedy_action`側の
+rollout評価には既に「primary(ボス)を倒した場合を優先し、復活するミニオンより優先する」補正が
+入っている(docs/CODEWIKI.md:91)——つまり同種の教訓がrollout側にしか反映されておらず、
+rolloutより先に実行される`lethal_direct`の早期リターンには反映されていない可能性がある。
+
+ただし`lethal_direct`は1アクションのみを選ぶ関数であり、`choose()`はアクション毎に呼ばれ直すため、
+「そのターンの残りエネルギーをFOGMOGへの非確定ダメージに回さなかった」のが本当にpolicy起因か、
+単にエネルギー不足・低HPでの防御優先という合理的判断だったかは、このtraceだけでは切り分けられない。
+n=2、FACT/HYPOTHESIS分離した詳細分析は行っていない。researcher/reviewerが手が空き次第、
+「IllusionPower持ちenemyへの`lethal_direct`が、他に非確定だが本命(FOGMOG等)への攻撃機会がある
+場合に不当に優先されていないか」を確認する調査を次の候補として残す。
