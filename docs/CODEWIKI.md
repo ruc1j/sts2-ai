@@ -1329,3 +1329,16 @@ data/leader_val108_trace.jsonl(seed=6734E10311)。Act2 Boss KNOWLEDGE_DEMON戦�
 敵HP346→52まで削っての敗北。過去3戦(val80: 敗北時227付近、val83: 227、val98: turn11時点198で
 timeout)と比べて最も敵HPを削れており、過去最接近。単一seedでの改善効果断定はできないが、
 unsafe拒否ガード3件修正後の初のKNOWLEDGE_DEMON戦としては良い兆候。0/4のまま、継続観測。
+
+### 2026-08-23 CARD.INFERNO/CARD.CRUELTY実装完了(commit 53458ba、leader検証済み)
+
+decompileでInfernoは1コスト、InfernoPower+6(Upgrade+9)を付与、プレイヤーが被ダメージするたびに
+全生存敵へその量を反撃(`_trigger_inferno`、Thorns反射やCrimson Mantle自傷等の既存全damage経路に
+網羅的に組み込み)、加えてターン開始時にInfernoSelfDamage分の自傷が確定。Crueltyは1コスト、
+CrueltyPower+25%(Upgrade+50%)を付与し、Vulnerable倍率(通常150%)に加算する
+(`_vulnerable_damage`ヘルパーとして一本化、既存の`damage*3//2`ハードコードを置き換え)。
+CARD_NAMES/POWER_NAMESにも登録。test_combat.pyにThorns/Vulnerableとの相互作用を含む振る舞いテスト
+を追加、python3 -m unittest discover 536件通過(leader独立検証済み)。C#変更なし。coderが残した
+留保: CombatBridgeの観測はInfernoPower量のみを送りInfernoSelfDamageの累積値自体は伝わらないため、
+観測復元経由でのrollout再開(mid-turn再構成)では自傷回数を完全復元できない可能性がある(新規play
+経路は正確)。実機での次回KNOWLEDGE_DEMON等の遭遇時に注視する。
