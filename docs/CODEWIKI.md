@@ -1398,3 +1398,16 @@ python3 -m unittest discover 537件通過(leader独立検証済み)。TASK2(aoe_
 reviewer提供の再現条件(HP80、3体HP100・incoming0、Thunderclap/Inflame/Strike)でrollout_successに
 固定されることを確認。python3 -m unittest discover 538件通過(leader独立検証済み)。TASK3
 (rage_direct)へ継続を依頼した。
+
+### 2026-08-23 TOP3の3件目修正完了(commit 0cc3239、leader検証済み): rage_direct/rage_defense_
+directをblock必要時限定に、reviewer監査3件すべて対応完了
+
+`remaining = max(0, incoming - block)`を算出し、`remaining > 0 or not rollout_enabled`の場合のみ
+Rage直行を許可するよう変更。rollout無効時の既存挙動、incomingありでの強防御選択ロジックは維持。
+reviewer提供の再現条件(HP80、incoming0、Rage/Perfected Strike/Strike)でrollout_successに固定
+されることを確認。python3 -m unittest discover 539件通過(leader独立検証済み)。
+
+これでreviewerが発見した直行分岐3件(generic_multi_primary_focus_direct、aoe_threat_direct、
+rage_direct)すべて修正完了。先生の指摘(「カードの順番が怪しい、次ターンを考えていないのでは」)から
+始まった一連の調査・修正が完結した形。3件ともC#変更なし・小さくcommit分割・leader独立検証
+(python3 -m unittest discover)済み。効果測定は今後のrunバッチで継続観測する。
