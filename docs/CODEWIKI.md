@@ -1032,3 +1032,14 @@ rollout_rejected_unsafeが4連続(trace seq175/176/178/179/180)発生しつつVA
 既に敗北をrollout側が予見)、既存のVANTOM分析(構造的バグなし、44-45%程度の勝率)およびKIN_PRIEST
 分析(死亡ターン自体にはunsafe拒否が付随しないことが多い)と整合。reviewerへ依頼中のunsafe拒否ガード
 コードレビュー用の追加サンプルとして有用。
+
+### 2026-08-23 val80: Act2 Boss KNOWLEDGE_DEMON戦で敗北(CurseOfKnowledge修正後、初の実機遭遇)
+
+data/leader_val80_trace.jsonl(seed=616F13EBE3)。Act2 F16 Boss、MONSTER.KNOWLEDGE_DEMON(開始HP346)
+戦でturn6終了時にHP0敗北。turn2時点で既にsearch_value=-0.79〜-0.98と大きく劣勢、以降turn6まで
+一貫して-0.85〜-1.12で推移。rollout_exception系は0件で、以前修正した`CurseOfKnowledgeBranch`の
+NotImplementedError(4ターン目以降毎回rolloutクラッシュ、docs/CODEWIKI.md:53参照)は再発していない
+——修正後この敵との初の実機遭遇でもクラッシュなしを確認できた。HPは346→142まで削れており(turn6終了
+時点)、進行自体は機能している。turn2から一貫して大幅劣勢という評価は、単に高HP+強力なボスとの
+苦戦(M: unavoidable/high variance)の可能性が高く、現時点でコード変更は不要と判断。追加seedで
+KNOWLEDGE_DEMON遭遇が増えたら勝率を確認する。
