@@ -808,7 +808,16 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     hp, max_hp = player.get("hp", 0), player.get("max_hp", player.get("hp", 0))
     incoming = sum(enemy_incoming.values())
     aoe = [action for action in cards if action["card_id"] in ALL_ENEMY_CARDS and not _is_self_damage(action, hand)]
-    if len(enemy_by_id) > 1 and aoe and not lethal and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)):
+    current_block = _number(player.get("block"))
+    defense_block = max((card_value(action, "block") for action in cards), default=0)
+    defense_can_survive = defense_block > 0 and incoming - current_block - defense_block < hp
+    if (
+        len(enemy_by_id) > 1
+        and aoe
+        and not lethal
+        and (incoming < hp + current_block or not defense_can_survive)
+        and (len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2))
+    ):
         return _tag_action(max(aoe, key=lambda action: card_value(action, "damage")), "aoe_threat_direct")
 
     # Queen's Torch Head Amalgam is marked as a secondary minion, but it is the only enemy

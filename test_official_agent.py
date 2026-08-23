@@ -2690,6 +2690,27 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.THUNDERCLAP")
 
+    def test_multi_enemy_threat_does_not_choose_unsafe_aoe_over_block(self) -> None:
+        observation = {
+            "player": {"hp": 10, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.THUNDERCLAP", "type": "Attack", "vars": [{"id": "Damage", "value": 4}]},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 50, "block": 0, "intents": [{"damage": 5, "repeats": 1}], "powers": []},
+                {"combat_id": 2, "hp": 50, "block": 0, "intents": [{"damage": 5, "repeats": 1}], "powers": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.THUNDERCLAP", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation)
+        self.assertEqual(action["card_id"], "CARD.DEFEND_IRONCLAD")
+        self.assertEqual(action["decision_source"], "heuristic_fallback")
+
     def test_multi_enemy_threat_avoids_self_damage_aoe(self) -> None:
         observation = {
             "player": {"hp": 20, "max_hp": 80, "block": 0},
