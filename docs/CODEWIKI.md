@@ -1142,3 +1142,28 @@ Act2到達率はやや低め(34.0% vs 43.1%)だがAct3到達率はほぼ同水�
 n=31時点でresearcherが暫定報告した29.0%よりは基準値に近づいており、本日の一連の修正
 (Crab facing lethal優先、AoE lethal盲点、self-damage回避、SoarPower等)による新規regressionの
 証拠は引き続き見られない。詳細なFACT/HYPOTHESIS分離分析はresearcher手隙時に別途依頼予定。
+
+### 2026-08-23 KIN_PRIEST 5敗+1勝の再分析: 強防御カード不足が上流原因の有力候補(F)、unsafe拒否は
+死亡隣接の症状(C)に留まる可能性
+
+researcherによるval37/39/47/50/57/58の再分析。核心の発見:
+
+- official_agent.py:1579-1583のSTRONG_BLOCK_CARDS、:1622の「デッキ16枚以上ならstrong block 3枚
+  以上」しきい値に対し、KIN_PRIEST突入時点のデッキスナップショットは**敗北5戦すべてがこの
+  しきい値未達**(strong block 0〜1枚、val37/47=1、val50=1、val57=1、val58=0)。唯一の勝利val39は
+  ちょうど18枚/strong3枚(Blood Wall/Flame Barrier/Impervious)でしきい値を満たしていた。5敗5敗/
+  1勝1勝ときれいに分離しているが、n=6なので記述的証拠に留まり因果は未証明。
+- unsafe拒否(rollout_rejected_unsafe)は死亡ターンまたはその直前ターンに5/5全戦で出現(最終ターン
+  自体は4/5)。ただしval39(勝利)はunsafe 0件。researcherの結論: **unsafe拒否は「安全ガードが勝ち筋
+  を潰している」証拠ではなく、防御不足という上流原因(F)の下流症状である可能性が高い**——ガード自体を
+  緩めるべきという結論には至らない。
+- kin_follower_direct比率は敗北群(13.7%)と勝利control(14.3%)でほぼ同水準、target selection(D)の
+  バグを示す明確な差はない。
+
+推奨優先度: (1) F最優先——KIN_PRIEST到達までにSTRONG_BLOCK_CARDS3枚以上を確保する報酬/ショップ/
+ルート選択の強化を検討。(2) C——rejectされた候補・予測incoming・利用可能な安全な代替手を計装した上で
+本当に安全策が無かったのかを確認してから、ガード自体の変更要否を判断。(3) D(kin_follower_direct)は
+現状変更不要。reviewerへ依頼中のunsafe拒否ガードコードレビュー(2026-08-23T01:14:30)は、この
+F優位仮説を踏まえた上で「ガードの実装自体に単純ミスが無いか」の確認として引き続き有効。coderが
+現在の緊急タスク(win/loss mismatch調査)を終え次第、F側(強防御カード確保policy)の実装検討を
+次のタスクとして依頼する。
