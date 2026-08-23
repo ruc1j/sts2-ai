@@ -1242,3 +1242,12 @@ official_agent.py:808-816に生存可能性チェックを追加。`incoming < h
 分岐を許可し、致死級incomingで生存可能なDefendがあるのに非ブロックAoEを選ぶケースを塞いだ。
 regression test追加、python3 -m unittest discover 529件通過(leader独立検証済み)。C#変更なしの
 ためbuild再検証は不要。TASK2(UPPERCUT/MANGLE等の非block軽減をunsafe判定へ反映)へ継続を依頼した。
+
+### 2026-08-23 TASK2修正完了(commit a31340f、leader検証済み): unsafeガードがUPPERCUT/MANGLEの
+被害軽減を評価するように
+
+`mitigation_incoming()`をrollout_is_unsafe判定に追加。CARD.UPPERCUT(Weak付与、次被弾×3/4)と
+CARD.MANGLE(Strength -10、upgrade時-15、decompile準拠)の2カードに限定して、対象敵の現在intentから
+軽減後の被弾量を再計算し、その値で致死判定する。対象外カードの挙動は不変。regression test追加、
+python3 -m unittest discover 530件通過(leader独立検証済み)。C#変更なし。TASK3(hp<=0敵のstale
+intent除外)へ継続を依頼した。
