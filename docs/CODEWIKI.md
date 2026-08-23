@@ -1322,3 +1322,10 @@ coder/reviewerで確認し、他のPOWER_NAMES漏れと同様の手順(ID正規�
 候補としてcoderへ依頼する。CLUMSY/SPOILS_MAP/BYRDONIS_EGG/DECAY/LANTERN_KEYは100%未使用だが、
 report/curse/relic由来の可能性が高くプレイヤーカードではないと推測(未確定)。Burning Pact/Drum of
 Battle等の既知カードの未使用頻度は、モデル自体は存在するため今は追加runを待つ(即修正しない)。
+
+### 2026-08-23 val108: KNOWLEDGE_DEMON 4戦目、turn13でHP52まで削って敗北(過去最接近、n=4)
+
+data/leader_val108_trace.jsonl(seed=6734E10311)。Act2 Boss KNOWLEDGE_DEMON戦、turn13時点で
+敵HP346→52まで削っての敗北。過去3戦(val80: 敗北時227付近、val83: 227、val98: turn11時点198で
+timeout)と比べて最も敵HPを削れており、過去最接近。単一seedでの改善効果断定はできないが、
+unsafe拒否ガード3件修正後の初のKNOWLEDGE_DEMON戦としては良い兆候。0/4のまま、継続観測。
