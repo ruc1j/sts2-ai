@@ -1378,3 +1378,14 @@ lethal_direct、kin_follower_urgent_direct)は現時点で具体的な悪化例�
 RECOMMENDED: 大規模書き換えはせず、各直行分岐に「urgent(HP低下または実際のincomingあり)でない
 限りrolloutへ渡す」形のgateを追加し、各分岐に最小回帰testを追加。その後実機traceで発火頻度・Act3
 結果を継続観測する方針。coderが次に空き次第、この3件の修正を依頼する。
+
+### 2026-08-23 TOP3の1件目修正完了(commit dd923f1、leader検証済み): generic_multi_primary_focus_
+direct/kin_follower_directをurgent限定に
+
+条件を`not urgent`(非緊急時に発火という逆転した設計)から`urgent and not kin_follower_ids`に修正、
+非urgentの通常局面はrolloutへ委譲するようにした。KINの緊急ルール(kin_follower_urgent_direct)は
+別分岐のまま維持、非urgentなKIN戦もrolloutへ委譲。副次的に、primary_idsからhp<=0の死亡済み敵を
+除外する修正も同時実施(過去のTASK3と同系統の見落とし)。reviewer提供の再現条件(HP80、2体HP100・
+incoming0、Inflame/Strike/Anger)でrollout_successに固定されることをregression testで確認。
+python3 -m unittest discover 537件通過(leader独立検証済み)。TASK2(aoe_threat_direct)へ継続を
+依頼した。
