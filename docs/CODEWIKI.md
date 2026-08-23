@@ -1459,3 +1459,33 @@ data/leader_val113_trace.jsonl。HP11・block0の局面でROCKETのLASER_MOVE in
 data/leader_val116_trace.jsonl。intentでKIN_PRIESTのBEAM_MOVEが1回5ダメージ×3repeats=15と確認でき、
 HP9・block0に対し確実な致死量だったと判明。unsafeガード(ANGER拒否)は正しい判断だったが代替手段が
 無かった。KIN_PRIESTのdecision_source付きサンプルは9件に到達。
+
+### 2026-08-23 本日のセッション終了(val119まで、119本実施)
+
+先生の指示によりチームを解散。coder/researcher/reviewer(いずれもcodex)のプロセスを終了し、
+Terminalウィンドウのクローズも試みた(ウィンドウ自体はAppleScript経由で閉じきれず数枚残存、
+プロセス自体は終了済みで実害なし)。log-monitor(hermes)はそもそも常駐プロセスを持たないため対応不要。
+val119は通常のAct1 Boss敗北(watchdog timeout)、mods フォルダも正常にクリーンアップ済みで残留なし。
+
+本日の主な成果(commit履歴参照):
+- val1〜119、119本の実機run実施。Act2到達率34%前後、Act3到達1件(val56)を維持。
+- win/loss mismatch修正(Feed+Thorns+Kill順序の誤判定、commit 0dbffab)。
+- unsafe拒否ガードの3件のバグ修正(aoe_threat_direct自滅、UPPERCUT/MANGLE軽減未評価、死亡敵stale
+  intent、commit 30dce94/a31340f/f4d6aea)。
+- KIN_PRIEST向け強防御カード確保policy(BOSS_CARD_AXESへのTHE_KIN_BOSS登録、commit e466659)。
+- CARD.INFERNO/CARD.CRUELTYの完全実装(commit 53458ba)。
+- 直行分岐3件の設計問題修正(generic_multi_primary_focus_direct/aoe_threat_direct/rage_direct、
+  先生の指摘起点、commit dd923f1/cf08590/0cc3239)。
+- combat traceへのintent/hand/legal_actions計装強化(commit 0dee31d)——早速val112以降の複数の
+  死因診断で威力を発揮し、これまで数分かかっていた分析が数秒で完了するようになった。
+
+未完了・継続課題:
+- KNOWLEDGE_DEMON戦は0/4のまま(過去最接近はval108のHP52残し)、継続観測が必要。
+- CRUSHER+ROCKETはlethal優先バグ修正後も0/4、依然として高難度。
+- Act3到達はval56の1件のみ、Act3以降のデータはまだ極めて少ない。
+- researcherの未使用カード横断調査で見つかったBurning Pact/Drum of Battle等の未使用頻度は
+  「モデルは存在するため追加runを待つ」段階で保留中。
+- 100%未使用のCLUMSY/SPOILS_MAP/BYRDONIS_EGG/DECAY/LANTERN_KEYはプレイヤーカードか未確認のまま。
+
+次回セッション再開時は、team.sh sts2-aiでロスターを確認の上、必要な役割をspawn.shで再起動し、
+docs/agmsg.md・本ファイルの最新セクションから状況を追うこと。
