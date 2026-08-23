@@ -1222,6 +1222,8 @@ official_agent.py側のロジックギャップ。
    incoming計算に混入し、実際には脅威が無いのに不要なunsafe拒否を誘発しうる。IllusionPower持ち敵
    (EYE_WITH_TEETH等、val87/88で観測)のような「hp=0のまま盤面に残る」ケースで特に疑わしい。公式
    observationでの検証fixtureが必要。
+   対応: `_intent_incoming`でhp<=0の敵をincoming 0として扱い、BufferPower用のhit候補からも死亡敵を
+   除外した。死亡敵のstale intentと生存敵の無害なintentを含む公式観測相当のregression testを追加した。
 3. **[HIGH] unsafeガードがblock/lethal以外の被害軽減を認識しない**
    (official_agent.py:943-947 `choose()`、`_card_value()`/`is_lethal()`):
    UPPERCUT(Weak付与)やMANGLE(敵Strength低下)のように、blockを得ずに次の被弾を軽減するカードが

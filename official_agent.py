@@ -289,6 +289,8 @@ def _number(value: object, default: int = 0) -> int:
 def _intent_incoming(enemy: dict) -> int:
     # CombatBridge reports intent damage via GetSingleDamage, which already includes
     # Strength/Weak/Vulnerable, so the observed damage is used as-is.
+    if "hp" in enemy and _number(enemy.get("hp")) <= 0:
+        return 0
     return sum(max(0, _number(intent.get("damage"))) * max(1, _number(intent.get("repeats"), 1)) for intent in enemy.get("intents") or ())
 
 
@@ -325,6 +327,7 @@ def _potion_is_lethal_incoming(observation: dict) -> bool:
     hits = [
         max(0, _number(intent.get("damage")))
         for enemy in observation.get("enemies", ())
+        if enemy.get("hp") is None or _number(enemy.get("hp")) > 0
         for intent in enemy.get("intents") or ()
         for _ in range(max(1, _number(intent.get("repeats"), 1)))
     ]

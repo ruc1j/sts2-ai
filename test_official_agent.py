@@ -353,6 +353,26 @@ class OfficialAgentTest(unittest.TestCase):
                 self.assertEqual(action["card_id"], card_id)
                 self.assertEqual(action["decision_source"], "rollout_success")
 
+    def test_dead_enemy_intent_does_not_trigger_unsafe_rollout_guard(self) -> None:
+        selected = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2}
+        observation = {
+            "seq": 1,
+            "legal_actions": [selected, {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 10, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DEAD", "hp": 0, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []},
+                {"combat_id": 2, "id": "MONSTER.LIVE", "hp": 50, "block": 0, "intents": [], "powers": []},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=selected):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
+        self.assertEqual(action["decision_source"], "rollout_success")
+
     def test_map_route_prefers_boss_reachable_path(self) -> None:
         # The col-1 branch dead-ends at a Treasure, so the planner follows the col-0 branch to the boss.
         observation = {
