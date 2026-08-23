@@ -1411,3 +1411,21 @@ reviewer提供の再現条件(HP80、incoming0、Rage/Perfected Strike/Strike)�
 rage_direct)すべて修正完了。先生の指摘(「カードの順番が怪しい、次ターンを考えていないのでは」)から
 始まった一連の調査・修正が完結した形。3件ともC#変更なし・小さくcommit分割・leader独立検証
 (python3 -m unittest discover)済み。効果測定は今後のrunバッチで継続観測する。
+
+### 2026-08-23 combat traceに敵intent/手札/block/legal_actionsを追加(commit 0dee31d、leader検証済み)
+
+先生からの依頼: 今日3回(researcherの未使用カード調査、reviewerの直行分岐監査、先生自身の
+「殴られない時に瀉血使ってまでブロックしてる」質問への調査)、combat traceに敵の意図(intent)・
+手札・legal_actionsが記録されていないせいで分析が頭打ちになったことを受け、trace計装を強化。
+
+official_mod/CombatBridge.cs:99のcombat Trace呼び出しに、既にWriteObservation(:171-224)側で
+計算済みだったフィールドを追加(デコンパイル調査不要、既存データの転記のみ):
+- player.block/energy/max_energy
+- hand(手札全カード、WriteObservationと同一構造)
+- enemies配列にblock/move/intentsを追加(従来はid/hp/powersのみ)
+- legal_actions(Exchange内で観測構築時に計算済みのlegalをそのままtupleで返すよう変更、
+  legal_actionsの二重計算を回避)
+
+過去のtraceファイル(val1〜111)は変更されず、val112以降のrunから新フィールドが出る。
+python3 -m unittest discover 540件通過、build_official_mod.ps1(実機DLL参照)0警告/0エラー、
+いずれもleader独立検証済み。次回run以降で実際に新フィールドが出力されているか確認する。
