@@ -1172,6 +1172,15 @@ F優位仮説を踏まえた上で「ガードの実装自体に単純ミスが�
 現在の緊急タスク(win/loss mismatch調査)を終え次第、F側(強防御カード確保policy)の実装検討を
 次のタスクとして依頼する。
 
+### 2026-08-23 KIN_PRIEST強防御カードpolicy対応: THE_KIN_BOSSをboss axisへ追加
+
+RewardBridge/ShopBridgeはいずれも`run.Act.BossEncounter?.Id`/`SecondBossEncounter?.Id`を
+`run.boss_encounter_id`/`second_boss_encounter_id`へ渡す既存経路で、KINのIDも他ボスと同様に利用できる。
+`BOSS_CARD_AXES`へ`ENCOUNTER.THE_KIN_BOSS: STRONG_BLOCK_CARDS`を追加し、KINを次ボスとして観測した
+カード報酬でShrug It OffがBludgeonを上回る回帰テストを追加した。KINは単体のPriestを主敵とするため
+ALL_ENEMY_CARDSは加えていない。boss bonusはdeck sizeや`_block_starved`の条件に依存せずcore scoreへ
+加算されるため、16枚未満の到達ケースにも適用される。
+
 ### 2026-08-23 coderがval81のwin/loss mismatchを修正(commit 0dbffab、leader独立検証済み)
 
 Root cause: FeedのDamage中にThornsPowerが反射しplayerが一時HP0になり`CreatureCmd.Kill`が

@@ -897,6 +897,21 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
 
+    def test_reward_uses_kin_boss_axis_for_strong_block(self) -> None:
+        observation = {
+            "run": {"boss_encounter_id": "ENCOUNTER.THE_KIN_BOSS"},
+            "cards": [
+                {"id": "CARD.BLUDGEON", "rarity": "Rare", "cost": 3},
+                {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
+            ],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_reward_skips_unknown_skill(self) -> None:
         observation = {
             "cards": [{"id": "CARD.UNKNOWN_SKILL", "type": "Skill", "rarity": "Uncommon", "cost": 1}],
