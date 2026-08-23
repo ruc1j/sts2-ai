@@ -1191,3 +1191,14 @@ STRENGTH_POWERが21(以前の研究者報告val33の7→14よりさらに高い)
 使用しきい値(敵HP>=100)未満のため温存されたが、Strengthスノーボール自体はsearch_value=-0.98で
 正しく悲観評価されており、simulator側の見落としではなさそう。SHACKLING_POTIONの使用条件が「総HP」
 のみでなく「急速なStrength蓄積」も見るべきかは今後の検討候補として記録するのみ、現時点でタスク化はしない。
+
+### 2026-08-23 log-monitor(hermes)が稼働開始、val90〜102の所見を提供(運用効率の改善候補、低優先度)
+
+log-monitorが正常に動作し、初のレポートを送ってきた(以前セッションでは呼び出し手段が壊れており未稼働
+だった)。所見は本セッションで既に個別に記録してきたAutoSlay watchdog/rewards待機パターン
+(死亡後NGameOverScreenが出ているのにAutoSlayがNRewardsScreenを待ち続けてwatchdog/timeoutに頼る
+挙動、val77/79/91/93/94/96/100/101等で既出)と一致する独立確認。追加の指摘として、この検知漏れは
+ゲーム側`AutoSlayer.WaitForRewardsScreenAsync`(decompile対象、こちらのMod外)に起因しており、
+仮にHarmonyパッチで割り込めれば毎回の敗北後に数十〜数百秒の無駄な待機時間を削減できる可能性がある、
+という効率改善の提案。これは正誤(correctness)には影響しない運用効率の話であり、researcherの
+KIN_PRIEST F仮説対応(勝率に直結)より優先度は低いと判断、現時点ではタスク化を保留しコード変更もしない。
