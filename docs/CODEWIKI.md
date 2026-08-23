@@ -1065,3 +1065,12 @@ HYPOTHESIS(未検証): official_mod/CombatBridge.cs:132の`won = player.Creature
 VANTOM等のwin/loss統計を含む)の一部が静かに誤っている可能性があり、影響範囲は大きい。coderへ
 調査(decompile確認、他run横断でのパターン再現確認、バグ確定時は最小修正)を依頼した(2026-08-23、
 send.sh経由)。n=1、断定はしていない。
+
+### 2026-08-23 val83: Act2 Boss KNOWLEDGE_DEMON、2戦目も敗北(0/2)
+
+data/leader_val83_trace.jsonl(seed=A49CAD583B)。val80に続きKNOWLEDGE_DEMON戦(開始HP346)で敗北、
+現時点0/2。turn5-6はplayer_hp=20を維持したまま安定して削っていた(boss hp 276->227)が、turn6終了後の
+敵ターンでHP20から一気に0まで落ちて死亡。search_valueはturn2から一貫して-0.8〜-1.06と、val80同様に
+早期から劣勢予測。2戦とも「安定して削れてはいるが、どこかで大きな一撃を受けて即死する」という共通の
+死に方をしており、単発の苦戦ではなくこのボス特有の高火力アタックパターンの可能性がある。まだn=2で
+コード変更はしないが、追加seedでの継続観測対象とする。
