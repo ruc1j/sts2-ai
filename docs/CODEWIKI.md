@@ -1453,3 +1453,9 @@ data/leader_val113_trace.jsonl。HP11・block0の局面でROCKETのLASER_MOVE in
 (raw_damage31、crab facing次第で変動)。crab_facing_direct→aoe_threat_directと同一ターン内で
 2つの直行分岐が発火したが、この火力を受け切れる状態ではなく敗北。intentが見える形で確認できたのは
 初めてで、既知の「lethal優先バグ修正後も難度自体は高いまま」という結論を裏付ける追加データ。
+
+### 2026-08-23 val116: KIN_PRIEST 9件目、BEAM_MOVE(5×3=15)がHP9・block0を確実に上回る回避不能死
+
+data/leader_val116_trace.jsonl。intentでKIN_PRIESTのBEAM_MOVEが1回5ダメージ×3repeats=15と確認でき、
+HP9・block0に対し確実な致死量だったと判明。unsafeガード(ANGER拒否)は正しい判断だったが代替手段が
+無かった。KIN_PRIESTのdecision_source付きサンプルは9件に到達。
