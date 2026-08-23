@@ -1118,3 +1118,17 @@ data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollou
 data/leader_val93_trace.jsonl。turn13、HP3でrollout_rejected_unsafeの後end_turnして敗北。
 KIN_PRIESTのdecision_source付きサンプルが計8件に到達、いずれもreviewerのunsafe拒否ガードレビュー
 待ちの追加データとして蓄積中。
+
+### 2026-08-23 val98: KNOWLEDGE_DEMON戦がturn11まで進行した末に300s room timeoutで打ち切り(新パターン)
+
+data/leader_val98_log.txt末尾: Act2 Boss room(KNOWLEDGE_DEMON、3件目の遭遇)で
+`Operation timed out after 300s`(`AutoSlayer.HandleRoomAsync`のroom全体タイムアウト)。
+data/leader_val98_trace.jsonlはturn11まで進行中(combat_endに到達せず、実際の勝敗は不明のまま
+打ち切り)。以前記録した「Elite入場直後、戦闘開始前の完全ハング」(val38/49/78、n=3)とは異なり、
+今回は戦闘自体が最後まで正常に進行していた(turn11で敵HP346→198まで削れている)。KNOWLEDGE_DEMONは
+開始HP346と非常に高く、これまでの2戦(val80/83)もいずれも敗北。今回は決着すら付かず、1000
+simulationsのrollout判断を10ターン以上繰り返す累積のリアルタイム経過時間が、`run_official_autoslay.ps1`
+側の300秒room timeoutに達したと見られる。コード上のハング/バグではなく、単純に「高HPボスとの長期戦
++高simulations設定」の組み合わせが運用上のタイムアウトに衝突する新しいパターンとして記録。
+対策候補(未着手、優先度低): 長期戦時にsimulationsを動的に下げる、room timeoutを延長する、等。
+現時点ではコード変更・タスク化はせず記録のみ。
