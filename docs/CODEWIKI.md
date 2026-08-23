@@ -959,3 +959,12 @@ targetless lethal(AoE盲点修正)は6件全てparent combatがwon=true。Crab f
 (ab1793b)より前のtraceに限られ、修正後は0件。22件の主な内訳はVANTOM/CEREMONIAL_BEAST/KIN_PRIESTでの
 低HP・防御不足とrollout_rejected_unsafeで、これらは既に「単に手強いボス」と分類済みの敵。Act1低下は
 今回のバッチでこれら既知の強敵が偏って出現した標本ノイズの可能性が高い。
+
+### 本日初のAct3到達(leader_val56、2026-08-23)
+
+seed=6A311C0F2E、Act1・Act2両方のボスを突破し、Act3 F4のMonster室まで到達(data/leader_val56_log.txt
+"Entering Monster room (Act 3, Floor 4)")。ベースラインのAct2 clear率は約1%(202 seed中2)なので稀な
+成功例。Act3 F4でPUNCH_CONSTRUCT+CUBEX_CONSTRUCT×2の3体戦、turn3でHP22→0敗北(data/leader_val56_trace.jsonl:396-400、
+全アクションrollout_rejected_unsafe/no_playable_card)。単一成功例なので断定はしないが、Act1/2を
+安定して抜けられる可能性を示す実例として記録。今後この戦闘(Construct系複数敵)のdecision_source分析も
+候補に入れること。
