@@ -1112,3 +1112,9 @@ n=2、FACT/HYPOTHESIS分離した詳細分析は行っていない。researcher/
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして
 記録され、その直後に敗北。reviewerへ依頼中のunsafe拒否ガード妥当性レビューの追加サンプル。
+
+### 2026-08-23 val93: KIN_PRIEST 8件目、死亡ターン(turn13)にもunsafe拒否
+
+data/leader_val93_trace.jsonl。turn13、HP3でrollout_rejected_unsafeの後end_turnして敗北。
+KIN_PRIESTのdecision_source付きサンプルが計8件に到達、いずれもreviewerのunsafe拒否ガードレビュー
+待ちの追加データとして蓄積中。
