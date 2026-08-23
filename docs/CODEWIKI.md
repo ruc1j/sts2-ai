@@ -1445,3 +1445,11 @@ HP14・block12(のちに7)に対し明確な致死量だったことが即座に
 なったのも正しい判断で、残り手札がほぼ攻撃札のみ(防御札なし)だったため回避不能な敗北と特定できた
 ——従来のtrace形式ではここまで数分かかっていた分析が数秒で完了。intent/hand/legal_actionsの追加は
 狙い通り機能している。この件自体はコード変更不要(単なる手札運の悪い正当な敗北)。
+
+### 2026-08-23 val113: CRUSHER+ROCKET post-fix 4戦目も敗北(0/4)、ROCKETのLASER_MOVEが原因と
+intentで確認
+
+data/leader_val113_trace.jsonl。HP11・block0の局面でROCKETのLASER_MOVE intentがdamage24〜37
+(raw_damage31、crab facing次第で変動)。crab_facing_direct→aoe_threat_directと同一ターン内で
+2つの直行分岐が発火したが、この火力を受け切れる状態ではなく敗北。intentが見える形で確認できたのは
+初めてで、既知の「lethal優先バグ修正後も難度自体は高いまま」という結論を裏付ける追加データ。
