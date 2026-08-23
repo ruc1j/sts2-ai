@@ -1389,3 +1389,12 @@ direct/kin_follower_directをurgent限定に
 incoming0、Inflame/Strike/Anger)でrollout_successに固定されることをregression testで確認。
 python3 -m unittest discover 537件通過(leader独立検証済み)。TASK2(aoe_threat_direct)へ継続を
 依頼した。
+
+### 2026-08-23 TOP3の2件目修正完了(commit cf08590、leader検証済み): aoe_threat_directのincoming
+閾値を必須化
+
+`len(enemy_by_id) >= 3 or incoming >= max(1, hp // 2)`の人数単独OR条件を削除し、
+`incoming >= max(1, hp // 2)`のみに変更。既存の生存性ガード(TASK1のdefense_can_survive等)は維持。
+reviewer提供の再現条件(HP80、3体HP100・incoming0、Thunderclap/Inflame/Strike)でrollout_successに
+固定されることを確認。python3 -m unittest discover 538件通過(leader独立検証済み)。TASK3
+(rage_direct)へ継続を依頼した。
