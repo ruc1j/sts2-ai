@@ -919,3 +919,22 @@ leaderの実機run群にVANTOMが9回登場(別seed)し、Crusher+Rocketの前�
 **結論**: 主分類はM(高難度/高分散)またはE/F(低HP・防御/資源不足)候補。現n=9では因果断定不可、
 コード変更は保留。KIN_PRIESTと合わせ、「Crusher+Rocketは本物のバグだったが、KIN_PRIEST/VANTOMは
 単に手強いボス」という切り分けがdecision_sourceベースで進んでいる。
+
+### Elite部屋入場直後の300秒完全ハング(researcher、2026-08-23) — コード起因ではない、運用上の既知事象
+
+leaderの実機run50本中2本(val38/val49)で、Act2 Elite部屋入場直後に完全ハングし
+`Operation timed out after 300s`で停止した。**我々のコード(CombatBridge/Python agent)が一切動く前に
+発生しており、Bridgeやsearch/policyのバグではない。**
+
+- 2件とも共通してAct2のElite入場直後、GC0/GC1/GC2カウントが通常(run開始時10前後)の約19倍(187〜193/
+  92〜94/31〜35)、VRAM 1.2GB台まで蓄積した状態で発生。val49では同一run内のAct1 Elite(GC0/1/2は
+  94/45/20とまだ低い状態)は35秒で正常終了しており、Elite全般の即時ハングではなく、run経過に伴う
+  リソース蓄積が疑わしい。
+- 全50 log中この現象はこの2件のみ(4%)。
+
+**分類**: L(timeout/performance)、運用上のGodot/engineリソース蓄積が最有力候補。A(不正action)/
+C(combat search)/J(event fallback)の証拠なし。コード変更は保留。
+
+**注意**: AIの実力が上がりAct2/3への到達・長時間生存が増えるほど、この現象に遭遇する頻度が上がる
+可能性がある。今後同様のハングが増えるようなら、run監視スクリプト側でVRAM/GC閾値を見て早期に
+ゲームプロセスを再起動する等の運用対策を検討すること(コード修正ではなく運用対策)。
