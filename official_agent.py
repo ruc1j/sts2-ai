@@ -879,10 +879,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             and _number(hand.get(action.get("hand_index"), {}).get("cost"), 1) <= remaining_energy
             for action in cards
         )
-        if attack_after_rage:
+        remaining = max(0, incoming - _number(player.get("block")))
+        if attack_after_rage and (remaining > 0 or not rollout_enabled):
             # combat.py models Rage as 3 block per attack (5 when upgraded).
             rage_block = 5 if _number(hand.get(rage.get("hand_index"), {}).get("upgrade")) else 3
-            remaining = max(0, incoming - _number(player.get("block")))
             defenses = [action for action in cards if card_value(action, "block") > 0]
             best_defense = max(defenses, key=lambda action: card_value(action, "block"), default=None)
             if best_defense and remaining > rage_block and card_value(best_defense, "block") > rage_block:
