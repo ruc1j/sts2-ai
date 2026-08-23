@@ -993,3 +993,21 @@ focus_direct 2件(33 action中)。最終的にHP0で敗北。過去の修正後�
 post-fix Crusher+Rocketは0/3勝。lethal優先バグ自体は塞がったが、この敵自体の難度は依然高いままの
 可能性が高い(修正は「無駄打ちを防ぐ」ものであり「勝てるようにする」ものではないため、想定内)。
 追加seedでの継続観測が必要。
+
+### 2026-08-23 val77: Act2 F12 Elite DECIMILLIPEDE戦、REATTACH_POWERによる蘇生で敗北(コードバグではない)
+
+data/leader_val77_trace.jsonl(seed=C1DF9D5FAA)。Act2 F12 EliteのDECIMILLIPEDE(3セグメント、
+REATTACH_POWER=25)戦でHP0敗北。turn7時点でsearch_value=-0.98(rollout_success)と既にsimulatorが
+ほぼ確実な劣勢を予測していた。turn8開始時、直前に撃破していたMIDDLEセグメントがHP0→25へ
+REATTACH_POWERで復活(combat.pyのreattach処理は正しく反映、trace上でも0→25と一致)。player HP1の
+まま複数回rollout_rejected_unsafeが発生し、そのままturn8終了時に敗北。死亡直前のunsafe拒否は
+KIN_PRIESTの過去分析と同様のパターン(低HP局面でのfallback連鎖)。simulatorが事前に-0.98と正確に
+劣勢を検知していたことから、scoring自体は機能しており、単に苦戦マッチアップ(M: unavoidable/high
+variance)と判断。コード変更は不要。
+
+なお同run上、AutoSlay側watchdogがElite入場〜敗北検出まで約160秒(12:00:24入場→12:03:04 Watchdog
+timeout)かかっている。ログの流れは「Finished Elite room」→「Waiting for rewards screen」→
+watchdog検出、で、死亡時はNGameOverScreenが出ているにも関わらずAutoSlayが報酬画面待ちのまま
+watchdogタイムアウトに頼って終了を検出している。以前記録した「Elite入場直後の完全ハング(300s、
+戦闘開始前)」とは別パターン(今回は戦闘自体は最後まで進行し、終了検出のみが遅い)。これもゲーム側
+AutoSlayの挙動であり、こちら側のコード修正対象ではない。
