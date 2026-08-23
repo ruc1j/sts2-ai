@@ -951,3 +951,11 @@ C(combat search)/J(event fallback)の証拠なし。コード変更は保留。
   3件では再現しなかった**。範囲内にKIN勝利例(val39)も1件あり、KIN_PRIESTは不可避の死ではない。
   デッキ/HP/fallback条件の差を今後比較する。
 - VANTOMは11戦5勝6敗(約45%)で、前回の44%とほぼ一致。KIN群は4戦1勝3敗、simulations null率57.0%。
+
+**Act1 clear率低下(29.0%)の追加確認**: 22件のAct1失敗を、本日の修正経路(crab_facing_direct/AoE
+targetless lethal/self-damage拒否/SoarPower)ごとに突き合わせたが、**新規regressionの証拠は無い**。
+targetless lethal(AoE盲点修正)は6件全てparent combatがwon=true。Crab facing/SoarPowerはこの22件
+そのものに一度も出現せず(評価対象外であって「効果なし」ではない)。StopIteration例外はAoE修正
+(ab1793b)より前のtraceに限られ、修正後は0件。22件の主な内訳はVANTOM/CEREMONIAL_BEAST/KIN_PRIESTでの
+低HP・防御不足とrollout_rejected_unsafeで、これらは既に「単に手強いボス」と分類済みの敵。Act1低下は
+今回のバッチでこれら既知の強敵が偏って出現した標本ノイズの可能性が高い。
