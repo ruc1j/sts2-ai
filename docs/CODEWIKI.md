@@ -1202,3 +1202,31 @@ log-monitorが正常に動作し、初のレポートを送ってきた(以前�
 仮にHarmonyパッチで割り込めれば毎回の敗北後に数十〜数百秒の無駄な待機時間を削減できる可能性がある、
 という効率改善の提案。これは正誤(correctness)には影響しない運用効率の話であり、researcherの
 KIN_PRIEST F仮説対応(勝率に直結)より優先度は低いと判断、現時点ではタスク化を保留しコード変更もしない。
+
+### 2026-08-23 reviewerのunsafe拒否ガードコードレビュー: 3件の具体的バグ発見(未修正、coderへ依頼予定)
+
+reviewerがofficial_agent.pyのunsafe拒否ガードをコードレビューし、再現手順付きで3件報告(diffなし、
+既存テストのみ実行して確認、528件通過を維持したまま発見)。いずれもcombat.py/simulatorではなく
+official_agent.py側のロジックギャップ。
+
+1. **[HIGH] aoe_threat_direct分岐がunsafeガードの手前で直接returnする**(official_agent.py:810-812):
+   `incoming >= hp // 2`条件は`incoming >= hp`(即死級)も含むが、この分岐はrollout/unsafeガードより
+   前に実行されるため、生存可能なDefendがあるのに非ブロック・非致死のAoE攻撃を選んで自滅しうる。
+   再現: hp=10/block=0、2体がそれぞれintent damage=5(計10=即死級)の局面でTHUNDERCLAP(範囲4)と
+   DEFEND(block5)がある場合、aoe_threat_directがTHUNDERCLAPを選び死亡。Defendなら生存。
+2. **[MEDIUM] 死亡済み敵(hp<=0)の古いintentがenemy_incoming集計に混入しうる**
+   (official_agent.py:333 `_intent_incoming`、enemy_incoming構築部/CombatBridge.cs:210-221):
+   死亡した敵のNextMove/intentsがCombatBridge側でシリアライズされたままの場合、その古いダメージ値が
+   incoming計算に混入し、実際には脅威が無いのに不要なunsafe拒否を誘発しうる。IllusionPower持ち敵
+   (EYE_WITH_TEETH等、val87/88で観測)のような「hp=0のまま盤面に残る」ケースで特に疑わしい。公式
+   observationでの検証fixtureが必要。
+3. **[HIGH] unsafeガードがblock/lethal以外の被害軽減を認識しない**
+   (official_agent.py:943-947 `choose()`、`_card_value()`/`is_lethal()`):
+   UPPERCUT(Weak付与)やMANGLE(敵Strength低下)のように、blockを得ずに次の被弾を軽減するカードが
+   「安全」と判定されず不当にunsafe拒否される。再現: hp=10、敵intent damage=10(致死級)の局面で
+   UPPERCUT(13ダメージ+Weak、次の被弾10→7に軽減)とBLUDGEON(32ダメージ、被弾据え置き)がある場合、
+   rolloutがUPPERCUTを選んでもunsafe拒否されBLUDGEONにfallbackし死亡。UPPERCUTなら生存できた。
+
+この3件目は、researcherのKIN_PRIEST分析(F仮説: 強防御カード不足が上流原因、unsafe拒否はその下流症状)
+と矛盾しない——unsafeガード自体にも「軽減効果を正しく評価できない」という独立した実装ギャップが
+あることが分かった形。優先度は1・3(HIGH)を先に、2(MEDIUM)を後に、coderへ修正を依頼する。
