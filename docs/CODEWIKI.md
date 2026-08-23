@@ -1107,3 +1107,8 @@ rolloutより先に実行される`lethal_direct`の早期リターンには反�
 n=2、FACT/HYPOTHESIS分離した詳細分析は行っていない。researcher/reviewerが手が空き次第、
 「IllusionPower持ちenemyへの`lethal_direct`が、他に非確定だが本命(FOGMOG等)への攻撃機会がある
 場合に不当に優先されていないか」を確認する調査を次の候補として残す。
+
+### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
+
+data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして
+記録され、その直後に敗北。reviewerへ依頼中のunsafe拒否ガード妥当性レビューの追加サンプル。
