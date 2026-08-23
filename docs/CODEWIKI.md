@@ -1023,3 +1023,12 @@ data/leader_val78_log.txt:334-352(seed=3D52DA3B7C)。Act2 F8 Elite入場直後�
 「長時間run後のリソース蓄積が引き金」という既存仮説と整合する追加データ点。AutoSlay watchdog自体は
 ゲーム側C#実装(MegaCrit.Sts2.Core.AutoSlay.Helpers.Watchdog)でこちらのMod外なので、引き続き
 コード修正対象ではなく運用上の既知事象として扱う。n=3まで増えたが、傾向確認のみで対策は保留。
+
+### 2026-08-23 val79: Act1 Boss VANTOM戦で敗北、turn9-10にrollout_rejected_unsafe連続
+
+data/leader_val79_trace.jsonl(seed=11FF5BC674)。Act1 Boss VANTOM戦でturn11にHP3→0敗北。turn9-10で
+rollout_rejected_unsafeが4連続(trace seq175/176/178/179/180)発生しつつVANTOM HPは71→13まで削れて
+おり、拒否後も攻撃は続行できていた。死亡turn11自体にunsafe拒否は無く(search_value=-1.04〜-1.06と
+既に敗北をrollout側が予見)、既存のVANTOM分析(構造的バグなし、44-45%程度の勝率)およびKIN_PRIEST
+分析(死亡ターン自体にはunsafe拒否が付随しないことが多い)と整合。reviewerへ依頼中のunsafe拒否ガード
+コードレビュー用の追加サンプルとして有用。
