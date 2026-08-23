@@ -1285,3 +1285,11 @@ DRAW_CARDS/ALL_ENEMY_CARDSは含めていない。boss bonusはdeck sizeや`_blo
 適用されることを確認済み。regression test追加、python3 -m unittest discover 532件通過(leader独立
 検証済み)。C#変更なし。これで本日の一連の対応(win/loss mismatch修正、reviewer発見3件、researcher
 発見のKIN F仮説)が全て完了。効果測定は追加のKIN_PRIEST遭遇seedが溜まってから行う。
+
+### 2026-08-23 val106: KIN policy修正後、初のKIN_PRIEST遭遇(敗北、n=7、F仮説と矛盾しない)
+
+data/leader_val106_trace.jsonl。turn11、HP2→0で敗北。KIN到達時点のデッキ16枚中STRONG_BLOCK_CARDS
+はEVIL_EYEの1枚のみで、依然として3枚しきい値未達。boss bonus自体は報酬候補の中でSTRONG_BLOCK_CARDS
+の優先度を上げるだけで、そもそも十分な数のstrong block候補が提示されなければ効果が出ない——今回は
+単に提示された報酬に強防御カードが少なかった可能性が高い。researcherのF仮説(strong<3=敗北)とは
+矛盾しない追加データ点(n=7、6敗1勝→7敗1勝)。単一seedでの効果判定はできないため、今後も継続観測。
