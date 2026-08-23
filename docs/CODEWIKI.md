@@ -1011,3 +1011,15 @@ watchdog検出、で、死亡時はNGameOverScreenが出ているにも関わら
 watchdogタイムアウトに頼って終了を検出している。以前記録した「Elite入場直後の完全ハング(300s、
 戦闘開始前)」とは別パターン(今回は戦闘自体は最後まで進行し、終了検出のみが遅い)。これもゲーム側
 AutoSlayの挙動であり、こちら側のコード修正対象ではない。
+
+### 2026-08-23 val78: Act2 Elite入場直後ハング、3件目(n=3)
+
+data/leader_val78_log.txt:334-352(seed=3D52DA3B7C)。Act2 F8 Elite入場直後、CombatBridge/敵生成の
+ログが一切出る前にwatchdogがNo progress 47.9sで検出、run failed(exit code 1)。これはval38
+(Act2 F12、300s)・val49(Act2 F8、300s)に続く3件目で、いずれも「Act2のElite入場直後、戦闘開始前」
+という共通パターン。val49とval78はどちらもAct2 F8だが、seed(C8259B2C4F/3D52DA3B7C)は別物なので
+座標一致は偶然の可能性が高い。今回はwatchdog検出までの時間が47.9秒とこれまでの300秒より大幅に
+短く、リソース蓄積量(GC0=167、val38/49の187-193よりやや少ない)も相関する形で少なめだった。
+「長時間run後のリソース蓄積が引き金」という既存仮説と整合する追加データ点。AutoSlay watchdog自体は
+ゲーム側C#実装(MegaCrit.Sts2.Core.AutoSlay.Helpers.Watchdog)でこちらのMod外なので、引き続き
+コード修正対象ではなく運用上の既知事象として扱う。n=3まで増えたが、傾向確認のみで対策は保留。
