@@ -1132,3 +1132,13 @@ simulationsのrollout判断を10ターン以上繰り返す累積のリアルタ
 +高simulations設定」の組み合わせが運用上のタイムアウトに衝突する新しいパターンとして記録。
 対策候補(未着手、優先度低): 長期戦時にsimulationsを動的に下げる、room timeoutを延長する、等。
 現時点ではコード変更・タスク化はせず記録のみ。
+
+### 2026-08-23 leader実機run 100本到達の節目
+
+data/leader_val1〜val100_trace.jsonl(全100run、重複seedなし、unique seed=100)を集計。
+Act2到達(Act1 boss clear相当) 34/100=34.0%、Act3到達 1/100=1.0%(val56)。
+baseline R5(修正前307 trace中202 unique seed: Act1 clear 43.1%、Act2到達 0.99%)と比較すると
+Act2到達率はやや低め(34.0% vs 43.1%)だがAct3到達率はほぼ同水準(1.0% vs 0.99%)。val20〜50の
+n=31時点でresearcherが暫定報告した29.0%よりは基準値に近づいており、本日の一連の修正
+(Crab facing lethal優先、AoE lethal盲点、self-damage回避、SoarPower等)による新規regressionの
+証拠は引き続き見られない。詳細なFACT/HYPOTHESIS分離分析はresearcher手隙時に別途依頼予定。
