@@ -1228,6 +1228,8 @@ official_agent.py側のロジックギャップ。
    「安全」と判定されず不当にunsafe拒否される。再現: hp=10、敵intent damage=10(致死級)の局面で
    UPPERCUT(13ダメージ+Weak、次の被弾10→7に軽減)とBLUDGEON(32ダメージ、被弾据え置き)がある場合、
    rolloutがUPPERCUTを選んでもunsafe拒否されBLUDGEONにfallbackし死亡。UPPERCUTなら生存できた。
+   対応: UPPERCUTは対象敵の観測intentへWeakの3/4補正、MANGLEはStrength減少量(通常10、upgrade時15)を
+   適用した次hit推定をunsafe判定に使い、両方のregression testを追加した。
 
 この3件目は、researcherのKIN_PRIEST分析(F仮説: 強防御カード不足が上流原因、unsafe拒否はその下流症状)
 と矛盾しない——unsafeガード自体にも「軽減効果を正しく評価できない」という独立した実装ギャップが

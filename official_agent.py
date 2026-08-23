@@ -942,14 +942,40 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 "kin_follower_urgent_direct",
             )
 
+    def mitigation_incoming(action: dict) -> int:
+        card_id = action.get("card_id")
+        if card_id not in {"CARD.UPPERCUT", "CARD.MANGLE"}:
+            return incoming
+        target_id = action.get("target_id")
+        target = enemy_by_id.get(target_id)
+        current = enemy_incoming.get(target_id, 0)
+        if target is None or current <= 0:
+            return incoming
+        repeats = lambda intent: max(1, _number(intent.get("repeats"), 1))
+        if card_id == "CARD.UPPERCUT":
+            projected = sum(
+                max(0, _number(intent.get("damage")) * 3 // 4) * repeats(intent)
+                for intent in target.get("intents") or ()
+            )
+        else:
+            upgrade = _number(hand.get(action.get("hand_index"), {}).get("upgrade"))
+            strength_reduction = 15 if upgrade else 10
+            projected = sum(
+                max(0, _number(intent.get("damage")) - strength_reduction) * repeats(intent)
+                for intent in target.get("intents") or ()
+            )
+        return incoming - current + projected
+
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if rollout_enabled:
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
             # The rollout can miss a live enemy intent when its move/power is only partially
-            # modeled. Never spend the last HP on a non-blocking, non-lethal play.
-            rollout_is_unsafe = incoming >= hp and card_value(selected, "block") <= 0 and not is_lethal(selected)
+            # modeled. Never spend the last HP on a non-blocking, non-lethal play unless the card
+            # itself reduces the next hit enough to survive (e.g. Uppercut's Weak or Mangle's
+            # Strength reduction).
+            rollout_is_unsafe = mitigation_incoming(selected) >= hp and card_value(selected, "block") <= 0 and not is_lethal(selected)
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.

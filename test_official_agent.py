@@ -331,6 +331,28 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=1)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_rollout_allows_nonblocking_damage_mitigation(self) -> None:
+        for card_id, vars_ in (
+            ("CARD.UPPERCUT", [{"id": "Damage", "value": 13}, {"id": "Weak", "value": 1}]),
+            ("CARD.MANGLE", [{"id": "Damage", "value": 15}]),
+        ):
+            with self.subTest(card_id=card_id):
+                selected = {"type": "card", "card_id": card_id, "hand_index": 0, "target_id": 1}
+                observation = {
+                    "seq": 1,
+                    "legal_actions": [selected, {"type": "card", "card_id": "CARD.BLUDGEON", "hand_index": 1, "target_id": 1}, {"type": "end_turn"}],
+                    "player": {"hp": 10, "max_hp": 80, "block": 0, "energy": 3},
+                    "hand": [
+                        {"index": 0, "id": card_id, "type": "Attack", "vars": vars_},
+                        {"index": 1, "id": "CARD.BLUDGEON", "type": "Attack", "vars": [{"id": "Damage", "value": 32}]},
+                    ],
+                    "enemies": [{"combat_id": 1, "hp": 100, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []}],
+                }
+                with patch("official_agent.rollout_choice", return_value=selected):
+                    action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+                self.assertEqual(action["card_id"], card_id)
+                self.assertEqual(action["decision_source"], "rollout_success")
+
     def test_map_route_prefers_boss_reachable_path(self) -> None:
         # The col-1 branch dead-ends at a Treasure, so the planner follows the col-0 branch to the boss.
         observation = {
