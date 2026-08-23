@@ -984,3 +984,12 @@ FACT/HYPOTHESIS分離レビューは未実施、次にresearcherが動けたら�
 自体がtraceに残っていないため、reviewerによるofficial_agent.pyのunsafe拒否ロジック(incoming>=HPかつ
 非block・非lethal時に拒否)自体の妥当性コードレビューを依頼した。データ収集だけでなく、ロジック自体に
 過度に保守的な条件が無いか(例えば実際にはまだ生存可能な選択肢を拒否していないか)を確認する。
+
+### Crusher+Rocket修正後の初観測(leader_val68、2026-08-23)
+
+修正済みのcrab_facing_direct(4f28b85でlethal優先化済み)が実機で初めて発火した観測。Act2ボスCRUSHER+
+ROCKET戦、開始HP80、crab_facing_direct 11件/rollout_success 11件/fallback 7件/generic_multi_primary_
+focus_direct 2件(33 action中)。最終的にHP0で敗北。過去の修正後データ(2件、いずれも敗北)と合わせて
+post-fix Crusher+Rocketは0/3勝。lethal優先バグ自体は塞がったが、この敵自体の難度は依然高いままの
+可能性が高い(修正は「無駄打ちを防ぐ」ものであり「勝てるようにする」ものではないため、想定内)。
+追加seedでの継続観測が必要。
