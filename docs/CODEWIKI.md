@@ -1436,3 +1436,12 @@ data/leader_val111_log.txt(seed=F6688529F3)。Act1 F7/F15の2つのEliteは正�
 戦に勝利)したが、Act2 F11 Elite入場直後、戦闘開始前に`Operation timed out after 300s`。既知の
 「Elite入場直後の完全ハング」パターン(val38/49/78に続き4件目)。引き続きゲーム側AutoSlayの挙動で
 コード修正対象ではない。
+
+### 2026-08-23 val112: trace計装強化が実際に機能、初のintent付きtraceで死因を即座に特定できた
+
+data/leader_val112_trace.jsonl。Act2 F6 SPINY_TOAD(THORNS_POWER=5)戦で敗北。新フィールドにより、
+死亡直前の敵intentが`{"type":"Attack","damage":23,...}`(SPIKE_EXPLOSION_MOVE)と直接確認でき、
+HP14・block12(のちに7)に対し明確な致死量だったことが即座に判明。BASHがrollout_rejected_unsafeと
+なったのも正しい判断で、残り手札がほぼ攻撃札のみ(防御札なし)だったため回避不能な敗北と特定できた
+——従来のtrace形式ではここまで数分かかっていた分析が数秒で完了。intent/hand/legal_actionsの追加は
+狙い通り機能している。この件自体はコード変更不要(単なる手札運の悪い正当な敗北)。
