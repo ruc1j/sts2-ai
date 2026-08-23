@@ -1275,3 +1275,13 @@ discover 531件通過(leader独立検証済み)。
 これでreviewerが発見した3件(aoe_threat_direct自滅・UPPERCUT/MANGLE軽減未評価・死亡敵stale
 intent)すべて修正完了。3件ともC#変更なし・小さくcommit分割・leader独立検証(python3 -m unittest
 discover)済み。次はresearcherのKIN_PRIEST F仮説(強防御カード確保policy)対応をcoderへ依頼する。
+
+### 2026-08-23 KIN_PRIEST強防御カード確保policy修正完了(commit e466659、leader検証済み)
+
+leaderが事前調査した通り、BOSS_CARD_AXES(official_agent.py:1633-1638、次ボスが既知の時に対象カード
+の報酬優先度へ+2ボーナスを与える仕組み)にENCOUNTER.THE_KIN_BOSSが未登録だった(既存の4ボスには
+登録済み)。`"ENCOUNTER.THE_KIN_BOSS": STRONG_BLOCK_CARDS`の1行追加で解消。KINは単体ボスなので
+DRAW_CARDS/ALL_ENEMY_CARDSは含めていない。boss bonusはdeck sizeや`_block_starved`条件に依存せず
+適用されることを確認済み。regression test追加、python3 -m unittest discover 532件通過(leader独立
+検証済み)。C#変更なし。これで本日の一連の対応(win/loss mismatch修正、reviewer発見3件、researcher
+発見のKIN F仮説)が全て完了。効果測定は追加のKIN_PRIEST遭遇seedが溜まってから行う。
