@@ -1171,3 +1171,23 @@ researcherによるval37/39/47/50/57/58の再分析。核心の発見:
 F優位仮説を踏まえた上で「ガードの実装自体に単純ミスが無いか」の確認として引き続き有効。coderが
 現在の緊急タスク(win/loss mismatch調査)を終え次第、F側(強防御カード確保policy)の実装検討を
 次のタスクとして依頼する。
+
+### 2026-08-23 coderがval81のwin/loss mismatchを修正(commit 0dbffab、leader独立検証済み)
+
+Root cause: FeedのDamage中にThornsPowerが反射しplayerが一時HP0になり`CreatureCmd.Kill`が
+LoseCombat/RunManager.OnEnded(false)/NGameOverScreen遷移を正しく実行していたが、その後Feed自身の
+GainMaxHp+Heal効果がplayer HPを3へ戻すため、HPのみを見ていたCombatBridge.csが`won=true`と誤記録
+していた。単純なIsInProgressのrace conditionではなかった。修正はCombatBridge.cs:132で
+`NOverlayStack.Instance?.Peek() is NGameOverScreen`を確認し、trueならHPが正数でも`won=false`に
+する形。regression testをtest_official_trace.pyに追加。coderの報告によるとval1〜val101横断で
+この誤記録パターンが確認できたのはval81のみ(稀だが実在)。leader側で独立に
+`python3 -m unittest discover`(528件通過)と`build_official_mod.ps1`(実機DLL参照、0警告/0エラー)を
+確認し承認。以後のrun(val103〜)はこの修正込みのmodで実行される。
+
+### 2026-08-23 val102: FUZZY_WURM_CRAWLERのStrengthがturn9で21まで蓄積(参考メモ、対応不要)
+
+data/leader_val102_trace.jsonl。Act1、SHRINKER_BEETLE+FUZZY_WURM_CRAWLER戦でturn9時点のFUZZY_WURMの
+STRENGTH_POWERが21(以前の研究者報告val33の7→14よりさらに高い)。合計敵HPは48でSHACKLING_POTIONの
+使用しきい値(敵HP>=100)未満のため温存されたが、Strengthスノーボール自体はsearch_value=-0.98で
+正しく悲観評価されており、simulator側の見落としではなさそう。SHACKLING_POTIONの使用条件が「総HP」
+のみでなく「急速なStrength蓄積」も見るべきかは今後の検討候補として記録するのみ、現時点でタスク化はしない。
