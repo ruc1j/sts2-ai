@@ -1293,3 +1293,32 @@ data/leader_val106_trace.jsonl。turn11、HP2→0で敗北。KIN到達時点の�
 の優先度を上げるだけで、そもそも十分な数のstrong block候補が提示されなければ効果が出ない——今回は
 単に提示された報酬に強防御カードが少なかった可能性が高い。researcherのF仮説(strong<3=敗北)とは
 矛盾しない追加データ点(n=7、6敗1勝→7敗1勝)。単一seedでの効果判定はできないため、今後も継続観測。
+
+### 2026-08-23 先生の指摘(「取ったけど使われていないカード」)からCARD.INFERNO/CARD.CRUELTYの
+CARD_NAMES/combat.py登録漏れを発見(未修正、coderへ依頼予定)
+
+先生からの「取ったけど使われていないカードを調べさせて」という指示を受け、researcherがval1〜107の
+全107 run(全trace parse成功)を横断調査。
+
+FACT: 最終デッキのrun-card組合せ1,072件中98件(9.1%)が「そのrunで一度もplayされていない」。
+既知カード47件・未知カード51件に大別。
+
+最有力候補は**CARD.INFERNO**(最終デッキに入った6run中5run未使用: val31/33/54/87/100、いずれも
+取得後にcombat行動が多数あるのに未play)と**CARD.CRUELTY**(4run中3run未使用: val26/39/77)。
+両カードともofficial_agent.py:124(self-damage評価)・:170(INFERNO)・:1592(STRENGTH_CARDS、CRUELTY)
+では参照されるが、**CARD_NAMES辞書(official_agent.py:18-117)に未登録**であり、combat.pyにも
+cost/damage/power実装が一切無いことをleaderも独立に`grep`で確認した。CARD_NAMES未登録のカードは
+rolloutの既知カード集合から外れ、実際にplayされる際もheuristic_fallback(rollout_disabled_no_playable
+_card等)経由になる(val76でINFERNOが実際にplayされた2例はいずれもこの経路)。
+
+これは過去のFlame Barrier未モデル化(報酬では高評価だが実戦で完全play不能)と同じ系統のPOWER_NAMES/
+CARD_NAMES正規化漏れパターンだが、今回は100%未使用ではなく5/6・3/4という部分的な未使用のため、
+「引かなかった/他行動を優先しただけ」の可能性も残る——researcher自身、legal_actions/hand観測が
+無いtraceだけでは「候補に出たが未選択」と「rollout対象外で回避された」を区別できないと明記して
+おり、断定はしていない。
+
+RECOMMENDED: CARD_NAMESへのCARD.INFERNO/CARD.CRUELTY登録漏れと、combat.py側の効果実装有無を
+coder/reviewerで確認し、他のPOWER_NAMES漏れと同様の手順(ID正規化+効果実装+回帰テスト)で対応する
+候補としてcoderへ依頼する。CLUMSY/SPOILS_MAP/BYRDONIS_EGG/DECAY/LANTERN_KEYは100%未使用だが、
+report/curse/relic由来の可能性が高くプレイヤーカードではないと推測(未確定)。Burning Pact/Drum of
+Battle等の既知カードの未使用頻度は、モデル自体は存在するため今は追加runを待つ(即修正しない)。
