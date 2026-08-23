@@ -1429,3 +1429,10 @@ official_mod/CombatBridge.cs:99のcombat Trace呼び出しに、既にWriteObser
 過去のtraceファイル(val1〜111)は変更されず、val112以降のrunから新フィールドが出る。
 python3 -m unittest discover 540件通過、build_official_mod.ps1(実機DLL参照)0警告/0エラー、
 いずれもleader独立検証済み。次回run以降で実際に新フィールドが出力されているか確認する。
+
+### 2026-08-23 val111: Act2 F11 Elite入場直後ハング、4件目(n=4)
+
+data/leader_val111_log.txt(seed=F6688529F3)。Act1 F7/F15の2つのEliteは正常終了(F15はDECIMILLIPEDE
+戦に勝利)したが、Act2 F11 Elite入場直後、戦闘開始前に`Operation timed out after 300s`。既知の
+「Elite入場直後の完全ハング」パターン(val38/49/78に続き4件目)。引き続きゲーム側AutoSlayの挙動で
+コード修正対象ではない。
