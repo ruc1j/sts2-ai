@@ -2675,8 +2675,8 @@ class OfficialAgentTest(unittest.TestCase):
                 {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
             ],
             "enemies": [
-                {"combat_id": 1, "hp": 40, "powers": [], "intents": [{"damage": 8, "repeats": 1}]},
-                {"combat_id": 2, "hp": 10, "powers": [], "intents": [{"damage": 16, "repeats": 1}]},
+                {"combat_id": 1, "hp": 40, "powers": [], "intents": [{"damage": 24, "repeats": 1}]},
+                {"combat_id": 2, "hp": 10, "powers": [], "intents": [{"damage": 24, "repeats": 1}]},
             ],
             "legal_actions": [
                 {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
@@ -2687,6 +2687,33 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation)
         self.assertEqual(action["target_id"], 2)
         self.assertEqual(action["decision_source"], "generic_multi_primary_focus_direct")
+
+    def test_nonurgent_multi_primary_focus_defers_to_rollout(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.INFLAME", "type": "Power", "cost": 1},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 2, "id": "CARD.ANGER", "type": "Attack", "cost": 0, "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []},
+                {"combat_id": 2, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 2},
+                {"type": "card", "card_id": "CARD.ANGER", "hand_index": 2, "target_id": 1},
+                {"type": "card", "card_id": "CARD.ANGER", "hand_index": 2, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][0]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["card_id"], "CARD.INFLAME")
+        self.assertEqual(action["decision_source"], "rollout_success")
 
     def test_queen_boss_focuses_torch_head_amalgam(self) -> None:
         observation = {
@@ -2720,7 +2747,7 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 2)
 
-    def test_focuses_kin_followers_despite_minion_power(self) -> None:
+    def test_nonurgent_kin_follower_focus_defers_to_rollout(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
             "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
@@ -2734,9 +2761,11 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        action = choose(observation)
+        rolled = observation["legal_actions"][0]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual(action["target_id"], 1)
-        self.assertEqual(action["decision_source"], "kin_follower_direct")
+        self.assertEqual(action["decision_source"], "rollout_success")
 
     def test_urgent_kin_turn_still_focuses_an_attacking_follower(self) -> None:
         observation = {

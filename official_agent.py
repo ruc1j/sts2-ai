@@ -889,7 +889,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 return _tag_action(best_defense, "rage_defense_direct")
             return _tag_action(rage, "rage_direct")
 
-    # In multi-primary fights, spreading single-target damage leaves every attacker alive.
+    # In urgent multi-primary fights, spreading single-target damage leaves every attacker alive.
     # Keep lethal and urgent-defense decisions above this light tie-break, then focus the
     # next attack on the enemy with the largest incoming hit (lowest HP breaks ties).
     minion_ids = {
@@ -902,7 +902,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         if enemy.get("id") == "MONSTER.KIN_FOLLOWER"
     }
-    primary_ids = {combat_id for combat_id in enemy_by_id if combat_id not in minion_ids} | kin_follower_ids
+    primary_ids = {
+        combat_id
+        for combat_id, enemy in enemy_by_id.items()
+        if _number(enemy.get("hp")) > 0 and combat_id not in minion_ids
+    } | kin_follower_ids
     primary_ids -= {
         enemy["combat_id"]
         for enemy in observation.get("enemies", ())
@@ -916,8 +920,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         and not _is_self_damage(action, hand)
     ]
     urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
-    if len(primary_ids) > 1 and focusable and not lethal and not urgent:
-        source = "kin_follower_direct" if kin_follower_ids else "generic_multi_primary_focus_direct"
+    if len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids:
+        source = "generic_multi_primary_focus_direct"
         return _tag_action(
             max(
                 focusable,
