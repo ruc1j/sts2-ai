@@ -1232,3 +1232,11 @@ official_agent.py側のロジックギャップ。
 この3件目は、researcherのKIN_PRIEST分析(F仮説: 強防御カード不足が上流原因、unsafe拒否はその下流症状)
 と矛盾しない——unsafeガード自体にも「軽減効果を正しく評価できない」という独立した実装ギャップが
 あることが分かった形。優先度は1・3(HIGH)を先に、2(MEDIUM)を後に、coderへ修正を依頼する。
+
+### 2026-08-23 TASK1修正完了(commit 30dce94、leader検証済み): aoe_threat_directの自滅を防止
+
+official_agent.py:808-816に生存可能性チェックを追加。`incoming < hp + current_block`(既に安全)
+または`not defense_can_survive`(どのみち防御カードでも生存不能)のいずれかを満たす場合のみAoE直行
+分岐を許可し、致死級incomingで生存可能なDefendがあるのに非ブロックAoEを選ぶケースを塞いだ。
+regression test追加、python3 -m unittest discover 529件通過(leader独立検証済み)。C#変更なしの
+ためbuild再検証は不要。TASK2(UPPERCUT/MANGLE等の非block軽減をunsafe判定へ反映)へ継続を依頼した。
