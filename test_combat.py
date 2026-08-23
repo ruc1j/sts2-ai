@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE,
+    CRUELTY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -208,6 +208,35 @@ class CombatTest(unittest.TestCase):
         after_play = step(after_play, CRIMSON_MANTLE, DUMMY_DATA, random.Random(0))
         after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual((after_turn.player_hp, after_turn.player_block, _power(after_turn.player_powers, "CrimsonMantlePower"), _power(after_turn.player_powers, "CrimsonMantleSelfDamage")), (78, 20, 20, 2))
+
+    def test_inferno_reacts_to_player_side_damage_and_hits_all_enemies(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()))
+        combat = Combat(80, (INFERNO,), (), (), enemies, energy=1)
+        self.assertIn(INFERNO, legal_actions(combat))
+        after_play = step(combat, INFERNO, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_play.energy, _power(after_play.player_powers, "InfernoPower"), _power(after_play.player_powers, "InfernoSelfDamage")), (0, 6, 1))
+        upgraded = step(replace(combat, upgraded_cards=(INFERNO,)), INFERNO, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(upgraded.player_powers, "InfernoPower"), 9)
+        after_turn = step(after_play, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_turn.player_hp, [enemy.hp for enemy in after_turn.enemies]), (79, [94, 94]))
+
+    def test_inferno_reacts_to_thorns_reflection_after_a_card_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("ThornsPower", 5),))
+        combat = Combat(80, (INFERNO, STRIKE), (), (), (enemy,), energy=2)
+        after_power = step(combat, INFERNO, DUMMY_DATA, random.Random(0))
+        after_attack = step(after_power, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after_attack.player_hp, after_attack.enemies[0].hp), (75, 88))
+
+    def test_cruelty_increases_vulnerable_powered_attack_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("VulnerablePower", 1),))
+        combat = Combat(80, (CRUELTY, STRIKE), (), (), (enemy,), energy=2)
+        self.assertIn(CRUELTY, legal_actions(combat))
+        after_power = step(combat, CRUELTY, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after_power.player_powers, "CrueltyPower"), 25)
+        after_attack = step(after_power, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after_attack.enemies[0].hp, 90)
+        upgraded = step(replace(combat, upgraded_cards=(CRUELTY,)), CRUELTY, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(upgraded.player_powers, "CrueltyPower"), 50)
 
     def test_forgotten_ritual_gains_energy_only_after_prior_exhaust(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())

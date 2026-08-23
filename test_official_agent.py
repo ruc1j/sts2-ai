@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
-from combat import BURN, DAZED, END_TURN, INFECTION, TOXIC, step
+from combat import BURN, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -60,6 +60,52 @@ class OfficialAgentTest(unittest.TestCase):
                 "HellraiserPower": 1,
             },
         )
+
+    def test_maps_inferno_and_cruelty_into_rollout_cards_and_powers(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY", "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "turn": 1,
+            "player": {
+                "hp": 80, "max_hp": 80, "block": 0, "energy": 3,
+                "powers": [
+                    {"id": "POWER.INFERNO_POWER", "amount": 6},
+                    {"id": "POWER.CRUELTY_POWER", "amount": 25},
+                ],
+            },
+            "hand": [
+                {"index": 0, "id": "CARD.INFERNO", "type": "Power", "cost": 1},
+                {"index": 1, "id": "CARD.CRUELTY", "type": "Power", "cost": 1},
+            ],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.INFERNO", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.CRUELTY", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["hand"] = state.hand
+            captured["powers"] = dict(state.player_powers)
+            captured["legal_actions"] = combat_legal_actions(state)
+            return [(END_TURN, 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            selected = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["hand"], ("Inferno", "Cruelty"))
+        self.assertEqual(captured["powers"], {"InfernoPower": 6, "CrueltyPower": 25})
+        self.assertIn("Inferno", captured["legal_actions"])
+        self.assertIn("Cruelty", captured["legal_actions"])
+        self.assertEqual(selected["type"], "end_turn")
 
     def test_soar_power_normalizes_from_official_id_for_rollout_state(self) -> None:
         data = {"monsters": [{

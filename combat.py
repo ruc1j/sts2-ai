@@ -17,7 +17,7 @@ BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, 
 TOXIC, BURN, DAZED, FLAME_BARRIER, INFECTION = "Toxic", "Burn", "Dazed", "Flame Barrier", "Infection"
 MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Yet", "Offering", "Pacts End", "Pommel Strike"
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
-RUPTURE = "Rupture"
+RUPTURE, INFERNO, CRUELTY = "Rupture", "Inferno", "Cruelty"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -40,7 +40,7 @@ HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
-    CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3, BARRICADE: 3, PYRE: 2, BLOOD_WALL: 2,
+    CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, INFERNO: 1, CRUELTY: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3, BARRICADE: 3, PYRE: 2, BLOOD_WALL: 2,
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
@@ -79,10 +79,10 @@ ATTACKS = {
 INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {INFLAME, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER}
+POWERS = {INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
-    DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
+    DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
 }
@@ -282,7 +282,7 @@ def _sync_belt_buckle(combat: Combat) -> Combat:
     )
 
 
-def _apply_player_damage(combat: Combat, amount: int) -> Combat:
+def _apply_player_damage(combat: Combat, amount: int, *, trigger_inferno: bool = True) -> Combat:
     """Apply unblocked HP loss and the relics that modify it."""
     if amount <= 0:
         return combat
@@ -292,7 +292,8 @@ def _apply_player_damage(combat: Combat, amount: int) -> Combat:
         actual = min(actual, max(0, 20 - combat.damage_received_this_turn))
     # Tungsten Rod reduces each HP-loss event before Beating Remnant applies its turn-wide cap.
     if actual > 0 and _power(combat.player_powers, "BufferPower"):
-        return replace(combat, player_powers=_add_power(combat.player_powers, "BufferPower", -1))
+        updated = replace(combat, player_powers=_add_power(combat.player_powers, "BufferPower", -1))
+        return _trigger_inferno(updated) if trigger_inferno else updated
     hp = combat.player_hp - actual
     used_tail = combat.lizard_tail_used
     if hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not used_tail:
@@ -301,12 +302,13 @@ def _apply_player_damage(combat: Combat, amount: int) -> Combat:
     powers = combat.player_powers
     if actual > 0 and RELIC_SELF_FORMING_CLAY in combat.player_relics:
         powers = _add_power(powers, "SelfFormingClayPower", 3)
-    return _sync_red_skull(replace(
+    updated = _sync_red_skull(replace(
         combat, player_hp=hp, player_powers=powers,
         damage_received_this_turn=combat.damage_received_this_turn + actual,
         lost_hp_this_turn=combat.lost_hp_this_turn or actual > 0,
         lizard_tail_used=used_tail,
     ))
+    return _trigger_inferno(updated) if trigger_inferno else updated
 
 
 def _after_exhaust(combat: Combat, cards: tuple[str, ...], rng: random.Random, data: dict) -> Combat:
@@ -805,6 +807,24 @@ def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     return _mark_enemy_death(replace(enemy, block=enemy.block - blocked, hp=hp, powers=powers))
 
 
+def _trigger_inferno(combat: Combat) -> Combat:
+    """InfernoPower deals its amount to every living enemy after player-side HP loss."""
+    amount = _power(combat.player_powers, "InfernoPower")
+    if amount <= 0:
+        return combat
+    return replace(
+        combat,
+        enemies=tuple(_damage_enemy(enemy, amount, powered=False) if enemy.alive else enemy for enemy in combat.enemies),
+    )
+
+
+def _vulnerable_damage(combat: Combat, enemy: Enemy, damage: int) -> int:
+    """Apply Vulnerable's powered-attack multiplier, including CrueltyPower's bonus."""
+    if not _power(enemy.powers, "VulnerablePower"):
+        return damage
+    return damage * (150 + _power(combat.player_powers, "CrueltyPower")) // 100
+
+
 def _apply_curl_up(before: tuple[Enemy, ...], enemies: list[Enemy], card: str) -> None:
     """Resolve Louse Progenitor's one-shot block after a powered attack card."""
     if card not in ATTACKS:
@@ -1216,10 +1236,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         plating = _power(combat.player_powers, "PlatingPower")
         if plating:
             combat = replace(combat, player_block=combat.player_block + plating)
-        combat = _apply_player_damage(combat, hand_damage)
+        combat = _apply_player_damage(combat, hand_damage, trigger_inferno=True)
         # Knowledge Demon's DisintegrationPower deals flat damage at the end of the player's
         # turn; the live bridge exposes it as a player power, so include it in rollouts.
-        combat = _apply_player_damage(combat, _power(combat.player_powers, "DisintegrationPower"))
+        combat = _apply_player_damage(combat, _power(combat.player_powers, "DisintegrationPower"), trigger_inferno=True)
         if screaming_flagon:
             combat = replace(combat, enemies=tuple(_damage_enemy(enemy, 20, powered=False) if enemy.alive else enemy for enemy in combat.enemies))
         # ConstrictPower.AfterSideTurnEnd (Slithering Strangler): CreatureCmd.Damage for the
@@ -1231,7 +1251,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         if constrict:
             blocked = min(combat.player_block, constrict)
             combat = replace(combat, player_block=combat.player_block - blocked)
-            combat = _apply_player_damage(combat, constrict - blocked)
+            combat = _apply_player_damage(combat, constrict - blocked, trigger_inferno=True)
         # BeforeSideTurnEnd hooks.  Orichalcum checks the pre-hook block value, while Ripple
         # Basin independently rewards a turn with no attacks; both can trigger together.
         end_block = combat.player_block
@@ -1278,11 +1298,17 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
         # upcoming turn). new_turn is the turn number the player is about to begin.
         new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
+        inferno_self_damage = _power(player_powers, "InfernoSelfDamage")
+        if inferno_self_damage:
+            combat = _apply_player_damage(combat, inferno_self_damage, trigger_inferno=True)
+            player_powers = combat.player_powers
+            enemies = list(combat.enemies)
         crimson_mantle = _power(player_powers, "CrimsonMantlePower")
         crimson_self_damage = _power(player_powers, "CrimsonMantleSelfDamage")
         if crimson_self_damage:
-            combat = _apply_player_damage(combat, crimson_self_damage)
+            combat = _apply_player_damage(combat, crimson_self_damage, trigger_inferno=True)
             player_powers = combat.player_powers
+            enemies = list(combat.enemies)
         extra_block += crimson_mantle
         block_next = _power(player_powers, "BlockNextTurnPower")
         if block_next:
@@ -1492,7 +1518,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     self_damage = SELF_DAMAGE.get(card, 0)
     if self_damage:
         # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
-        damaged = _apply_player_damage(combat, self_damage)
+        damaged = _apply_player_damage(combat, self_damage, trigger_inferno=True)
         player_hp, combat = damaged.player_hp, damaged
     if card == NOT_YET:
         # No max-HP tracking in this model (Combat has no companion max_hp field), so the heal is
@@ -1511,6 +1537,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         player_powers = _add_power(player_powers, "CrimsonMantleSelfDamage", 1)
     if card == HELLRAISER:
         player_powers = _add_power(player_powers, "HellraiserPower", 1)
+    if card == INFERNO:
+        player_powers = _add_power(player_powers, "InfernoPower", 9 if card_was_upgraded else 6)
+        # InfernoPower keeps this private counter separately from its retaliation amount.
+        player_powers = _add_power(player_powers, "InfernoSelfDamage", 1)
+    if card == CRUELTY:
+        player_powers = _add_power(player_powers, "CrueltyPower", 50 if card_was_upgraded else 25)
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
@@ -1618,7 +1650,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
     if card == FEEL_NO_PAIN:
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
-    if card in {INFLAME, PRIMAL_FORCE, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
@@ -1647,7 +1679,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 if not enemies[index].alive:
                     break
                 target_enemy = enemies[index]
-                scaled = damage * 3 // 2 if _power(target_enemy.powers, "VulnerablePower") else damage
+                scaled = _vulnerable_damage(combat, target_enemy, damage)
                 # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage
                 # taken per card played earlier this turn (combat.cards_played_this_turn already
                 # counts the card resolving right now, hence the -1).
@@ -1678,8 +1710,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # _draw() already pops randomly from draw_pile, appending is equivalent.
         hive = sum(_power(enemy.powers, "PersonalHivePower") for enemy in before if enemy.alive)
         _apply_curl_up(tuple(before), enemies, card)
-        combat = _apply_player_damage(combat, reflected)
-        return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
+        combat = replace(combat, enemies=tuple(enemies))
+        combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+        return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
         enemy = enemies[int(target)]
         vulnerable = 6 if lamp_double else 3
@@ -1709,7 +1742,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 break
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
-            scaled = damage * 3 // 2 if _power(before_enemy.powers, "VulnerablePower") else damage
+            scaled = _vulnerable_damage(combat, before_enemy, damage)
             if _power(before_enemy.powers, "SlowPower"):
                 scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[hit] = _damage_enemy(before_enemy, scaled)
@@ -1726,8 +1759,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             elif before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(tuple(enemies), index):
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
         _apply_curl_up(before, enemies, card)
-        combat = _apply_player_damage(combat, reflected)
-        return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
+        combat = replace(combat, enemies=tuple(enemies))
+        combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+        return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == VOLLEY:
         damage = 14 if card_was_upgraded else 10
         damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
@@ -1745,7 +1779,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 break
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
-            scaled = damage * 3 // 2 if _power(before_enemy.powers, "VulnerablePower") else damage
+            scaled = _vulnerable_damage(combat, before_enemy, damage)
             if _power(before_enemy.powers, "SlowPower"):
                 scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[hit] = _damage_enemy(before_enemy, scaled)
@@ -1762,8 +1796,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             elif before_enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and not _decimillipede_teammates_dead(tuple(enemies), index):
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
         _apply_curl_up(before, enemies, card)
-        combat = _apply_player_damage(combat, reflected)
-        return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
+        combat = replace(combat, enemies=tuple(enemies))
+        combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+        return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     before = tuple(enemies)
     enemy = enemies[int(target)]
     if card == SPITE:
@@ -1797,7 +1832,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if pen_nib_double:
         damage *= 2
     if _power(enemy.powers, "VulnerablePower"):
-        damage = damage * 3 // 2
+        damage = _vulnerable_damage(combat, enemy, damage)
     # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage taken per
     # card played earlier this turn (combat.cards_played_this_turn already counts the card
     # resolving right now, hence the -1).
@@ -1883,9 +1918,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     # inserts Amount Dazed cards into the draw pile at a random position.
     hive = _power(enemy.powers, "PersonalHivePower")
     _apply_curl_up(before, enemies, card)
-    combat = replace(combat, player_powers=player_powers)
-    combat = _apply_player_damage(combat, reflected)
-    return replace(combat, enemies=tuple(enemies), draw_pile=combat.draw_pile + (DAZED,) * hive)
+    combat = replace(combat, player_powers=player_powers, enemies=tuple(enemies))
+    combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+    return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
 
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:
