@@ -56,7 +56,7 @@ CARD_DAMAGE = {
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
 CARD_HITS = {TWIN_STRIKE: 2}
-CARD_UPGRADE_DAMAGE = {TWIN_STRIKE: 2, MANGLE: 5, SETUP_STRIKE: 2}
+CARD_UPGRADE_DAMAGE = {BASH: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
@@ -662,6 +662,8 @@ def _spawn_wrigglers(data: dict, rng: random.Random) -> tuple[Enemy, ...]:
 def _effective_cost(combat: Combat, card: CardValue) -> int:
     name = card_name(card)
     cost = CARD_COST.get(name, 0)
+    if name == BODY_SLAM and card_is_upgraded(combat, card):
+        cost = 0
     if name == BARRICADE and card_is_upgraded(combat, card):
         cost = 2
     if name == UNMOVABLE and card_is_upgraded(combat, card):
@@ -1537,7 +1539,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
                 break
         return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,), energy=combat.energy - (0 if card_is_free else 1), enemies=tuple(enemies))
     if card == SHRUG:
-        base = 8 + (1 if card_was_upgraded else 0)
+        base = 8 + (3 if card_was_upgraded else 0)
         combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         combat = replace(
             combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,),
@@ -1546,7 +1548,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return _draw_into_combat(combat, 1, data, rng)
     if card in CARD_DRAW:
         combat = _draw_into_combat(
-            replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile), CARD_DRAW[card], data, rng,
+            replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile),
+            CARD_DRAW[card] + (1 if card == POMMEL_STRIKE and card_was_upgraded else 0), data, rng,
         )
         hand = list(combat.hand)
     if card == IMPATIENCE and not any(card_name(value) in ATTACKS for value in hand):
@@ -1676,7 +1679,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card in CARD_BLOCK:
         base = CARD_BLOCK[card]
         if card_was_upgraded:
-            base += 4 if card == BLOOD_WALL else 3 if card in {EVIL_EYE, COLOSSUS} else 2 if card == TRUE_GRIT else 0 if card == ARMAMENTS else 1
+            base += 4 if card == BLOOD_WALL else 3 if card in {DEFEND, EVIL_EYE, COLOSSUS} else 2 if card == TRUE_GRIT else 0 if card == ARMAMENTS else 1
         combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
     if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE, COLOSSUS, ARMAMENTS, BLOOD_WALL}:
         return combat
@@ -1889,7 +1892,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             1 for value in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile
             if card_name(value) in STRIKE_TAGGED
         )
-        damage = 6 + 2 * strikes
+        damage = 6 + (3 if card_was_upgraded else 2) * strikes
     elif card == ASHEN_STRIKE:
         damage = 6 + 3 * len(exhaust_before)
     elif card == MIND_BLAST:
@@ -1900,7 +1903,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = 7
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK}:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
@@ -1949,7 +1952,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
     if card in CARD_VULNERABLE_TARGET:
-        vulnerable = CARD_VULNERABLE_TARGET[card] * (2 if lamp_double else 1)
+        vulnerable = (CARD_VULNERABLE_TARGET[card] + (1 if card == BASH and card_was_upgraded else 0)) * (2 if lamp_double else 1)
         enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], "VulnerablePower", vulnerable)
     if card == UPPERCUT:
         weak = 1 + (1 if card_was_upgraded else 0)

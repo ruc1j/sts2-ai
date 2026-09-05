@@ -317,7 +317,7 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(step(combat, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 94)
         self.assertEqual(step(combat, "card:1@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 91)
         self.assertEqual(step(combat, "card:2", DUMMY_DATA, random.Random(0)).player_block, 5)
-        self.assertGreater(step(combat, "card:3", DUMMY_DATA, random.Random(0)).player_block, 5)
+        self.assertEqual(step(combat, "card:3", DUMMY_DATA, random.Random(0)).player_block, 8)
 
         armaments = Combat(80, (Card(ARMAMENTS), Card(STRIKE), Card(STRIKE)), (), (), (enemy,), energy=1)
         self.assertIn("card:0@0", legal_actions(armaments))
@@ -326,6 +326,15 @@ class CombatTest(unittest.TestCase):
         next_turn = step(upgraded, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(next_turn.hand.count(Card(STRIKE, upgraded=True)), 1)
         self.assertEqual(next_turn.hand.count(Card(STRIKE)), 1)
+
+    def test_upgraded_defend_and_shrug_match_card_values(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        for name, expected_block in ((DEFEND, 8), (SHRUG, 11)):
+            with self.subTest(card=name):
+                card = Card(name, upgraded=True)
+                combat = Combat(80, (card,), (), (), (enemy,), energy=1)
+                after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+                self.assertEqual(after.player_block, expected_block)
 
     def test_razor_tooth_upgrades_played_card_before_fiend_fire_exhausts_hand(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
@@ -1099,8 +1108,11 @@ class CombatTest(unittest.TestCase):
         self.assertTrue(all(enemy.hp == 83 for enemy in after.enemies))
 
     def test_pommel_strike_deals_damage_and_draws(self) -> None:
-        after = step(Combat(80, (POMMEL_STRIKE,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{POMMEL_STRIKE}@0", {}, random.Random(0))
+        base = Combat(80, (POMMEL_STRIKE,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1)
+        after = step(base, f"{POMMEL_STRIKE}@0", {}, random.Random(0))
+        upgraded = step(replace(base, upgraded_cards=(POMMEL_STRIKE,)), f"{POMMEL_STRIKE}@0", {}, random.Random(0))
         self.assertEqual((after.enemies[0].hp, len(after.hand)), (91, 1))
+        self.assertEqual((upgraded.enemies[0].hp, len(upgraded.hand)), (90, 2))
 
     def test_twin_strike_hits_twice_and_upgrade_adds_two_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
@@ -1179,8 +1191,14 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(after.enemies[0].hp, 100 - len(STARTING_DECK))
 
     def test_body_slam_damage_scales_with_player_block(self) -> None:
-        after = step(Combat(80, (BODY_SLAM,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, player_block=13), f"{BODY_SLAM}@0", {}, random.Random(0))
-        self.assertEqual(after.enemies[0].hp, 87)
+        base_damage = step(Combat(80, (BODY_SLAM,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, player_block=13), f"{BODY_SLAM}@0", {}, random.Random(0))
+        self.assertEqual(base_damage.enemies[0].hp, 87)
+        base_cost = Combat(80, (BODY_SLAM,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=0, player_block=10)
+        upgraded = replace(base_cost, upgraded_cards=(BODY_SLAM,))
+        self.assertNotIn(f"{BODY_SLAM}@0", legal_actions(base_cost))
+        self.assertIn(f"{BODY_SLAM}@0", legal_actions(upgraded))
+        after = step(upgraded, f"{BODY_SLAM}@0", {}, random.Random(0))
+        self.assertEqual((after.energy, after.enemies[0].hp), (0, 90))
 
     def test_headbutt_deals_damage_and_returns_a_discard_card_to_draw(self) -> None:
         after = step(Combat(80, (HEADBUTT,), (), (STRIKE,), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{HEADBUTT}@0", {}, random.Random(1))
@@ -1354,15 +1372,33 @@ class CombatTest(unittest.TestCase):
     def test_cinder_damages_and_exhausts_a_random_hand_card(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
         after = step(Combat(80, (CINDER, STRIKE, DEFEND), (), (), (enemy,)), f"{CINDER}@0", {}, random.Random(0))
+        upgraded = step(Combat(80, (CINDER, STRIKE, DEFEND), (), (), (enemy,), upgraded_cards=(CINDER,)), f"{CINDER}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 22)
+        self.assertEqual(upgraded.enemies[0].hp, 16)
         self.assertEqual(len(after.exhaust_pile), 1)
         self.assertEqual(sorted(after.hand), sorted({STRIKE, DEFEND} - set(after.exhaust_pile)))
 
     def test_perfected_strike_scales_with_strike_tagged_cards(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
-        combat = Combat(80, (PERFECTED_STRIKE, STRIKE), (STRIKE, STRIKE), (), (enemy,))
-        after = step(combat, f"{PERFECTED_STRIKE}@0", {}, random.Random(0))
-        self.assertEqual(after.enemies[0].hp, 26)  # 6 + 2 * 4 strikes
+        base = Combat(80, (PERFECTED_STRIKE, STRIKE), (STRIKE, STRIKE), (), (enemy,))
+        base_after = step(base, f"{PERFECTED_STRIKE}@0", {}, random.Random(0))
+        self.assertEqual(base_after.enemies[0].hp, 26)  # 6 + 2 * 4 strikes
+        combat = Combat(
+            80,
+            (Card(PERFECTED_STRIKE, upgraded=True), Card(STRIKE), STRIKE),
+            (Card(STRIKE, upgraded=True), STRIKE),
+            (),
+            (enemy,),
+        )
+        after = step(combat, "card:0@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 19)  # 6 + 3 * 5 strikes
+
+    def test_upgraded_bash_increases_damage_and_vulnerable(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        base = step(Combat(80, (BASH,), (), (), (enemy,), energy=2), f"{BASH}@0", {}, random.Random(0))
+        upgraded = step(replace(Combat(80, (BASH,), (), (), (enemy,), energy=2), upgraded_cards=(BASH,)), f"{BASH}@0", {}, random.Random(0))
+        self.assertEqual((base.enemies[0].hp, _power(base.enemies[0].powers, "VulnerablePower")), (92, 2))
+        self.assertEqual((upgraded.enemies[0].hp, _power(upgraded.enemies[0].powers, "VulnerablePower")), (90, 3))
 
     def test_ashen_strike_scales_with_exhaust_pile(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 30, "MOVE", ())
