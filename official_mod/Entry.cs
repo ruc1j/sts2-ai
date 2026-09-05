@@ -60,6 +60,8 @@ public static class Entry
     {
         while (SaveManager.Instance.PrefsSave is null)
             await Task.Delay(100);
+        if (CommandLineHelper.HasArg("sts2ai-autoslay"))
+            SaveManager.Instance.ObtainEpochOverride(EpochModel.GetId<NeowEpoch>(), EpochState.Revealed);
         if (CommandLineHelper.HasArg("unlock-ironclad-epochs"))
         {
             string[] epochs = [
