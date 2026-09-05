@@ -986,7 +986,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # modeled. Never spend the last HP on a non-blocking, non-lethal play unless the card
             # itself reduces the next hit enough to survive (e.g. Uppercut's Weak or Mangle's
             # Strength reduction).
-            rollout_is_unsafe = mitigation_incoming(selected) >= hp and card_value(selected, "block") <= 0 and not is_lethal(selected)
+            rollout_is_unsafe = max(0, mitigation_incoming(selected) - current_block) >= hp and card_value(selected, "block") <= 0 and not is_lethal(selected)
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.

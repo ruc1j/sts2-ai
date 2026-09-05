@@ -399,22 +399,50 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=1)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_rollout_guard_uses_unblocked_incoming(self) -> None:
+        for hp, expected_card, expected_source in (
+            (15, "CARD.STRIKE_IRONCLAD", "rollout_success"),
+            (9, "CARD.DEFEND_IRONCLAD", "heuristic_fallback"),
+        ):
+            with self.subTest(hp=hp):
+                observation = {
+                    "seq": 1,
+                    "legal_actions": [
+                        {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                        {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                        {"type": "end_turn"},
+                    ],
+                    "player": {"hp": hp, "max_hp": 80, "block": 8},
+                    "hand": [
+                        {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack"},
+                        {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill"},
+                    ],
+                    "enemies": [{"combat_id": 1, "hp": 30, "intents": [{"damage": 17, "repeats": 1}]}],
+                }
+                with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
+                    action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+                self.assertEqual(action["card_id"], expected_card)
+                self.assertEqual(action["decision_source"], expected_source)
+                if hp == 9:
+                    self.assertEqual(action["decision_reason"], "rollout_rejected_unsafe")
+
     def test_rollout_allows_nonblocking_damage_mitigation(self) -> None:
-        for card_id, vars_ in (
-            ("CARD.UPPERCUT", [{"id": "Damage", "value": 13}, {"id": "Weak", "value": 1}]),
-            ("CARD.MANGLE", [{"id": "Damage", "value": 15}]),
+        for card_id, vars_, hp, block, incoming in (
+            ("CARD.UPPERCUT", [{"id": "Damage", "value": 13}, {"id": "Weak", "value": 1}], 10, 0, 10),
+            ("CARD.UPPERCUT", [{"id": "Damage", "value": 13}, {"id": "Weak", "value": 1}], 7, 1, 10),
+            ("CARD.MANGLE", [{"id": "Damage", "value": 15}], 10, 0, 10),
         ):
             with self.subTest(card_id=card_id):
                 selected = {"type": "card", "card_id": card_id, "hand_index": 0, "target_id": 1}
                 observation = {
                     "seq": 1,
                     "legal_actions": [selected, {"type": "card", "card_id": "CARD.BLUDGEON", "hand_index": 1, "target_id": 1}, {"type": "end_turn"}],
-                    "player": {"hp": 10, "max_hp": 80, "block": 0, "energy": 3},
+                    "player": {"hp": hp, "max_hp": 80, "block": block, "energy": 3},
                     "hand": [
                         {"index": 0, "id": card_id, "type": "Attack", "vars": vars_},
                         {"index": 1, "id": "CARD.BLUDGEON", "type": "Attack", "vars": [{"id": "Damage", "value": 32}]},
                     ],
-                    "enemies": [{"combat_id": 1, "hp": 100, "block": 0, "intents": [{"damage": 10, "repeats": 1}], "powers": []}],
+                    "enemies": [{"combat_id": 1, "hp": 100, "block": 0, "intents": [{"damage": incoming, "repeats": 1}], "powers": []}],
                 }
                 with patch("official_agent.rollout_choice", return_value=selected):
                     action = choose(observation, enemy_data={"monsters": []}, simulations=1)
