@@ -4348,6 +4348,41 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(captured["combat"].draw_pile, ("Strike", "Defend"))
         self.assertEqual(captured["combat"].upgraded_cards, ("Strike",))
 
+    def test_rollout_preserves_enchantments_in_all_card_piles(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        ember = "ENCHANTMENT.TEZCATARAS_EMBER"
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "upgrade": 0, "enchantment": ember}],
+            "draw_pile": [{"id": "CARD.DEFEND_IRONCLAD", "upgrade": 0, "enchantment": ember}],
+            "discard_pile": [{"id": "CARD.BASH", "upgrade": 0, "enchantment": ember}],
+            "exhaust_pile": [{"id": "CARD.ANGER", "upgrade": 0, "enchantment": None}],
+            "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["combat"] = state
+            return [(END_TURN, 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["combat"].hand, (Card("Strike", enchantment=ember),))
+        self.assertEqual(captured["combat"].draw_pile, (Card("Defend", enchantment=ember),))
+        self.assertEqual(captured["combat"].discard_pile, (Card("Bash", enchantment=ember),))
+        self.assertEqual(captured["combat"].exhaust_pile, (Card("Anger"),))
+        self.assertEqual(captured["combat"].upgraded_cards, ())
+
     def test_rollout_maps_indexed_armaments_to_selected_hand(self) -> None:
         data = {"monsters": [{
             "id": "MONSTER.DUMMY",

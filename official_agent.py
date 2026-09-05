@@ -1903,7 +1903,10 @@ def _observation_card(value: object) -> str | Card:
     if isinstance(value, dict):
         card_id = value.get("id", "")
         name = CARD_NAMES.get(card_id, card_id)
-        return Card(name, _number(value.get("upgrade")) > 0)
+        enchantment = value.get("enchantment")
+        if not isinstance(enchantment, str):
+            enchantment = None
+        return Card(name, _number(value.get("upgrade")) > 0, enchantment=enchantment)
     name = card_name(value)
     return CARD_NAMES.get(name, name)
 

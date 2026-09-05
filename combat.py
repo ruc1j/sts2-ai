@@ -31,6 +31,7 @@ ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, 
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
 POTION_BLOOD, POTION_HEART, POTION_BRONZE = "POTION.BLOOD_POTION", "POTION.HEART_OF_IRON", "POTION.LIQUID_BRONZE"
+ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -150,6 +151,7 @@ class Enemy:
 class Card:
     name: str
     upgraded: bool = False
+    enchantment: str | None = None
 
 
 CardValue = str | Card
@@ -241,7 +243,7 @@ def _upgrade_card(card: CardValue) -> CardValue:
 
 
 def _copy_card(name: str, source: CardValue) -> CardValue:
-    return Card(name, source.upgraded) if isinstance(source, Card) else name
+    return Card(name, source.upgraded, source.enchantment) if isinstance(source, Card) else name
 
 
 def _remember_legacy_upgrades(combat: Combat, cards: tuple[CardValue, ...]) -> tuple[str, ...]:
@@ -662,6 +664,8 @@ def _spawn_wrigglers(data: dict, rng: random.Random) -> tuple[Enemy, ...]:
 def _effective_cost(combat: Combat, card: CardValue) -> int:
     name = card_name(card)
     cost = CARD_COST.get(name, 0)
+    if isinstance(card, Card) and card.enchantment == ENCHANTMENT_TEZCATARAS_EMBER:
+        cost = 0
     if name == BODY_SLAM and card_is_upgraded(combat, card):
         cost = 0
     if name == BARRICADE and card_is_upgraded(combat, card):
@@ -1905,6 +1909,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
     if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
+        damage += 3
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
         damage *= 2
