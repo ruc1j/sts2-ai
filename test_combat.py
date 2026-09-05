@@ -8,8 +8,8 @@ from combat import (
     CRUELTY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
 )
 
@@ -297,6 +297,44 @@ class CombatTest(unittest.TestCase):
         after_upgraded = step(upgraded, ARMAMENTS, DUMMY_DATA, random.Random(0))
         self.assertEqual(after_upgraded.player_block, 5)
         self.assertEqual(after_upgraded.upgraded_cards, (ARMAMENTS, STRIKE, DEFEND))
+
+    def test_card_instances_keep_individual_upgrades_across_piles(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(
+            80,
+            (Card(STRIKE), Card(STRIKE, upgraded=True), Card(DEFEND), Card(DEFEND, upgraded=True)),
+            (),
+            (),
+            (enemy,),
+            energy=4,
+        )
+        actions = legal_actions(combat)
+        self.assertIn("card:0@0", actions)
+        self.assertIn("card:1@0", actions)
+        self.assertIn("card:2", actions)
+        self.assertIn("card:3", actions)
+        self.assertNotIn(f"{STRIKE}@0", actions)
+        self.assertEqual(step(combat, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 94)
+        self.assertEqual(step(combat, "card:1@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 91)
+        self.assertEqual(step(combat, "card:2", DUMMY_DATA, random.Random(0)).player_block, 5)
+        self.assertGreater(step(combat, "card:3", DUMMY_DATA, random.Random(0)).player_block, 5)
+
+        armaments = Combat(80, (Card(ARMAMENTS), Card(STRIKE), Card(STRIKE)), (), (), (enemy,), energy=1)
+        self.assertIn("card:0@0", legal_actions(armaments))
+        upgraded = step(armaments, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(upgraded.hand, (Card(STRIKE, upgraded=True), Card(STRIKE)))
+        next_turn = step(upgraded, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(next_turn.hand.count(Card(STRIKE, upgraded=True)), 1)
+        self.assertEqual(next_turn.hand.count(Card(STRIKE)), 1)
+
+    def test_razor_tooth_upgrades_played_card_before_fiend_fire_exhausts_hand(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(
+            80, (Card(FIEND_FIRE), Card(STRIKE)), (), (), (enemy,), energy=2,
+            player_relics=(RELIC_RAZOR_TOOTH,),
+        )
+        after = step(combat, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.exhaust_pile, (Card(FIEND_FIRE, upgraded=True), Card(STRIKE)))
 
     def test_peck_has_three_hits_and_four_when_upgraded(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())

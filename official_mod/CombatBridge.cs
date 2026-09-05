@@ -250,9 +250,9 @@ internal static class CombatBridge
                 vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
                 target = card.TargetType.ToString(),
             }),
-            draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => card.Id.ToString()),
-            discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(card => card.Id.ToString()),
-            exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(card => card.Id.ToString()),
+            draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel }),
+            discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel }),
+            exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel }),
             potions = player.PotionSlots.Select((potion, index) => potion is null ? null : new { index, id = potion.Id.ToString(), usage = potion.Usage.ToString(), target = potion.TargetType.ToString() }),
             enemies = combat.Enemies.Select(enemy => new
             {

@@ -9,9 +9,9 @@ import traceback
 from dataclasses import replace
 
 from combat import (
-    ALL_ENEMY_DAMAGE, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    ALL_ENEMY_DAMAGE, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
-    POTION_STRENGTH, SELF_DAMAGE, _resolve_move, search,
+    POTION_STRENGTH, SELF_DAMAGE, _resolve_move, card_name, search,
 )
 
 
@@ -1828,6 +1828,101 @@ def choose_rest(observation: dict) -> dict:
     return next((action for action in actions if action["option_id"] == "SMITH"), actions[0])
 
 
+def _observation_card(value: object) -> str | Card:
+    if isinstance(value, Card):
+        return value
+    if isinstance(value, dict):
+        card_id = value.get("id", "")
+        name = CARD_NAMES.get(card_id, card_id)
+        return Card(name, _number(value.get("upgrade")) > 0)
+    name = card_name(value)
+    return CARD_NAMES.get(name, name)
+
+
+def _rollout_cards(observation: dict) -> tuple[
+    tuple[str | Card, ...], tuple[str | Card, ...], tuple[str | Card, ...], tuple[str | Card, ...], tuple[str, ...]
+]:
+    hand_values = tuple(observation.get("hand", ()))
+    draw_values = tuple(observation.get("draw_pile", ()))
+    discard_values = tuple(observation.get("discard_pile", ()))
+    exhaust_values = tuple(observation.get("exhaust_pile", ()))
+    has_legacy_snapshot = any(
+        isinstance(value, str)
+        for pile in (draw_values, discard_values, exhaust_values)
+        for value in pile
+    )
+    upgraded_cards = ()
+    if has_legacy_snapshot:
+        upgraded_cards = tuple(
+            dict.fromkeys(
+                CARD_NAMES.get(card_id, card_id)
+                for card_id in (observation.get("player", {}).get("upgraded_cards") or ())
+            )
+        )
+    return (
+        tuple(_observation_card(value) for value in hand_values),
+        tuple(_observation_card(value) for value in draw_values),
+        tuple(_observation_card(value) for value in discard_values),
+        tuple(_observation_card(value) for value in exhaust_values),
+        upgraded_cards,
+    )
+
+
+def _rollout_target_id(target: str, observation: dict, compact_to_observation_index: list[int]) -> int | None:
+    if not target:
+        return None
+    index = int(target)
+    return observation["enemies"][compact_to_observation_index[index]]["combat_id"]
+
+
+def _map_rollout_card_action(
+    best: str,
+    actions: list[dict],
+    observation: dict,
+    compact_to_observation_index: list[int],
+) -> dict:
+    token, _, target = best.partition("@")
+    if token.startswith("card:"):
+        hand_index = int(token[len("card:"):])
+        candidates = [
+            action for action in actions
+            if action.get("type") == "card" and action.get("hand_index") == hand_index
+        ]
+        selected = next((action for action in candidates if action.get("target_id") is None), None)
+        if selected is None:
+            selected = next(iter(candidates))
+    else:
+        model = next(model for model, short in CARD_NAMES.items() if short == token)
+        candidates = [
+            action for action in actions
+            if action.get("type") == "card" and action.get("card_id") == model
+        ]
+        selected = next((action for action in candidates if action.get("target_id") is None), None)
+        if selected is None:
+            selected = next(iter(candidates))
+        hand_index = selected.get("hand_index")
+
+    if selected.get("card_id") == "CARD.ARMAMENTS" and target.isdigit():
+        if hand_index is None:
+            raise ValueError("Armaments action has no hand index")
+        relative_target = int(target)
+        target_index = relative_target + (relative_target >= hand_index)
+        return selected | {"upgrade_hand_index": target_index}
+
+    if target:
+        target_id = _rollout_target_id(target, observation, compact_to_observation_index)
+        selected_target = next((action for action in candidates if action.get("target_id") == target_id), None)
+        if selected_target is not None:
+            selected = selected_target
+        elif not token.startswith("card:") or selected.get("card_id") in ALL_ENEMY_CARDS:
+            # Legacy rollouts represented targetless all-enemy cards as name@<enemy index>
+            # even though the bridge action has no target_id.
+            selected = next(action for action in candidates if action.get("target_id") is None)
+        else:
+            raise ValueError(f"rollout target is not legal: {best}")
+    return selected
+
+
 def rollout_choice(observation: dict, actions: list[dict], data: dict, simulations: int) -> dict:
     specs = {monster["id"]: monster for monster in data["monsters"]}
     enemies = []
@@ -1875,25 +1970,20 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             enemy = replace(enemy, move=_resolve_move(enemy, spec, random.Random(observation["seq"]), spec["initial_state"]))
         enemies.append(enemy)
         compact_to_observation_index.append(observation_index)
-    upgraded_card_ids = list(observation["player"].get("upgraded_cards") or ())
-    upgraded_card_ids.extend(
-        card["id"] for card in observation.get("hand", ())
-        if card.get("upgrade", 0) > 0
-    )
-    upgraded_card_ids = tuple(dict.fromkeys(upgraded_card_ids))
+    hand, draw_pile, discard_pile, exhaust_pile, upgraded_cards = _rollout_cards(observation)
     allowed_potions = _rollout_allowed_potions(observation, actions)
     state = Combat(
         player_hp=observation["player"]["hp"],
-        hand=tuple(CARD_NAMES.get(card["id"], card["id"]) for card in observation["hand"]),
-        draw_pile=tuple(CARD_NAMES.get(card, card) for card in observation["draw_pile"]),
-        discard_pile=tuple(CARD_NAMES.get(card, card) for card in observation["discard_pile"]),
+        hand=hand,
+        draw_pile=draw_pile,
+        discard_pile=discard_pile,
         enemies=tuple(enemies),
         player_block=observation["player"]["block"],
         player_powers=tuple(sorted(((f"Surrounded{power['facing']}" if power["id"] == "POWER.SURROUNDED_POWER" and power.get("facing") else POWER_NAMES.get(power["id"], power["id"])), power["amount"]) for power in observation["player"]["powers"])),
         energy=observation["player"]["energy"],
         max_energy=observation["player"].get("max_energy", 3),
         turn=observation["turn"],
-        exhaust_pile=tuple(CARD_NAMES.get(card, card) for card in observation.get("exhaust_pile", ())),
+        exhaust_pile=exhaust_pile,
         player_relics=tuple(observation["player"].get("relics", ())),
         player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
         player_potions=allowed_potions,
@@ -1911,7 +2001,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             "RELIC.RED_SKULL" in observation["player"].get("relics", ())
             and observation["player"]["hp"] * 2 <= observation["player"].get("max_hp", observation["player"]["hp"])
         ),
-        upgraded_cards=tuple(CARD_NAMES.get(card, card) for card in upgraded_card_ids),
+        upgraded_cards=upgraded_cards,
     )
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
@@ -1931,21 +2021,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             and action.get("target_id") == target_id
         )
         return selected | {"simulations": simulations, "search_value": value}
-    name, _, target = best.partition("@")
-    model = next(model for model, short in CARD_NAMES.items() if short == name)
-    if name == "Armaments":
-        selected = next(action for action in actions if action.get("card_id") == model and action.get("target_id") is None)
-        if target.isdigit():
-            played_index = next(index for index, card in enumerate(observation["hand"]) if card["id"] == model)
-            target_index = int(target) + (int(target) >= played_index)
-            selected = selected | {"upgrade_hand_index": target_index}
-        return selected | {"simulations": simulations, "search_value": value}
-    target_id = (
-        None
-        if model in ALL_ENEMY_CARDS
-        else observation["enemies"][compact_to_observation_index[int(target)]]["combat_id"] if target else None
-    )
-    selected = next(action for action in actions if action.get("card_id") == model and action.get("target_id") == target_id)
+    selected = _map_rollout_card_action(best, actions, observation, compact_to_observation_index)
     return selected | {"simulations": simulations, "search_value": value}
 
 

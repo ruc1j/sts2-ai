@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
-from combat import BURN, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
+from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -101,10 +101,10 @@ class OfficialAgentTest(unittest.TestCase):
 
         with patch("official_agent.search", side_effect=capture):
             selected = rollout_choice(observation, observation["legal_actions"], data, 1)
-        self.assertEqual(captured["hand"], ("Inferno", "Cruelty"))
+        self.assertEqual(captured["hand"], (Card("Inferno"), Card("Cruelty")))
         self.assertEqual(captured["powers"], {"InfernoPower": 6, "CrueltyPower": 25})
-        self.assertIn("Inferno", captured["legal_actions"])
-        self.assertIn("Cruelty", captured["legal_actions"])
+        self.assertIn("card:0", captured["legal_actions"])
+        self.assertIn("card:1", captured["legal_actions"])
         self.assertEqual(selected["type"], "end_turn")
 
     def test_soar_power_normalizes_from_official_id_for_rollout_state(self) -> None:
@@ -154,7 +154,7 @@ class OfficialAgentTest(unittest.TestCase):
 
         def capture(state, enemy_data, _simulations, _seed):
             captured["power"] = dict(state.enemies[0].powers)
-            captured["after"] = step(state, "Strike@0", enemy_data, random.Random(0))
+            captured["after"] = step(state, "card:0@0", enemy_data, random.Random(0))
             return [("Strike@0", 0.0)]
 
         with patch("official_agent.search", side_effect=capture):
@@ -268,7 +268,7 @@ class OfficialAgentTest(unittest.TestCase):
 
         with patch("official_agent.search", side_effect=capture):
             rollout_choice(observation, observation["legal_actions"], data, 1)
-        self.assertEqual(captured["combat"].hand, (TOXIC,))
+        self.assertEqual(captured["combat"].hand, (Card("Toxic"),))
 
     def test_maps_knowledge_demon_powers_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.DISINTEGRATION_POWER"], "DisintegrationPower")
@@ -3855,6 +3855,32 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["decision_source"], "heuristic_fallback")
         self.assertEqual(action["decision_reason"], "rollout_exception_key_error")
 
+    def test_missing_indexed_rollout_card_uses_heuristic_fallback(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 50, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.search", return_value=[("card:99@0", 1.0)]):
+            action = choose(observation, data, 1)
+        self.assertEqual(action["card_id"], "CARD.STRIKE_IRONCLAD")
+        self.assertEqual(action["decision_source"], "heuristic_fallback")
+        self.assertEqual(action["decision_reason"], "rollout_exception_stop_iteration")
+
     def test_rollout_can_conserve_modeled_fysh_oil(self) -> None:
         data = {"monsters": [{
             "id": "MONSTER.DUMMY",
@@ -4047,7 +4073,116 @@ class OfficialAgentTest(unittest.TestCase):
 
         with patch("official_agent.search", side_effect=capture):
             rollout_choice(observation, observation["legal_actions"], data, 1)
-        self.assertEqual(captured["combat"].upgraded_cards, ("Twin Strike", "Strike"))
+        self.assertEqual(captured["combat"].hand, (Card("Strike", upgraded=True),))
+        self.assertEqual(captured["combat"].upgraded_cards, ())
+
+    def test_rollout_keeps_duplicate_card_upgrades_by_hand_index(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {
+                "hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": [],
+                # New card records carry their own upgrade state; this legacy field must not
+                # upgrade the unupgraded copies below.
+                "upgraded_cards": ["CARD.STRIKE_IRONCLAD"],
+            },
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "upgrade": 1},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "upgrade": 0},
+            ],
+            "draw_pile": [{"id": "CARD.STRIKE_IRONCLAD", "upgrade": 0}],
+            "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["combat"] = state
+            return [("card:1@0", 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            action = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(action["hand_index"], 1)
+        self.assertEqual(action["target_id"], 1)
+        self.assertEqual(captured["combat"].hand, (Card("Strike", upgraded=True), Card("Strike")))
+        self.assertEqual(captured["combat"].draw_pile, (Card("Strike"),))
+        self.assertEqual(captured["combat"].upgraded_cards, ())
+
+    def test_rollout_decodes_legacy_string_piles_with_upgraded_cards(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {
+                "hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": [],
+                "upgraded_cards": ["CARD.STRIKE_IRONCLAD"],
+            },
+            "hand": [{"index": 0, "id": "CARD.DEFEND_IRONCLAD", "upgrade": 0}],
+            "draw_pile": ["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["combat"] = state
+            return [(END_TURN, 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["combat"].hand, (Card("Defend"),))
+        self.assertEqual(captured["combat"].draw_pile, ("Strike", "Defend"))
+        self.assertEqual(captured["combat"].upgraded_cards, ("Strike",))
+
+    def test_rollout_maps_indexed_armaments_to_selected_hand(self) -> None:
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY",
+            "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+        observation = {
+            "seq": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "upgrade": 0},
+                {"index": 1, "id": "CARD.ARMAMENTS", "upgrade": 0},
+                {"index": 2, "id": "CARD.DEFEND_IRONCLAD", "upgrade": 0},
+                {"index": 3, "id": "CARD.ARMAMENTS", "upgrade": 0},
+            ],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [], "turn": 1,
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 20, "block": 0,
+                "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.ARMAMENTS", "hand_index": 1, "target_id": None},
+                {"type": "card", "card_id": "CARD.ARMAMENTS", "hand_index": 3, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.search", return_value=[("card:3@0", 0.0)]):
+            action = rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(action["hand_index"], 3)
+        self.assertEqual(action["upgrade_hand_index"], 0)
 
     def test_rollout_sends_armaments_hand_target(self) -> None:
         data = {"monsters": [{
