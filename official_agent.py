@@ -901,7 +901,18 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         enemy["combat_id"]
         for enemy in observation.get("enemies", ())
         if enemy.get("id") == "MONSTER.KIN_FOLLOWER"
+        and enemy.get("combat_id") is not None
+        and _number(enemy.get("hp")) > 0
     }
+    kin_focus_id = min(
+        kin_follower_ids,
+        key=lambda combat_id: (
+            _number(enemy_by_id[combat_id].get("hp")),
+            -enemy_incoming.get(combat_id, 0),
+            combat_id,
+        ),
+        default=None,
+    )
     primary_ids = {
         combat_id
         for combat_id, enemy in enemy_by_id.items()
@@ -941,15 +952,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         remaining = max(0, incoming - player.get("block", 0))
         best_block = max((card_value(action, "block") for action in cards), default=0)
         if kin_focusable and (not remaining or best_block < remaining):
+            preferred = [action for action in kin_focusable if action.get("target_id") == kin_focus_id]
+            if preferred:
+                kin_focusable = preferred
             return _tag_action(
-                max(
-                    kin_focusable,
-                    key=lambda action: (
-                        enemy_incoming.get(action["target_id"], 0),
-                        -enemy_by_id[action["target_id"]].get("hp", 0),
-                        card_value(action, "damage"),
-                    ),
-                ),
+                max(kin_focusable, key=lambda action: card_value(action, "damage")),
                 "kin_follower_urgent_direct",
             )
 
@@ -982,6 +989,32 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if rollout_enabled:
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
+            rollout_decision_reason = None
+            selected_card = hand.get(selected.get("hand_index"), {})
+            if (
+                kin_focus_id is not None
+                and selected.get("type") == "card"
+                and selected.get("target_id") is not None
+                and selected_card.get("type") == "Attack"
+                and not is_lethal(selected)
+                and selected.get("target_id") != kin_focus_id
+            ):
+                focused = next(
+                    (
+                        action for action in actions
+                        if action.get("type") == "card"
+                        and action.get("hand_index") == selected.get("hand_index")
+                        and action.get("card_id") == selected.get("card_id")
+                        and action.get("target_id") == kin_focus_id
+                    ),
+                    None,
+                )
+                if focused is not None:
+                    rollout_simulations = selected.get("simulations")
+                    selected = dict(focused)
+                    if rollout_simulations is not None:
+                        selected["simulations"] = rollout_simulations
+                    rollout_decision_reason = "kin_follower_focus"
             # The rollout can miss a live enemy intent when its move/power is only partially
             # modeled. Never spend the last HP on a non-blocking, non-lethal play unless the card
             # itself reduces the next hit enough to survive (e.g. Uppercut's Weak or Mangle's
@@ -997,7 +1030,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                         _LAST_POTION_ID = selected.get("potion_id")
                     if potion_room is not None:
                         _POTION_USED_ROOM = potion_room
-                return _tag_action(selected, "rollout_success")
+                return _tag_action(selected, "rollout_success", rollout_decision_reason)
             rollout_reason = "rollout_rejected_unsafe" if rollout_is_unsafe else "rollout_rejected_self_damage"
         except (KeyError, ValueError, NotImplementedError, StopIteration) as error:
             rollout_reason = {
@@ -1024,16 +1057,16 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     defenses = [action for action in cards if card_value(action, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return _tag_action(max(defenses, key=lambda action: card_value(action, "block")), "heuristic_fallback", rollout_reason)
-    # MinionPower enemies (e.g. The Kin's Followers) do not need to die to win the fight -
-    # CombatManager only checks primary enemies - so they should not distract focus fire.
+    # MinionPower enemies do not need to die to win; KIN_FOLLOWER is explicitly focused below.
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
-        def score(action: dict) -> tuple[int, int, int, int]:
+        def score(action: dict) -> tuple[int, int, int, int, int]:
             card = hand.get(action.get("hand_index"), {})
             attack = card.get("type") == "Attack" and action.get("target_id") in enemy_by_id
             # Focus fire: among equal-priority attacks, prefer non-minion enemies, then the weakest.
             return (
                 priority.get(action["card_id"], 3 if card.get("type") == "Attack" else 1),
+                int(kin_focus_id is not None and attack and action.get("target_id") == kin_focus_id),
                 damage(action) if attack else 0,
                 (action.get("target_id") not in minion_ids) if attack else 0,
                 -enemy_by_id[action["target_id"]].get("hp", 0) if attack else 0,

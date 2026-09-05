@@ -2811,23 +2811,105 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        rolled = observation["legal_actions"][0]
+        rolled = observation["legal_actions"][1] | {"simulations": 17, "search_value": 2.5}
         with patch("official_agent.rollout_choice", return_value=rolled):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual(action["target_id"], 1)
         self.assertEqual(action["decision_source"], "rollout_success")
+        self.assertEqual(action["decision_reason"], "kin_follower_focus")
+        self.assertEqual(action["simulations"], 17)
+        self.assertNotIn("search_value", action)
+
+    def test_kin_fallback_focuses_lowest_hp_follower(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.KIN_FOLLOWER", "hp": 30, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 20, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.KIN_FOLLOWER", "hp": 20, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 1, "repeats": 1}]},
+                {"combat_id": 3, "id": "MONSTER.KIN_PRIEST", "hp": 190, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 3},
+                {"type": "end_turn"},
+            ],
+        }
+        for _ in range(2):
+            action = choose(observation)
+            self.assertEqual(action["target_id"], 2)
+
+    def test_kin_rollout_keeps_lethal_body_target(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.KIN_FOLLOWER", "hp": 20, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": []},
+                {"combat_id": 2, "id": "MONSTER.KIN_PRIEST", "hp": 5, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][1]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["target_id"], 2)
+        self.assertEqual(action["decision_source"], "lethal_direct")
+
+    def test_kin_rollout_leaves_defense_action_untargeted(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [
+                {"index": 0, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.KIN_FOLLOWER", "hp": 20, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": []}, {"combat_id": 2, "id": "MONSTER.KIN_PRIEST", "hp": 100, "powers": [], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][0]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action, {**rolled, "decision_source": "rollout_success"})
+
+    def test_non_kin_rollout_target_is_unchanged(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "powers": [], "intents": []}, {"combat_id": 2, "id": "MONSTER.DUMMY", "hp": 100, "powers": [], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][1]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["target_id"], 2)
+        self.assertNotIn("decision_reason", action)
 
     def test_urgent_kin_turn_still_focuses_an_attacking_follower(self) -> None:
         observation = {
             "player": {"hp": 30, "max_hp": 80, "block": 0},
             "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
             "enemies": [
-                {"combat_id": 1, "id": "MONSTER.KIN_FOLLOWER", "hp": 20, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 12, "repeats": 1}]},
-                {"combat_id": 2, "id": "MONSTER.KIN_PRIEST", "hp": 100, "powers": [], "intents": []},
+                {"combat_id": 1, "id": "MONSTER.KIN_FOLLOWER", "hp": 20, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 2, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.KIN_FOLLOWER", "hp": 30, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 12, "repeats": 1}]},
+                {"combat_id": 3, "id": "MONSTER.KIN_PRIEST", "hp": 100, "powers": [], "intents": []},
             ],
             "legal_actions": [
                 {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
                 {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 3},
                 {"type": "end_turn"},
             ],
         }
