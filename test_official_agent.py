@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
 from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
 
 
@@ -3682,6 +3682,69 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_event(observation)["relic_id"], "RELIC.PAELS_FLESH")
+
+    def test_neow_priority_beats_presented_order(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "NEOW",
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "relic_id": "RELIC.NEOWS_TORMENT"},
+                {"type": "event_option", "option_index": 1, "relic_id": "RELIC.SMALL_CAPSULE"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.SMALL_CAPSULE")
+
+    def test_neow_priority_ignores_deck_and_hp(self) -> None:
+        for player, deck in [
+            ({"hp": 80, "max_hp": 80}, []),
+            ({"hp": 1, "max_hp": 80}, ["CARD.STRIKE_IRONCLAD"] * 20),
+        ]:
+            observation = {
+                "phase": "event",
+                "event_id": "NEOW",
+                "player": player,
+                "deck": deck,
+                "legal_actions": [
+                    {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.GOLDEN_PEARL"},
+                    {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.NEOWS_TALISMAN"},
+                ],
+            }
+            self.assertEqual(choose_event(observation)["relic_id"], "RELIC.NEOWS_TALISMAN")
+
+    def test_neow_priority_excludes_locked_and_ranks_unknown_last(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "NEOW",
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.UNKNOWN"},
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.SMALL_CAPSULE", "is_locked": True},
+                {"type": "event_relic", "option_index": 2, "relic_id": "RELIC.LARGE_CAPSULE"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.LARGE_CAPSULE")
+
+    def test_neow_unknown_relic_uses_presented_order(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "NEOW",
+            "legal_actions": [
+                {"type": "event_relic", "option_index": 1, "relic_id": "RELIC.UNKNOWN_A"},
+                {"type": "event_relic", "option_index": 0, "relic_id": "RELIC.UNKNOWN_B"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["relic_id"], "RELIC.UNKNOWN_A")
+
+    def test_neow_only_proceed_option_keeps_existing_processing(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "NEOW",
+            "legal_actions": [{"type": "event_option", "option_index": 0, "is_proceed": True}],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 0)
+
+    def test_neow_priority_has_28_unique_relics(self) -> None:
+        self.assertEqual(len(NEOW_RELIC_PRIORITY), 28)
+        self.assertEqual(len(set(NEOW_RELIC_PRIORITY)), 28)
 
     def test_event_option_wire_format_picks_paels_flesh(self) -> None:
         observation = {

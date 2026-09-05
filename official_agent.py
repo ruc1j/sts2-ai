@@ -387,6 +387,18 @@ def _self_damage_value(action: dict, hand: dict[int, dict]) -> int:
     return max(observed, default=SELF_DAMAGE.get(card_name, 0))
 
 
+# Fixed Act 1 Neow order. This intentionally ignores the deck and player HP; other events use
+# the conditional relic scoring below.
+NEOW_RELIC_PRIORITY = (
+    "RELIC.SMALL_CAPSULE", "RELIC.LARGE_CAPSULE", "RELIC.NEOWS_TALISMAN", "RELIC.GOLDEN_PEARL",
+    "RELIC.LOST_COFFER", "RELIC.PHIAL_HOLSTER", "RELIC.FISHING_ROD", "RELIC.NUTRITIOUS_OYSTER",
+    "RELIC.STONE_HUMIDIFIER", "RELIC.SCROLL_BOXES", "RELIC.POMANDER", "RELIC.ARCANE_SCROLL",
+    "RELIC.LEAD_PAPERWEIGHT", "RELIC.NEW_LEAF", "RELIC.NEOWS_TORMENT", "RELIC.PRECISE_SCISSORS",
+    "RELIC.BOOMING_CONCH", "RELIC.SILVER_CRUCIBLE", "RELIC.LAVA_ROCK", "RELIC.WINGED_BOOTS",
+    "RELIC.KALEIDOSCOPE", "RELIC.PRECARIOUS_SHEARS", "RELIC.SILKEN_TRESS", "RELIC.LEAFY_POULTICE",
+    "RELIC.HEFTY_TABLET", "RELIC.CURSED_PEARL", "RELIC.NEOWS_BONES", "RELIC.MASSIVE_SCROLL",
+)
+
 # Relic choices from Ancient events (e.g. PAEL at Act 2 start). Scores are tuned to the
 # Ironclad deck: energy, draw, upgrades, and block are worth more; relics that bloat the
 # deck with unplayable cards (PaelsHorn adds 2 Relax) are never taken.
@@ -583,6 +595,15 @@ def choose_event(observation: dict) -> dict:
     ]
     if not actions:
         raise ValueError("no event relic actions")
+    event_id = observation.get("event_id", "")
+    if event_id == "NEOW":
+        neow_relic_actions = [action for action in actions if action.get("relic_id")]
+        if neow_relic_actions:
+            priority = {relic_id: index for index, relic_id in enumerate(NEOW_RELIC_PRIORITY)}
+            return min(
+                neow_relic_actions,
+                key=lambda action: priority.get(action.get("relic_id"), len(priority)),
+            )
     relic_actions = [action for action in actions if action.get("relic_id")]
     if relic_actions:
         actions = relic_actions
@@ -602,8 +623,6 @@ def choose_event(observation: dict) -> dict:
             return value
 
         return max(actions, key=relic_score)
-
-    event_id = observation.get("event_id", "")
 
     def option_score(action: dict) -> int | None:
         scores = EVENT_OPTION_SCORES.get(event_id)
