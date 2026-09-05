@@ -3159,6 +3159,39 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["card_id"], "CARD.PERFECTED_STRIKE")
         self.assertEqual(action["decision_source"], "phase_shop")
 
+    def test_shop_removes_legal_curse_before_high_value_purchase(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD", "CARD.CURSE"],
+            "deck_cards": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "removable": True},
+                {"index": 1, "id": "CARD.CURSE", "type": "Curse", "removable": True},
+            ],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "remove", "card_index": 1, "card_id": "CARD.CURSE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["type"], "remove")
+
+    def test_shop_ignores_nonremovable_curse(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.STRIKE_IRONCLAD", "CARD.CURSE"],
+            "player": {
+                "deck_cards": [
+                    {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "removable": True},
+                    {"index": 1, "id": "CARD.CURSE", "type": "Curse", "removable": False},
+                ],
+            },
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.PERFECTED_STRIKE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
     def test_shop_uses_known_boss_axis(self) -> None:
         observation = {
             "phase": "shop",

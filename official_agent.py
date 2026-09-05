@@ -1401,12 +1401,26 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
 
 def choose_shop(observation: dict) -> dict:
     actions = observation.get("legal_actions", ())
+    removals = [action for action in actions if action.get("type") == "remove"]
+    deck_cards = observation.get("deck_cards") or (observation.get("player") or {}).get("deck_cards") or ()
+    deck_by_index = {
+        card.get("index"): card
+        for card in deck_cards
+        if isinstance(card, dict) and card.get("index") is not None
+    }
+    for action in removals:
+        card = deck_by_index.get(action.get("card_index"))
+        if (
+            card is not None
+            and card.get("type") == "Curse"
+            and (card.get("id") or card.get("card_id")) == action.get("card_id")
+        ):
+            return action
     deck_ids = _deck_ids(observation)
     deck_list = _deck_list(observation)
     shop_cards = {
         card.get("id") or card.get("card_id"): card for card in observation.get("cards", ())
     }
-    deck_cards = observation.get("deck_cards") or ()
     high_cost_in_deck = sum(_number(card.get("cost"), 0) >= 3 for card in deck_cards)
     over_high_cost_cap = high_cost_in_deck >= 2
     over_unmodeled_cap = sum(card_id in UNMODELED_REWARDS for card_id in deck_list) >= UNMODELED_CAP
@@ -1475,7 +1489,6 @@ def choose_shop(observation: dict) -> dict:
         return best_relic
     if best_card and card_key(best_card)[0] == 2:
         return best_card
-    removals = [action for action in actions if action.get("type") == "remove"]
     remove_id = "CARD.DEFEND_IRONCLAD" if "CARD.PERFECTED_STRIKE" in deck_ids else "CARD.STRIKE_IRONCLAD"
     preferred = next((action for action in removals if (action.get("card_id") or action.get("id")) == remove_id), None)
     if preferred:
