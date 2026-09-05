@@ -26,3 +26,4 @@ data/*_map.json
 data/*_mapdebug.jsonl
 data/dashboard.html
 data/dashboard_gen.log
+data/*_observations.jsonl
