@@ -2164,6 +2164,23 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
 
+    def test_uses_cheapest_frantic_escape_when_duplicates_are_legal(self) -> None:
+        observation = {
+            "player": {"energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.FRANTIC_ESCAPE", "type": "Skill", "cost": 2},
+                {"index": 1, "id": "CARD.FRANTIC_ESCAPE", "type": "Skill", "cost": 1},
+                {"index": 2, "id": "CARD.FLAME_BARRIER", "type": "Skill", "cost": 2},
+            ],
+            "enemies": [{"powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 1},
+                {"type": "card", "card_id": "CARD.FLAME_BARRIER", "hand_index": 2},
+            ],
+        }
+        self.assertEqual(choose(observation)["hand_index"], 1)
+
     def test_lethal_attack_precedes_sandpit_escape(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},

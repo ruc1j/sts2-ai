@@ -690,7 +690,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return _card_value(action, hand, metric, card_energy)
 
     sandpit_critical = any(power["id"] == "POWER.SANDPIT_POWER" and 0 < power["amount"] <= 2 for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ()))
-    escape = next((action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"), None)
+    escape = min(
+        (action for action in cards if action["card_id"] == "CARD.FRANTIC_ESCAPE"),
+        key=lambda action: _number(hand.get(action.get("hand_index"), {}).get("cost"), 1),
+        default=None,
+    )
     potion_context = _potion_context(observation)
     potion_room = _potion_room(observation)
     if potion_context is None:
