@@ -4,7 +4,7 @@ import unittest
 from dataclasses import replace
 
 from combat import (
-    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
+    AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
     CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
@@ -1368,6 +1368,17 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
         self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
+
+    def test_turn_end_hand_damage_is_absorbed_by_block_but_beckon_is_not(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ())
+        # Toxic (5) has no Unblockable prop, so standing block eats it before HP.
+        combat = Combat(80, (TOXIC,), (STRIKE,) * 10, (), (enemy,), player_block=7)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 80)
+        # Beckon (6) is Unblockable, so the same 7 block does nothing for it.
+        combat = Combat(80, (BECKON,), (STRIKE,) * 10, (), (enemy,), player_block=7)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 80 - 6)
 
     def test_decay_curse_burns_two_hp_at_turn_end_and_is_never_playable(self) -> None:
         combat = Combat(80, (DECAY,), (STRIKE,) * 10, (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),))

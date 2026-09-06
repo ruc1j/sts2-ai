@@ -52,6 +52,8 @@ Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_su
 
 cards1のAct 2ボス到達時のデッキは28枚で、ブロック札10枚(Defend 5、Blood Wall 4、Flame Barrier)に対し攻撃札は約10枚だった。`_block_starved` の40%判定はブロック札を足すとデッキも増えるため収束が遅く(1枚足すと左辺+5・右辺+2)、28枚10ブロックでもまだ「防御不足」を返し続ける。取得方針には**防御の下限はあるが攻撃の下限が無い**。ただしこの非対称は逆向きの失敗記録(29枚・強防御2枚のみでの敗北)を受けて作られたものなので、2runだけを根拠に閾値を動かさないこと。
 
+`HasTurnEndInHandEffect => true` を持つカードはDLL全体で11枚(Toxic、Burn、Infection、Decay、Beckon、Bad Luck、Wither、Regret、Shame、Doubt、Debt)。**未使用カードを洗う際はこの一覧で照合すること**。うちToxic/Burn/Infection/Decayは `ValueProp.Unpowered | Move` でUnblockableが**付いていない**——ターン終了フックが走る時点でブロックはまだ立っている(クリアは次の自ターン開始時)ので、ブロックが先に吸収する。以前は `_apply_player_damage` へ直接渡していてブロックを無視していた。対してBeckon(6)、Bad Luck(13)、Regretは `ValueProp.Unblockable` を持つので `HAND_END_UNBLOCKABLE` として別に扱う。Regret(ダメージ=手札枚数)、Wither(基本3、外部の`FakeUpgrade`で+3ずつ増える)、Shame/Doubt(ダメージではなくFrail/Weakを自分に付与)、Debt(ゴールドのみ)は未対応。
+
 Decay(`CARD.DECAY`)はUnplayableのCurseだが `HasTurnEndInHandEffect => true` を持ち、手札に残ったままターン終了すると所有者へ **2の固定Unpoweredダメージ**を与える。Toxic/Burn/Infectionと同型なので `HAND_INJECTED_STATUS` に追加した。前2者と違いDecayは戦闘中に注入されるのではなく最初からデッキにあるが、END_TURN側の処理は手札にあるかどうかだけを見るので同じ経路で正しく動く。**未使用カードを「未モデルの可能性」として洗う際、Unplayableだから問題なしと即断しないこと**——Unplayableでも `HasTurnEndInHandEffect` を持つカードは被弾源になる。
 
 Frantic Escapeは `OnPlay` の最後に `EnergyCost.AddThisCombat(1)` を呼ぶため、**使ったその1枚だけ**が戦闘中ずっと1コスト高くなる(Sandpitを+1する処理とは別)。`Card.extra_cost` で個体ごとに持ち、`_effective_cost` に加算し、使用後は増分を載せた同じ個体をdiscardへ戻す。観測は手札の各コピーの現在コストを出すので、エージェント側は `観測コスト − 1` で復元する(実トレース `astra_goal_neowrank1` seq312で観測コスト[1, 2]→extra_cost[0, 1]を確認)。以前はこの分岐がエネルギーを固定で1しか引いておらず、探索が実際には払えない枚数の脱出を打てると誤認していた。
