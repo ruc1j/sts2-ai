@@ -1645,6 +1645,18 @@ def choose_map(observation: dict) -> dict:
     # had no choice but to walk through. Raising the trigger point buys an earlier, healthier
     # margin before the unavoidable fights on the way to whatever rest site is actually reachable.
     if player.get("max_hp", 0) and player.get("hp", player["max_hp"]) * 4 <= player["max_hp"] * 3:
+        # An Unknown room is a gamble that can turn out to be a fight, so it sits between a
+        # guaranteed-safe room and a guaranteed fight: certain combat weighs 2, an Unknown weighs 1
+        # once HP is down to a third of max, and everything else 0. astra_seed_K7M2QX9BTR walked
+        # into an Unknown at 12/85 with a Shop as the only other option; the Unknown was an
+        # Ovicopter pack and the run died there. Weighing Unknown the same as a Monster instead
+        # would throw away the (correct) preference for a maybe-fight over a certain one.
+        critical_hp = player.get("hp", player["max_hp"]) * 3 <= player["max_hp"]
+
+        def fight_weight(room: str) -> int:
+            if room in {"Monster", "Elite", "Boss"}:
+                return 2
+            return 1 if critical_hp and room == "Unknown" else 0
         rest_paths: dict[tuple[int, int], tuple[int, int, int] | None] = {}
         rest_visiting: set[tuple[int, int]] = set()
 
@@ -1662,7 +1674,7 @@ def choose_map(observation: dict) -> dict:
                 return rest_paths[coord]
             children = (rest_path((child["col"], child["row"])) for child in point["children"])
             reachable = [path for path in children if path is not None]
-            fights = int(point["type"] in {"Monster", "Elite", "Boss"})
+            fights = fight_weight(point["type"])
             rest_paths[coord] = None if not reachable else min(
                 (fight_count + fights, distance + 1, elite_count + elites)
                 for fight_count, distance, elite_count in reachable
@@ -1688,8 +1700,8 @@ def choose_map(observation: dict) -> dict:
             point = points[coord]
             children = (safety_path((child["col"], child["row"])) for child in point["children"])
             reachable = [path for path in children if path is not None]
-            fights = point["type"] in {"Monster", "Elite", "Boss"}
-            safety_paths[coord] = (int(fights), int(not fights)) if not reachable else min(((fight_count + fights, noncombat_count + (not fights)) for fight_count, noncombat_count in reachable), key=lambda path: (path[0], -path[1]))
+            fights = fight_weight(point["type"])
+            safety_paths[coord] = (fights, int(not fights)) if not reachable else min(((fight_count + fights, noncombat_count + (not fights)) for fight_count, noncombat_count in reachable), key=lambda path: (path[0], -path[1]))
             safety_visiting.remove(coord)
             return safety_paths[coord]
 

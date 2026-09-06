@@ -594,8 +594,10 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(entry["seq"], 42)
         self.assertEqual(entry["hp"], 20)
         candidates = {(c["col"], c["type"]): c["route"] for c in entry["candidates"]}
-        self.assertEqual(candidates[(0, "Monster")], [1, 1, 0])
-        self.assertEqual(candidates[(1, "Unknown")], [0, 1, 0])
+        # Certain combat weighs 2 and an Unknown 1 at this HP, so the Monster route is the worse
+        # of the two even though both reach a rest site in one step.
+        self.assertEqual(candidates[(0, "Monster")], [2, 1, 0])
+        self.assertEqual(candidates[(1, "Unknown")], [1, 1, 0])
 
     def test_just_above_three_quarters_hp_uses_normal_routing(self) -> None:
         # One HP above the new cutoff (61/80): rest-priority routing must not engage yet.
@@ -663,6 +665,22 @@ class OfficialAgentTest(unittest.TestCase):
             "legal_actions": [{"type": "map", "col": 0, "row": 0}, {"type": "map", "col": 1, "row": 0}],
         }
         self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_critical_hp_prefers_a_safe_room_over_an_unknown(self) -> None:
+        # astra_seed_K7M2QX9BTR died here: at 12/85 the only choices were an Unknown and a Shop,
+        # and it walked into the Unknown, which turned out to be an Ovicopter pack.
+        observation = {
+            "player": {"hp": 12, "max_hp": 85},
+            "map": {"points": [
+                {"col": 2, "row": 13, "type": "Unknown", "children": []},
+                {"col": 3, "row": 13, "type": "Shop", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 2, "row": 13}, {"type": "map", "col": 3, "row": 13}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 3)
+        # Above a third of max HP the gamble is worth taking again, so routing is unchanged.
+        observation["player"] = {"hp": 40, "max_hp": 85}
+        self.assertEqual(choose_map(observation)["col"], 2)
 
     def test_low_hp_uses_existing_value_when_all_routes_fight(self) -> None:
         observation = {
