@@ -93,6 +93,9 @@ INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
 # ponytail: Stoke draws from the character's whole unlocked pool; this model can only generate
 # cards it knows, so the pool is every modeled non-Basic, non-Status card. Widen it when the
 # generated mix is shown to matter.
+# What a player actually picks when a card asks them to exhaust one card from hand: dead weight
+# first. Frantic Escape is deliberately absent - it is the only answer to Sandpit.
+EXHAUST_FODDER = {WOUND, DAZED, SLIMED, TOXIC, BURN, INFECTION, DECAY, BECKON, BAD_LUCK}
 STOKE_GENERATION = tuple(sorted(
     set(CARD_COST) - {STRIKE, DEFEND, BASH, SLIMED, FRANTIC_ESCAPE, TOXIC, BURN, DAZED, INFECTION, DECAY, WOUND, BECKON, BAD_LUCK}
 ))
@@ -795,6 +798,23 @@ def _spend_vigor(combat: Combat) -> tuple[Combat, int]:
     return replace(combat, player_powers=_add_power(combat.player_powers, "VigorPower", -vigor)), vigor
 
 
+def _choose_exhaust_from_hand(combat: Combat, rng: random.Random) -> CardValue:
+    """Pick the card to exhaust for the effects that let the player choose (Burning Pact, Brand,
+    upgraded True Grit use CardSelectCmd.FromHand; unupgraded True Grit really is random).
+
+    Modelling the choice as random made Burning Pact look like a gamble that could eat the best
+    card in hand, and the search passed on it in all 55 hands it appeared in during
+    astra_seed2_K7M2QX9BTR. ponytail: fodder first, then random - rank real cards by value only
+    if the choice among genuinely useful cards is ever shown to matter.
+    """
+    fodder = [
+        card for card in combat.hand
+        if card_name(card) in EXHAUST_FODDER or card_name(card) not in CARD_COST
+    ]
+    pool = fodder or list(combat.hand)
+    return pool[rng.randrange(len(pool))]
+
+
 def _tender_penalty(combat: Combat) -> int:
     """TenderPower drops Strength and Dexterity by 1 for every card already played this turn and
     hands the whole lot back at the side turn end. Reading it off cards_played_this_turn keeps the
@@ -848,6 +868,10 @@ def _mark_enemy_death(enemy: Enemy) -> Enemy:
 def legal_actions(combat: Combat) -> tuple[str, ...]:
     if combat.terminal:
         return ()
+    sloth = _power(combat.player_powers, "SlothPower")
+    if sloth and combat.cards_played_this_turn >= sloth:
+        # SlothPower.ShouldPlay refuses every card once Amount of them have been played this turn.
+        return (END_TURN,)
     if combat.played_this_turn and _power(combat.player_powers, "RingingPower"):
         # RingingPower.ShouldPlay (Ceremonial Beast's BEAST_CRY_MOVE): every card in the deck is
         # afflicted with Ringing, and a Ringing card can't be played once any card has already
@@ -1906,7 +1930,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return combat
     if card == TRUE_GRIT:
         if combat.hand:
-            sacrificed = combat.hand[rng.randrange(len(combat.hand))]
+            # Only the upgraded TrueGrit lets the player choose; the base one is Rng-driven.
+            sacrificed = (
+                _choose_exhaust_from_hand(combat, rng) if card_was_upgraded
+                else combat.hand[rng.randrange(len(combat.hand))]
+            )
             hand = list(combat.hand)
             hand.remove(sacrificed)
             combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
@@ -1919,7 +1947,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return combat
     if card == BURNING_PACT:
         if combat.hand:
-            sacrificed = combat.hand[rng.randrange(len(combat.hand))]
+            sacrificed = _choose_exhaust_from_hand(combat, rng)
             hand = list(combat.hand)
             hand.remove(sacrificed)
             combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
@@ -1927,7 +1955,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return _draw_into_combat(combat, 2 + (1 if card_was_upgraded else 0), data, rng)
     if card == BRAND:
         if combat.hand:
-            sacrificed = combat.hand[rng.randrange(len(combat.hand))]
+            sacrificed = _choose_exhaust_from_hand(combat, rng)
             hand = list(combat.hand)
             hand.remove(sacrificed)
             combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))

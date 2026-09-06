@@ -1395,6 +1395,37 @@ class CombatTest(unittest.TestCase):
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
 
+    def test_sloth_caps_the_number_of_cards_played_in_a_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (STRIKE,) * 4, (STRIKE,) * 8, (), (enemy,), energy=4, player_powers=(("SlothPower", 2),))
+        for _ in range(2):
+            self.assertIn(f"{STRIKE}@0", legal_actions(combat))
+            combat = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        # Two cards spent: the cap closes the turn even with energy and cards left.
+        self.assertEqual((combat.energy, legal_actions(combat)), (2, (END_TURN,)))
+
+    def test_burning_pact_exhausts_dead_weight_rather_than_a_random_card(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        hand = (BURNING_PACT, BLUDGEON, WOUND, BLUDGEON)
+        combat = Combat(80, hand, (STRIKE,) * 8, (), (enemy,), energy=1)
+        after = step(combat, BURNING_PACT, DUMMY_DATA, random.Random(0))
+        # The Wound goes, never one of the Bludgeons.
+        self.assertEqual(after.exhaust_pile, (WOUND,))
+        self.assertEqual(sum(card_name(c) == BLUDGEON for c in after.hand), 2)
+
+    def test_true_grit_only_chooses_when_upgraded(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        hand = (TRUE_GRIT, WOUND, BLUDGEON)
+        base = Combat(80, hand, (STRIKE,) * 8, (), (enemy,), energy=1)
+        upgraded = step(replace(base, upgraded_cards=(TRUE_GRIT,)), TRUE_GRIT, DUMMY_DATA, random.Random(0))
+        self.assertEqual(upgraded.exhaust_pile, (WOUND,))
+        # Unupgraded True Grit really is random, so it can take the Bludgeon.
+        picks = {
+            card_name(step(base, TRUE_GRIT, DUMMY_DATA, random.Random(seed)).exhaust_pile[0])
+            for seed in range(12)
+        }
+        self.assertIn(BLUDGEON, picks)
+
     def test_stoke_exhausts_the_hand_and_refills_it_with_generated_cards(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         combat = Combat(80, (STOKE, STRIKE, DEFEND, BASH), (), (), (enemy,), energy=1)

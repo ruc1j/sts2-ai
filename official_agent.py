@@ -186,6 +186,7 @@ POWER_NAMES = {
     "POWER.VIGOR_POWER": "VigorPower",
     "POWER.INTANGIBLE_POWER": "IntangiblePower",
     "POWER.TANGLED_POWER": "TangledPower",
+    "POWER.SLOTH_POWER": "SlothPower",
     "POWER.TENDER_POWER": "TenderPower",
     "POWER.REGEN_POWER": "RegenPower",
     "POWER.TORIC_TOUGHNESS_POWER": "ToricToughnessPower",
