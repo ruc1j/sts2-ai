@@ -10,7 +10,7 @@ from combat import (
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
+    _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1893,6 +1893,20 @@ class CombatTest(unittest.TestCase):
         self.assertIn(EQUILIBRIUM, legal_actions(combat))
         after = step(combat, EQUILIBRIUM, {}, random.Random(0))
         self.assertEqual((after.player_block, after.energy), (13, 1))
+
+    def test_frantic_escape_copy_gets_more_expensive_each_play(self) -> None:
+        enemy = Enemy("MONSTER.THE_INSATIABLE", 100, "IDLE_MOVE", (), powers=(("SandpitPower", 3),))
+        combat = Combat(80, (Card(FRANTIC_ESCAPE), Card(FRANTIC_ESCAPE)), (), (), (enemy,))
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, _power(after.enemies[0].powers, "SandpitPower")), (2, 4))
+        self.assertEqual(after.discard_pile, (Card(FRANTIC_ESCAPE, extra_cost=1),))
+        # The untouched copy still costs 1; only the played one drifted up.
+        after = replace(after, hand=after.hand + after.discard_pile, discard_pile=())
+        self.assertEqual(
+            [_effective_cost(after, value) for value in after.hand], [1, 2],
+        )
+        after = step(after, "card:1", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, after.discard_pile), (0, (Card(FRANTIC_ESCAPE, extra_cost=2),)))
 
     def test_tear_asunder_hits_once_per_unblocked_hit_taken(self) -> None:
         for taken, expected_hp in [(0, 35), (2, 25), (5, 10)]:

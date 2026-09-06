@@ -1969,7 +1969,10 @@ def _observation_card(value: object) -> str | Card:
         enchantment = value.get("enchantment")
         if not isinstance(enchantment, str):
             enchantment = None
-        return Card(name, _number(value.get("upgrade")) > 0, enchantment=enchantment)
+        # Frantic Escape is the one card whose copies drift above their base cost during a combat
+        # (EnergyCost.AddThisCombat), and the observation reports each copy's current cost.
+        extra_cost = max(_number(value.get("cost")) - 1, 0) if card_id == "CARD.FRANTIC_ESCAPE" else 0
+        return Card(name, _number(value.get("upgrade")) > 0, enchantment=enchantment, extra_cost=extra_cost)
     name = card_name(value)
     return CARD_NAMES.get(name, name)
 

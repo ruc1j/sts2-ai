@@ -155,6 +155,9 @@ class Card:
     name: str
     upgraded: bool = False
     enchantment: str | None = None
+    # FranticEscape.OnPlay calls EnergyCost.AddThisCombat(1), so each copy gets permanently more
+    # expensive for the rest of the combat every time that same copy is played.
+    extra_cost: int = 0
 
 
 CardValue = str | Card
@@ -694,6 +697,8 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
         cost = 0
     if combat.enlightened_this_turn and name != WHIRLWIND:
         cost = min(cost, 1)
+    if isinstance(card, Card):
+        cost += card.extra_cost
     return cost
 
 
@@ -1562,7 +1567,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if _power(enemy.powers, "SandpitPower"):
                 enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 1))
                 break
-        return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,), energy=combat.energy - (0 if card_is_free else 1), enemies=tuple(enemies))
+        spent = 0 if card_is_free else _effective_cost(combat, played_value)
+        # The copy that was played is the one that gets more expensive, so it returns to the
+        # discard carrying its own increment.
+        discarded = replace(played_value, extra_cost=played_value.extra_cost + 1) if isinstance(played_value, Card) else played_value
+        return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (discarded,), energy=combat.energy - spent, enemies=tuple(enemies))
     if card == SHRUG:
         base = 8 + (3 if card_was_upgraded else 0)
         combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
