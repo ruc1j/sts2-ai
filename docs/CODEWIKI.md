@@ -84,6 +84,8 @@ LIVING_SHIELDの `GetAllyCount() > 0` も同じ理由で未実装だった(全ru
 
 Brilliant Scarfは `TryModifyEnergyCostInCombatLate` で、**そのターンにちょうど `Cards-1`(=4)枚プレイ済みのときだけ**手札の全カードのコストを0にする——つまり毎ターン5枚目が無料。モデルは `CARD_COST` からコストを引くので、`astra_goal_endturn1` seq476ではTremble/Giant Rock/Defend/Infernoが観測上すべてコスト0なのに「コスト1・エネルギー0で打てない」と見て、HP121のAct 3ボスを前に無料のGiant Rock(16+筋力11=27)を握ったままEnd turnしていた。`_effective_cost` の最後で0を返すよう実装し、観測には手数カウンタが無いので**「基本コストが正のカードが観測上0で出ている」という指紋**から `cards_played_this_turn` を復元する。復元後、同じseq476はGiant Rockを選ぶ。
 
+DLL全体で `TryModifyEnergyCostInCombat` を実装しているのは、レリックがBrilliant ScarfとSpiked Gauntlets、powerがBorrowedTime/Corruption/Curious/FreeAttack/FreePower/FreeSkill/Tangled/Veilpiercer/VoidFormの計11個(mockを除く)。**コストのズレを見つけたらこの一覧で当たること。** 全runを突き合わせた結果、残る未説明はRupture(旧run 8件)とUnmovable(旧run 2件)だけで、どちらも既存の `Combat.free_cards` 機構が扱う「1枚無料」系の可能性が高い。Strikeがコスト0で出ていた151件はNutritious SoupのTezcataras Ember付与を持つ修正前の旧run(`shop1`/`neowrank1`)のもので、`c6ef39b` で対応済みの既知事象——**新しいバグとして追わないこと。**
+
 **未使用カードを見たら、観測の `cost` とモデルの `CARD_COST` を突き合わせること。** カードのコストを動かす経路は複数ある(Brilliant Scarfの5枚目無料、Nutritious SoupのTezcataras Ember付与でコスト0、Frantic Escapeの使用ごと+1、Stompの攻撃ごと減少、Enlightenmentの1上限)。トレースの手札にある `cost` は常に真の現在コストなので、これと `CARD_COST` がずれているカードは未対応の経路を示している。
 
 **「合法なのに使わなかった」の検出方法**: トレースの `type == "end_turn"` の行で `legal_actions` にまだ `type == "card"` が残っているものを数える。さらに `decision_source == "rollout_success"` に絞ると評価関数の問題、`heuristic_fallback` に絞るとrolloutが落ちている問題を切り分けられる。`decision_reason` が `rollout_exception_not_implemented` なら敵データに未実装のコマンド/条件がある。
