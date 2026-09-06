@@ -178,6 +178,9 @@ UNCOMMITTED_SELF_DAMAGE = {
 UNCOMMITTED_EXHAUST_PAYOFF = {"CARD.FEEL_NO_PAIN", "CARD.DARK_EMBRACE"}
 POWER_NAMES = {
     "POWER.FRAIL": "FrailPower",
+    # The live bridge only ever emits the _POWER form; without it Frail was silently dropped from
+    # every rollout state and the model overestimated its own block by a third.
+    "POWER.FRAIL_POWER": "FrailPower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
     "POWER.STRENGTH": "StrengthPower",
     "POWER.STRENGTH_POWER": "StrengthPower",
