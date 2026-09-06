@@ -3176,6 +3176,25 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["card_id"], "CARD.PERFECTED_STRIKE")
         self.assertEqual(action["decision_source"], "phase_shop")
 
+    def test_shop_prefers_basic_remove_over_ordinary_card_only(self) -> None:
+        cases = [
+            (["CARD.STRIKE_IRONCLAD"], "CARD.ANGER", "remove"),
+            (["CARD.STRIKE_IRONCLAD"], "CARD.INFLAME", "buy_card"),
+            (["CARD.STRIKE_IRONCLAD", "CARD.INFLAME"], "CARD.INFLAME", "remove"),
+        ]
+        for deck, card_id, expected_type in cases:
+            with self.subTest(deck=deck, card_id=card_id):
+                observation = {
+                    "phase": "shop",
+                    "deck": deck,
+                    "legal_actions": [
+                        {"type": "buy_card", "card_id": card_id},
+                        {"type": "remove", "card_id": "CARD.STRIKE_IRONCLAD"},
+                        {"type": "skip"},
+                    ],
+                }
+                self.assertEqual(choose_shop(observation)["type"], expected_type)
+
     def test_shop_removes_legal_curse_before_high_value_purchase(self) -> None:
         observation = {
             "phase": "shop",
@@ -3208,6 +3227,87 @@ class OfficialAgentTest(unittest.TestCase):
             ],
         }
         self.assertEqual(choose_shop(observation)["card_id"], "CARD.PERFECTED_STRIKE")
+
+    def test_large_deck_card_policy_matches_shop_and_reward(self) -> None:
+        def stable_deck(size):
+            return (
+                ["CARD.FLAME_BARRIER"] * 3
+                + ["CARD.POMMEL_STRIKE"] * 2
+                + ["CARD.STRIKE_IRONCLAD"] * (size - 5)
+            )
+
+        def assert_choice(label, deck, act, expected):
+            card_id = "CARD.ANGER"
+            shop = {
+                "phase": "shop",
+                "run": {"act": act},
+                "deck": deck,
+                "legal_actions": [{"type": "buy_card", "card_id": card_id}, {"type": "skip"}],
+            }
+            reward = {
+                "run": {"act": act},
+                "player": {"deck": deck},
+                "legal_actions": [
+                    {"type": "card_reward", "card_id": card_id},
+                    {"type": "card_reward_alternative", "option_id": "Skip"},
+                ],
+            }
+            with self.subTest(label=f"{label}_shop"):
+                selected = choose_shop(shop)
+                self.assertEqual(selected.get("card_id") == card_id, expected)
+                if not expected:
+                    self.assertEqual(selected["type"], "skip")
+            with self.subTest(label=f"{label}_reward"):
+                selected = choose_card_reward(reward)
+                self.assertEqual(selected.get("card_id") == card_id, expected)
+                if not expected:
+                    self.assertEqual(selected["option_id"], "Skip")
+
+        cases = [
+            ("act1_below_limit", stable_deck(19), 0, True),
+            ("act1_limit", stable_deck(20), 0, False),
+            ("act2_below_limit", stable_deck(24), 1, True),
+            ("act2_limit", stable_deck(25), 1, False),
+            ("act3_below_limit", stable_deck(29), 2, True),
+            ("act3_limit", stable_deck(30), 2, False),
+        ]
+        for case in cases:
+            assert_choice(*case)
+
+    def test_large_deck_limit_uses_low_cost_battle_trance_margin(self) -> None:
+        def observation(size, battle_specs):
+            deck = (
+                ["CARD.FLAME_BARRIER"] * 3
+                + ["CARD.POMMEL_STRIKE"] * 2
+                + ["CARD.STRIKE_IRONCLAD"] * (size - 5)
+            )
+            metadata = [
+                {"index": index, "id": card_id, "type": "Skill", "cost": 1, "upgrade": 0}
+                for index, card_id in enumerate(deck)
+            ]
+            for index, (cost, upgrade) in enumerate(battle_specs, start=5):
+                deck[index] = "CARD.BATTLE_TRANCE"
+                metadata[index] |= {"id": "CARD.BATTLE_TRANCE", "cost": cost, "upgrade": upgrade}
+            return {
+                "phase": "shop",
+                "run": {"act": 1},
+                "deck": deck,
+                "deck_cards": metadata,
+                "legal_actions": [
+                    {"type": "buy_card", "card_id": "CARD.ANGER"},
+                    {"type": "skip"},
+                ],
+            }
+
+        cases = [
+            ("low_cost", 26, [(1, 0)], "buy_card"),
+            ("cost_two", 26, [(2, 0)], "skip"),
+            ("normal_then_upgraded", 27, [(1, 0), (1, 1)], "buy_card"),
+            ("upgraded_then_normal", 27, [(1, 1), (1, 0)], "buy_card"),
+        ]
+        for label, size, battle_specs, expected_type in cases:
+            with self.subTest(label=label):
+                self.assertEqual(choose_shop(observation(size, battle_specs))["type"], expected_type)
 
     def test_shop_uses_known_boss_axis(self) -> None:
         observation = {

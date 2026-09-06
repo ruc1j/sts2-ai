@@ -1403,6 +1403,54 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
     return {card: len(cards) - index for index, card in enumerate(cards)}
 
 
+# This is a conservative acquisition guideline, not a measured rotation speed. Only repeatable,
+# low-cost cards with a positive hand-size gain contribute extra capacity.
+_REPEATABLE_DRAW_COUNTS = {
+    "CARD.BATTLE_TRANCE": (3, 4),
+    "CARD.DRUM_OF_BATTLE": (2, 2),
+    "CARD.POMMEL_STRIKE": (1, 2),
+}
+
+
+def _large_deck_addition_allowed(
+    observation: dict, deck_list: list[str], deck_ids: set[str], card_id: str, core: dict[str, int]
+) -> bool:
+    run = observation.get("run") or {}
+    act = _number(run.get("act"), 0) if isinstance(run, dict) else 0
+    limit = (20, 25, 30)[min(max(act, 0), 2)]
+    deck_cards = observation.get("deck_cards") or (observation.get("player") or {}).get("deck_cards") or ()
+    if not deck_cards:
+        deck_cards = (observation.get("player") or {}).get("deck") or deck_list
+    # Battle Trance also applies NoDraw, so only the largest copy contributes toward the margin.
+    trance_extra = 0
+    rotation_extra = 0
+    for card in deck_cards:
+        card_id_in_deck = card.get("id") or card.get("card_id") if isinstance(card, dict) else card
+        draw_counts = _REPEATABLE_DRAW_COUNTS.get(card_id_in_deck)
+        if draw_counts is None:
+            continue
+        if isinstance(card, dict):
+            cost = card.get("cost")
+            if cost is not None and _number(cost, 2) > 1:
+                continue
+            upgraded = _number(card.get("upgrade")) > 0
+        else:
+            upgraded = False
+        card_extra = max(draw_counts[upgraded] - 1, 0)
+        if card_id_in_deck == "CARD.BATTLE_TRANCE":
+            trance_extra = max(trance_extra, card_extra)
+        else:
+            rotation_extra += card_extra
+    limit += min(6, rotation_extra + trance_extra)
+    if len(deck_list) < limit:
+        return True
+    return (
+        (card_id in core and card_id not in deck_ids)
+        or (sum(card in STRONG_BLOCK_CARDS for card in deck_list) < 3 and card_id in STRONG_BLOCK_CARDS)
+        or (sum(card in DRAW_CARDS for card in deck_list) < 2 and card_id in DRAW_CARDS)
+    )
+
+
 def choose_shop(observation: dict) -> dict:
     actions = observation.get("legal_actions", ())
     removals = [action for action in actions if action.get("type") == "remove"]
@@ -1432,6 +1480,10 @@ def choose_shop(observation: dict) -> dict:
     buys = [action for action in actions if action.get("type") == "buy_card"]
     axis = _relic_axis(deck_ids)
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
+    buys = [
+        action for action in buys
+        if _large_deck_addition_allowed(observation, deck_list, deck_ids, action.get("card_id") or action.get("id"), core)
+    ]
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
 
     def card_key(action: dict) -> tuple[int, int, int, int, int]:
@@ -1441,7 +1493,7 @@ def choose_shop(observation: dict) -> dict:
             return (0, 0, 0, 0, 0)
         if over_high_cost_cap and _number(shop_cards.get(card_id, {}).get("energy_cost"), 0) >= 3:
             return (0, 0, 0, 0, 0)
-        if card_id in core:
+        if card_id in core and card_id not in deck_ids:
             return (4, core[card_id], tier_score.get(CARD_TIERS.get(card_id, "D"), 0), 0, 0)
         if not (set(EXHAUST_ENABLERS) & deck_ids) and card_id in UNCOMMITTED_EXHAUST_PAYOFF:
             return (0, 0, 0, 0, 0)
@@ -1491,12 +1543,12 @@ def choose_shop(observation: dict) -> dict:
         return best_card
     if best_relic is not None and relic_score >= 6:
         return best_relic
-    if best_card and card_key(best_card)[0] == 2:
-        return best_card
     remove_id = "CARD.DEFEND_IRONCLAD" if "CARD.PERFECTED_STRIKE" in deck_ids else "CARD.STRIKE_IRONCLAD"
     preferred = next((action for action in removals if (action.get("card_id") or action.get("id")) == remove_id), None)
     if preferred:
         return preferred
+    if best_card and card_key(best_card)[0] == 2:
+        return best_card
     return next((action for action in actions if action.get("type") == "skip"), actions[0] if actions else {"type": "skip"})
 
 
@@ -1758,6 +1810,12 @@ def choose_card_reward(observation: dict) -> dict:
     tier_score = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}
     deck_ids = _deck_ids(observation)
     core = _core_priority(deck_ids, {action["card_id"] for action in actions})
+    actions = [
+        action for action in actions
+        if _large_deck_addition_allowed(observation, deck_list, deck_ids, action["card_id"], core)
+    ]
+    if not actions:
+        return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     priority = {card_id: tier_score[tier] for card_id, tier in CARD_TIERS.items()}
     player = observation.get("player", {})
     if player.get("hp", 0) <= player.get("max_hp", 1) // 2 and "CARD.FEED" in priority:
