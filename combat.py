@@ -28,7 +28,7 @@ PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
 TORIC_TOUGHNESS, SQUASH, TEAR_ASUNDER = "Toric Toughness", "Squash", "Tear Asunder"
-HAVOC, STOKE = "Havoc", "Stoke"
+HAVOC, STOKE, METAMORPHOSIS = "Havoc", "Stoke", "Metamorphosis"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -57,7 +57,7 @@ CARD_COST = {
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
-    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1,
+    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -107,17 +107,17 @@ UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
-EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL}
+EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE}
 
@@ -780,6 +780,10 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
     if name in ATTACKS and _power(combat.player_powers, "TangledPower"):
         # TangledPower afflicts every Attack with Entangled (EnergyVar 1) for the turn.
         cost += 1
+    if name in ATTACKS and _power(combat.player_powers, "FreeAttackPower"):
+        # FreeAttackPower.TryModifyEnergyCostInCombatLate zeroes Attack costs while it lasts; each
+        # Attack played decrements it (see step()).
+        return 0
     if (
         RELIC_BRILLIANT_SCARF in combat.player_relics
         and combat.cards_played_this_turn == BRILLIANT_SCARF_FREE_AFTER
@@ -1698,6 +1702,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     energy_gain_allowed = not _power(combat.player_powers, "NoEnergyGainPower")
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
     combo_block += helmet_block
+    if card in ATTACKS and _power(combat.player_powers, "FreeAttackPower"):
+        # FreeAttackPower.BeforeCardPlayed decrements once per Attack played from hand.
+        combo_powers = _add_power(combo_powers, "FreeAttackPower", -1)
     if card in POWERS and RELIC_LOST_WISP in relics:
         # LostWisp.AfterCardPlayed: 8 Unpowered damage to every hittable enemy per Power card.
         combo_enemies = [
@@ -1736,6 +1743,18 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         vambrace_used=combat.vambrace_used or vambrace_double,
         unsettling_lamp_used=combat.unsettling_lamp_used or lamp_double,
     )
+    if card == METAMORPHOSIS:
+        # Generates Cards (3, 5 upgraded) random Attacks straight into the draw pile, each free
+        # for the rest of the combat, then exhausts itself.
+        count = 5 if card_was_upgraded else 3
+        generated = tuple(Card(rng.choice(INFERNAL_BLADE_ATTACKS)) for _ in range(count))
+        spent = 0 if card_is_free else _effective_cost(combat, played_value)
+        combat = replace(
+            combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (played_value,),
+            draw_pile=combat.draw_pile + generated, free_cards=combat.free_cards + generated,
+            energy=combat.energy - spent,
+        )
+        return _after_exhaust(combat, (played_value,), rng, data)
     if card == STOKE:
         # Stoke exhausts the whole hand, then generates that many cards back into it (upgraded
         # when Stoke itself is). The generated cards are not free - they cost their own energy.

@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, STOKE, STOKE_GENERATION, card_name, _tender_penalty, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -1394,6 +1394,27 @@ class CombatTest(unittest.TestCase):
         self.assertEqual((after.energy, _power(after.player_powers, "RadiancePower")), (4, 0))
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
+
+    def test_metamorphosis_seeds_the_draw_pile_with_free_attacks(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ())
+        combat = Combat(80, (METAMORPHOSIS,), (), (), (enemy,), energy=2)
+        after = step(combat, METAMORPHOSIS, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, len(after.draw_pile), after.exhaust_pile), (0, 3, (METAMORPHOSIS,)))
+        self.assertTrue(all(card_name(c) in INFERNAL_BLADE_ATTACKS for c in after.draw_pile))
+        # Every generated card is free for the rest of the combat.
+        self.assertEqual(set(after.draw_pile), set(after.free_cards))
+        upgraded = step(replace(combat, upgraded_cards=(METAMORPHOSIS,)), METAMORPHOSIS, DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(upgraded.draw_pile), 5)
+
+    def test_free_attack_power_zeroes_attacks_and_is_spent_per_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ())
+        combat = Combat(80, (STRIKE, STRIKE, DEFEND), (), (), (enemy,), energy=0, player_powers=(("FreeAttackPower", 1),))
+        self.assertEqual(_effective_cost(combat, STRIKE), 0)  # Attacks are free
+        self.assertEqual(_effective_cost(combat, DEFEND), 1)  # Skills still cost
+        after = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        # One Attack spent the only charge, so the next one is full price again and unaffordable.
+        self.assertEqual((_power(after.player_powers, "FreeAttackPower"), after.energy), (0, 0))
+        self.assertNotIn(f"{STRIKE}@0", legal_actions(after))
 
     def test_sloth_caps_the_number_of_cards_played_in_a_turn(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())

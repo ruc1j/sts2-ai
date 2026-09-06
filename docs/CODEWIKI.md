@@ -84,6 +84,12 @@ Byrdonis Egg(`CARD.BYRDONIS_EGG`)は手札に41回来て1度も使われない�
 
 `SlothPower` は `ShouldPlay` が `_cardsPlayedThisTurn < Amount` を返すので、**1ターンに打てる枚数がAmount枚に制限される**。RingingPowerと同じく `legal_actions` の先頭で `END_TURN` だけを返す。
 
+Metamorphosis(`CARD.METAMORPHOSIS`)はコスト2のEvent Skill(Exhaust)で、**ランダムな攻撃カードを3枚(強化5枚)山札へ生成し、その戦闘中ずっと無料**にする(`SetToFreeThisCombat`)。生成先は手札ではなく山札。`INFERNAL_BLADE_ATTACKS` のプールと `Combat.free_cards` にそのまま乗る。
+
+`FreeAttackPower` は所持中、手札とプレイ中の**攻撃カードのコストを0**にし、攻撃を1枚打つごとにDecrementする(`BeforeCardPlayed`)。`astra_base_T3XQ7WM2VP` でStrikeが観測コスト0で出ていた4件の正体。
+
+**未対応のまま残した: `CARD.VICIOUS` と `ViciousPower`。** カードはコスト1のPowerで `ViciousPower`(1、強化2)を付与し、powerは `AfterPowerAmountChanged` で**自分がVulnerableを付与するたびAmount枚ドロー**する。Vulnerableの付与箇所が `CARD_VULNERABLE_TARGET`/TAUNT/TREMBLE/THUNDERCLAP/MOLTEN_FIST/DOMINATEと散っており、`_apply_enemy_debuff` はEnemyしか返さないのでドローを差し込めない。入れるなら単体攻撃パスの出口でVulnerable増加を検出する形になる。`astra_base_M5PC8TQ3BN` で手札12回・`POWER.VICIOUS_POWER` の観測23回。
+
 Stoke(`CARD.STOKE`)は手札を全てExhaustし、その枚数ぶんカードを生成して手札へ戻すコスト1のRare Skill(強化で生成カードも強化済み)。生成は `AddGeneratedCardsToCombat` 系でJSONに実体が無いため、Infernal Bladeと同じ近似——`STOKE_GENERATION`(モデル済みの非Basic・非Statusカード)から抽選する(`ponytail:` コメントあり)。生成カードは無料ではなく自前のコストを払う。
 
 `TangledPower` は所持中、**攻撃カードのコストを+1**する(全Attackに `Entangled` を付与するが、Afflictionに固有ロジックは無くTangledPower側に全て載っている)。自ターン終了で自身を消すので1ターン限り。
