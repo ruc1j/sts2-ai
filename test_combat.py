@@ -1391,6 +1391,18 @@ class CombatTest(unittest.TestCase):
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
 
+    def test_search_never_prefers_a_first_move_that_kills_the_player(self) -> None:
+        # astra_goal_scarf1 seq463: at 2 HP against a respawning boss every line lost, and the
+        # old scoring picked Blood Wall - its 2 self-damage killed the player on the spot, which
+        # scored better than dying later at negative HP.
+        enemy = Enemy("MONSTER.DUMMY", 400, "HIT_MOVE", ())
+        combat = Combat(2, (BLOOD_WALL, PRIMAL_FORCE), (), (), (enemy,), energy=3)
+        ranked = search(combat, ATTACKING_DUMMY_DATA, 40, seed=0)
+        self.assertEqual(dict(ranked)[BLOOD_WALL], min(value for _, value in ranked))
+        self.assertNotEqual(ranked[0][0], BLOOD_WALL)
+        # Blood Wall really is lethal here, so the penalty is not masking a survivable line.
+        self.assertEqual(step(combat, BLOOD_WALL, ATTACKING_DUMMY_DATA, random.Random(0)).player_hp, 0)
+
     def test_brilliant_scarf_makes_the_turns_fifth_card_free(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ())
         combat = Combat(

@@ -2279,7 +2279,11 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
             # the turn outscore a free Strike whenever any block was up (astra_goal_thin1 seq94:
             # End turn +10 vs Strike +6, while the Strike's rollouts ended 1.5 HP higher). Only
             # the rollout's own outcome should speak for End turn.
-            immediate = 0.0 if action == END_TURN else (
+            # A first move that kills the player outright gets no credit for whatever block or
+            # damage it produced on the way, and is scored below every other loss: the rollouts
+            # may all lose, but only this line forecloses the fight on the spot.
+            self_killed = action != END_TURN and state.player_hp <= 0
+            immediate = 0.0 if action == END_TURN or state.player_hp <= 0 else (
                 _step_score(combat, state, data) + _setup_bonus(combat, state, card_value, data)
             ) / 100
             for _ in range(60):
@@ -2296,10 +2300,18 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
                 and not any(enemy.escaped and enemy.primary for enemy in state.enemies)
             )
             # Win/loss dominates; HP and the immediate-move score break ties so noisy rollouts still rank correctly.
-            scored_hp = state.player_hp
+            # The real game floors HP at 0, but _apply_player_damage lets it go negative. Without
+            # the clamp a lost position ranks "die now at exactly 0" above "die later at -23", and
+            # a move whose own self-damage is lethal outscores every alternative (astra_goal_scarf1
+            # seq463: at 2 HP the search played Blood Wall for its 2 self-damage and killed itself
+            # rather than block with Toric Toughness).
+            scored_hp = max(0, state.player_hp)
             if won and RELIC_MEAT_ON_THE_BONE in state.player_relics and state.player_max_hp > 0 and scored_hp * 2 <= state.player_max_hp:
                 scored_hp = min(state.player_max_hp, scored_hp + 12)
-            scores.append((1 if won else -1 if state.player_hp <= 0 else 0) + scored_hp / 100 + immediate)
+            scores.append(
+                (1 if won else -1 if state.player_hp <= 0 else 0)
+                + scored_hp / 100 + immediate - (0.01 if self_killed else 0.0)
+            )
         results.append((action, sum(scores) / len(scores)))
     if not results:
         return [(END_TURN, 0.0)]
