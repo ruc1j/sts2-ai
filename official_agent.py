@@ -1175,6 +1175,17 @@ def choose_crab_facing(observation: dict, cards: list[dict]) -> dict | None:
 def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     if not actions:
         return None
+    # EntropicBrew.OnUse loops `while HasOpenPotionSlots`, and the belt frees the brew's own slot
+    # first, so drinking it on a full belt trades it for exactly one random potion (observed:
+    # astra_base_K7M2QX9BTR seq117 -> seq118, Entropic Brew replaced by a Strength Potion). With
+    # a slot already open it yields two or more. It has no combat effect either way and is usable
+    # AnyTime, so holding it until a slot frees up costs nothing.
+    if any(str(action.get("potion_id")) == "POTION.ENTROPIC_BREW" for action in actions):
+        slots = observation.get("potions")
+        if isinstance(slots, list) and slots and all(slot for slot in slots):
+            actions = [action for action in actions if str(action.get("potion_id")) != "POTION.ENTROPIC_BREW"]
+            if not actions:
+                return None
     enemy_hp = {enemy["combat_id"]: enemy["hp"] for enemy in observation.get("enemies", ())}
     enemy_max_hp = {
         enemy["combat_id"]: _number(enemy.get("max_hp"), enemy.get("hp", 0))

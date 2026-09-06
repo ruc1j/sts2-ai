@@ -48,6 +48,10 @@ Toric Toughness(`CARD.TORIC_TOUGHNESS`)は `astra_goal_deck2` で手札に53回�
 
 Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_success` 0回)。Bashと同型のコスト1・ダメージ10・対象にVulnerable 2、強化で+2/+1のEventカードである。
 
+**Entropic Brewは空きスロットが無い間は使わない。** `EntropicBrew.OnUse` は `while HasOpenPotionSlots` で空き全部を埋めるが、**飲んだ本人のスロットが先に空く**ので、満杯で飲むと「1本を1本に交換」で終わる(実測: `astra_base_K7M2QX9BTR` seq117→118でEntropic BrewがStrength Potionに置き換わっただけ)。空きが1つあれば2本以上になる。戦闘効果は無く `PotionUsage.AnyTime` なので、空くまで持っていても損はしない。`choose_potion` の入口で、全スロットが埋まっているときだけ候補から外す。
+
+**ポーションを抱えて死ぬこと自体は必ずしも誤りではない。** `astra_base_B8KD5NR9GC` はCure All/Power/Strengthの3本を持ったままHP13で敗北し、一見「温存しすぎ」に見えた。だが実際にはHP13・被弾22・敵HP44で、手札の最大火力はCinder+Strikeの24、Evil Eyeで8ブロックしても足りない——**どのポーションを飲んでも助からない局面**だった。「死ぬときは温存を解除する」という変更を試したところ、記録済みの `test_saves_major_potion_after_defensive_potion_in_monster_room` が落ちた。テストの側が正しく、変更は撤回した。**敗北時の所持ポーションを見るときは、飲んでいれば勝てたかを必ず確認すること。**
+
 **「取得方針に攻撃の下限が無い」という仮説は測定で否定された(2026-09-07)。** `astra_goal_cards1` のAct 2ボス到達デッキ(28枚中ブロック10・攻撃約10)を目で見て一般化したものだったが、8seedのベースライン(`data/astra_base_*`)をゲーム自身の `type` で数え直すと**ほぼ全てのデッキでAttackがSkillを上回っていた**(例: B8KD5NR9GC 21枚でAttack11/Skill9、T3XQ7WM2VP 17枚でAttack11/Skill6)。「攻撃札 < ブロック札」が成立するのはカード報酬78件中10件だけで、`strong_defense_bonus` に攻撃優先の譲歩を足しても**78件中0件しか判断が変わらなかった**。変更は撤回した。**この方向を再提案する前に、必ず同じ数え直しをすること。**
 
 ベースラインそのものも記録しておく: base `ae68b6c` の8seedで **1勝7敗**(勝ちはD6A1F8C3E5のみ、残HP22/98)。敗北した7本の敗因は「その戦闘に入る前のHPが足りない」形が多く、デッキ構成そのものではない。

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_potion, choose_rest, choose_shop, rollout_choice
 from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
 
 
@@ -1378,6 +1378,29 @@ class OfficialAgentTest(unittest.TestCase):
         elite = {**base, "run": {"act": 0, "floor": 5, "room_type": "Elite"}}
         self.assertEqual(choose(monster)["type"], "end_turn")
         self.assertEqual(choose(elite)["potion_id"], "POTION.STRENGTH_POTION")
+
+    def test_entropic_brew_waits_for_an_open_potion_slot(self) -> None:
+        # Drinking it on a full belt frees only its own slot, so it trades one potion for one.
+        observation = {
+            "run": {"act": 1, "floor": 8, "room_type": "Elite"},
+            "turn": 1,
+            "potions": [
+                {"index": 0, "id": "POTION.SPEED_POTION"},
+                {"index": 1, "id": "POTION.FAIRY_IN_A_BOTTLE"},
+                {"index": 2, "id": "POTION.ENTROPIC_BREW"},
+            ],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.ENTROPIC_BREW", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 60, "max_hp": 80},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.X", "hp": 120, "max_hp": 120, "intents": [{"damage": 12, "repeats": 1}]}],
+        }
+        actions = [a for a in observation["legal_actions"] if a["type"] == "potion"]
+        self.assertIsNone(choose_potion(observation, actions))
+        # With a slot already open it yields two or more potions, so it is worth drinking.
+        observation["potions"][1] = None
+        self.assertEqual(choose_potion(observation, actions)["potion_id"], "POTION.ENTROPIC_BREW")
 
     def test_saves_major_potion_after_defensive_potion_in_monster_room(self) -> None:
         observation = {
