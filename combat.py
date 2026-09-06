@@ -29,6 +29,7 @@ EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
 TORIC_TOUGHNESS, SQUASH, TEAR_ASUNDER = "Toric Toughness", "Squash", "Tear Asunder"
 HAVOC, STOKE, METAMORPHOSIS = "Havoc", "Stoke", "Metamorphosis"
+VICIOUS = "Vicious"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -57,7 +58,7 @@ CARD_COST = {
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
-    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2,
+    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -101,13 +102,13 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER}
+POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -1379,7 +1380,29 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     return _autoplay_drawn_strikes(result, drawn, data, rng)
 
 
+def _enemy_vulnerable_total(combat: Combat) -> int:
+    return sum(_power(enemy.powers, "VulnerablePower") for enemy in combat.enemies if enemy.alive)
+
+
 def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
+    """Resolve one player action.
+
+    ViciousPower.AfterPowerAmountChanged draws its amount whenever the owner applies Vulnerable,
+    and the player can do that from Bash, Squash, Break, Taunt, Tremble, Thunderclap, Molten Fist,
+    Dominate and potions. Detecting the increase once here beats threading a draw through every
+    one of those call sites and missing one.
+    """
+    vicious = _power(combat.player_powers, "ViciousPower")
+    if not vicious or action == END_TURN:
+        return _step(combat, action, data, rng)
+    before = _enemy_vulnerable_total(combat)
+    after = _step(combat, action, data, rng)
+    if _enemy_vulnerable_total(after) > before and not after.terminal:
+        return _draw_into_combat(after, vicious, data, rng)
+    return after
+
+
+def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
     combat = _sync_belt_buckle(_sync_red_skull(combat))
@@ -1996,6 +2019,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
     if card == FEEL_NO_PAIN:
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
+    if card == VICIOUS:
+        return replace(combat, player_powers=_add_power(combat.player_powers, "ViciousPower", 2 if card_was_upgraded else 1))
     if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER}:
         return combat
     enemies = list(combat.enemies)

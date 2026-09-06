@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -1394,6 +1394,27 @@ class CombatTest(unittest.TestCase):
         self.assertEqual((after.energy, _power(after.player_powers, "RadiancePower")), (4, 0))
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
+
+    def test_vicious_draws_whenever_the_player_applies_vulnerable(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (VICIOUS, BASH, STRIKE), (STRIKE,) * 8, (), (enemy,), energy=6)
+        after = step(combat, VICIOUS, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "ViciousPower"), 1)
+        # Bash applies Vulnerable, so one card is drawn on top of the usual hand.
+        before = len(after.hand)
+        after = step(after, f"{BASH}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.enemies[0].powers, "VulnerablePower"), 2)
+        self.assertEqual(len(after.hand), before)  # Bash left hand, one card drawn back in
+        # A plain Strike applies no Vulnerable, so nothing is drawn.
+        before = len(after.hand)
+        after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(after.hand), before - 1)
+
+    def test_vicious_upgraded_draws_two(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (BASH,), (STRIKE,) * 8, (), (enemy,), energy=3, player_powers=(("ViciousPower", 2),))
+        after = step(combat, f"{BASH}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(after.hand), 2)  # Bash left hand, two drawn
 
     def test_metamorphosis_seeds_the_draw_pile_with_free_attacks(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ())
