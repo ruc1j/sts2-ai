@@ -465,7 +465,11 @@ def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -
     values = _dict(enemy.values)
     if "SlotName ==" in expression:
         return enemy.slot == re.search(r'"([^"]+)"', expression).group(1)
-    if expression.lstrip("!") == "CanLay":
+    if expression.lstrip("!") == "CanFabricate":
+        # Fabricator.CanFabricate: GetTeammatesOf counts the whole enemy side including itself,
+        # so it keeps building bots until four monsters are alive, then Disintegrates instead.
+        result = sum(other.alive for other in enemies) < 4
+    elif expression.lstrip("!") == "CanLay":
         # Ovicopter lays three ToughEgg minions while fewer than three remain alive.
         result = sum(other.alive and other.model == "MONSTER.TOUGH_EGG" for other in enemies) < 3
     elif "HasPower<" in expression:
@@ -1125,6 +1129,17 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         and enemy.move == "ABOUT_TO_BLOW_MOVE"
     ):
         forced_move = "ABOUT_TO_BLOW_MOVE"
+    if enemy.model == "MONSTER.FABRICATOR" and move_id in {"FABRICATE_MOVE", "FABRICATING_STRIKE_MOVE"}:
+        # The exporter leaves both moves' effects empty because Fabricator spawns through its own
+        # SpawnDefensiveBot/SpawnAggroBot helpers rather than a CreatureCmd.Add effect.  Fabricate
+        # builds one of each kind, Fabricating Strike only an aggro bot; every bot gets MinionPower.
+        # ponytail: SpawnBot also excludes whichever model it spawned last, which needs per-monster
+        # state - draw uniformly instead and add the exclusion if bot mix ever matters.
+        pools = [("MONSTER.GUARDBOT", "MONSTER.NOISEBOT")] if move_id == "FABRICATE_MOVE" else []
+        pools.append(("MONSTER.ZAPBOT", "MONSTER.STABBOT"))
+        for pool in pools:
+            spawned = _summon(_specs(data)[rng.choice(pool)]["class"], data, rng)
+            enemies.append(replace(spawned, powers=spawned.powers + (("MinionPower", 1),)))
     if enemy.model == "MONSTER.BOWLBUG_ROCK":
         if move_id == "HEADBUTT_MOVE" and damage_events and not sum(damage_events):
             # ImbalancedPower.AfterDamageGiven: a fully-blocked Headbutt sets IsOffBalance, which
