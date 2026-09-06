@@ -76,6 +76,16 @@ Spoils Map(`CARD.SPOILS_MAP`)はUnplayableのQuestカードで、Act 1のマッ�
 
 Byrdonis Egg(`CARD.BYRDONIS_EGG`)は手札に41回来て1度も使われないが、これは `CardKeyword.Unplayable` のQuestカードなのでモデル化の欠落ではない。休憩所の `HATCH` を選ぶと `Byrdpip` レリックを得てデッキから消える。`choose_rest` はHP75%以上のときだけHATCHを選ぶため、それまでは戦闘中ずっと手札を1枚潰す。
 
+Stoke(`CARD.STOKE`)は手札を全てExhaustし、その枚数ぶんカードを生成して手札へ戻すコスト1のRare Skill(強化で生成カードも強化済み)。生成は `AddGeneratedCardsToCombat` 系でJSONに実体が無いため、Infernal Bladeと同じ近似——`STOKE_GENERATION`(モデル済みの非Basic・非Statusカード)から抽選する(`ponytail:` コメントあり)。生成カードは無料ではなく自前のコストを払う。
+
+`TangledPower` は所持中、**攻撃カードのコストを+1**する(全Attackに `Entangled` を付与するが、Afflictionに固有ロジックは無くTangledPower側に全て載っている)。自ターン終了で自身を消すので1ターン限り。
+
+`TenderPower` は `AfterCardPlayed` で筋力と敏捷を1ずつ下げ、`AfterSideTurnEnd` にそのターンの枚数ぶんまとめて戻す。**powerを増減させるのではなく `cards_played_this_turn - 1` を読み取り時に引く**形で実装した——`AfterCardPlayed` は解決後に走るので**いま解決中のカードは満額**であり、この形なら自然にそうなる上、ターン終了の戻し処理も要らない(カウンタがターンで戻るため)。powerを直接下げる実装にすると、打ったカード自身まで弱くなる。
+
+敵の `RegenPower` は自ターン終了に `Amount` だけ回復してDecrementする。このモデルの敵は最大HPを持たないので、exportの `MaxInitialHp` を上限に使う。
+
+Blood Vialはターン1開始時に2回復するが、rolloutは常に現在ターンから始まるためLanternと同じく実害が無い。
+
 Havoc(`CARD.HAVOC`)は `CardPileCmd.AutoPlayFromDrawPile(1, Top, forceExhaust)` で、山札の1枚を無料で解決して**廃棄置き場ではなくExhaustへ送る**コスト1のSkill(強化で0)。`astra_seed_R9TB3LKD6M` では手札に39回来て `rollout_success` は0だった。`_autoplay_top_of_draw` を `_autoplay_drawn_strikes`(Hellraiser)と同じ要領で実装した。**このモデルの山札は順序を持たない袋**で `_draw` はランダムに1枚返すため、「一番上」は近似である(`ponytail:` コメントあり)。使えないStatus/Curseが出た場合も手札から消えてExhaustされる。
 
 **低HP時のマップ経路はUnknownを「確定の戦闘より軽く、安全な部屋より重い」中間として扱う。** `astra_seed_K7M2QX9BTR` はAct 2 Floor 13でHP12/85のとき、選択肢がUnknownとShopの2つだけの場面でUnknownへ進み、そこがOvicopter+Tough Eggの戦闘で敗北した。`rest_path`/`safety_path` の `fights` 判定が `{Monster, Elite, Boss}` だけを見ており、**Unknownは戦闘なし扱いだった**。ただしUnknownをMonsterと同じ重みにすると `test_low_hp_prefers_unknown_when_no_rest_is_reachable` が落ちる——「確定の戦闘より、戦闘かもしれない部屋のほうがまし」という記録済みの判断を壊すからで、これは正しい指摘である。よって3段階にした: 確定戦闘=2、Unknown=1(HPが最大値の1/3以下のときのみ)、それ以外=0。1/3という境界は、3/4の帯全体でUnknownを戦闘扱いにすると今回の失敗が正当化する範囲をはるかに超えて経路が変わるため。

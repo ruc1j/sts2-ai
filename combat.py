@@ -28,7 +28,7 @@ PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
 TORIC_TOUGHNESS, SQUASH, TEAR_ASUNDER = "Toric Toughness", "Squash", "Tear Asunder"
-HAVOC = "Havoc"
+HAVOC, STOKE = "Havoc", "Stoke"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -57,7 +57,7 @@ CARD_COST = {
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
-    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1,
+    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -90,6 +90,12 @@ ATTACKS = {
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
 INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
+# ponytail: Stoke draws from the character's whole unlocked pool; this model can only generate
+# cards it knows, so the pool is every modeled non-Basic, non-Status card. Widen it when the
+# generated mix is shown to matter.
+STOKE_GENERATION = tuple(sorted(
+    set(CARD_COST) - {STRIKE, DEFEND, BASH, SLIMED, FRANTIC_ESCAPE, TOXIC, BURN, DAZED, INFECTION, DECAY, WOUND, BECKON, BAD_LUCK}
+))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
 POWERS = {INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER}
@@ -98,14 +104,14 @@ UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC,
+    TORIC_TOUGHNESS, HAVOC, STOKE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL}
@@ -768,6 +774,9 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
         cost = min(cost, 1)
     if isinstance(card, Card):
         cost += card.extra_cost
+    if name in ATTACKS and _power(combat.player_powers, "TangledPower"):
+        # TangledPower afflicts every Attack with Entangled (EnergyVar 1) for the turn.
+        cost += 1
     if (
         RELIC_BRILLIANT_SCARF in combat.player_relics
         and combat.cards_played_this_turn == BRILLIANT_SCARF_FREE_AFTER
@@ -786,6 +795,16 @@ def _spend_vigor(combat: Combat) -> tuple[Combat, int]:
     return replace(combat, player_powers=_add_power(combat.player_powers, "VigorPower", -vigor)), vigor
 
 
+def _tender_penalty(combat: Combat) -> int:
+    """TenderPower drops Strength and Dexterity by 1 for every card already played this turn and
+    hands the whole lot back at the side turn end. Reading it off cards_played_this_turn keeps the
+    card currently resolving at full value (AfterCardPlayed fires once it has resolved) and needs
+    no restore, since the counter resets with the turn."""
+    if not _power(combat.player_powers, "TenderPower"):
+        return 0
+    return max(0, combat.cards_played_this_turn - 1)
+
+
 def _grant_block(
     combat: Combat,
     base: int,
@@ -796,7 +815,7 @@ def _grant_block(
     powered: bool = True,
 ) -> Combat:
     if powered:
-        base += _power(combat.player_powers, "DexterityPower")
+        base += _power(combat.player_powers, "DexterityPower") - _tender_penalty(combat)
     block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
     if vambrace_double:
         block *= 2
@@ -1213,6 +1232,13 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         elif move_id == "DIZZY_MOVE":
             # DizzyMove clears IsOffBalance back to false once it executes.
             enemy = replace(enemy, powers=_add_power(enemy.powers, "OffBalancePower", -_power(enemy.powers, "OffBalancePower")))
+    regen = _power(enemy.powers, "RegenPower")
+    if regen and enemy.alive:
+        # RegenPower.AfterSideTurnEnd heals the owner by its amount, then decrements. Enemies have
+        # no max HP in this model, so cap the heal at whatever the export calls their initial HP.
+        ceiling = _dict(enemy.values).get("MaxInitialHp")
+        healed = enemy.hp + regen if ceiling is None else min(int(ceiling), enemy.hp + regen)
+        enemy = replace(enemy, hp=healed, powers=_add_power(enemy.powers, "RegenPower", -1))
     if _power(enemy.powers, "NemesisPower"):
         # NemesisPower.AfterSideTurnEnd flips a private bool each of the owner's turn ends,
         # alternately applying and removing IntangiblePower - so Test Subject's third form is
@@ -1531,6 +1557,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         if radiance:
             extra_energy += 1
             player_powers = _add_power(player_powers, "RadiancePower", -1)
+        tangled = _power(player_powers, "TangledPower")
+        if tangled:
+            # TangledPower.AfterSideTurnEnd removes itself, so the Attack surcharge lasts one turn.
+            player_powers = _add_power(player_powers, "TangledPower", -tangled)
         # NoDrawPower.AfterSideTurnEnd removes itself, so it never survives into the next turn.
         no_draw = _power(player_powers, "NoDrawPower")
         if no_draw:
@@ -1682,6 +1712,20 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         vambrace_used=combat.vambrace_used or vambrace_double,
         unsettling_lamp_used=combat.unsettling_lamp_used or lamp_double,
     )
+    if card == STOKE:
+        # Stoke exhausts the whole hand, then generates that many cards back into it (upgraded
+        # when Stoke itself is). The generated cards are not free - they cost their own energy.
+        exhausted = tuple(hand)
+        spent = 0 if card_is_free else _effective_cost(combat, played_value)
+        combat = replace(
+            combat, hand=(), discard_pile=combat.discard_pile + (played_value,),
+            exhaust_pile=combat.exhaust_pile + exhausted, energy=combat.energy - spent,
+        )
+        combat = _after_exhaust(combat, exhausted, rng, data)
+        generated = tuple(
+            Card(rng.choice(STOKE_GENERATION), upgraded=card_was_upgraded) for _ in exhausted
+        )
+        return replace(combat, hand=combat.hand + generated)
     if card == HAVOC:
         spent = 0 if card_is_free else _effective_cost(combat, played_value)
         combat = replace(
@@ -1920,7 +1964,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         # at least its Cards value. Below that it is a 0-cost card that does nothing at all.
         return combat
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
-        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower") - _tender_penalty(combat)
         combat, vigor = _spend_vigor(combat)
         damage += vigor
         if card_was_upgraded:
@@ -2091,7 +2135,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
         damage += 3
-    damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+    damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower") - _tender_penalty(combat)
     combat, vigor = _spend_vigor(combat)
     damage += vigor
     # StrikeDummy.ModifyDamageAdditive: +3 on any powered attack tagged Strike.

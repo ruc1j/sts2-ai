@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, STOKE, STOKE_GENERATION, card_name, _tender_penalty, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -1394,6 +1394,45 @@ class CombatTest(unittest.TestCase):
         self.assertEqual((after.energy, _power(after.player_powers, "RadiancePower")), (4, 0))
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
+
+    def test_stoke_exhausts_the_hand_and_refills_it_with_generated_cards(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (STOKE, STRIKE, DEFEND, BASH), (), (), (enemy,), energy=1)
+        after = step(combat, STOKE, DUMMY_DATA, random.Random(0))
+        # The three other cards are exhausted and three generated ones take their place.
+        self.assertEqual((after.energy, len(after.hand)), (0, 3))
+        self.assertEqual(sorted(map(card_name, after.exhaust_pile)), sorted([STRIKE, DEFEND, BASH]))
+        self.assertTrue(all(card_name(card) in STOKE_GENERATION for card in after.hand))
+        self.assertEqual(after.discard_pile, (STOKE,))
+
+    def test_tangled_surcharges_attacks_for_one_turn_only(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (STRIKE, DEFEND), (STRIKE,) * 8, (), (enemy,), player_powers=(("TangledPower", 1),))
+        self.assertEqual(_effective_cost(combat, STRIKE), 2)  # Attack pays the Entangled surcharge
+        self.assertEqual(_effective_cost(combat, DEFEND), 1)  # Skills are untouched
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((_power(after.player_powers, "TangledPower"), _effective_cost(after, STRIKE)), (0, 1))
+
+    def test_tender_weakens_later_cards_then_hands_the_stats_back(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (STRIKE, STRIKE), (STRIKE,) * 8, (), (enemy,), energy=3, player_powers=(("TenderPower", 1),))
+        # The first card of the turn resolves at full value; each later one loses 1.
+        after = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 94)
+        after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 89)
+        # The counter resets with the turn, so the next turn starts at full value again.
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_tender_penalty(after), 0)
+
+    def test_enemy_regen_heals_and_decrements_up_to_its_initial_hp(self) -> None:
+        values = (("MaxInitialHp", 50), ("MinInitialHp", 50))
+        enemy = Enemy("MONSTER.DUMMY", 45, "IDLE_MOVE", values, powers=(("RegenPower", 3),))
+        combat = Combat(80, (), (STRIKE,) * 8, (), (enemy,))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "RegenPower")), (48, 2))
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "RegenPower")), (50, 1))
 
     def test_havoc_plays_the_top_of_the_draw_pile_for_free_and_exhausts_it(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
