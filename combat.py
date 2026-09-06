@@ -465,7 +465,17 @@ def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -
     values = _dict(enemy.values)
     if "SlotName ==" in expression:
         return enemy.slot == re.search(r'"([^"]+)"', expression).group(1)
-    if expression.lstrip("!") == "CanFabricate":
+    if "GetAllyCount()" in expression:
+        # LivingShield.GetAllyCount explicitly excludes itself (unlike Fabricator's raw
+        # GetTeammatesOf): it Shield Slams while any ally lives and Smashes once left alone.
+        allies = sum(other.alive and other is not enemy for other in enemies)
+        match = re.search(r"GetAllyCount\(\)\s*(==|>|>=|<|<=)\s*(\d+)", expression)
+        operator, threshold = match.group(1), int(match.group(2))
+        result = {
+            "==": allies == threshold, ">": allies > threshold, ">=": allies >= threshold,
+            "<": allies < threshold, "<=": allies <= threshold,
+        }[operator]
+    elif expression.lstrip("!") == "CanFabricate":
         # Fabricator.CanFabricate: GetTeammatesOf counts the whole enemy side including itself,
         # so it keeps building bots until four monsters are alive, then Disintegrates instead.
         result = sum(other.alive for other in enemies) < 4
