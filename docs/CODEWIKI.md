@@ -56,6 +56,8 @@ cards1のAct 2ボス到達時のデッキは28枚で、ブロック札10枚(Defe
 
 Akabeko由来の `VigorPower` は対応済み——`ModifyDamageAdditive` はStrengthと同じ加算段(倍率より前)で、**1枚の攻撃カードの全ヒットに同じ量が乗り**、その攻撃の後に `AfterAttack` が自分を全消費して消える。`_spend_vigor` を単体攻撃と全体攻撃の両方の加算箇所で呼ぶ。
 
+`NoDrawPower`(Battle Tranceが自分のドロー後に自分へ付与)は `ShouldDraw` が `fromHandDraw` のときだけtrueを返す——**ターン開始時の手札ドローだけ通し、そのターンのそれ以外のドローを全て止める**。`AfterSideTurnEnd` で自分を消す。`_draw_into_combat` に `from_hand_draw` を足し、ターン開始のドローだけTrueで呼ぶ。以前は未実装で、モデルはBattle Trance→Drum of Battleと繋げてドローできると誤認していた。`RadiancePower` は `AfterEnergyReset` で+1エネルギーしてDecrementする。
+
 同じ照合でレリックも対応した。Lost Wisp(Powerカードを使うたび全敵に8のUnpoweredダメージ——`_play_card` の `combo_enemies` 段で処理)、Paper Phrog(powered攻撃のVulnerable倍率を1.5→1.75に。`_vulnerable_damage` でCrueltyと同じ加算段)、Strike Dummy(Strikeタグのpowered攻撃に+3)。Gorget(戦闘開始時Plating 4)とRed Mask(ターン1に全敵へWeak 1)は観測がpowerとして直接出すので実害は無い。Lantern(ターン1に+1エネルギー)も観測のenergyに反映済みで、rolloutは現在ターンから始まるため実害は無い。
 
 `HasTurnEndInHandEffect => true` を持つカードはDLL全体で11枚(Toxic、Burn、Infection、Decay、Beckon、Bad Luck、Wither、Regret、Shame、Doubt、Debt)。**未使用カードを洗う際はこの一覧で照合すること**。うちToxic/Burn/Infection/Decayは `ValueProp.Unpowered | Move` でUnblockableが**付いていない**——ターン終了フックが走る時点でブロックはまだ立っている(クリアは次の自ターン開始時)ので、ブロックが先に吸収する。以前は `_apply_player_damage` へ直接渡していてブロックを無視していた。対してBeckon(6)、Bad Luck(13)、Regretは `ValueProp.Unblockable` を持つので `HAND_END_UNBLOCKABLE` として別に扱う。Regret(ダメージ=手札枚数)、Wither(基本3、外部の`FakeUpgrade`で+3ずつ増える)、Shame/Doubt(ダメージではなくFrail/Weakを自分に付与)、Debt(ゴールドのみ)は未対応。

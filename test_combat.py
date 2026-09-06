@@ -1369,6 +1369,28 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
         self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
 
+    def test_battle_trance_blocks_further_draws_until_the_next_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (BATTLE_TRANCE, DRUM_OF_BATTLE), (STRIKE,) * 12, (), (enemy,))
+        after = step(combat, BATTLE_TRANCE, DUMMY_DATA, random.Random(0))
+        self.assertEqual((len(after.hand), _power(after.player_powers, "NoDrawPower")), (4, 1))
+        # Drum of Battle still resolves, but NoDraw eats its two cards.
+        after = step(after, DRUM_OF_BATTLE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(after.hand), 3)
+        # The power is removed at the side turn end, so the next hand is drawn normally.
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((len(after.hand), _power(after.player_powers, "NoDrawPower")), (5, 0))
+
+    def test_radiance_grants_one_energy_per_turn_then_decrements(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (), (STRIKE,) * 12, (), (enemy,), player_powers=(("RadiancePower", 2),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, _power(after.player_powers, "RadiancePower")), (4, 1))
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.energy, _power(after.player_powers, "RadiancePower")), (4, 0))
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 3)
+
     def test_strike_dummy_and_paper_phrog_modify_attack_damage(self) -> None:
         vulnerable = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", (), powers=(("VulnerablePower", 2),))
         # Strike 6 (+3 Strike Dummy) = 9, then Vulnerable 1.5 + Paper Phrog 0.25 = 1.75x -> 15.

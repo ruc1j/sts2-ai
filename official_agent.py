@@ -182,6 +182,8 @@ POWER_NAMES = {
     # every rollout state and the model overestimated its own block by a third.
     "POWER.FRAIL_POWER": "FrailPower",
     "POWER.VIGOR_POWER": "VigorPower",
+    "POWER.NO_DRAW_POWER": "NoDrawPower",
+    "POWER.RADIANCE_POWER": "RadiancePower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
     "POWER.STRENGTH": "StrengthPower",
     "POWER.STRENGTH_POWER": "StrengthPower",

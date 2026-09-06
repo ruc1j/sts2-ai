@@ -580,7 +580,11 @@ def _autoplay_drawn_strikes(combat: Combat, drawn: tuple[CardValue, ...], data: 
     return combat
 
 
-def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random) -> Combat:
+def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random, *, from_hand_draw: bool = False) -> Combat:
+    # NoDrawPower.ShouldDraw allows the turn-start hand draw and blocks every other draw until it
+    # is removed at the side turn end.
+    if not from_hand_draw and _power(combat.player_powers, "NoDrawPower"):
+        return combat
     drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, count, rng)
     combat = replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard)
     if not _power(combat.player_powers, "HellraiserPower"):
@@ -1437,6 +1441,15 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             if clay:
                 extra_block += clay
                 player_powers = _add_power(player_powers, "SelfFormingClayPower", -clay)
+        # RadiancePower.AfterEnergyReset: +1 energy at the turn's energy reset, then Decrement.
+        radiance = _power(player_powers, "RadiancePower")
+        if radiance:
+            extra_energy += 1
+            player_powers = _add_power(player_powers, "RadiancePower", -1)
+        # NoDrawPower.AfterSideTurnEnd removes itself, so it never survives into the next turn.
+        no_draw = _power(player_powers, "NoDrawPower")
+        if no_draw:
+            player_powers = _add_power(player_powers, "NoDrawPower", -no_draw)
         if _power(player_powers, "PlatingPower") and new_turn > 1:
             player_powers = _add_power(player_powers, "PlatingPower", -1)
         if RELIC_POCKETWATCH in relics and new_turn > 1 and combat.cards_played_this_turn <= 3:
@@ -1477,7 +1490,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
         )
-        return _draw_into_combat(combat, draw_count, data, rng)
+        return _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
 
     action_card, _, target = action.partition("@")
     card_index = None
@@ -1586,7 +1599,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     )
     if card == BATTLE_TRANCE:
         combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,))
-        return _draw_into_combat(combat, 3, data, rng)
+        combat = _draw_into_combat(combat, 3, data, rng)
+        # BattleTrance applies NoDraw after its own draw, so nothing else draws this turn.
+        return replace(combat, player_powers=_add_power(combat.player_powers, "NoDrawPower", 1))
     if card == SLIMED:
         combat = replace(combat, hand=tuple(hand), energy=combat.energy - (0 if card_is_free else 1))
         return _draw_into_combat(combat, 1, data, rng)
