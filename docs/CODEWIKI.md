@@ -76,6 +76,8 @@ Spoils Map(`CARD.SPOILS_MAP`)はUnplayableのQuestカードで、Act 1のマッ�
 
 Byrdonis Egg(`CARD.BYRDONIS_EGG`)は手札に41回来て1度も使われないが、これは `CardKeyword.Unplayable` のQuestカードなのでモデル化の欠落ではない。休憩所の `HATCH` を選ぶと `Byrdpip` レリックを得てデッキから消える。`choose_rest` はHP75%以上のときだけHATCHを選ぶため、それまでは戦闘中ずっと手札を1枚潰す。
 
+**Act 3クリア達成(2026-09-07、seed D6A1F8C3E5、base `3fd097e`)。** `data/astra_goal_intangible1_result.json` に `"act_3_complete": true`、HP22/98、15戦15勝0敗。ゲームの終了コードは0で、ログに `Finished Boss room`(Act 3 Floor 15)があり `Run failed` は無い。決め手は直前に入れたIntangible/Nemesisのモデル化で、最終戦のボスHPはturn7=299(Intangible)→turn8=291(この間8しか削れない)→**turn9=81**(Intangibleが切れた1ターンで210)→turn10で撃破と推移した。**Intangible中は仕込み、切れたターンに火力を集中する**という方針はハードコードしていない——機構を正しく教えただけで `search` が自力で導いている(第3形態の同一手札で、Intangible中はInflame -0.84 > Defend -0.95 > Strike/Bludgeon -0.99の同点、Intangible切れではBludgeonが -0.68 で首位)。
+
 **TEST_SUBJECT(Act 3ボス)の第3形態はIntangibleで、殴っても1しか通らない。** 100/200/**300**HPの3形態で総HP約600。形態変化(`RESPAWN_MOVE`)の間はHP0扱いなので `enemy.alive` が偽になり、攻撃が `legal_actions` から落ちる——ここは元から正しい。問題は第3形態の実際のpowerが `[INTANGIBLE_POWER, NEMESIS_POWER]` なのに、`_enemy_turn` の復活処理が `NemesisPower` しか付けず、しかもそれが**効果のない目印**だったこと。`IntangiblePower.ModifyHpLostAfterOsty` はSlipperyと同じフックで**1以上のHP損失を全て1にする**(Slipperyと違い被弾で消費されない)。`NemesisPower.AfterSideTurnEnd` は自ターン終了ごとに内部boolを反転させ、**Intangibleの付与と解除を交互に**行う——つまり1ターンおきに無敵。実トレース `astra_goal_pacts1` でも第3形態は299→298と1ずつしか減っていない。修正前の探索は第3形態300HPを普通に殴り倒せると信じており、勝てない火力レースに突っ込んでいた。復活時に `IntangiblePower` を付け、`_damage_enemy` で1にクランプし、敵ターン終了で反転させる。**`choose` の致死ゲートでもSlipperyと同じ扱いにする**(ヒット数を返す)——探索モデルだけでは足りない。
 
 第3形態の行動は `PHASE3_LACERATE_MOVE`(10×3) → `BIG_POUNCE`(45) → `BURNING_GROWL_MOVE`(Burn3枚+筋力2) の循環。第2形態の `MULTI_CLAW_MOVE` は自分へ戻り続け、ヒット数が毎ターン増える。
