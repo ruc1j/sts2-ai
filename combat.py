@@ -118,6 +118,10 @@ RELIC_BRIMSTONE, RELIC_MERCURY_HOURGLASS, RELIC_ART_OF_WAR = "RELIC.BRIMSTONE", 
 RELIC_SCREAMING_FLAGON, RELIC_CLOAK_CLASP = "RELIC.SCREAMING_FLAGON", "RELIC.CLOAK_CLASP"
 RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_HORN_CLEAT = "RELIC.CANDELABRA", "RELIC.CAPTAINS_WHEEL", "RELIC.HORN_CLEAT"
 RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY = "RELIC.LOST_WISP", "RELIC.PAPER_PHROG", "RELIC.STRIKE_DUMMY"
+RELIC_BRILLIANT_SCARF = "RELIC.BRILLIANT_SCARF"
+# BrilliantScarf.ShouldModifyCost fires only while exactly Cards-1 cards have been played
+# this turn, i.e. the turn's fifth card is free.
+BRILLIANT_SCARF_FREE_AFTER = 4
 RELIC_SPARKLING_ROUGE, RELIC_STONE_CALENDAR = "RELIC.SPARKLING_ROUGE", "RELIC.STONE_CALENDAR"
 RELIC_HAPPY_FLOWER, RELIC_PENDULUM = "RELIC.HAPPY_FLOWER", "RELIC.PENDULUM"
 RELIC_KUNAI, RELIC_SHURIKEN, RELIC_ORNAMENTAL_FAN, RELIC_KUSARIGAMA = "RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.ORNAMENTAL_FAN", "RELIC.KUSARIGAMA"
@@ -725,6 +729,13 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
         cost = min(cost, 1)
     if isinstance(card, Card):
         cost += card.extra_cost
+    if (
+        RELIC_BRILLIANT_SCARF in combat.player_relics
+        and combat.cards_played_this_turn == BRILLIANT_SCARF_FREE_AFTER
+    ):
+        # TryModifyEnergyCostInCombatLate zeroes the cost outright, so it wins over every
+        # adjustment above.
+        return 0
     return cost
 
 

@@ -9,7 +9,7 @@ import traceback
 from dataclasses import replace
 
 from combat import (
-    ALL_ENEMY_DAMAGE, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
     POTION_STRENGTH, SELF_DAMAGE, _resolve_move, card_name, search,
 )
@@ -2146,6 +2146,20 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         turn=observation["turn"],
         exhaust_pile=exhaust_pile,
         player_relics=tuple(observation["player"].get("relics", ())),
+        # Brilliant Scarf zeroes every hand card's cost while exactly four cards have been played
+        # this turn, and the bridge exposes no cards-played counter - but the discount is visible
+        # in the hand: a card whose modeled base cost is positive shows up at 0. Restoring the
+        # counter is what lets the rollout see that free fifth card and spend it (endturn1 seq476
+        # ended the turn holding a free Giant Rock against a 121 HP boss).
+        cards_played_this_turn=(
+            BRILLIANT_SCARF_FREE_AFTER
+            if "RELIC.BRILLIANT_SCARF" in observation["player"].get("relics", ())
+            and any(
+                _number(card.get("cost"), -1) == 0 and CARD_COST.get(CARD_NAMES.get(card.get("id"), ""), 0) > 0
+                for card in observation.get("hand") or ()
+            )
+            else 0
+        ),
         player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
         player_potions=allowed_potions,
         # The bridge exposes Lizard Tail but not its one-shot-used flag; below half HP, assume
