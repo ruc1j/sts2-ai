@@ -70,11 +70,15 @@ Frantic Escapeは `OnPlay` の最後に `EnergyCost.AddThisCombat(1)` を呼ぶ�
 
 Tear Asunder(`CARD.TEAR_ASUNDER`)はコスト2のRare攻撃で、ダメージ5を **1 + その戦闘で受けた「ブロックを貫通したダメージ」イベント数** 回ヒットさせる(強化でダメージ+2)。`CombatManager.History` の `DamageReceivedEntry` のうち `UnblockedDamage > 0` の行を数えるので、多段攻撃は貫通したヒットごとに1加算される。`Combat.unblocked_hits` で戦闘を通して数える——自傷ダメージは `DamageReceivedEntry` ではないので `_apply_player_damage` ではなく `_enemy_turn` の `damage_events` 側で数える。観測は手札のTear Asunderに `CalculatedHits` を出すため、エージェント側の再構築はその値−1を使い、正確に復元できる。
 
-Stoke(`CARD.STOKE`)は手札を全てExhaustし、その枚数ぶんランダムなカードを生成して手札に加える(強化で生成カードが強化済み)。`AddGeneratedCardsToCombat` 系でJSONに実体が無く、Infernal Bladeと同じ「モデル済みカードのプールから抽選する」近似が必要になるため未対応のまま。全試走で手札27回・`rollout_success` 0回。
+Stokeは当初この理由で保留にしていた(全試走で手札27回・`rollout_success` 0回)。後に別seedの検証で最大の死に札になったため実装した——下記参照。
 
 Spoils Map(`CARD.SPOILS_MAP`)はUnplayableのQuestカードで、Act 1のマップのTreasure地点にクエストを付け、そこへ行くと600ゴールド。戦闘での未対応ではないが、`choose_map` はこの地点を優先していない。
 
 Byrdonis Egg(`CARD.BYRDONIS_EGG`)は手札に41回来て1度も使われないが、これは `CardKeyword.Unplayable` のQuestカードなのでモデル化の欠落ではない。休憩所の `HATCH` を選ぶと `Byrdpip` レリックを得てデッキから消える。`choose_rest` はHP75%以上のときだけHATCHを選ぶため、それまでは戦闘中ずっと手札を1枚潰す。
+
+**プレイヤーが選ぶ効果をランダムで実装すると、そのカードは探索から永久に避けられる。** `CardSelectCmd.FromHand` を使う Burning Pact と Brand、および**強化版**True Gritは「手札から1枚選んでExhaust」だが、`combat.py` は3つとも常にランダムに選んでいた。結果Burning Pactは「手札の最良札を焼くかもしれない賭け」に見え、`astra_seed2_K7M2QX9BTR` では手札に**55回**来て `rollout_success` は0回だった。`_choose_exhaust_from_hand` を追加し、`EXHAUST_FODDER`(Wound/Dazed/Slimed/Toxic/Burn/Infection/Decay/Beckon/Bad Luck)とモデル未対応カードを優先して捨てる。**Frantic Escapeは意図的に除外**——Sandpitへの唯一の解答だから。未強化のTrue Gritだけは実際に `Rng.CombatCardSelection` なのでランダムのまま。**`CardSelectCmd` が出てきたら、ランダムで代用していないか確認すること。**
+
+`SlothPower` は `ShouldPlay` が `_cardsPlayedThisTurn < Amount` を返すので、**1ターンに打てる枚数がAmount枚に制限される**。RingingPowerと同じく `legal_actions` の先頭で `END_TURN` だけを返す。
 
 Stoke(`CARD.STOKE`)は手札を全てExhaustし、その枚数ぶんカードを生成して手札へ戻すコスト1のRare Skill(強化で生成カードも強化済み)。生成は `AddGeneratedCardsToCombat` 系でJSONに実体が無いため、Infernal Bladeと同じ近似——`STOKE_GENERATION`(モデル済みの非Basic・非Statusカード)から抽選する(`ponytail:` コメントあり)。生成カードは無料ではなく自前のコストを払う。
 
