@@ -28,6 +28,7 @@ PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
 TORIC_TOUGHNESS, SQUASH, TEAR_ASUNDER = "Toric Toughness", "Squash", "Tear Asunder"
+HAVOC = "Havoc"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -56,7 +57,7 @@ CARD_COST = {
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
-    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2,
+    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -97,14 +98,14 @@ UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS,
+    TORIC_TOUGHNESS, HAVOC,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL}
@@ -600,6 +601,40 @@ def _autoplay_drawn_strikes(combat: Combat, drawn: tuple[CardValue, ...], data: 
     return combat
 
 
+def _autoplay_top_of_draw(combat: Combat, data: dict, rng: random.Random) -> Combat:
+    """Havoc: CardPileCmd.AutoPlayFromDrawPile(1, Top, forceExhaust) - the top card of the draw
+    pile resolves for free and is exhausted instead of discarded.
+
+    ponytail: this model keeps the draw pile as an unordered bag, so _draw hands back a random
+    card rather than the true top one. Track draw order if card-order effects ever need it.
+    """
+    drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
+    if not drawn:
+        return combat
+    card = drawn[0]
+    combat = replace(combat, draw_pile=draw, discard_pile=discard, hand=combat.hand + (card,))
+    hand_index = len(combat.hand) - 1
+    base = f"card:{hand_index}" if isinstance(card, Card) else card_name(card)
+    candidate = replace(combat, free_cards=combat.free_cards + (card,))
+    options = legal_actions(candidate)
+    alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
+    action = None
+    if base in options:
+        action = base
+    elif alive:
+        targeted = f"{base}@{rng.choice(alive)}"
+        action = targeted if targeted in options else None
+    if action is None:
+        # An unplayable status or curse still leaves hand and is exhausted by forceExhaust.
+        combat = replace(combat, hand=combat.hand[:-1], exhaust_pile=combat.exhaust_pile + (card,))
+        return _after_exhaust(combat, (card,), rng, data)
+    after = step(candidate, action, data, rng)
+    if after.discard_pile and after.discard_pile[-1] == card:
+        after = replace(after, discard_pile=after.discard_pile[:-1], exhaust_pile=after.exhaust_pile + (card,))
+        after = _after_exhaust(after, (card,), rng, data)
+    return after
+
+
 def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random, *, from_hand_draw: bool = False) -> Combat:
     # NoDrawPower.ShouldDraw allows the turn-start hand draw and blocks every other draw until it
     # is removed at the side turn end.
@@ -726,6 +761,8 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
         # Stomp's BeforeCardPlayed hook lowers its current-turn cost for each completed Attack.
         cost = max(0, cost - combat.attacks_played_this_turn)
     if name == INFERNAL_BLADE and card_is_upgraded(combat, card):
+        cost = 0
+    if name == HAVOC and card_is_upgraded(combat, card):
         cost = 0
     if combat.enlightened_this_turn and name != WHIRLWIND:
         cost = min(cost, 1)
@@ -1645,6 +1682,13 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         vambrace_used=combat.vambrace_used or vambrace_double,
         unsettling_lamp_used=combat.unsettling_lamp_used or lamp_double,
     )
+    if card == HAVOC:
+        spent = 0 if card_is_free else _effective_cost(combat, played_value)
+        combat = replace(
+            combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,),
+            energy=combat.energy - spent,
+        )
+        return _autoplay_top_of_draw(combat, data, rng)
     if card == BATTLE_TRANCE:
         combat = replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,))
         combat = _draw_into_combat(combat, 3, data, rng)

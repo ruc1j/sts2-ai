@@ -60,6 +60,7 @@ CARD_NAMES = {
     "CARD.EQUILIBRIUM": "Equilibrium",
     "CARD.TORIC_TOUGHNESS": "Toric Toughness",
     "CARD.SQUASH": "Squash",
+    "CARD.HAVOC": "Havoc",
     "CARD.TEAR_ASUNDER": "Tear Asunder",
     "CARD.BREAK": "Break",
     "CARD.HOWL_FROM_BEYOND": "Howl From Beyond",

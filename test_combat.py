@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -1394,6 +1394,25 @@ class CombatTest(unittest.TestCase):
         self.assertEqual((after.energy, _power(after.player_powers, "RadiancePower")), (4, 0))
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
+
+    def test_havoc_plays_the_top_of_the_draw_pile_for_free_and_exhausts_it(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        # The draw pile is an unordered bag in this model, so it holds one kind of card to keep
+        # the autoplayed card deterministic.
+        combat = Combat(80, (HAVOC,), (STRIKE, STRIKE), (), (enemy,), energy=1)
+        after = step(combat, HAVOC, DUMMY_DATA, random.Random(0))
+        # Havoc costs its 1, the drawn Strike resolves for nothing, and is exhausted not discarded.
+        self.assertEqual((after.energy, after.enemies[0].hp), (0, 94))
+        self.assertEqual((after.exhaust_pile, after.discard_pile), ((STRIKE,), (HAVOC,)))
+        self.assertEqual(after.draw_pile, (STRIKE,))
+
+    def test_havoc_exhausts_an_unplayable_top_card_without_playing_it(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (HAVOC,), (WOUND, WOUND), (), (enemy,), energy=1)
+        after = step(combat, HAVOC, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 100)
+        self.assertEqual(after.exhaust_pile, (WOUND,))
+        self.assertNotIn(WOUND, after.hand)
 
     def test_intangible_caps_every_hit_at_one_without_wearing_off(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("IntangiblePower", 1),))
