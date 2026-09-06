@@ -34,6 +34,7 @@ CARD_NAMES = {
     "CARD.BURN": "Burn",
     "CARD.DAZED": "Dazed",
     "CARD.INFECTION": "Infection",
+    "CARD.DECAY": "Decay",
     "CARD.FRANTIC_ESCAPE": "Frantic Escape",
     "CARD.IRON_WAVE": "Iron Wave",
     "CARD.TWIN_STRIKE": "Twin Strike",

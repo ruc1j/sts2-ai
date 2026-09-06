@@ -37,8 +37,10 @@ ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
 # PileType.Discard by Wriggler's WRIGGLE_MOVE and only bites once it's drawn into a later hand.
-WOUND = "Wound"
-HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3}
+WOUND, DECAY = "Wound", "Decay"
+# Decay is a Curse that starts in the deck rather than being injected mid-combat, but its
+# OnTurnEndInHand is the same 2 flat Unpowered damage.
+HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3, DECAY: 2}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
