@@ -57,6 +57,7 @@ CARD_NAMES = {
     "CARD.BYRD_SWOOP": "Byrd Swoop",
     "CARD.PILLAGE": "Pillage",
     "CARD.EQUILIBRIUM": "Equilibrium",
+    "CARD.TORIC_TOUGHNESS": "Toric Toughness",
     "CARD.BREAK": "Break",
     "CARD.HOWL_FROM_BEYOND": "Howl From Beyond",
     "CARD.IMPERVIOUS": "Impervious",
@@ -280,6 +281,8 @@ KNOWN_CARD_BLOCK = {
     "CARD.TRUE_GRIT": 7,
     "CARD.EVIL_EYE": 8,
     "CARD.COLOSSUS": 5,
+    # Immediate block only; the two delayed re-grants land on later turns.
+    "CARD.TORIC_TOUGHNESS": 5,
 }
 
 
@@ -2132,6 +2135,14 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             and observation["player"]["hp"] * 2 <= observation["player"].get("max_hp", observation["player"]["hp"])
         ),
         upgraded_cards=upgraded_cards,
+        # ponytail: the bridge exposes the Toric power's remaining uses but not the block it
+        # stored, so assume the unupgraded 5. Under-counting block is the safe direction; expose
+        # the power's Block var from CombatBridge if this turns out to matter.
+        toric_pending=tuple(
+            (KNOWN_CARD_BLOCK["CARD.TORIC_TOUGHNESS"], _number(power["amount"]))
+            for power in observation["player"]["powers"]
+            if power["id"] == "POWER.TORIC_TOUGHNESS_POWER" and _number(power["amount"]) > 0
+        ),
     )
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":

@@ -27,6 +27,7 @@ RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
+TORIC_TOUGHNESS = "Toric Toughness"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -48,6 +49,7 @@ CARD_COST = {
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
+    TORIC_TOUGHNESS: 2,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -63,7 +65,7 @@ ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
 ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
-CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16}
+CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16, TORIC_TOUGHNESS: 5}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5}
 # Flat card draw with no other effect - a Skill that just replaces itself with more options.
@@ -86,13 +88,14 @@ UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
+    TORIC_TOUGHNESS,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL}
@@ -214,6 +217,10 @@ class Combat:
     cards_played_last_turn: int | None = None
     free_cards: tuple[CardValue, ...] = ()
     powers_played_this_turn: int = 0
+    # ToricToughnessPower is Instanced: each copy played stores the block it actually granted and
+    # re-grants exactly that much on each of the next two block clears.  One (stored, uses) pair
+    # per live instance, since two copies can hold different stored amounts.
+    toric_pending: tuple[tuple[int, int], ...] = ()
     bellows_used: bool = False
     burning_sticks_used: bool = False
     joss_paper_count: int = 0
@@ -1416,9 +1423,18 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
             upgraded_cards = _remember_legacy_upgrades(combat, tuple(selected))
         else:
             upgraded_cards = combat.upgraded_cards
-        retained_block = combat.player_block if _power(player_powers, "BarricadePower") else min(combat.player_block, 10) if RELIC_STURDY_CLAMP in relics else 0
+        barricaded = bool(_power(player_powers, "BarricadePower"))
+        retained_block = combat.player_block if barricaded else min(combat.player_block, 10) if RELIC_STURDY_CLAMP in relics else 0
+        toric_pending = combat.toric_pending
+        if toric_pending and not barricaded:
+            # ToricToughnessPower.AfterBlockCleared: re-grant the stored block (ValueProp.Unpowered,
+            # so no Dexterity and no Frail), then Decrement.  Barricade prevents the clear, so the
+            # power never fires that turn.
+            extra_block += sum(stored for stored, _ in toric_pending)
+            toric_pending = tuple((stored, uses - 1) for stored, uses in toric_pending if uses > 1)
         combat = replace(
             combat, hand=tuple(hand), discard_pile=tuple(discard), player_block=retained_block + extra_block,
+            toric_pending=toric_pending,
             energy=combat.max_energy + extra_energy, turn=new_turn, player_powers=player_powers, enemies=tuple(enemies),
             upgraded_cards=upgraded_cards,
             paels_tears_pending=False,
@@ -1683,8 +1699,13 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if card in CARD_BLOCK:
         base = CARD_BLOCK[card]
         if card_was_upgraded:
-            base += 4 if card == BLOOD_WALL else 3 if card in {DEFEND, EVIL_EYE, COLOSSUS} else 2 if card == TRUE_GRIT else 0 if card == ARMAMENTS else 1
+            base += 4 if card == BLOOD_WALL else 3 if card in {DEFEND, EVIL_EYE, COLOSSUS} else 2 if card in {TRUE_GRIT, TORIC_TOUGHNESS} else 0 if card == ARMAMENTS else 1
+        before = combat.player_block
         combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        if card == TORIC_TOUGHNESS:
+            # ToricToughness.OnPlay stores the block it actually granted (so Frail shrinks the
+            # stored amount too), then applies the power with Amount = Turns = 2.
+            return replace(combat, toric_pending=combat.toric_pending + ((combat.player_block - before, 2),))
     if card in {DEFEND, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, FLAME_BARRIER, FINESSE, COLOSSUS, ARMAMENTS, BLOOD_WALL}:
         return combat
     if card == RAGE:

@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
 )
 
@@ -1893,6 +1893,51 @@ class CombatTest(unittest.TestCase):
         self.assertIn(EQUILIBRIUM, legal_actions(combat))
         after = step(combat, EQUILIBRIUM, {}, random.Random(0))
         self.assertEqual((after.player_block, after.energy), (13, 1))
+
+    def test_toric_toughness_regrants_stored_block_on_two_clears(self) -> None:
+        combat = Combat(80, (TORIC_TOUGHNESS,), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),))
+        self.assertIn(TORIC_TOUGHNESS, legal_actions(combat))
+        after = step(combat, TORIC_TOUGHNESS, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_block, after.energy, after.toric_pending), (5, 1, ((5, 2),)))
+        # Each of the next two block clears re-grants the stored 5; the third turn has none left.
+        blocks = []
+        for _ in range(3):
+            after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+            blocks.append(after.player_block)
+        self.assertEqual((blocks, after.toric_pending), ([5, 5, 0], ()))
+
+    def test_toric_toughness_stores_the_block_frail_actually_granted(self) -> None:
+        combat = Combat(
+            80, (TORIC_TOUGHNESS,), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),),
+            player_powers=(("FrailPower", 2),), upgraded_cards=(TORIC_TOUGHNESS,),
+        )
+        after = step(combat, TORIC_TOUGHNESS, DUMMY_DATA, random.Random(0))
+        # Upgraded 7 block, Frail cuts it to 5, and the stored amount is that reduced value.
+        self.assertEqual((after.player_block, after.toric_pending), (5, ((5, 2),)))
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        # The re-grant is Unpowered, so Frail does not shrink it a second time.
+        self.assertEqual(after.player_block, 5)
+
+    def test_toric_toughness_does_not_fire_while_barricade_keeps_block(self) -> None:
+        combat = Combat(
+            80, (TORIC_TOUGHNESS,), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),),
+            player_powers=(("BarricadePower", 1),),
+        )
+        after = step(combat, TORIC_TOUGHNESS, DUMMY_DATA, random.Random(0))
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        # Block is retained instead of cleared, so AfterBlockCleared never runs and no use is spent.
+        self.assertEqual((after.player_block, after.toric_pending), (5, ((5, 2),)))
+
+    def test_toric_toughness_keeps_each_copy_stored_amount_separate(self) -> None:
+        combat = Combat(
+            80, (Card(TORIC_TOUGHNESS), Card(TORIC_TOUGHNESS, upgraded=True)), (), (),
+            (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),), energy=4,
+        )
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        after = step(after, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_block, after.toric_pending), (12, ((5, 2), (7, 2))))
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 12)
 
     def test_insatiable_boss_encounter_search_runs(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
