@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    SQUASH, STOMP, TAUNT, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
 )
 
@@ -1893,6 +1893,24 @@ class CombatTest(unittest.TestCase):
         self.assertIn(EQUILIBRIUM, legal_actions(combat))
         after = step(combat, EQUILIBRIUM, {}, random.Random(0))
         self.assertEqual((after.player_block, after.energy), (13, 1))
+
+    def test_tear_asunder_hits_once_per_unblocked_hit_taken(self) -> None:
+        for taken, expected_hp in [(0, 35), (2, 25), (5, 10)]:
+            with self.subTest(taken=taken):
+                enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+                combat = Combat(80, (TEAR_ASUNDER,), (), (), (enemy,), unblocked_hits=taken)
+                after = step(combat, f"{TEAR_ASUNDER}@0", DUMMY_DATA, random.Random(0))
+                self.assertEqual((after.enemies[0].hp, after.energy), (expected_hp, 1))
+
+    def test_tear_asunder_counts_each_unblocked_repeat_hit(self) -> None:
+        # ATTACKING_DUMMY_DATA hits once for 10 a turn; 5 block absorbs half of the first one.
+        combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", ()),), player_block=5)
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.unblocked_hits), (75, 1))
+        after = replace(after, player_block=99)
+        after = step(after, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        # Fully blocked, so no DamageReceivedEntry with unblocked damage and no extra hit.
+        self.assertEqual((after.player_hp, after.unblocked_hits), (75, 1))
 
     def test_squash_deals_ten_and_applies_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())

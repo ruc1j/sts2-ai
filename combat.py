@@ -27,7 +27,7 @@ RAGE, SPITE, COLOSSUS, VOLLEY = "Rage", "Spite", "Colossus", "Volley"
 PECK = "Peck"
 EXTERMINATE = "Exterminate"
 SETUP_STRIKE = "Setup Strike"
-TORIC_TOUGHNESS, SQUASH = "Toric Toughness", "Squash"
+TORIC_TOUGHNESS, SQUASH, TEAR_ASUNDER = "Toric Toughness", "Squash", "Tear Asunder"
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -49,17 +49,17 @@ CARD_COST = {
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
-    TORIC_TOUGHNESS: 2, SQUASH: 1,
+    TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
-    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, SQUASH: 10, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7, SWORD_BOOMERANG: 3,
+    FEED: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, SQUASH: 10, TEAR_ASUNDER: 5, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7, SWORD_BOOMERANG: 3,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
 }
 CARD_HITS = {TWIN_STRIKE: 2}
-CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2}
+CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
@@ -75,7 +75,7 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
-    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, SQUASH, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
+    MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, SQUASH, TEAR_ASUNDER, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -221,6 +221,8 @@ class Combat:
     # re-grants exactly that much on each of the next two block clears.  One (stored, uses) pair
     # per live instance, since two copies can hold different stored amounts.
     toric_pending: tuple[tuple[int, int], ...] = ()
+    # Times the player has taken unblocked damage this combat; Tear Asunder's hit count is 1 + this.
+    unblocked_hits: int = 0
     bellows_used: bool = False
     burning_sticks_used: bool = False
     joss_paper_count: int = 0
@@ -1197,6 +1199,9 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     combat_after_damage = replace(
         combat, player_hp=player_hp, player_powers=player_powers,
         damage_received_this_turn=damage_received, lizard_tail_used=lizard_tail_used,
+        # TearAsunder counts DamageReceivedEntry rows with UnblockedDamage > 0 for the whole
+        # combat, so each individual repeat hit that got through counts once.
+        unblocked_hits=combat.unblocked_hits + sum(amount > 0 for amount in damage_events),
     )
     combat_after_damage = _sync_red_skull(combat_after_damage)
     result = replace(
@@ -1910,6 +1915,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1
     elif card == PECK:
         hits = 4 if card_was_upgraded else 3
+    elif card == TEAR_ASUNDER:
+        # CalculatedHits: one hit, plus one per unblocked-damage event taken this combat.
+        hits = 1 + combat.unblocked_hits
     else:
         hits = fiend_fire_count if card == FIEND_FIRE else CARD_HITS.get(card, 1)
     if card == PERFECTED_STRIKE:
@@ -2096,7 +2104,7 @@ def _projected_attack_value(combat: Combat, card: CardValue) -> int:
         return max(0, combat.energy) * (CARD_DAMAGE[VOLLEY] + strength)
     if name == SWORD_BOOMERANG:
         return (3 + strength) * (4 if card_is_upgraded(combat, card) else 3)
-    hits = CARD_HITS.get(name, 1)
+    hits = 1 + combat.unblocked_hits if name == TEAR_ASUNDER else CARD_HITS.get(name, 1)
     if name in ALL_ENEMY_DAMAGE:
         return ALL_ENEMY_DAMAGE[name] * alive * hits + strength * alive * hits
     return (CARD_DAMAGE.get(name, 0) + strength) * hits

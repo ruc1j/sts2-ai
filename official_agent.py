@@ -59,6 +59,7 @@ CARD_NAMES = {
     "CARD.EQUILIBRIUM": "Equilibrium",
     "CARD.TORIC_TOUGHNESS": "Toric Toughness",
     "CARD.SQUASH": "Squash",
+    "CARD.TEAR_ASUNDER": "Tear Asunder",
     "CARD.BREAK": "Break",
     "CARD.HOWL_FROM_BEYOND": "Howl From Beyond",
     "CARD.IMPERVIOUS": "Impervious",
@@ -2139,6 +2140,18 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         # ponytail: the bridge exposes the Toric power's remaining uses but not the block it
         # stored, so assume the unupgraded 5. Under-counting block is the safe direction; expose
         # the power's Block var from CombatBridge if this turns out to matter.
+        # Tear Asunder's CalculatedHits is 1 + the combat's unblocked-damage events, so a copy in
+        # hand reports the counter directly. Without one in hand nothing reads it, so 0 is fine.
+        unblocked_hits=max(
+            (
+                _number(var.get("value")) - 1
+                for card in observation.get("hand") or ()
+                if card.get("id") == "CARD.TEAR_ASUNDER"
+                for var in card.get("vars") or ()
+                if var.get("id") == "CalculatedHits"
+            ),
+            default=0,
+        ),
         toric_pending=tuple(
             (KNOWN_CARD_BLOCK["CARD.TORIC_TOUGHNESS"], _number(power["amount"]))
             for power in observation["player"]["powers"]
