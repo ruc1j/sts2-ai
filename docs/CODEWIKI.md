@@ -48,6 +48,10 @@ Toric Toughness(`CARD.TORIC_TOUGHNESS`)は `astra_goal_deck2` で手札に53回�
 
 Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_success` 0回)。Bashと同型のコスト1・ダメージ10・対象にVulnerable 2、強化で+2/+1のEventカードである。
 
+`astra_goal_deck2` と `astra_goal_cards1`(seed D6A1F8C3E5)はどちらもAct 2 Floor 16のTHE_INSATIABLEで敗北した。**未モデル機構による敗北ではない**——砂地の即死は `_enemy_turn` の `SandpitPower == 1` で正しくモデル化されており、`search_value` もターン4以降ずっと−0.85〜−1.05で「負けている」と正しく報告していた。ボスHP321に対し到達点は111と105で、砂時計の下で火力が足りない純粋なレースの負けである。deck2の敗北ターンは手札に脱出も引き札も無く、その時点で詰んでいた(脱出は手札に来た5回とも全て使われている)。両runとも敗北後にAutoSlayのwatchdogが報酬画面を待って30秒でタイムアウトするため、`result.json` は書かれず終了コード1になる——**watchdogのstack traceはクラッシュではなく敗北のサイン**で、ログの `Overlay Stack: NGameOverScreen` で判別する。
+
+cards1のAct 2ボス到達時のデッキは28枚で、ブロック札10枚(Defend 5、Blood Wall 4、Flame Barrier)に対し攻撃札は約10枚だった。`_block_starved` の40%判定はブロック札を足すとデッキも増えるため収束が遅く(1枚足すと左辺+5・右辺+2)、28枚10ブロックでもまだ「防御不足」を返し続ける。取得方針には**防御の下限はあるが攻撃の下限が無い**。ただしこの非対称は逆向きの失敗記録(29枚・強防御2枚のみでの敗北)を受けて作られたものなので、2runだけを根拠に閾値を動かさないこと。
+
 Tear Asunder(`CARD.TEAR_ASUNDER`)はコスト2のRare攻撃で、ダメージ5を **1 + その戦闘で受けた「ブロックを貫通したダメージ」イベント数** 回ヒットさせる(強化でダメージ+2)。`CombatManager.History` の `DamageReceivedEntry` のうち `UnblockedDamage > 0` の行を数えるので、多段攻撃は貫通したヒットごとに1加算される。`Combat.unblocked_hits` で戦闘を通して数える——自傷ダメージは `DamageReceivedEntry` ではないので `_apply_player_damage` ではなく `_enemy_turn` の `damage_events` 側で数える。観測は手札のTear Asunderに `CalculatedHits` を出すため、エージェント側の再構築はその値−1を使い、正確に復元できる。
 
 Stoke(`CARD.STOKE`)は手札を全てExhaustし、その枚数ぶんランダムなカードを生成して手札に加える(強化で生成カードが強化済み)。`AddGeneratedCardsToCombat` 系でJSONに実体が無く、Infernal Bladeと同じ「モデル済みカードのプールから抽選する」近似が必要になるため未対応のまま。全試走で手札27回・`rollout_success` 0回。
