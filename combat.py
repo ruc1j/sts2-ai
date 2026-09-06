@@ -2237,7 +2237,15 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -
             # rollout whose outcome is dominated by draw/enemy RNG, not by this one decision
             # (observed: VANTOM's Slippery opening scored "End turn" above "Defend").
             card_value = _action_card(combat, action)
-            immediate = (_step_score(combat, state, data) + _setup_bonus(combat, state, card_value, data)) / 100
+            # End turn has no effect of its own, but stepping it also runs the whole enemy turn,
+            # so _step_score would hand it the block absorption and kill credit for a turn it did
+            # not act in - block that was already standing before the decision. That made ending
+            # the turn outscore a free Strike whenever any block was up (astra_goal_thin1 seq94:
+            # End turn +10 vs Strike +6, while the Strike's rollouts ended 1.5 HP higher). Only
+            # the rollout's own outcome should speak for End turn.
+            immediate = 0.0 if action == END_TURN else (
+                _step_score(combat, state, data) + _setup_bonus(combat, state, card_value, data)
+            ) / 100
             for _ in range(60):
                 if state.terminal:
                     break
