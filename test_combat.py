@@ -1122,9 +1122,13 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (OFFERING,), STARTING_DECK, (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), OFFERING, {}, random.Random(0))
         self.assertEqual((after.player_hp, after.energy, len(after.hand)), (74, 3, 3))
 
-    def test_pacts_end_hits_every_enemy(self) -> None:
+    def test_pacts_end_hits_every_enemy_only_once_the_exhaust_pile_is_deep_enough(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 100, "MOVE", ()), Enemy("MONSTER.DUMMY", 100, "MOVE", ()))
-        after = step(Combat(80, (PACTS_END,), (), (), enemies, energy=1), f"{PACTS_END}@0", {}, random.Random(0))
+        base = Combat(80, (PACTS_END,), (), (), enemies, energy=1)
+        # CanDealDamage needs three cards already exhausted; with fewer it resolves for nothing.
+        after = step(replace(base, exhaust_pile=(STRIKE, STRIKE)), f"{PACTS_END}@0", {}, random.Random(0))
+        self.assertTrue(all(enemy.hp == 100 for enemy in after.enemies))
+        after = step(replace(base, exhaust_pile=(STRIKE,) * 3), f"{PACTS_END}@0", {}, random.Random(0))
         self.assertTrue(all(enemy.hp == 83 for enemy in after.enemies))
 
     def test_pommel_strike_deals_damage_and_draws(self) -> None:

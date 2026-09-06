@@ -70,6 +70,8 @@ CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRI
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
+# Pact's End deals no damage unless the exhaust pile already holds this many cards.
+PACTS_END_EXHAUST_REQUIRED = 3
 ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16, TORIC_TOUGHNESS: 5}
@@ -1859,6 +1861,10 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         enemies[int(target)] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
         combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         return replace(combat, enemies=tuple(enemies))
+    if card == PACTS_END and len(exhaust_before) < PACTS_END_EXHAUST_REQUIRED:
+        # PactsEnd.OnPlay only attacks while CanDealDamage - the exhaust pile must already hold
+        # at least its Cards value. Below that it is a 0-cost card that does nothing at all.
+        return combat
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
         damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
         combat, vigor = _spend_vigor(combat)

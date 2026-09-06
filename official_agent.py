@@ -9,7 +9,7 @@ import traceback
 from dataclasses import replace
 
 from combat import (
-    ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
     POTION_STRENGTH, SELF_DAMAGE, _resolve_move, card_name, search,
 )
@@ -759,6 +759,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if enemy is None:
             enemy = enemy_by_id.get(action.get("target_id"))
         if enemy is None:
+            return 0
+        if (
+            action.get("card_id") == "CARD.PACTS_END"
+            and len(observation.get("exhaust_pile") or ()) < PACTS_END_EXHAUST_REQUIRED
+        ):
+            # CanDealDamage is false, so the card resolves for nothing. Without this the lethal
+            # gate "confirms" a kill and burns the turn (astra_goal_suicide1 seq483 played it at
+            # 9 boss HP with one card exhausted, dealt 0, and died to the next attack).
             return 0
         hits = _card_hit_count(action.get("card_id"), card_energy)
         # Slippery enemies reduce every hit to 1 until the power is spent.
