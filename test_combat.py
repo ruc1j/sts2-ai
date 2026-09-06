@@ -1395,6 +1395,31 @@ class CombatTest(unittest.TestCase):
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
 
+    def test_intangible_caps_every_hit_at_one_without_wearing_off(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("IntangiblePower", 1),))
+        combat = Combat(80, (BLUDGEON, STRIKE), (), (), (enemy,), energy=4)
+        after = step(combat, f"{BLUDGEON}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 99)  # 32 damage capped to 1
+        after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        # Unlike Slippery, taking a hit does not consume it.
+        self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "IntangiblePower")), (98, 1))
+
+    def test_nemesis_toggles_intangible_every_enemy_turn(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        values = next(m for m in glory["monsters"] if m["id"] == TEST_SUBJECT)["values"]
+        enemy = Enemy(
+            TEST_SUBJECT, 300, "PHASE3_LACERATE_MOVE", tuple(sorted(values.items())),
+            powers=(("NemesisPower", 1), ("IntangiblePower", 1)), respawns=2,
+        )
+        combat = Combat(300, (), (STRIKE,) * 10, (), (enemy,))
+        # Third form arrives Intangible; Nemesis flips it off at the end of its next turn, then on.
+        states = []
+        for _ in range(3):
+            combat = step(combat, END_TURN, glory, random.Random(0))
+            states.append(_power(combat.enemies[0].powers, "IntangiblePower"))
+        self.assertEqual(states, [0, 1, 0])
+
     def test_search_never_prefers_a_first_move_that_kills_the_player(self) -> None:
         # astra_goal_scarf1 seq463: at 2 HP against a respawning boss every line lost, and the
         # old scoring picked Blood Wall - its 2 self-damage killed the player on the spot, which

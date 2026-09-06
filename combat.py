@@ -894,6 +894,10 @@ def _damage_enemy(enemy: Enemy, damage: int, *, powered: bool = True) -> Enemy:
     if slippery and unblocked > 0:
         unblocked = 1
         powers = _add_power(powers, "SlipperyPower", -1)
+    # IntangiblePower.ModifyHpLostAfterOsty caps HP loss at 1 the same way, but is a standing
+    # power rather than a counter - nothing consumes it, only NemesisPower's toggle removes it.
+    if _power(powers, "IntangiblePower") and unblocked > 0:
+        unblocked = 1
     if flutter and unblocked > 0:
         powers = _add_power(powers, "FlutterPower", -1)
     hp = enemy.hp - unblocked
@@ -977,7 +981,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         else:
             revived = replace(
                 enemy, hp=int(values["ThirdFormHp"]), move="PHASE3_LACERATE_MOVE", respawns=respawns,
-                powers=(("NemesisPower", 1),),
+                powers=(("NemesisPower", 1), ("IntangiblePower", 1)),
             )
         enemies = list(combat.enemies)
         enemies[index] = revived
@@ -1172,6 +1176,12 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         elif move_id == "DIZZY_MOVE":
             # DizzyMove clears IsOffBalance back to false once it executes.
             enemy = replace(enemy, powers=_add_power(enemy.powers, "OffBalancePower", -_power(enemy.powers, "OffBalancePower")))
+    if _power(enemy.powers, "NemesisPower"):
+        # NemesisPower.AfterSideTurnEnd flips a private bool each of the owner's turn ends,
+        # alternately applying and removing IntangiblePower - so Test Subject's third form is
+        # untouchable (every hit capped at 1) on every other player turn.
+        intangible = _power(enemy.powers, "IntangiblePower")
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "IntangiblePower", -1 if intangible else 1))
     if move_id == "SNORE_MOVE":
         # SlumberPower.AfterSideTurnEnd decrements once per enemy turn and forces an immediate
         # wake-up (not a "next move" transition) once it reaches 0, so this must land before the

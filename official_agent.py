@@ -182,6 +182,8 @@ POWER_NAMES = {
     # every rollout state and the model overestimated its own block by a third.
     "POWER.FRAIL_POWER": "FrailPower",
     "POWER.VIGOR_POWER": "VigorPower",
+    "POWER.INTANGIBLE_POWER": "IntangiblePower",
+    "POWER.NEMESIS_POWER": "NemesisPower",
     "POWER.NO_DRAW_POWER": "NoDrawPower",
     "POWER.RADIANCE_POWER": "RadiancePower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
@@ -769,8 +771,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # 9 boss HP with one card exhausted, dealt 0, and died to the next attack).
             return 0
         hits = _card_hit_count(action.get("card_id"), card_energy)
-        # Slippery enemies reduce every hit to 1 until the power is spent.
-        if any(power.get("id") == "POWER.SLIPPERY_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
+        # Slippery enemies reduce every hit to 1 until the power is spent; Intangible (Test
+        # Subject's third form, toggled on and off by Nemesis) does the same without wearing off.
+        if any(
+            power.get("id") in {"POWER.SLIPPERY_POWER", "POWER.INTANGIBLE_POWER"}
+            and _number(power.get("amount")) > 0
+            for power in enemy.get("powers", ())
+        ):
             return hits
         value = card_value(action, "damage")
         if value <= 0:

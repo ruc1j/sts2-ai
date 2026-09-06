@@ -76,6 +76,10 @@ Spoils Map(`CARD.SPOILS_MAP`)はUnplayableのQuestカードで、Act 1のマッ�
 
 Byrdonis Egg(`CARD.BYRDONIS_EGG`)は手札に41回来て1度も使われないが、これは `CardKeyword.Unplayable` のQuestカードなのでモデル化の欠落ではない。休憩所の `HATCH` を選ぶと `Byrdpip` レリックを得てデッキから消える。`choose_rest` はHP75%以上のときだけHATCHを選ぶため、それまでは戦闘中ずっと手札を1枚潰す。
 
+**TEST_SUBJECT(Act 3ボス)の第3形態はIntangibleで、殴っても1しか通らない。** 100/200/**300**HPの3形態で総HP約600。形態変化(`RESPAWN_MOVE`)の間はHP0扱いなので `enemy.alive` が偽になり、攻撃が `legal_actions` から落ちる——ここは元から正しい。問題は第3形態の実際のpowerが `[INTANGIBLE_POWER, NEMESIS_POWER]` なのに、`_enemy_turn` の復活処理が `NemesisPower` しか付けず、しかもそれが**効果のない目印**だったこと。`IntangiblePower.ModifyHpLostAfterOsty` はSlipperyと同じフックで**1以上のHP損失を全て1にする**(Slipperyと違い被弾で消費されない)。`NemesisPower.AfterSideTurnEnd` は自ターン終了ごとに内部boolを反転させ、**Intangibleの付与と解除を交互に**行う——つまり1ターンおきに無敵。実トレース `astra_goal_pacts1` でも第3形態は299→298と1ずつしか減っていない。修正前の探索は第3形態300HPを普通に殴り倒せると信じており、勝てない火力レースに突っ込んでいた。復活時に `IntangiblePower` を付け、`_damage_enemy` で1にクランプし、敵ターン終了で反転させる。**`choose` の致死ゲートでもSlipperyと同じ扱いにする**(ヒット数を返す)——探索モデルだけでは足りない。
+
+第3形態の行動は `PHASE3_LACERATE_MOVE`(10×3) → `BIG_POUNCE`(45) → `BURNING_GROWL_MOVE`(Burn3枚+筋力2) の循環。第2形態の `MULTI_CLAW_MOVE` は自分へ戻り続け、ヒット数が毎ターン増える。
+
 **Pact's Endは条件付きで、条件を外すと完全な空振りになる。** `PactsEnd.OnPlay` は `CanDealDamage`(廃棄置き場が `Cards`=3枚以上)のときだけ攻撃する。`ALL_ENEMY_DAMAGE` に17を無条件で入れていたため、`astra_goal_suicide1` seq483ではAct 3ボス残HP9・廃棄置き場1枚の場面で `lethal_direct` が「確定キル」としてPact's Endを打ち、**0ダメージのまま次の10×6=60被弾で敗北した**。`combat.py` 側の判定に加え、`choose` の致死ゲートの `damage()` でも同じ条件を見る——**探索モデルだけ直しても、pre-rollout の致死判定が別経路で嘘をつく**。0コストなので打つこと自体は無害だが、キル扱いにしてはいけない。
 
 **負け確定の局面で自滅しないこと。** `astra_goal_scarf1` seq463はAct 3ボスTEST_SUBJECTの第1形態をHP0まで削り、復活を待つ自HP2・ブロック0の局面だった。探索は自傷2のBlood Wallを選び、**その場で自分を殺して敗北した**。原因は2つ。(1) 実ゲームのHPは0で止まるが `_apply_player_damage` は負の値まで下げるので、`scored_hp/100` が「ちょうど0で今死ぬ」(-1.02)を「後で大きく被弾して-23で死ぬ」(-1.23)より高く評価していた——`max(0, state.player_hp)` でクランプする。(2) クランプしても即死する手が `immediate` のブロック分だけ得をするので、初手で自HPが0以下になる手には即時ボーナスを与えず、さらに0.01引いて**他のどの敗北よりも厳密に低く**する。rolloutが全て負けを返しても、その場で終わらせる手だけは別扱いにするという意味である。修正後、同じseq463はBlood Wall 2枚を最下位に落としてPrimal Forceを選ぶ。
