@@ -54,7 +54,9 @@ cards1のAct 2ボス到達時のデッキは28枚で、ブロック札10枚(Defe
 
 `POWER_NAMES` に `POWER.FRAIL` はあったが、**ゲームが実際に出すのは `POWER.FRAIL_POWER` だけ**で、この対応表は一度も機能していなかった。未対応idはそのまま素通しされるため、`combat.py` が完全に実装しているFrail(ブロック×3/4)が全rolloutで無効になり、モデルは自分のブロックを3割過大評価していた。Weak/Vulnerable/Strengthは短縮形と`_POWER`形の両方が登録されているのに、Frailだけ短縮形しか無かった。**対応表を足すときは実トレースの観測idと突き合わせること**——`data/astra_goal_*_observations.jsonl` の `player.powers[].id` を集計すれば未対応idが出る。この方法で `POWER.VIGOR_POWER`(Akabeko)、`POWER.RADIANCE_POWER`、`POWER.NO_DRAW_POWER`、`POWER.RETAIN_HAND_POWER`、`POWER.TENDER_POWER`、ポーション系powerも未対応と分かった。
 
-戦闘に効くのに `combat.py` が持っていないレリック(実トレースで所持を確認済み): Akabeko(ターン1にVigor 8——次の1枚の攻撃カードの全ヒットに+8してから消滅)、Lost Wisp(Powerカードを使うたび全敵に8ダメージ)、Paper Phrog(自分以外へのpowered攻撃でVulnerable倍率+0.25)、Strike Dummy(Strikeタグのpowered攻撃に+3)、Lantern(ターン1に+1エネルギー)。Gorget(戦闘開始時Plating 4)とRed Mask(ターン1に全敵へWeak 1)は観測がpowerとして直接出すので実害は無い。
+Akabeko由来の `VigorPower` は対応済み——`ModifyDamageAdditive` はStrengthと同じ加算段(倍率より前)で、**1枚の攻撃カードの全ヒットに同じ量が乗り**、その攻撃の後に `AfterAttack` が自分を全消費して消える。`_spend_vigor` を単体攻撃と全体攻撃の両方の加算箇所で呼ぶ。
+
+戦闘に効くのに `combat.py` が持っていないレリック(実トレースで所持を確認済み): Lost Wisp(Powerカードを使うたび全敵に8ダメージ)、Paper Phrog(自分以外へのpowered攻撃でVulnerable倍率+0.25)、Strike Dummy(Strikeタグのpowered攻撃に+3)、Lantern(ターン1に+1エネルギー)。Gorget(戦闘開始時Plating 4)とRed Mask(ターン1に全敵へWeak 1)は観測がpowerとして直接出すので実害は無い。
 
 `HasTurnEndInHandEffect => true` を持つカードはDLL全体で11枚(Toxic、Burn、Infection、Decay、Beckon、Bad Luck、Wither、Regret、Shame、Doubt、Debt)。**未使用カードを洗う際はこの一覧で照合すること**。うちToxic/Burn/Infection/Decayは `ValueProp.Unpowered | Move` でUnblockableが**付いていない**——ターン終了フックが走る時点でブロックはまだ立っている(クリアは次の自ターン開始時)ので、ブロックが先に吸収する。以前は `_apply_player_damage` へ直接渡していてブロックを無視していた。対してBeckon(6)、Bad Luck(13)、Regretは `ValueProp.Unblockable` を持つので `HAND_END_UNBLOCKABLE` として別に扱う。Regret(ダメージ=手札枚数)、Wither(基本3、外部の`FakeUpgrade`で+3ずつ増える)、Shame/Doubt(ダメージではなくFrail/Weakを自分に付与)、Debt(ゴールドのみ)は未対応。
 

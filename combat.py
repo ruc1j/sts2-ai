@@ -709,6 +709,14 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
     return cost
 
 
+def _spend_vigor(combat: Combat) -> tuple[Combat, int]:
+    """VigorPower adds its amount to every hit of the next powered attack, then removes itself."""
+    vigor = _power(combat.player_powers, "VigorPower")
+    if not vigor:
+        return combat, 0
+    return replace(combat, player_powers=_add_power(combat.player_powers, "VigorPower", -vigor)), vigor
+
+
 def _grant_block(
     combat: Combat,
     base: int,
@@ -1794,6 +1802,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
         return replace(combat, enemies=tuple(enemies))
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
         damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+        combat, vigor = _spend_vigor(combat)
+        damage += vigor
         if card_was_upgraded:
             damage += ALL_ENEMY_UPGRADE_DAMAGE.get(card, 3)
         if _power(combat.player_powers, "WeakPower"):
@@ -1963,6 +1973,8 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
         damage += 3
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+    combat, vigor = _spend_vigor(combat)
+    damage += vigor
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
         damage *= 2
     if _power(combat.player_powers, "WeakPower"):

@@ -1369,6 +1369,15 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
         self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
 
+    def test_vigor_boosts_every_hit_of_one_attack_then_is_spent(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 80, "IDLE_MOVE", ())
+        combat = Combat(80, (TWIN_STRIKE, STRIKE), (), (), (enemy,), player_powers=(("VigorPower", 8),))
+        # Twin Strike is 5 damage x2 hits; Vigor adds 8 to each hit, then removes itself.
+        after = step(combat, f"{TWIN_STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.player_powers, "VigorPower")), (80 - 26, 0))
+        after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 80 - 26 - 6)  # no Vigor left for the follow-up
+
     def test_turn_end_hand_damage_is_absorbed_by_block_but_beckon_is_not(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ())
         # Toxic (5) has no Unblockable prop, so standing block eats it before HP.

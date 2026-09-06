@@ -181,6 +181,7 @@ POWER_NAMES = {
     # The live bridge only ever emits the _POWER form; without it Frail was silently dropped from
     # every rollout state and the model overestimated its own block by a third.
     "POWER.FRAIL_POWER": "FrailPower",
+    "POWER.VIGOR_POWER": "VigorPower",
     "POWER.SLIPPERY_POWER": "SlipperyPower",
     "POWER.STRENGTH": "StrengthPower",
     "POWER.STRENGTH_POWER": "StrengthPower",
