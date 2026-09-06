@@ -58,6 +58,7 @@ CARD_NAMES = {
     "CARD.PILLAGE": "Pillage",
     "CARD.EQUILIBRIUM": "Equilibrium",
     "CARD.TORIC_TOUGHNESS": "Toric Toughness",
+    "CARD.SQUASH": "Squash",
     "CARD.BREAK": "Break",
     "CARD.HOWL_FROM_BEYOND": "Howl From Beyond",
     "CARD.IMPERVIOUS": "Impervious",
