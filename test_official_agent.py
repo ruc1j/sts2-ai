@@ -3224,6 +3224,29 @@ class OfficialAgentTest(unittest.TestCase):
                 }
                 self.assertEqual(choose_shop(observation)["type"], expected_type)
 
+    def test_shop_removes_basic_before_starvation_driven_block_buy(self) -> None:
+        # A block-starved Act 2 deck: the old order bought a strong block card here every time,
+        # which grew the deck and left the starvation flag still set on the next visit.
+        deck = ["CARD.STRIKE_IRONCLAD"] * 10 + ["CARD.BASH"] * 8 + ["CARD.DEFEND_IRONCLAD"] * 6
+        observation = {
+            "phase": "shop",
+            "run": {"act": 1},
+            "deck": deck,
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.BLOOD_WALL"},
+                {"type": "remove", "card_id": "CARD.STRIKE_IRONCLAD"},
+                {"type": "skip"},
+            ],
+        }
+        action = choose_shop(observation)
+        self.assertEqual((action["type"], action["card_id"]), ("remove", "CARD.STRIKE_IRONCLAD"))
+        # With nothing left to thin, the same shop still buys the block card.
+        observation["legal_actions"] = [
+            {"type": "buy_card", "card_id": "CARD.BLOOD_WALL"},
+            {"type": "skip"},
+        ]
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.BLOOD_WALL")
+
     def test_shop_removes_legal_curse_before_high_value_purchase(self) -> None:
         observation = {
             "phase": "shop",

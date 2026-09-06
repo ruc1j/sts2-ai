@@ -1537,6 +1537,26 @@ def choose_shop(observation: dict) -> dict:
         return best_card
     if best_potion and potion_score >= SHOP_POTION_MIN_SCORE and relic_score < 8:
         return best_potion
+    # Basic removal outranks the starvation-driven buys below.  _block_starved compares block
+    # cards against deck size, so buying block also grows the deck and the ratio barely moves -
+    # deleting a Strike raises the same ratio without adding a card.  Only an unowned core card
+    # and a potion come ahead of thinning the deck.  Shop turns are sequential, so this decides
+    # what happens first, not what happens at all: a later call still reaches the buys below.
+    # Once the primary basic is gone the shop used to stop thinning entirely, even with removals on
+    # offer and gold to spare - astra_goal_cards1 left five Defends untouched through every Act 2
+    # shop and grew to 28 cards. Fall back to the other basic, but keep 3 copies so the deck does
+    # not lose its cheap filler; the Perfected Strike axis has no fallback because it needs its
+    # Strike count.
+    remove_ids = (
+        ("CARD.DEFEND_IRONCLAD",) if "CARD.PERFECTED_STRIKE" in deck_ids
+        else ("CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD")
+    )
+    for index, remove_id in enumerate(remove_ids):
+        if index and deck_list.count(remove_id) < 4:
+            continue
+        preferred = next((action for action in removals if (action.get("card_id") or action.get("id")) == remove_id), None)
+        if preferred:
+            return preferred
     if (
         best_card
         and card_key(best_card)[0] == 2
@@ -1555,10 +1575,6 @@ def choose_shop(observation: dict) -> dict:
         return best_card
     if best_relic is not None and relic_score >= 6:
         return best_relic
-    remove_id = "CARD.DEFEND_IRONCLAD" if "CARD.PERFECTED_STRIKE" in deck_ids else "CARD.STRIKE_IRONCLAD"
-    preferred = next((action for action in removals if (action.get("card_id") or action.get("id")) == remove_id), None)
-    if preferred:
-        return preferred
     if best_card and card_key(best_card)[0] == 2:
         return best_card
     return next((action for action in actions if action.get("type") == "skip"), actions[0] if actions else {"type": "skip"})
