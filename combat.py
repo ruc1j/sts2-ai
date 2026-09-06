@@ -117,6 +117,7 @@ STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRI
 RELIC_BRIMSTONE, RELIC_MERCURY_HOURGLASS, RELIC_ART_OF_WAR = "RELIC.BRIMSTONE", "RELIC.MERCURY_HOURGLASS", "RELIC.ART_OF_WAR"
 RELIC_SCREAMING_FLAGON, RELIC_CLOAK_CLASP = "RELIC.SCREAMING_FLAGON", "RELIC.CLOAK_CLASP"
 RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_HORN_CLEAT = "RELIC.CANDELABRA", "RELIC.CAPTAINS_WHEEL", "RELIC.HORN_CLEAT"
+RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY = "RELIC.LOST_WISP", "RELIC.PAPER_PHROG", "RELIC.STRIKE_DUMMY"
 RELIC_SPARKLING_ROUGE, RELIC_STONE_CALENDAR = "RELIC.SPARKLING_ROUGE", "RELIC.STONE_CALENDAR"
 RELIC_HAPPY_FLOWER, RELIC_PENDULUM = "RELIC.HAPPY_FLOWER", "RELIC.PENDULUM"
 RELIC_KUNAI, RELIC_SHURIKEN, RELIC_ORNAMENTAL_FAN, RELIC_KUSARIGAMA = "RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.ORNAMENTAL_FAN", "RELIC.KUSARIGAMA"
@@ -899,7 +900,9 @@ def _vulnerable_damage(combat: Combat, enemy: Enemy, damage: int) -> int:
     """Apply Vulnerable's powered-attack multiplier, including CrueltyPower's bonus."""
     if not _power(enemy.powers, "VulnerablePower"):
         return damage
-    return damage * (150 + _power(combat.player_powers, "CrueltyPower")) // 100
+    # PaperPhrog.ModifyVulnerableMultiplier: +0.25 on top of the base 1.5 for powered attacks.
+    phrog = 25 if RELIC_PAPER_PHROG in combat.player_relics else 0
+    return damage * (150 + phrog + _power(combat.player_powers, "CrueltyPower")) // 100
 
 
 def _apply_curl_up(before: tuple[Enemy, ...], enemies: list[Enemy], card: str) -> None:
@@ -1543,6 +1546,11 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     energy_gain_allowed = not _power(combat.player_powers, "NoEnergyGainPower")
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
     combo_block += helmet_block
+    if card in POWERS and RELIC_LOST_WISP in relics:
+        # LostWisp.AfterCardPlayed: 8 Unpowered damage to every hittable enemy per Power card.
+        combo_enemies = [
+            _damage_enemy(enemy, 8, powered=False) if enemy.alive else enemy for enemy in combo_enemies
+        ]
     if card in ATTACKS:
         combo_block += _power(combat.player_powers, "RagePower")
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
@@ -1975,6 +1983,9 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     combat, vigor = _spend_vigor(combat)
     damage += vigor
+    # StrikeDummy.ModifyDamageAdditive: +3 on any powered attack tagged Strike.
+    if RELIC_STRIKE_DUMMY in combat.player_relics and card in STRIKE_TAGGED:
+        damage += 3
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
         damage *= 2
     if _power(combat.player_powers, "WeakPower"):

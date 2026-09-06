@@ -8,7 +8,7 @@ from combat import (
     CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
 )
@@ -1368,6 +1368,27 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
         self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
+
+    def test_strike_dummy_and_paper_phrog_modify_attack_damage(self) -> None:
+        vulnerable = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", (), powers=(("VulnerablePower", 2),))
+        # Strike 6 (+3 Strike Dummy) = 9, then Vulnerable 1.5 + Paper Phrog 0.25 = 1.75x -> 15.
+        combat = Combat(80, (STRIKE,), (), (), (vulnerable,), player_relics=(RELIC_STRIKE_DUMMY, RELIC_PAPER_PHROG))
+        self.assertEqual(step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 60 - 15)
+        # Neither relic: 6 damage at the plain 1.5x -> 9.
+        combat = Combat(80, (STRIKE,), (), (), (vulnerable,))
+        self.assertEqual(step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 60 - 9)
+        # Strike Dummy only applies to Strike-tagged attacks, not to Bash.
+        combat = Combat(80, (BASH,), (), (), (Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ()),), player_relics=(RELIC_STRIKE_DUMMY,))
+        self.assertEqual(step(combat, f"{BASH}@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 60 - 8)
+
+    def test_lost_wisp_hits_every_enemy_on_each_power_card(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 30, "IDLE_MOVE", ()))
+        combat = Combat(80, (INFLAME, STRIKE), (), (), enemies, player_relics=(RELIC_LOST_WISP,))
+        after = step(combat, INFLAME, DUMMY_DATA, random.Random(0))
+        self.assertEqual([enemy.hp for enemy in after.enemies], [32, 22])
+        # Only Power cards trigger it - the follow-up Strike hits one enemy for its own damage.
+        after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual([enemy.hp for enemy in after.enemies], [32 - 6 - 2, 22])
 
     def test_vigor_boosts_every_hit_of_one_attack_then_is_spent(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 80, "IDLE_MOVE", ())
