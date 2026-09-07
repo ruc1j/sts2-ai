@@ -48,6 +48,12 @@ Toric Toughness(`CARD.TORIC_TOUGHNESS`)は `astra_goal_deck2` で手札に53回�
 
 Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_success` 0回)。Bashと同型のコスト1・ダメージ10・対象にVulnerable 2、強化で+2/+1のEventカードである。
 
+**満杯時のポーション報酬はブリッジで拾えるようにした(実機検証済み)。** 素の `RewardsScreenHandler` は `!(b.Reward is PotionReward) || hasPotionSlots` でフィルタしており、**belt が満杯だとポーション報酬をボタンごと飛ばして床に置き去りにする**——判断がエージェントへ一切渡らない。`official_mod/PotionRewardBridge.cs` がこのハンドラを差し替え、満杯かつ `CanRemovePotions` のときだけ `phase = "potion_reward"` の観測(手持ちと `PotionReward.Potion` の中身)を出して `discard`/`skip` を待つ。`discard` なら `PotionCmd.Discard` で枠を空けてから元のクリック処理へ進む。それ以外の挙動は素の drain loop をそのまま写している。`choose_potion_reward` は `SHOP_POTION_SCORES` で**提示品が手持ち最弱を厳密に上回るときだけ**入れ替える(同格の交換は報酬を捨てるのと変わらず、格下は見送りより悪い)。
+
+実機確認(`astra_potion1`, seed D6A1F8C3E5): seq198で[Snecko Oil, Explosive Ampoule, Fysh Oil]の満杯、seq200で `potion_reward` が発火しSnecko Oilを捨てる判断、seq203で[**Fysh Oil**, Explosive Ampoule, Fysh Oil]になった。戦闘後の必須経路を差し替えているが15戦を通して例外は無い。
+
+**測定用の環境固定**: `/tmp/sts2_goal_run.py` に `STS2_USERDATA_SNAPSHOT` を足した。ディレクトリを渡すと初回にユーザーデータを写し取り、以降の全runがそこから開始・復元する。**これが無いとseedを固定しても同じrunにならない**——`astra_base_*`(03:00)と`astra_v2_*`(08:35)は同じseedで開始レリックが違い(CHANDELIER+PANTOGRAPH vs MOLTEN_EGG+ORICHALCUM)、前後比較が成立しなかった。原因はrun間でユーザーデータが変わっていたこと。**前後を測るときは必ずスナップショットを固定すること。**
+
 **Entropic Brewは空きスロットが無い間は使わない。** `EntropicBrew.OnUse` は `while HasOpenPotionSlots` で空き全部を埋めるが、**飲んだ本人のスロットが先に空く**ので、満杯で飲むと「1本を1本に交換」で終わる(実測: `astra_base_K7M2QX9BTR` seq117→118でEntropic BrewがStrength Potionに置き換わっただけ)。空きが1つあれば2本以上になる。戦闘効果は無く `PotionUsage.AnyTime` なので、空くまで持っていても損はしない。`choose_potion` の入口で、全スロットが埋まっているときだけ候補から外す。
 
 **ポーションを抱えて死ぬこと自体は必ずしも誤りではない。** `astra_base_B8KD5NR9GC` はCure All/Power/Strengthの3本を持ったままHP13で敗北し、一見「温存しすぎ」に見えた。だが実際にはHP13・被弾22・敵HP44で、手札の最大火力はCinder+Strikeの24、Evil Eyeで8ブロックしても足りない——**どのポーションを飲んでも助からない局面**だった。「死ぬときは温存を解除する」という変更を試したところ、記録済みの `test_saves_major_potion_after_defensive_potion_in_monster_room` が落ちた。テストの側が正しく、変更は撤回した。**敗北時の所持ポーションを見るときは、飲んでいれば勝てたかを必ず確認すること。**
