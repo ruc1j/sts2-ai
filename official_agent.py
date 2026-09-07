@@ -1051,6 +1051,32 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             )
         return incoming - current + projected
 
+    def turn_can_clear_threats() -> bool:
+        """True when the attacks affordable this turn can finish the only enemy that is swinging.
+
+        `is_lethal` asks whether one card kills; this asks whether the turn does. Killing the
+        attacker removes the entire incoming hit, so a multi-card kill beats blocking part of it -
+        but only while a single enemy is the threat, since killing one of several leaves the rest.
+        """
+        threats = [
+            enemy for enemy in observation.get("enemies", ())
+            if _intent_incoming(enemy) > 0 and _number(enemy.get("hp")) > 0
+        ]
+        if len(threats) != 1:
+            return False
+        target = threats[0]
+        budget, total = card_energy, 0
+        for action in sorted(cards, key=lambda candidate: -damage(candidate, target)):
+            dealt = damage(action, target)
+            if dealt <= 0:
+                continue
+            cost = _number(hand.get(action.get("hand_index"), {}).get("cost"), 0)
+            if cost < 0 or cost > budget:
+                continue
+            budget -= cost
+            total += dealt
+        return total >= _number(target.get("hp"))
+
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if rollout_enabled:
@@ -1086,7 +1112,12 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # modeled. Never spend the last HP on a non-blocking, non-lethal play unless the card
             # itself reduces the next hit enough to survive (e.g. Uppercut's Weak or Mangle's
             # Strength reduction).
-            rollout_is_unsafe = max(0, mitigation_incoming(selected) - current_block) >= hp and card_value(selected, "block") <= 0 and not is_lethal(selected)
+            rollout_is_unsafe = (
+                max(0, mitigation_incoming(selected) - current_block) >= hp
+                and card_value(selected, "block") <= 0
+                and not is_lethal(selected)
+                and not turn_can_clear_threats()
+            )
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.

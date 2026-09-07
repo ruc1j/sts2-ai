@@ -478,6 +478,55 @@ class OfficialAgentTest(unittest.TestCase):
                 self.assertEqual(action["card_id"], card_id)
                 self.assertEqual(action["decision_source"], "rollout_success")
 
+    def test_multi_card_kill_beats_the_unsafe_rollout_guard(self) -> None:
+        # astra_sims400_R9TB3LKD6M seq137: 6 HP, 3 energy, VANTOM on 16, and 7+8+6 in hand. The
+        # guard only knew single-card lethals, so it swapped the opener for Defend and left the
+        # boss alive on 1 HP. Killing the sole attacker removes the whole incoming hit.
+        selected = {"type": "card", "card_id": "CARD.SETUP_STRIKE", "hand_index": 0, "target_id": 1}
+        observation = {
+            "seq": 1,
+            "legal_actions": [
+                selected,
+                {"type": "card", "card_id": "CARD.PILLAGE", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 2, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 6, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.SETUP_STRIKE", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 7}]},
+                {"index": 1, "id": "CARD.PILLAGE", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 2, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 16, "block": 0, "intents": [{"damage": 20, "repeats": 1}], "powers": []}],
+        }
+        with patch("official_agent.rollout_choice", return_value=selected):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["card_id"], "CARD.SETUP_STRIKE")
+        self.assertEqual(action["decision_source"], "rollout_success")
+
+    def test_unsafe_rollout_guard_still_rejects_a_kill_the_turn_cannot_reach(self) -> None:
+        # Same shape, but 16 damage of hand against 30 HP - no kill, so the guard still blocks.
+        selected = {"type": "card", "card_id": "CARD.SETUP_STRIKE", "hand_index": 0, "target_id": 1}
+        observation = {
+            "seq": 1,
+            "legal_actions": [
+                selected,
+                {"type": "card", "card_id": "CARD.PILLAGE", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 2, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 6, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.SETUP_STRIKE", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 7}]},
+                {"index": 1, "id": "CARD.PILLAGE", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 2, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 30, "block": 0, "intents": [{"damage": 20, "repeats": 1}], "powers": []}],
+        }
+        with patch("official_agent.rollout_choice", return_value=selected):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["decision_reason"], "rollout_rejected_unsafe")
+
     def test_dead_enemy_intent_does_not_trigger_unsafe_rollout_guard(self) -> None:
         selected = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2}
         observation = {
