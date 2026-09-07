@@ -1481,7 +1481,11 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
         # axis deals the most damage - then Perfected Strike (strike) and Corruption (exhaust).
         # Rupture is only a seed once a self-damage enabler is already in the deck.
         first = ["CARD.INFLAME", "CARD.PERFECTED_STRIKE", "CARD.CORRUPTION"]
-        if UNCOMMITTED_SELF_DAMAGE & deck_ids:
+        # Fuel already held, or fuel on this very screen. Without the second half the axis cannot
+        # start at all: the enabler is docked 2-3 priority until Rupture arrives, and Rupture is
+        # not a seed until an enabler arrives. H2LV6ZJ4XW was offered Rupture and Bloodletting
+        # together and took neither.
+        if UNCOMMITTED_SELF_DAMAGE & deck_ids or (available and UNCOMMITTED_SELF_DAMAGE & available):
             first.insert(2, "CARD.RUPTURE")
         cards = [card for card in first if available and card in available]
     if available is not None:

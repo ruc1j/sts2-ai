@@ -87,6 +87,14 @@ Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_su
 
 → **改善の当たり所は、デッキがStrengthエンジンのような勝ち筋を組めるかどうか。**HPも打ち回しも、それが無いデッキを救わない。
 
+**Act 3を踏破した2本は、どちらもRupture + Bloodlettingで最終戦Strength 30超(2026-09-08)。** D6A1F8C3E5(`astra_goal_intangible1`、TEST_SUBJECT、Strength 32、29枚)とN8CQ4ZKP2W(`wide_base_N8CQ4ZKP2W`、QUEEN、Strength 30、31枚)。ボスも防御札の柱も違う(Blood Wall 4枚 対 Shrug It Off 4枚)のに、**エンジンだけが一致している**。100本超のrunで踏破したのはこの2本だけ。
+
+`_core_priority` にはこのエンジンを組ませない片方向の噛み合わせがあった。**Ruptureが無い間 `UNCOMMITTED_SELF_DAMAGE`(Bloodletting/Hemokinesis/Offering/Inferno/Blood Wall/Brand/Breakthrough)は報酬点を2〜3減点されるのに、Ruptureが軸の種になるのは「燃料がすでにデッキにあるとき」だけ**——どちらも先には入れない。`astra_base_H2LV6ZJ4XW` act1 f2の提示は `Rupture / Infernal Blade / Bloodletting`、つまり**エンジンの両方が同じ画面にあったのに、どちらも取らなかった**。同じ画面の燃料も燃料として数えるよう直した。
+
+**ただしこの修正は現在の計器では検証できない。**記録済み1649件の報酬決定のうち変わるのは**3件、いずれも古いrunで、16seed基準値では0件**。Ruptureは16runで5回しか提示されていない(1runあたり0.3回)。段位をC→Aまで上げても変化3件・16seedで0件で同じだった。**機序の正しさとして入れるが、勝率への寄与は測っていない。**
+
+なお `_axis` がPerfected Strikeを先に見るためRuptureを持っていても軸がstrikeになる、という当初の仮説は**外れ**だった。Rupture系を持つ状態での報酬判定208件のうち、軸を奪われていたのは6件(古い2runのみ)で、202件は正しくself_damageになっていた。
+
 **16seedスイープは、4seedが出せなかった答えを一度で出した(2026-09-08)。** 基準値(commit `d14d60c`): **1勝/16、総戦闘203、個別勝ち188、Act 3到達3本**(D6A1F8C3E5・L3PN5HBQ8T・N8CQ4ZKP2W)。到達actの分布はact1が2本、act2が11本、act3が3本。1周あたり約1時間かかるが、4seedを4周する時間で判定できない答えを4つ集めるより速い。
 
 同じ16seedでS段位逃げ道を測った結果は**劣化4・改善0・同一12**、総戦闘203→193、Act 3到達3→2。4seedでは「1劣化3同一」でコイン投げと区別がつかなかったものが、**16seedでは一方向にしか動かない**とはっきりした。不採用。

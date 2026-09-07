@@ -1166,6 +1166,30 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.INFLAME")
 
+    def test_reward_seeds_self_damage_axis_from_one_offer(self) -> None:
+        # Neither half of the Rupture engine could enter first: the enabler is docked priority
+        # until Rupture is in the deck, and Rupture was a seed only once an enabler was. An offer
+        # holding both (astra_base_H2LV6ZJ4XW act1 f2) took neither. Fuel on screen counts as fuel.
+        observation = {
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.RUPTURE"},
+                {"type": "card_reward", "card_id": "CARD.BLOODLETTING"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.RUPTURE")
+
+    def test_reward_does_not_seed_rupture_without_any_fuel(self) -> None:
+        # No enabler in the deck and none on offer: Rupture is a C-tier card with nothing to pay it.
+        observation = {
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.RUPTURE"},
+                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_reward_feeds_started_strength_axis(self) -> None:
         # Once Inflame is in the deck, other Strength sources (Dominate) outrank same-tier cards.
         observation = {
