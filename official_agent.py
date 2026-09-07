@@ -882,8 +882,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     current_block = _number(player.get("block"))
     defense_block = max((card_value(action, "block") for action in cards), default=0)
     defense_can_survive = defense_block > 0 and incoming - current_block - defense_block < hp
+    # Enemies that are actually swinging this turn - a defending or buffing enemy adds nothing to
+    # the combined hit this shortcut is meant to answer.
+    attackers = sum(1 for damage in enemy_incoming.values() if damage > 0)
     if (
-        len(enemy_by_id) > 1
+        attackers > 1
         and aoe
         and not lethal
         and (incoming < hp + current_block or not defense_can_survive)
