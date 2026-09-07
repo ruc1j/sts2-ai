@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from official_agent import CARD_NAMES, CARD_TIERS, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_potion, choose_rest, choose_shop, rollout_choice
+from official_agent import CARD_NAMES, CARD_TIERS, SHOP_POTION_SCORES, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_potion, choose_rest, choose_shop, rollout_choice
 from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
 
 
@@ -1378,6 +1378,36 @@ class OfficialAgentTest(unittest.TestCase):
         elite = {**base, "run": {"act": 0, "floor": 5, "room_type": "Elite"}}
         self.assertEqual(choose(monster)["type"], "end_turn")
         self.assertEqual(choose(elite)["potion_id"], "POTION.STRENGTH_POTION")
+
+    def test_potion_reward_swaps_out_the_worst_potion_only_when_it_is_an_upgrade(self) -> None:
+        def observation(offered: str) -> dict:
+            return {
+                "phase": "potion_reward",
+                "run": {"act": 1, "floor": 5},
+                "player": {"hp": 50, "max_hp": 80},
+                "offered": {"id": offered},
+                "potions": [
+                    {"index": 0, "id": "POTION.BLOCK_POTION"},
+                    {"index": 1, "id": "POTION.WEAK_POTION"},
+                    {"index": 2, "id": "POTION.FIRE_POTION"},
+                ],
+                "legal_actions": [
+                    {"type": "discard", "index": 0, "potion_id": "POTION.BLOCK_POTION"},
+                    {"type": "discard", "index": 1, "potion_id": "POTION.WEAK_POTION"},
+                    {"type": "discard", "index": 2, "potion_id": "POTION.FIRE_POTION"},
+                    {"type": "skip", "index": -1, "potion_id": None},
+                ],
+            }
+        worst = min(
+            ("POTION.BLOCK_POTION", "POTION.WEAK_POTION", "POTION.FIRE_POTION"),
+            key=lambda potion: SHOP_POTION_SCORES.get(potion, -1),
+        )
+        better = max(SHOP_POTION_SCORES, key=lambda potion: SHOP_POTION_SCORES[potion])
+        action = choose(observation(better))
+        self.assertEqual((action["type"], action["potion_id"]), ("discard", worst))
+        # An offer that does not beat the worst held potion is not worth a slot.
+        action = choose(observation(worst))
+        self.assertEqual(action["type"], "skip")
 
     def test_entropic_brew_waits_for_an_open_potion_slot(self) -> None:
         # Drinking it on a full belt frees only its own slot, so it trades one potion for one.

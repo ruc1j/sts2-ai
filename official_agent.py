@@ -695,6 +695,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return _tag_action(choose_rest(observation), "phase_rest")
     if observation.get("phase") == "event":
         return _tag_action(choose_event(observation), "phase_event")
+    if observation.get("phase") == "potion_reward":
+        return _tag_action(choose_potion_reward(observation), "phase_potion_reward")
     actions = observation["legal_actions"]
     # TheGambitPower (decompiled): 50 block for 0 cost, but the very next unblocked hit taken
     # while it's active - this turn or any later turn, it has no self-expiry - kills the player
@@ -2011,6 +2013,28 @@ def choose_card_reward(observation: dict) -> dict:
         rarity = {"Rare": 3, "Uncommon": 2, "Common": 1}
         return max(attacks, key=lambda action: (rarity.get(cards[action["card_id"]].get("rarity"), 0), -_number(cards[action["card_id"]].get("cost"), 99)))
     return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
+
+
+def choose_potion_reward(observation: dict) -> dict:
+    """Pick which held potion to discard for an offered one, or keep the belt as it is.
+
+    The stock rewards handler drops a potion reward on the floor whenever the belt is full, so
+    without this the choice never reached the agent at all. Swap only when the offer scores
+    strictly higher than the worst potion held - a sideways trade wastes the reward and a
+    downgrade is worse than skipping.
+    """
+    actions = observation["legal_actions"]
+    skip = next((action for action in actions if action.get("type") == "skip"), None)
+    discards = [action for action in actions if action.get("type") == "discard"]
+    if not discards:
+        return skip or actions[0]
+    offered = (observation.get("offered") or {}).get("id")
+    offered_score = SHOP_POTION_SCORES.get(offered, -1)
+    worst = min(discards, key=lambda action: SHOP_POTION_SCORES.get(action.get("potion_id"), -1))
+    worst_score = SHOP_POTION_SCORES.get(worst.get("potion_id"), -1)
+    if offered_score > worst_score:
+        return worst
+    return skip or worst
 
 
 def choose_rest(observation: dict) -> dict:

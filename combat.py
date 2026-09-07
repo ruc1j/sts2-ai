@@ -482,7 +482,14 @@ def _condition(expression: str, enemy: Enemy, enemies: tuple[Enemy, ...] = ()) -
     values = _dict(enemy.values)
     if "SlotName ==" in expression:
         return enemy.slot == re.search(r'"([^"]+)"', expression).group(1)
-    if "GetAllyCount()" in expression:
+    if "HasBeetleCharged" in expression:
+        # FrogKnight charges once, on the first turn it finds itself under half HP; afterwards
+        # HasBeetleCharged stays true and it goes back to Tongue Lash. The move history is the
+        # runtime record of that flag. The "!HasBeetleCharged && hp < MaxHp / 2" branch is the
+        # exact negation of this, and the trailing "!" handling below applies it.
+        ceiling = int(values.get("MaxInitialHp", enemy.hp) or enemy.hp)
+        result = "BEETLE_CHARGE" in enemy.history or enemy.hp >= ceiling // 2
+    elif "GetAllyCount()" in expression:
         # LivingShield.GetAllyCount explicitly excludes itself (unlike Fabricator's raw
         # GetTeammatesOf): it Shield Slams while any ally lives and Smashes once left alone.
         allies = sum(other.alive and other is not enemy for other in enemies)

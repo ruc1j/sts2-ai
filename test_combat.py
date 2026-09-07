@@ -1395,6 +1395,22 @@ class CombatTest(unittest.TestCase):
         after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.energy, 3)
 
+    def test_frog_knight_charges_once_below_half_health(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        values = next(m for m in glory["monsters"] if m["id"] == "MONSTER.FROG_KNIGHT")["values"]
+        spec = next(m for m in glory["monsters"] if m["id"] == "MONSTER.FROG_KNIGHT")
+
+        def branch(hp: int, history: tuple[str, ...]) -> str:
+            enemy = Enemy("MONSTER.FROG_KNIGHT", hp, "HALF_HEALTH", tuple(sorted(values.items())), history=history)
+            return _resolve_move(enemy, spec, random.Random(0), "HALF_HEALTH")
+
+        # 191 max HP, so the charge waits until below 95.
+        self.assertEqual(branch(120, ()), "TONGUE_LASH")
+        self.assertEqual(branch(80, ()), "BEETLE_CHARGE")
+        # Once it has charged it never charges again, however low it gets.
+        self.assertEqual(branch(20, ("BEETLE_CHARGE",)), "TONGUE_LASH")
+
     def test_vicious_draws_whenever_the_player_applies_vulnerable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         combat = Combat(80, (VICIOUS, BASH, STRIKE), (STRIKE,) * 8, (), (enemy,), energy=6)
