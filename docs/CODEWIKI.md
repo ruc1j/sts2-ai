@@ -79,7 +79,9 @@ Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_su
 
 **QUEENは勝てる。Strengthエンジンを積めたデッキなら(2026-09-08)。** 上のQUEEN分析を書いた直後、同じcommit `45aa0e1` の16seedスイープでseed **N8CQ4ZKP2W が19戦19勝でAct 3を踏破**し、そのQUEENを倒した(残HP 13/83、`data/wide_base_N8CQ4ZKP2W_result.json`)。
 
-勝ったデッキは **Rupture + Battle Trance 4枚 + Bloodletting**で、自傷のたびにStrengthが積まれ、最終戦の終盤で**Strength 30**に達している。防御もShrug It Off 4・Colossus 2・Taunt 2・Feel No Pain・Crimson Mantleと厚い。31枚と大きいが初期札はStrike 2・Defend 3まで削られていた。負けたD6A1F8C3E5のデッキは27枚中にStrike 6・Defend 3・呪い3を抱え、Strengthエンジンが無かった。
+勝ったデッキ(31枚)は**防御が主、エンジンは各1枚**という構成だった。防御がShrug It Off 4・Colossus 2・Taunt 2・True Grit・Feel No Pain・Crimson Mantle、エンジンがRupture・Bloodletting・Pyre各1枚、ドローがBattle Trance 3・Pommel Strike 2。呪いは0枚で、ショップでStrikeを3回除去して初期札はStrike 2・Defend 3まで減っている。最終戦の終盤で**Strength 30**。負けたD6A1F8C3E5のデッキは27枚中にStrike 6・Defend 3・呪い3を抱え、エンジンが無かった。
+
+**構築の順序が効いている。Act 1では防御しか取っていない**——Shrug It Offを3連続で選び、Colossus/Setup Strike/Second Wind/True Gritを退けた。エンジン1枚目のBloodlettingはAct 1 floor 15、RuptureはAct 2 floor 4でようやく入る。さらにAct 1 floor 17で`Offering`(S段位)を含む提示を丸ごとSkipし、Bloodlettingの2枚目以降(act1f13/act2f6/act2f12)も全て退けてBattle Trance・Taunt・Colossusを取っている。**エンジンは1枚で足り、2枚目からは防御を削るだけだった。**これは同日にS段位逃げ道が16seedで劣化4・改善0となった理由そのものである。
 
 **この一件は「1手目の `search_value` が −0.8〜−0.9 なら詰み」という読み方への反証でもある。**N8CQ4ZKP2Wの最終戦もT1で −0.89 だった。あの値はgreedy rolloutで平均的に打った場合の見積もりであり、**勝ち筋が存在しないことを意味しない**。統計としては強い予測子(値1.0で勝率99%、−1.0で18%)だが、個別の局面を諦める根拠には使えない。
 
