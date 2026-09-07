@@ -88,11 +88,23 @@ internal static class PotionRewardBridge
         {
             AutoSlayLog.Action("Clicking proceed");
             await UiHelper.Click(proceed);
-            await WaitHelper.Until(
-                () => !GodotObject.IsInstanceValid(screen) || NOverlayStack.Instance?.Peek() != screen || (NMapScreen.Instance?.IsOpen ?? false),
-                ct,
-                TimeSpan.FromSeconds(10),
-                "Rewards screen did not close or map did not open after clicking proceed");
+            try
+            {
+                await WaitHelper.Until(
+                    () => !GodotObject.IsInstanceValid(screen) || NOverlayStack.Instance?.Peek() != screen || (NMapScreen.Instance?.IsOpen ?? false),
+                    ct,
+                    TimeSpan.FromSeconds(10),
+                    "Rewards screen did not close or map did not open after clicking proceed");
+            }
+            catch (TimeoutException)
+            {
+                // The stock handler aborts the whole run here. Proceed can legitimately be refused
+                // while an unclaimed reward is still pending (seen once when the card reward screen
+                // re-opened NRewardsScreen), and the run was healthy at Act 2 floor 11 when it died.
+                // Returning hands the screen back to the drain loop for another pass; if it really
+                // is stuck, AutoSlayer's own 30s watchdog still ends the run.
+                AutoSlayLog.Action("Proceed did not close the rewards screen; returning to drain loop");
+            }
         }
         AutoSlayLog.ExitScreen("NRewardsScreen");
     }
