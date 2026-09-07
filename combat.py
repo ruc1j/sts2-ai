@@ -39,7 +39,7 @@ ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
 # PileType.Discard by Wriggler's WRIGGLE_MOVE and only bites once it's drawn into a later hand.
-WOUND, DECAY = "Wound", "Decay"
+WOUND, DECAY, NORMALITY = "Wound", "Decay", "Normality"
 BECKON, BAD_LUCK = "Beckon", "Bad Luck"
 # Decay is a Curse that starts in the deck rather than being injected mid-combat, but its
 # OnTurnEndInHand is the same 2 flat Unpowered damage.
@@ -72,6 +72,8 @@ CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRI
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
+# Normality caps the turn at this many cards while it is in hand.
+NORMALITY_CARD_CAP = 3
 # Pact's End deals no damage unless the exhaust pile already holds this many cards.
 PACTS_END_EXHAUST_REQUIRED = 3
 ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1}
@@ -880,6 +882,12 @@ def _mark_enemy_death(enemy: Enemy) -> Enemy:
 def legal_actions(combat: Combat) -> tuple[str, ...]:
     if combat.terminal:
         return ()
+    if combat.cards_played_this_turn >= NORMALITY_CARD_CAP and any(
+        card_name(value) == NORMALITY for value in combat.hand
+    ):
+        # Normality.ShouldPlay refuses every card once three have been played this turn, for as
+        # long as the curse is sitting in hand. Unplayable itself, so it never leaves that way.
+        return (END_TURN,)
     sloth = _power(combat.player_powers, "SlothPower")
     if sloth and combat.cards_played_this_turn >= sloth:
         # SlothPower.ShouldPlay refuses every card once Amount of them have been played this turn.
