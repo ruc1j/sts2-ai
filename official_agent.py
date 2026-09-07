@@ -1768,11 +1768,18 @@ def choose_map(observation: dict) -> dict:
             elif room_type == "Elite":
                 elite_run += 1
                 unrested_elites += int(elite_run > 1)
+        # Measured HP budget of the route rather than a fixed order of tile counts: an ordinary
+        # Act 2 fight costs 17.0 HP, an elite 32.2, and a rest site restores about 26. Ranking the
+        # counts instead had the planner trade one ordinary fight for one elite (about fifteen HP
+        # worse), and pricing only the fights had it trade away rest sites it needed.
+        hp_cost = (
+            types.count("Monster") * 17
+            + types.count("Elite") * 32
+            - types.count("RestSite") * 26
+        )
         return (
             unrested_elites,
-            types.count("Monster"),
-            -types.count("RestSite"),
-            types.count("Elite"),
+            hp_cost,
             -types.count("Treasure"),
             types.count("Unknown"),
             -types.count("Shop"),
