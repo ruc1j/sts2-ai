@@ -9,7 +9,7 @@ import traceback
 from dataclasses import replace
 
 from combat import (
-    ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
     POTION_STRENGTH, SELF_DAMAGE, _resolve_move, card_name, search,
 )
@@ -1085,6 +1085,19 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
             rollout_decision_reason = None
+            if selected.get("card_id") == "CARD.HEADBUTT" and not observation.get("discard_pile"):
+                headbutt_cost = _number(hand.get(selected.get("hand_index"), {}).get("cost"))
+                setup_attacks = [
+                    action for action in cards
+                    if action.get("card_id") != "CARD.HEADBUTT"
+                    and hand.get(action.get("hand_index"), {}).get("type") == "Attack"
+                    and CARD_NAMES.get(action.get("card_id")) not in EXHAUSTS
+                    and headbutt_cost + _number(hand.get(action.get("hand_index"), {}).get("cost")) <= card_energy
+                    and card_value(action, "damage") >= 15
+                ]
+                if setup_attacks:
+                    selected = max(setup_attacks, key=lambda action: card_value(action, "damage"))
+                    rollout_decision_reason = "headbutt_setup"
             selected_card = hand.get(selected.get("hand_index"), {})
             if (
                 kin_focus_id is not None

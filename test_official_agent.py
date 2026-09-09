@@ -380,6 +380,25 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["card_id"], "CARD.PERFECTED_STRIKE")
         self.assertEqual(action["decision_source"], "rollout_success")
 
+    def test_attack_precedes_headbutt_when_discard_is_empty(self) -> None:
+        observation = {
+            "player": {"hp": 40, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.HEADBUTT", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 1, "id": "CARD.PERFECTED_STRIKE", "cost": 2, "type": "Attack", "vars": [{"id": "CalculatedDamage", "value": 22}]},
+            ],
+            "discard_pile": [],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.HEADBUTT", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.PERFECTED_STRIKE", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["decision_reason"]), ("CARD.PERFECTED_STRIKE", "headbutt_setup"))
+
     def test_rage_yields_to_stronger_defense_when_incoming_exceeds_rage_block(self) -> None:
         for incoming, hp, expected in (
             (0, 30, "CARD.RAGE"),
