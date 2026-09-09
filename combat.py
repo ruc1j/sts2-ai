@@ -842,6 +842,7 @@ def _tender_penalty(combat: Combat) -> int:
 def _grant_block(
     combat: Combat,
     base: int,
+    rng: random.Random,
     *,
     vambrace_double: bool = False,
     unmovable_double: bool = False,
@@ -855,7 +856,13 @@ def _grant_block(
         block *= 2
     if unmovable_double:
         block *= 2
-    return replace(combat, player_block=combat.player_block + block)
+    enemies = list(combat.enemies)
+    juggernaut = _power(combat.player_powers, "JuggernautPower")
+    alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
+    if block > 0 and juggernaut and alive:
+        target = rng.choice(alive)
+        enemies[target] = _damage_enemy(enemies[target], juggernaut, powered=False)
+    return replace(combat, player_block=combat.player_block + block, enemies=tuple(enemies))
 
 
 def _mark_test_subject_death(enemy: Enemy) -> Enemy:
@@ -1427,10 +1434,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         potions.remove(potion)
         combat = _sync_belt_buckle(replace(combat, player_potions=tuple(potions)))
         if potion == POTION_BLOCK:
-            return _grant_block(combat, 12, apply_frail=False, powered=False)
+            return _grant_block(combat, 12, rng, apply_frail=False, powered=False)
         if potion == POTION_SHIP:
             return replace(
-                _grant_block(combat, 10, apply_frail=False, powered=False),
+                _grant_block(combat, 10, rng, apply_frail=False, powered=False),
                 player_powers=_add_power(combat.player_powers, "BlockNextTurnPower", 10),
             )
         if potion == POTION_STRENGTH:
@@ -1835,7 +1842,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile + (discarded,), energy=combat.energy - spent, enemies=tuple(enemies))
     if card == SHRUG:
         base = 8 + (3 if card_was_upgraded else 0)
-        combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        combat = _grant_block(combat, base, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         combat = replace(
             combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,),
             energy=combat.energy - (0 if card_is_free else 1),
@@ -1976,7 +1983,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         if card_was_upgraded:
             base += 4 if card == BLOOD_WALL else 3 if card in {DEFEND, EVIL_EYE, COLOSSUS} else 2 if card in {TRUE_GRIT, TORIC_TOUGHNESS} else 0 if card == ARMAMENTS else 1
         before = combat.player_block
-        combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        combat = _grant_block(combat, base, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         if card == TORIC_TOUGHNESS:
             # ToricToughness.OnPlay stores the block it actually granted (so Frail shrinks the
             # stored amount too), then applies the power with Amount = Turns = 2.
@@ -2000,7 +2007,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == EVIL_EYE:
         if combat.exhausted_this_turn:
             base = CARD_BLOCK[EVIL_EYE] + (3 if card_was_upgraded else 0)
-            combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+            combat = _grant_block(combat, base, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         return combat
     if card == BURNING_PACT:
         if combat.hand:
@@ -2020,7 +2027,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, player_powers=_add_power(combat.player_powers, "StrengthPower", 1 + (1 if card_was_upgraded else 0)))
     if card == RELAX:
         base = 15 + (1 if card_was_upgraded else 0)
-        return _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        return _grant_block(combat, base, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
     if card == SECOND_WIND:
         # SecondWind.OnPlay: exhausts every non-Attack card still in hand, gaining 5 block
         # (ValueProp.Move, so Frail doesn't reduce it) per card exhausted this way.
@@ -2028,7 +2035,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         remaining = tuple(value for value in combat.hand if card_name(value) in ATTACKS)
         block = 5 * len(non_attacks)
         combat = replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks)
-        combat = _grant_block(combat, block, vambrace_double=vambrace_double, unmovable_double=unmovable_double, apply_frail=False)
+        combat = _grant_block(combat, block, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double, apply_frail=False)
         return _after_exhaust(combat, non_attacks, rng, data)
     if card == STONE_ARMOR:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
@@ -2044,7 +2051,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         enemy = enemies[int(target)]
         vulnerable = 1 * (2 if lamp_double else 1)
         enemies[int(target)] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
-        combat = _grant_block(combat, base, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
+        combat = _grant_block(combat, base, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         return replace(combat, enemies=tuple(enemies))
     if card == PACTS_END and len(exhaust_before) < PACTS_END_EXHAUST_REQUIRED:
         # PactsEnd.OnPlay only attacks while CanDealDamage - the exhaust pile must already hold

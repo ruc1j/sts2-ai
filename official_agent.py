@@ -227,6 +227,7 @@ POWER_NAMES = {
     "POWER.DEXTERITY_POWER": "DexterityPower",
     "POWER.SELF_FORMING_CLAY_POWER": "SelfFormingClayPower",
     "POWER.RUPTURE_POWER": "RupturePower",
+    "POWER.JUGGERNAUT_POWER": "JuggernautPower",
     "POWER.INFERNO_POWER": "InfernoPower",
     "POWER.CRUELTY_POWER": "CrueltyPower",
     "POWER.TAINTED_POWER": "TaintedPower",

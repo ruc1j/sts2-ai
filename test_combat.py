@@ -739,6 +739,12 @@ class CombatTest(unittest.TestCase):
         after = step(combat, SHRUG, {}, random.Random(0))
         self.assertEqual((after.player_block, after.hand), (8, (DEFEND,)))
 
+    def test_juggernaut_damages_an_enemy_when_block_is_gained(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "MOVE", ())
+        combat = Combat(80, (DEFEND,), (), (), (enemy,), player_powers=(("JuggernautPower", 6),))
+        after = step(combat, DEFEND, {}, random.Random(0))
+        self.assertEqual((after.player_block, after.enemies[0].hp), (5, 14))
+
     def test_battle_trance_draws_three(self) -> None:
         combat = Combat(80, (BATTLE_TRANCE,), (DEFEND, DEFEND, DEFEND), (), (Enemy("MONSTER.DUMMY", 20, "MOVE", ()),))
         after = step(combat, BATTLE_TRANCE, {}, random.Random(0))
