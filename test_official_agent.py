@@ -2018,17 +2018,19 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
-    def test_uses_fysh_before_a_hit_at_two_thirds_hp(self) -> None:
+    def test_uses_fysh_before_a_hit_at_three_fifths_hp(self) -> None:
         observation = {
             "legal_actions": [
                 {"type": "potion", "potion_id": "POTION.FYSH_OIL", "target_id": None},
                 {"type": "potion", "potion_id": "POTION.STRENGTH_POTION", "target_id": None},
                 {"type": "end_turn"},
             ],
-            "player": {"hp": 53, "max_hp": 80},
+            "player": {"hp": 48, "max_hp": 80},
             "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 200, "intents": [{"damage": 20, "repeats": 1}]}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.FYSH_OIL")
+        observation["player"]["hp"] = 49
+        self.assertEqual(choose(observation)["type"], "end_turn")
 
     def test_uses_binding_on_the_first_attacking_boss_turn(self) -> None:
         observation = {

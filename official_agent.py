@@ -1419,10 +1419,10 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # Effigy that don't attack on an early turn). Only spend it once an attack is actually
         # incoming this decision, so the -7 lands on a turn that would otherwise deal damage.
         shackling = use_major_aware({"POTION.SHACKLING_POTION"}) if incoming > 0 else None
-        # Fysh Oil grants both Strength and Dexterity; at two-thirds HP it is a pre-hit stabilizer
+        # Fysh Oil grants both Strength and Dexterity; at three-fifths HP it is a pre-hit stabilizer
         # rather than a speculative damage potion, even when a high-HP regular still reserves
         # other boss potions.
-        fysh = use({"POTION.FYSH_OIL"}) if incoming > 0 and hp <= max(1, (max_hp * 2) // 3) else None
+        fysh = use({"POTION.FYSH_OIL"}) if incoming > 0 and hp <= max(1, (max_hp * 3) // 5) else None
         binding = use({"POTION.POTION_OF_BINDING"}) if boss_context and incoming > 0 else None
         # Skill Potion is also worth firing on any attacking boss turn: unlike a regular fight,
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
