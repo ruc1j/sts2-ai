@@ -447,6 +447,23 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=1)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_unsafe_fallback_uses_free_full_draw_before_spending_energy(self) -> None:
+        bash = {"type": "card", "card_id": "CARD.BASH", "hand_index": 0, "target_id": 1}
+        battle_trance = {"type": "card", "card_id": "CARD.BATTLE_TRANCE", "hand_index": 1, "target_id": None}
+        observation = {
+            "legal_actions": [bash, battle_trance, {"type": "end_turn"}],
+            "player": {"hp": 15, "max_hp": 105, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.BASH", "type": "Attack", "cost": 2, "vars": [{"id": "Damage", "value": 20}]},
+                {"index": 1, "id": "CARD.BATTLE_TRANCE", "type": "Skill", "cost": 0, "vars": [{"id": "Cards", "value": 3}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 63, "block": 0, "intents": [{"damage": 30, "repeats": 1}], "powers": []}],
+        }
+        with patch("official_agent.rollout_choice", return_value=bash):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual(action["card_id"], "CARD.BATTLE_TRANCE")
+        self.assertEqual(action["decision_reason"], "rollout_rejected_unsafe")
+
     def test_rollout_guard_uses_unblocked_incoming(self) -> None:
         for hp, expected_card, expected_source in (
             (15, "CARD.STRIKE_IRONCLAD", "rollout_success"),

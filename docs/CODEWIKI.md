@@ -1729,3 +1729,14 @@ N8の現行版はFysh OilをHP 65%で使っていたが、勝利履歴ではHP 5
 使用閾値をHP 2/3から3/5へ変更。既存観測で発火したN8・D6・H2を実機再走した。N8は19戦18勝・
 QUEEN残HP160、D6は16戦15勝・QUEEN残HP380でともに同値。H2は17戦16勝のまま、Act 2ボス
 THE_INSATIABLEの残HPが170から33へ改善した。悪化したseedはなく、全618テスト成功。
+
+### 2026-09-10 致死ターンではBattle Tranceを先に使う
+
+H2のAct 2ボス最終ターンは敵HP63、3エネルギーでBattle Trance、Perfected Strike、山札先頭の
+Strikeがあったが、unsafe fallbackがBashとStone Armorへ先にエネルギーを使い、引いたStrikeを
+使えなかった。致死被弾でrolloutがunsafe拒否され、手札を満杯にせず全量引ける場合は、0コストの
+Battle Tranceを先に使う。
+
+実機再走でH2は17戦16勝・Act 2ボス残HP33から、23戦22勝・Act 3ボスQUEEN残HP341まで前進。
+N8は19戦18勝・QUEEN残HP160で同値。全619テスト成功。固定16seed見込みは0勝、215戦199勝、
+Act 3到達3本。

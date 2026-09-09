@@ -1167,6 +1167,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             cards = safe_cards
         elif cards:
             return _tag_action(next(action for action in actions if action["type"] == "end_turn"), "heuristic_fallback", rollout_reason)
+    if rollout_reason == "rollout_rejected_unsafe" and max(0, incoming - _number(player.get("block"))) >= hp:
+        battle_trance = next((action for action in cards if action.get("card_id") == "CARD.BATTLE_TRANCE"), None)
+        if battle_trance and not any(power.get("id") == "POWER.NO_DRAW_POWER" for power in player.get("powers", ())):
+            draw = max(
+                (_number(variable.get("value")) for variable in hand[battle_trance["hand_index"]].get("vars", ()) if variable.get("id") == "Cards"),
+                default=0,
+            )
+            if draw and len(hand) + draw <= 10:
+                return _tag_action(battle_trance, "heuristic_fallback", rollout_reason)
     defenses = [action for action in cards if card_value(action, "block") > 0]
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return _tag_action(max(defenses, key=lambda action: card_value(action, "block")), "heuristic_fallback", rollout_reason)
