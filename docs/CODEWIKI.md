@@ -95,6 +95,10 @@ Squash(`CARD.SQUASH`)も同じ検出で見つかった(手札18回、`rollout_su
 
 なお `_axis` がPerfected Strikeを先に見るためRuptureを持っていても軸がstrikeになる、という当初の仮説は**外れ**だった。Rupture系を持つ状態での報酬判定208件のうち、軸を奪われていたのは6件(古い2runのみ)で、202件は正しくself_damageになっていた。
 
+ただし**ショップで未所持のRuptureを提示された場面には同じ問題が残っていた**。J7GW6DFX9VではPerfected StrikeとBloodlettingを所持していたためstrike軸が優先され、137Gを持ち77GのRuptureを買わずに退出していた。提示中のRuptureと既存の自傷札を先に組み合わせると購入へ変わり、同seedは8勝から12勝へ伸びた。16seed全体では勝利数は1のまま、総戦闘203→207、個別勝ち188→192。Q2VD9LWC7Fも5勝→8勝に伸びたが、これは同時に含まれる`9e2431d`の影響と分離できない。**勝率向上は未証明だが、J7で狙った判断が発火し、悪化seedが無かったため採用する。**
+
+**満杯のポーション報酬をskipした非terminal画面は、ボタンを再試行対象から外すだけでは閉じない。** T3XQ7WM2VPのCRYSTAL_SPHEREでは、同じFlex Potionを3回問い合わせてAutoSlayが停止した。`NRewardButton.GetReward`と`NRewardsScreen.OnProceedButtonPressed`を照合すると、skip済みボタンの無効化・記録に加え、非terminal画面ではbackendのreward setを必要に応じてskipし、overlay stackから画面を直接外す必要がある。修正後の同seedは当該画面を一度で閉じ、Act 2 Floor 6の通常戦まで進んで8勝1敗で自然終了した。ユーザーデータは固定スナップショットから開始し、run後に差分ゼロへ復元済み。
+
 **16seedスイープは、4seedが出せなかった答えを一度で出した(2026-09-08)。** 基準値(commit `d14d60c`): **1勝/16、総戦闘203、個別勝ち188、Act 3到達3本**(D6A1F8C3E5・L3PN5HBQ8T・N8CQ4ZKP2W)。到達actの分布はact1が2本、act2が11本、act3が3本。1周あたり約1時間かかるが、4seedを4周する時間で判定できない答えを4つ集めるより速い。
 
 同じ16seedでS段位逃げ道を測った結果は**劣化4・改善0・同一12**、総戦闘203→193、Act 3到達3→2。4seedでは「1劣化3同一」でコイン投げと区別がつかなかったものが、**16seedでは一方向にしか動かない**とはっきりした。不採用。

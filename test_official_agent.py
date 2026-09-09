@@ -3669,6 +3669,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_shop(observation)["type"], "skip")
 
+    def test_shop_completes_self_damage_engine_despite_strike_axis(self) -> None:
+        observation = {
+            "phase": "shop",
+            "deck": ["CARD.PERFECTED_STRIKE", "CARD.BLOODLETTING"],
+            "legal_actions": [
+                {"type": "buy_card", "card_id": "CARD.RUPTURE"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["card_id"], "CARD.RUPTURE")
+
     def test_unresolved_deck_uses_tiers_without_random_core(self) -> None:
         observation = {
             "player": {"deck": []},

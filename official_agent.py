@@ -1467,6 +1467,9 @@ def _axis(deck_ids: set[str]) -> str | None:
 
 
 def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dict[str, int]:
+    if available:
+        if "CARD.RUPTURE" in available and UNCOMMITTED_SELF_DAMAGE & deck_ids:
+            return {"CARD.RUPTURE": 1}
     axis = _axis(deck_ids)
     if axis == "strike":
         cards = ["CARD.HELLRAISER"] if "CARD.PERFECTED_STRIKE" in deck_ids and "CARD.HELLRAISER" not in deck_ids else []
