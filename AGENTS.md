@@ -33,10 +33,6 @@ Tests use `unittest`; name files `test_<module>.py` and methods `test_<behavior>
 
 Use short Japanese subjects such as `Ruptureをシミュレータに実装`, with one verified fix per commit. Pull requests must describe behavior, the change, and test results. Game-facing changes also require the game version, seed, and relevant log or trace excerpts.
 
-## Agent Delegation
-
-The primary agent owns investigation, decisions, task breakdown, orchestration, and final verification. After defining a narrow solution, delegate concrete work such as implementation to `luna_worker`. Spawn it with `agent_type: "luna_worker"`; its settings are fixed. Prompts must name owned files, acceptance criteria, expected output, and the shared-worktree rule: never revert others' edits. Do not delegate architecture or final validation. Example: `spawn_agent(task_name="combat_fix", agent_type="luna_worker", message="Own combat.py; implement the specified effect. Do not revert others' edits. Report changed files.")`. The primary agent reviews the diff and runs the required checks.
-
 ## Run Safety
 
 Official runs write to tracked default artifact paths. Use explicit `-ResultFile`, `-AgentTrace`, `-MapFile`, and `-LogFile` paths for experiments, and never launch concurrent runs against the same files.

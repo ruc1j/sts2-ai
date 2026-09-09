@@ -22,6 +22,7 @@ data/map_*.json
 data/*.log
 data/*_log.txt
 data/*_trace.jsonl
+data/*_agent.jsonl
 data/*_map.json
 data/*_mapdebug.jsonl
 data/dashboard.html
