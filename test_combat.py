@@ -93,6 +93,12 @@ class CombatTest(unittest.TestCase):
         frail = replace(combat, player_powers=(("DexterityPower", 2), ("FrailPower", 1)))
         self.assertEqual(step(frail, DEFEND, DUMMY_DATA, random.Random(0)).player_block, 5)
 
+    def test_speed_potion_dexterity_expires_at_turn_end(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(80, (DEFEND,), (), (), (enemy,), energy=1, player_powers=(("DexterityPower", 7), ("SpeedPotionPower", 5)))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((_power(after.player_powers, "DexterityPower"), _power(after.player_powers, "SpeedPotionPower")), (2, 0))
+
     def test_unpowered_block_potion_ignores_dexterity(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
         combat = Combat(80, (), (), (), (enemy,), player_powers=(("DexterityPower", 2),), player_potions=(POTION_BLOCK,))

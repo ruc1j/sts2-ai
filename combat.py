@@ -1466,6 +1466,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             enemies[int(target)] = _damage_enemy(enemies[int(target)], 20 if potion == POTION_FIRE else 15, powered=False)
         return replace(combat, enemies=tuple(enemies))
     if action == END_TURN:
+        speed_dexterity = _power(combat.player_powers, "SpeedPotionPower")
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
         # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
         combat = replace(
@@ -1479,6 +1480,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             ),
             played_this_turn=False,
         )
+        if speed_dexterity:
+            combat = replace(
+                combat,
+                player_powers=_add_power(
+                    _add_power(combat.player_powers, "SpeedPotionPower", -speed_dexterity),
+                    "DexterityPower", -speed_dexterity,
+                ),
+            )
         setup_strike = _power(combat.player_powers, "SetupStrikePower")
         if setup_strike:
             combat = replace(

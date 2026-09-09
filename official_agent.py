@@ -225,6 +225,7 @@ POWER_NAMES = {
     "POWER.SOAR_POWER": "SoarPower",
     "POWER.DEXTERITY": "DexterityPower",
     "POWER.DEXTERITY_POWER": "DexterityPower",
+    "POWER.SPEED_POTION_POWER": "SpeedPotionPower",
     "POWER.SELF_FORMING_CLAY_POWER": "SelfFormingClayPower",
     "POWER.RUPTURE_POWER": "RupturePower",
     "POWER.JUGGERNAUT_POWER": "JuggernautPower",

@@ -26,6 +26,8 @@ combat traceには判断時点の手札だけでなく、draw/discard/exhaust pi
 
 T3XQ7WM2VPではSmall Capsule由来の`JuggernautPower(amount=6)`が13局面に出ていたが、`POWER_NAMES`に無くrolloutから消えていた。ゲーム実装は、所有者が正のブロックを得るたびに生存中の敵1体をランダムに選び、amount分のUnpoweredダメージを与える。共有のブロック獲得処理でこの効果を再現すると旧観測13局面中6局面の選択が変わったが、固定16seedの再測定結果は基準と同じ0勝、202戦186勝だった。T3も新旧とも9戦8勝・Act 2 Floor 6敗北で、勝敗と到達点は変わらない。ほか15seedのtraceは基準とバイト単位で一致した。
 
+Speed Potionは`DexterityPower(5)`と`SpeedPotionPower(5)`を同時に付与し、プレイヤーターン終了時に後者を除去して同量のDexterityを戻す。観測済みの対象4seedで修正を再測定すると、J7/P4はtraceが完全一致、N8は12戦11勝・Act 2敗退から19戦18勝・Act 3ボス敗退へ改善、R9は11戦10勝・Act 2敗退から7戦6勝・Act 1ボス敗退へ劣化した。固定16seed全体では0勝のままだが、202戦186勝から205戦189勝、Act 3到達は1本増える。正しい持続時間の再現であり全体到達度も上がるため採用し、R9の後退は次の改善対象とする。
+
 **`CARD.THE_GAMBIT`は自動プレイ対象から完全除外**: combat.pyのシミュレータは以前から`TheGambitPower`が未知のため本カードをモデル対象から除外していたが(後述)、それは`rollout_choice`(search経由)を素通りするだけで、ヒューリスティック側の「ブロック値最大のカードを選ぶ」防御フォールバックは素通しで本カードを選び続けていた——0コストでブロック50という数値だけ見れば圧倒的最良の防御札に見えるため。デコンパイルで`TheGambitPower.AfterDeath`(実際は`AfterDamageReceived`)を確認したところ、**このpowerが付いている間に無傷でない(Unblocked)被弾を1回でもすると、残りHPに関係なく即死**(`CreatureCmd.Kill`)する仕様で、自動解除トリガーも見当たらない(このターンに限らず、以降のどのターンで被弾しても発動する)。実機run(VANTOM戦)でHP87から一切のダメージログなしに1ターンでHP0になる事例が発生し、原因はturn1に打ったTHE_GAMBITがturn3のDismember(26ダメージ、ブロックしきれず)で即死判定を踏んだことだった。`choose()`の`cards`構築時点で`CARD.THE_GAMBIT`を除外し、ヒューリスティックのどの経路からも二度と選ばれないようにした。
 
 `_axis` はデッキから `strike`（Perfected StrikeまたはHellraiser）、`self_damage`（RuptureまたはTear Asunder）、`vulnerable`（`VULNERABLE_PAYOFF` とBashまたは `VULNERABLE_APPLY`）、`exhaust`（`EXHAUST_ENABLERS` と `EXHAUST_PAYOFF`）の順に判定する。`_core_priority` はaxisごとの未所持coreカードを順位化し、axisがない場合だけ利用可能な Perfected Strike、Inflame、Rupture、Corruption を候補にする(InflameはStrength軸の種)。
