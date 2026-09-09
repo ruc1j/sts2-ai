@@ -22,7 +22,9 @@ combat選択の順序は、Sandpit中の `Frantic Escape`、Crabのfacing変更�
 
 combat traceには判断時点の手札だけでなく、draw/discard/exhaust pile、playerのpower・relic、敵のcombat id・slot・move historyも記録する。これらは`rollout_choice`の入力を再構築するために必要で、J7GW6DFX9VのTHE_INSATIABLE戦では旧traceにpileが無く、Ruptureを見送った探索の代替手評価を再現できなかった。`trace_piles_T3XQ7WM2VP`の1戦実機runで各フィールドの出力を確認済み。
 
-現行基準（`0a1d41f`、固定16seed）は0勝、202戦186勝。K7M2QX9BTRの初回はゲーム本体が終了コード134で落ちたため無効とし、再走の15戦14勝を採用した。T3XQ7WM2VPではSmall Capsule由来の`JuggernautPower(amount=6)`が13局面に出ていたが、`POWER_NAMES`に無くrolloutから消えていた。ゲーム実装は、所有者が正のブロックを得るたびに生存中の敵1体をランダムに選び、amount分のUnpoweredダメージを与える。共有のブロック獲得処理でこの効果を再現したところ、旧観測13局面中6局面の選択が変わり、実機ではAct 1の8戦目敗北（7勝）からAct 1ボス突破・Act 2の9戦目敗北（8勝）へ改善した。
+現行基準（`0a1d41f`、固定16seed）は0勝、202戦186勝。K7M2QX9BTRの初回はゲーム本体が終了コード134で落ちたため無効とし、再走の15戦14勝を採用した。
+
+T3XQ7WM2VPではSmall Capsule由来の`JuggernautPower(amount=6)`が13局面に出ていたが、`POWER_NAMES`に無くrolloutから消えていた。ゲーム実装は、所有者が正のブロックを得るたびに生存中の敵1体をランダムに選び、amount分のUnpoweredダメージを与える。共有のブロック獲得処理でこの効果を再現すると旧観測13局面中6局面の選択が変わったが、固定16seedの再測定結果は基準と同じ0勝、202戦186勝だった。T3も新旧とも9戦8勝・Act 2 Floor 6敗北で、勝敗と到達点は変わらない。ほか15seedのtraceは基準とバイト単位で一致した。
 
 **`CARD.THE_GAMBIT`は自動プレイ対象から完全除外**: combat.pyのシミュレータは以前から`TheGambitPower`が未知のため本カードをモデル対象から除外していたが(後述)、それは`rollout_choice`(search経由)を素通りするだけで、ヒューリスティック側の「ブロック値最大のカードを選ぶ」防御フォールバックは素通しで本カードを選び続けていた——0コストでブロック50という数値だけ見れば圧倒的最良の防御札に見えるため。デコンパイルで`TheGambitPower.AfterDeath`(実際は`AfterDamageReceived`)を確認したところ、**このpowerが付いている間に無傷でない(Unblocked)被弾を1回でもすると、残りHPに関係なく即死**(`CreatureCmd.Kill`)する仕様で、自動解除トリガーも見当たらない(このターンに限らず、以降のどのターンで被弾しても発動する)。実機run(VANTOM戦)でHP87から一切のダメージログなしに1ターンでHP0になる事例が発生し、原因はturn1に打ったTHE_GAMBITがturn3のDismember(26ダメージ、ブロックしきれず)で即死判定を踏んだことだった。`choose()`の`cards`構築時点で`CARD.THE_GAMBIT`を除外し、ヒューリスティックのどの経路からも二度と選ばれないようにした。
 
