@@ -65,8 +65,10 @@ internal static class PotionRewardBridge
             {
                 if (!await MakeRoom(player, potionReward, ct))
                 {
-                    // The agent kept its belt, so leave this reward alone exactly as the stock
-                    // handler would and move on to the next button.
+                    // Mark the button skipped so proceed is enabled. Leaving it merely attempted
+                    // makes non-room reward screens reopen until AutoSlay aborts the run.
+                    button.Disable();
+                    screen.RewardSkippedFrom(button);
                     attempted.Add(button);
                     continue;
                 }
@@ -82,6 +84,15 @@ internal static class PotionRewardBridge
                 AutoSlayLog.ExitScreen("NRewardsScreen");
                 return;
             }
+        }
+        if (!Traverse.Create(screen).Field<bool>("_isTerminal").Value)
+        {
+            var rewardsSet = Traverse.Create(screen).Field<RewardsSet>("_rewardsSet").Value;
+            if (!RunManager.Instance.RewardsSetSynchronizer.IsRewardsSetCompleted(rewardsSet))
+                RunManager.Instance.RewardsSetSynchronizer.SkipLocalRewardsSet();
+            NOverlayStack.Instance!.Remove(screen);
+            AutoSlayLog.ExitScreen("NRewardsScreen");
+            return;
         }
         var proceed = UiHelper.FindFirst<NProceedButton>(screen);
         if (proceed != null)
