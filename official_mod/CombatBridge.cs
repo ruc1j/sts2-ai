@@ -105,9 +105,13 @@ internal static class CombatBridge
                 player_hp = player.Creature.CurrentHp,
                 player = new
                 {
+                    hp = player.Creature.CurrentHp,
+                    max_hp = player.Creature.MaxHp,
                     block = player.Creature.Block,
                     energy = player.PlayerCombatState.Energy,
                     max_energy = player.PlayerCombatState.MaxEnergy,
+                    powers = player.Creature.Powers.Select(p => new { id = p.Id.ToString(), amount = p.Amount, facing = p is SurroundedPower surrounded ? surrounded.Facing.ToString() : null }),
+                    relics = player.Relics.Select(r => r.Id.ToString()),
                 },
                 action.Type,
                 hand_index = action.HandIndex,
@@ -133,14 +137,21 @@ internal static class CombatBridge
                     vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
                     target = card.TargetType.ToString(),
                 }),
+                draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
+                discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
+                exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
                 enemies = combat.Enemies.Select(enemy => new
                 {
+                    combat_id = enemy.CombatId,
                     id = enemy.ModelId.ToString(),
+                    slot = enemy.SlotName,
                     hp = enemy.CurrentHp,
+                    max_hp = enemy.MaxHp,
                     block = enemy.Block,
                     move = enemy.Monster?.NextMove.Id,
                     intents = enemy.Monster?.NextMove.Intents.Select(intent => Intent(intent, combat.PlayerCreatures, enemy)),
                     powers = enemy.Powers.Select(power => new { id = power.Id.ToString(), amount = power.Amount }),
+                    history = enemy.Monster?.MoveStateMachine?.StateLog.Where(state => state.IsMove).Select(state => state.Id),
                 }),
                 legal_actions = legal,
             });
