@@ -1406,6 +1406,8 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         if boss_context and boss_skill and hp <= max(1, max_hp // 3):
             return boss_skill
         return use_major_aware(recovery) or boss_shackling or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)
+    if effective_incoming < hp // 2 <= incoming and use({"POTION.FYSH_OIL"}):
+        return None
     if incoming >= hp // 2:
         energy = use({"POTION.ENERGY_POTION"}) if any(card.get("cost", 1) > 0 for card in hand) else None
         return use_major_aware(blocking) or use(survival_debuffs, enemy_damage) or use_major_aware(recovery) or boss_shackling or energy or use_major_aware(offensive_safe, enemy_hp) or use({"POTION.SWIFT_POTION"}) or (unknown_manual() if danger else None)

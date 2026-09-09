@@ -1524,6 +1524,16 @@ class OfficialAgentTest(unittest.TestCase):
         observation["potions"][1] = None
         self.assertEqual(choose_potion(observation, actions)["potion_id"], "POTION.ENTROPIC_BREW")
 
+    def test_elite_potion_danger_uses_damage_after_current_block(self) -> None:
+        observation = {
+            "run": {"act": 2, "floor": 10, "room_type": "Elite"},
+            "turn": 3,
+            "player": {"hp": 79, "max_hp": 87, "block": 19},
+            "enemies": [{"combat_id": 1, "id": "MONSTER.X", "hp": 158, "max_hp": 300, "intents": [{"damage": 40, "repeats": 1}]}],
+        }
+        actions = [{"type": "potion", "potion_id": "POTION.FYSH_OIL", "target_id": None}]
+        self.assertIsNone(choose_potion(observation, actions))
+
     def test_saves_major_potion_after_defensive_potion_in_monster_room(self) -> None:
         observation = {
             "run": {"act": 0, "floor": 5, "room_type": "Monster"},
