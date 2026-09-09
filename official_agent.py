@@ -798,6 +798,20 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         value = card_value(action, "damage")
         if value <= 0:
             value = ALL_ENEMY_DAMAGE.get(CARD_NAMES.get(action.get("card_id")), 0)
+        if (
+            hand.get(action.get("hand_index"), {}).get("type") == "Attack"
+            and any(
+                power.get("id") in {"POWER.VULNERABLE", "POWER.VULNERABLE_POWER"}
+                and _number(power.get("amount")) > 0
+                for power in enemy.get("powers", ())
+            )
+        ):
+            cruelty = next((
+                _number(power.get("amount")) for power in player.get("powers", ())
+                if power.get("id") == "POWER.CRUELTY_POWER"
+            ), 0)
+            phrog = 25 if "RELIC.PAPER_PHROG" in (player.get("relics") or ()) else 0
+            value = value * (150 + phrog + cruelty) // 100
         # SoarPower halves each powered card hit before HardToKill caps it.  Keep this in the
         # heuristic too, otherwise the pre-rollout lethal gate can select a false kill.
         if any(power.get("id") == "POWER.SOAR_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
@@ -1079,12 +1093,43 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             total += dealt
         return total >= _number(target.get("hp"))
 
+    if (
+        hp <= max(1, max_hp // 4)
+        and any(
+            power.get("id") == "POWER.STRENGTH_POWER" and _number(power.get("amount")) >= 40
+            for power in player.get("powers", ())
+        )
+        and turn_can_clear_threats()
+    ):
+        threat_id = next(
+            enemy["combat_id"] for enemy in observation.get("enemies", ())
+            if _intent_incoming(enemy) > 0 and _number(enemy.get("hp")) > 0
+        )
+        finishers = [
+            action for action in cards
+            if action.get("target_id") == threat_id and card_value(action, "damage") > 0
+        ]
+        if finishers:
+            return _tag_action(max(finishers, key=lambda action: (
+                not _is_self_damage(action, hand),
+                not hand.get(action.get("hand_index"), {}).get("bound", False),
+                card_value(action, "damage"),
+            )), "multi_lethal_direct")
+
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if rollout_enabled:
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
             rollout_decision_reason = None
+            if (
+                selected.get("card_id") == "CARD.BLOODLETTING"
+                and not any(power.get("id") == "POWER.RUPTURE_POWER" for power in player.get("powers", ()))
+            ):
+                rupture = next((action for action in cards if action.get("card_id") == "CARD.RUPTURE"), None)
+                if rupture:
+                    selected = rupture
+                    rollout_decision_reason = "rupture_before_bloodletting"
             if selected.get("card_id") == "CARD.HEADBUTT" and not observation.get("discard_pile"):
                 headbutt_cost = _number(hand.get(selected.get("hand_index"), {}).get("cost"))
                 setup_attacks = [
@@ -1133,10 +1178,18 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 and not is_lethal(selected)
                 and not turn_can_clear_threats()
             )
+            rupture_self_damage_is_safe = (
+                any(power.get("id") == "POWER.RUPTURE_POWER" for power in player.get("powers", ()))
+                and any(
+                    power.get("id") == "POWER.STRENGTH_POWER" and _number(power.get("amount")) >= 20
+                    for power in player.get("powers", ())
+                )
+                and _self_damage_value(selected, hand) + max(0, incoming - current_block) < hp
+            )
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected)):
+            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected) and not rupture_self_damage_is_safe):
                 if selected.get("type") == "potion":
                     if potion_context is not None:
                         _LAST_POTION_CONTEXT = potion_context

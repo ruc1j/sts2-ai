@@ -1740,3 +1740,14 @@ Battle Tranceを先に使う。
 実機再走でH2は17戦16勝・Act 2ボス残HP33から、23戦22勝・Act 3ボスQUEEN残HP341まで前進。
 N8は19戦18勝・QUEEN残HP160で同値。全619テスト成功。固定16seed見込みは0勝、215戦199勝、
 Act 3到達3本。
+
+### 2026-09-10 N8CQ4ZKP2WでAct 3を初突破
+
+RuptureとBloodlettingが同時に使える場合はRuptureを先に使い、Strength 20以上では致死しない
+自傷をrolloutから選べるようにした。これによりQUEEN戦のStrengthは16から44へ増え、残HPは
+160から75まで減少した。
+
+最後に、直接リーサル判定のダメージ計算が敵のVulnerableを含んでいない問題を修正した。
+Paper PhrogとCrueltyも既存の戦闘モデルと同じ倍率で計算し、低HP・Strength 40以上に限って
+複数枚リーサルを優先する。公式実機run `candidate_vulnlethal_N8CQ4ZKP2W` は19戦全勝、最終HP 7で
+`act_3_complete: true`。固定seed N8CQ4ZKP2WをAct 3まで初めて完走した。

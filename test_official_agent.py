@@ -399,6 +399,24 @@ class OfficialAgentTest(unittest.TestCase):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["decision_reason"]), ("CARD.PERFECTED_STRIKE", "headbutt_setup"))
 
+    def test_rupture_precedes_bloodletting_when_both_are_legal(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.RUPTURE", "cost": 1, "type": "Power"},
+                {"index": 1, "id": "CARD.BLOODLETTING", "cost": 0, "type": "Skill", "vars": [{"id": "HpLoss", "value": 3}]},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [], "intents": []}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.RUPTURE", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][1]):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["decision_reason"]), ("CARD.RUPTURE", "rupture_before_bloodletting"))
+
     def test_rage_yields_to_stronger_defense_when_incoming_exceeds_rage_block(self) -> None:
         for incoming, hp, expected in (
             (0, 30, "CARD.RAGE"),
@@ -527,18 +545,25 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 2, "target_id": None},
                 {"type": "end_turn"},
             ],
-            "player": {"hp": 6, "max_hp": 80, "block": 0, "energy": 3},
+            "player": {
+                "hp": 6, "max_hp": 80, "block": 0, "energy": 3,
+                "powers": [{"id": "POWER.STRENGTH_POWER", "amount": 40}],
+            },
             "hand": [
                 {"index": 0, "id": "CARD.SETUP_STRIKE", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 7}]},
                 {"index": 1, "id": "CARD.PILLAGE", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 9}]},
                 {"index": 2, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 5}]},
             ],
-            "enemies": [{"combat_id": 1, "hp": 16, "block": 0, "intents": [{"damage": 20, "repeats": 1}], "powers": []}],
+            "enemies": [{
+                "combat_id": 1, "hp": 23, "block": 0,
+                "intents": [{"damage": 20, "repeats": 1}],
+                "powers": [{"id": "POWER.VULNERABLE_POWER", "amount": 1}],
+            }],
         }
-        with patch("official_agent.rollout_choice", return_value=selected):
+        with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][2]):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
-        self.assertEqual(action["card_id"], "CARD.SETUP_STRIKE")
-        self.assertEqual(action["decision_source"], "rollout_success")
+        self.assertEqual(action["card_id"], "CARD.PILLAGE")
+        self.assertEqual(action["decision_source"], "multi_lethal_direct")
 
     def test_unsafe_rollout_guard_still_rejects_a_kill_the_turn_cannot_reach(self) -> None:
         # Same shape, but 16 damage of hand against 30 HP - no kill, so the guard still blocks.
@@ -2880,6 +2905,43 @@ class OfficialAgentTest(unittest.TestCase):
         rolled = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
         with patch("official_agent.rollout_choice", return_value=rolled):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.DEFEND_IRONCLAD")
+
+    def test_rollout_allows_safe_self_damage_with_rupture_active(self) -> None:
+        observation = {
+            "player": {
+                "hp": 14, "max_hp": 81, "block": 19, "energy": 2,
+                "powers": [
+                    {"id": "POWER.RUPTURE_POWER", "amount": 2},
+                    {"id": "POWER.STRENGTH_POWER", "amount": 38},
+                ],
+            },
+            "hand": [
+                {"index": 0, "id": "CARD.BREAKTHROUGH", "cost": 1, "type": "Attack", "vars": [
+                    {"id": "Damage", "value": 9}, {"id": "HpLoss", "value": 1},
+                ]},
+                {"index": 1, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 8}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 220, "intents": [{"damage": 28, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BREAKTHROUGH", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][0]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=1)["card_id"], "CARD.BREAKTHROUGH")
+
+        observation["player"].update(hp=13, block=19, energy=0)
+        observation["hand"] = [
+            {"index": 0, "id": "CARD.BLOODLETTING", "cost": 0, "type": "Skill", "vars": [{"id": "HpLoss", "value": 3}]},
+        ]
+        observation["legal_actions"] = [
+            {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None},
+            {"type": "end_turn"},
+        ]
+        with patch("official_agent.rollout_choice", return_value=observation["legal_actions"][0]):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=1)["card_id"], "CARD.BLOODLETTING")
 
     def test_rollout_allows_blood_wall_self_damage_when_it_blocks(self) -> None:
         observation = {
