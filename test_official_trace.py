@@ -80,6 +80,11 @@ class OfficialAgentTraceTest(unittest.TestCase):
                 self.assertIn("decision_source = action.DecisionSource", source)
                 self.assertIn("decision_reason = action.DecisionReason", source)
 
+    def test_act_three_boss_smith_prioritizes_rupture(self) -> None:
+        bridge = Path("official_mod/RestBridge.cs").read_text(encoding="utf-8")
+        self.assertIn('_queenBoss = act == 2 && _nearBoss;', bridge)
+        self.assertIn('_queenBoss && _deck.Contains("CARD.RUPTURE") && id == "CARD.RUPTURE"', bridge)
+
 
 if __name__ == "__main__":
     unittest.main()

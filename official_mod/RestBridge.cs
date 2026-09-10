@@ -92,6 +92,7 @@ internal static class RestBridge
 
         private readonly HashSet<string> _deck;
         private readonly bool _nearBoss;
+        private readonly bool _queenBoss;
 
         public SmithCardSelector(IEnumerable<string> deck, int act, int floor)
         {
@@ -104,6 +105,7 @@ internal static class RestBridge
                 _ => 15,
             };
             _nearBoss = floor >= bossFloor - 3;
+            _queenBoss = act == 2 && _nearBoss;
         }
 
         public Task<IEnumerable<CardModel>> GetSelectedCards(IEnumerable<CardModel> options, int minSelect, int maxSelect)
@@ -117,6 +119,8 @@ internal static class RestBridge
         private int Score(CardModel card)
         {
             var id = card.Id.ToString();
+            if (_queenBoss && _deck.Contains("CARD.RUPTURE") && id == "CARD.RUPTURE")
+                return 1200;
             if (_nearBoss && StrongBlock.TryGetValue(id, out var blockScore))
                 return 1000 + blockScore;
             if (_deck.Contains("CARD.PERFECTED_STRIKE") && id is "CARD.PERFECTED_STRIKE" or "CARD.HELLRAISER")

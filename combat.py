@@ -185,6 +185,7 @@ class Card:
     # FranticEscape.OnPlay calls EnergyCost.AddThisCombat(1), so each copy gets permanently more
     # expensive for the rest of the combat every time that same copy is played.
     extra_cost: int = 0
+    bound: bool = False
 
 
 CardValue = str | Card
@@ -908,6 +909,8 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
     seen_cards = set()
     for hand_index, card_value in enumerate(combat.hand):
         name = card_name(card_value)
+        if isinstance(card_value, Card) and card_value.bound:
+            continue
         if card_value in seen_cards:
             continue
         seen_cards.add(card_value)
@@ -1511,7 +1514,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         screaming_flagon = RELIC_SCREAMING_FLAGON in relics and not combat.hand
         combat = replace(
             combat, player_block=combat.player_block + cloak_clasp_block,
-            discard_pile=combat.discard_pile + combat.hand, hand=(),
+            discard_pile=combat.discard_pile + tuple(
+                replace(card, bound=False) if isinstance(card, Card) and card.bound else card
+                for card in combat.hand
+            ), hand=(),
             paels_tears_pending=RELIC_PAELS_TEARS in relics and combat.energy > 0,
         )
         plating = _power(combat.player_powers, "PlatingPower")

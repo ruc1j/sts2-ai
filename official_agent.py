@@ -841,6 +841,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return bool(lethal_targets(action))
 
     lethal = [action for action in cards if is_lethal(action)]
+    obscura_id = next((enemy.get("combat_id") for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.THE_OBSCURA" and _number(enemy.get("hp")) > 0), None)
+    obscura_present = obscura_id is not None
+    if obscura_present:
+        lethal = [action for action in lethal if any(enemy.get("id") != "MONSTER.PARAFRIGHT" for enemy in lethal_targets(action))]
     incoming_threats = {combat_id for combat_id, value in enemy_incoming.items() if value > 0}
     lethal_attacks = [action for action in lethal if not _is_self_damage(action, hand)]
     lethal_target_ids = {
@@ -927,12 +931,31 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         and not _is_self_damage(action, hand)
     ]
     if queen_focusable and not lethal:
+        rupture_active = any(power.get("id") == "POWER.RUPTURE_POWER" for power in player.get("powers", ()))
+        if not rupture_active:
+            rupture = next((action for action in cards if action.get("card_id") == "CARD.RUPTURE"), None)
+            if rupture:
+                return _tag_action(rupture, "rupture_before_queen_focus")
+        bloodletting = next((action for action in cards if action.get("card_id") == "CARD.BLOODLETTING"), None)
+        if bloodletting and _self_damage_value(bloodletting, hand) + max(0, incoming - current_block) < hp:
+            return _tag_action(bloodletting, "queen_focus_energy")
         urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
         defenses = [action for action in cards if card_value(action, "block") > 0]
         remaining = max(0, incoming - _number(player.get("block")))
         best_block = max((card_value(action, "block") for action in defenses), default=0)
         if not urgent or best_block < remaining:
             return _tag_action(max(queen_focusable, key=lambda action: card_value(action, "damage")), "queen_minion_direct")
+
+    ovicopter = next((enemy for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.OVICOPTER"), None)
+    if lethal and ovicopter and not any(ovicopter in lethal_targets(action) for action in lethal):
+        finishers = [action for action in cards if action.get("target_id") == ovicopter.get("combat_id") and damage(action, ovicopter) > 0]
+        for first in finishers:
+            for second in finishers:
+                if first.get("hand_index") == second.get("hand_index"):
+                    continue
+                cost = sum(_number(hand[action.get("hand_index")].get("cost")) for action in (first, second))
+                if cost <= card_energy and damage(first, ovicopter) + damage(second, ovicopter) >= _number(ovicopter.get("hp")) + _number(ovicopter.get("block")):
+                    return _tag_action(max((first, second), key=lambda action: damage(action, ovicopter)), "ovicopter_turn_lethal_direct")
 
     if lethal:
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
@@ -980,6 +1003,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         if any(power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))
     }
+    if obscura_present:
+        minion_ids.update(enemy["combat_id"] for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.PARAFRIGHT")
     kin_follower_ids = {
         enemy["combat_id"]
         for enemy in observation.get("enemies", ())
@@ -1014,6 +1039,23 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         and not _is_self_damage(action, hand)
     ]
     urgent = hp <= max_hp // 2 or incoming >= max(1, hp // 2)
+    two_card_kills = []
+    if len(primary_ids) > 1 and urgent:
+        for first in focusable:
+            target_id = first.get("target_id")
+            for second in focusable:
+                if second.get("target_id") != target_id or second.get("hand_index") == first.get("hand_index"):
+                    continue
+                cost = sum(_number(hand.get(action.get("hand_index"), {}).get("cost")) for action in (first, second))
+                setup_strength = card_value(first, "strength") if first.get("card_id") == "CARD.SETUP_STRIKE" else 0
+                if cost < card_energy and card_value(first, "damage") + card_value(second, "damage") + setup_strength >= _number(enemy_by_id[target_id].get("hp")):
+                    two_card_kills.append(first)
+                    break
+    if two_card_kills:
+        return _tag_action(
+            max(two_card_kills, key=lambda action: (enemy_incoming.get(action["target_id"], 0), card_value(action, "damage"))),
+            "two_card_lethal_setup_direct",
+        )
     if len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids:
         source = "generic_multi_primary_focus_direct"
         return _tag_action(
@@ -1116,12 +1158,54 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 card_value(action, "damage"),
             )), "multi_lethal_direct")
 
+    # Fiend Fire destroys the rest of the hand.  On a safe turn, preserve a long-fight power
+    # when both cards can be paid for; Z6 otherwise exhausts Crimson Mantle on the Act 2 boss's
+    # opening buff turn despite starting with eight energy.
+    fiend_fire = next((action for action in cards if action.get("card_id") == "CARD.FIEND_FIRE"), None)
+    crimson_mantle = next((action for action in cards if action.get("card_id") == "CARD.CRIMSON_MANTLE"), None)
+    if fiend_fire and crimson_mantle and incoming == 0:
+        combined_cost = sum(
+            _number(hand.get(action.get("hand_index"), {}).get("cost"))
+            for action in (fiend_fire, crimson_mantle)
+        )
+        if combined_cost <= card_energy:
+            return _tag_action(crimson_mantle, "crimson_mantle_before_fiend_fire")
+
     # rollouts cover the modeled cards in hand; unknown cards are treated as unplayable by the
     # simulator rather than abandoning the rollout entirely (e.g. Dominate used to disable it).
     if rollout_enabled:
         try:
             selected = rollout_choice(observation, actions, enemy_data, simulations)
             rollout_decision_reason = None
+            frog_knight = next((enemy for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.FROG_KNIGHT"), None)
+            selected_card = hand.get(selected.get("hand_index"), {})
+            if frog_knight and incoming == 0 and card_value(selected, "damage") <= 0 and card_value(selected, "block") > 0:
+                attacks = [
+                    action for action in cards
+                    if action.get("target_id") == frog_knight.get("combat_id")
+                    and not _is_self_damage(action, hand)
+                    and card_value(action, "damage") > 0
+                    and _number(hand.get(action.get("hand_index"), {}).get("cost")) <= card_energy
+                ]
+                if attacks:
+                    selected = max(attacks, key=lambda action: card_value(action, "damage"))
+                    rollout_decision_reason = "frog_knight_rest_attack"
+            devoted = next((enemy for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.DEVOTED_SCULPTOR"), None)
+            if devoted and selected.get("card_id") == "CARD.TRUE_GRIT" and not _number(hand.get(selected.get("hand_index"), {}).get("upgrade")) and incoming < hp + current_block:
+                race_attacks = [
+                    action for action in cards
+                    if action.get("target_id") == devoted.get("combat_id")
+                    and not _is_self_damage(action, hand)
+                    and card_value(action, "damage") > 0
+                    and _number(hand.get(action.get("hand_index"), {}).get("cost")) <= card_energy
+                ]
+                if race_attacks:
+                    selected = max(race_attacks, key=lambda action: (
+                        _number(hand.get(action.get("hand_index"), {}).get("cost")) == 0,
+                        action.get("card_id") == "CARD.MAUL",
+                        card_value(action, "damage"),
+                    ))
+                    rollout_decision_reason = "devoted_race_before_true_grit"
             if (
                 selected.get("card_id") == "CARD.BLOODLETTING"
                 and not any(power.get("id") == "POWER.RUPTURE_POWER" for power in player.get("powers", ()))
@@ -1144,6 +1228,13 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                     selected = max(setup_attacks, key=lambda action: card_value(action, "damage"))
                     rollout_decision_reason = "headbutt_setup"
             selected_card = hand.get(selected.get("hand_index"), {})
+            if (
+                obscura_present
+                and selected.get("target_id") in minion_ids
+                and selected_card.get("type") == "Attack"
+            ):
+                selected = next((action for action in actions if action.get("hand_index") == selected.get("hand_index") and action.get("target_id") == obscura_id), selected)
+                rollout_decision_reason = "obscura_focus"
             if (
                 kin_focus_id is not None
                 and selected.get("type") == "card"
@@ -1186,10 +1277,20 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 )
                 and _self_damage_value(selected, hand) + max(0, incoming - current_block) < hp
             )
+            vulnerable_self_damage_is_safe = (
+                enemy_by_id.get(selected.get("target_id"), {}).get("id") == "MONSTER.OVICOPTER"
+                and
+                any(
+                    power.get("id") == "POWER.VULNERABLE_POWER" and _number(power.get("amount")) > 0
+                    for power in enemy_by_id.get(selected.get("target_id"), {}).get("powers", ())
+                )
+                and card_value(selected, "damage") > 0
+                and _self_damage_value(selected, hand) + max(0, incoming - current_block) < hp
+            )
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected) and not rupture_self_damage_is_safe):
+            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected) and not rupture_self_damage_is_safe and not vulnerable_self_damage_is_safe):
                 if selected.get("type") == "potion":
                     if potion_context is not None:
                         _LAST_POTION_CONTEXT = potion_context
@@ -1215,7 +1316,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for intent in enemy.get("intents") or ()
     )
     if hp <= max_hp // 2 or incoming >= max(1, hp // 2):
-        safe_cards = [action for action in cards if not _is_self_damage(action, hand)]
+        safe_cards = [
+            action for action in cards
+            if not _is_self_damage(action, hand)
+            or (incoming == 0 and _self_damage_value(action, hand) == hp - 1)
+        ]
         if safe_cards:
             cards = safe_cards
         elif cards:
@@ -1568,7 +1673,7 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
         # not a seed until an enabler arrives. H2LV6ZJ4XW was offered Rupture and Bloodletting
         # together and took neither.
         if UNCOMMITTED_SELF_DAMAGE & deck_ids or (available and UNCOMMITTED_SELF_DAMAGE & available):
-            first.insert(2, "CARD.RUPTURE")
+            first.insert(0, "CARD.RUPTURE")
         cards = [card for card in first if available and card in available]
     if available is not None:
         cards = [card for card in cards if card in available]
@@ -1649,7 +1754,14 @@ def choose_shop(observation: dict) -> dict:
     over_high_cost_cap = high_cost_in_deck >= 2
     over_unmodeled_cap = sum(card_id in UNMODELED_REWARDS for card_id in deck_list) >= UNMODELED_CAP
     defense_needed = _block_starved(deck_list)
-    buys = [action for action in actions if action.get("type") == "buy_card"]
+    buys = [
+        action for action in actions
+        if action.get("type") == "buy_card"
+        and not (
+            (action.get("card_id") or action.get("id")) in {"CARD.BLOODLETTING", "CARD.UPPERCUT"}
+            and (action.get("card_id") or action.get("id")) in deck_ids
+        )
+    ]
     axis = _relic_axis(deck_ids)
     core = _core_priority(deck_ids, {(action.get("card_id") or action.get("id")) for action in buys})
     buys = [
@@ -2196,7 +2308,10 @@ def _observation_card(value: object) -> str | Card:
         # Frantic Escape is the one card whose copies drift above their base cost during a combat
         # (EnergyCost.AddThisCombat), and the observation reports each copy's current cost.
         extra_cost = max(_number(value.get("cost")) - 1, 0) if card_id == "CARD.FRANTIC_ESCAPE" else 0
-        return Card(name, _number(value.get("upgrade")) > 0, enchantment=enchantment, extra_cost=extra_cost)
+        return Card(
+            name, _number(value.get("upgrade")) > 0,
+            enchantment=enchantment, extra_cost=extra_cost, bound=bool(value.get("bound")),
+        )
     name = card_name(value)
     return CARD_NAMES.get(name, name)
 
