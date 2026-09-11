@@ -667,7 +667,7 @@ class OfficialAgentTest(unittest.TestCase):
             "hand": [
                 {"index": 0, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
                 {"index": 1, "id": "CARD.ANGER", "cost": 0, "type": "Attack", "vars": [{"id": "Damage", "value": 12}]},
-                {"index": 2, "id": "CARD.BASH", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 14}, {"id": "VulnerablePower", "value": 2}]},
+                {"index": 2, "id": "CARD.BASH", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 14}, {"id": "Power", "value": 2}]},
                 {"index": 3, "id": "CARD.ANGER", "cost": 0, "type": "Attack", "vars": [{"id": "Damage", "value": 12}]},
             ],
             "enemies": [{"combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 40, "block": 0, "powers": [], "intents": [{"damage": 12, "repeats": 2}]}],
@@ -684,6 +684,29 @@ class OfficialAgentTest(unittest.TestCase):
 
         observation["enemies"][0]["powers"] = [{"id": "POWER.THORNS_POWER", "amount": 5}]
         self.assertNotEqual(choose(observation, enemy_data={"monsters": []}, simulations=1).get("decision_source"), "vulnerable_multi_lethal_direct")
+
+    def test_vulnerable_setup_kills_ovicopter_instead_of_its_minions(self) -> None:
+        observation = {
+            "player": {"hp": 11, "max_hp": 80, "block": 0, "energy": 3, "powers": [], "relics": ["RELIC.NUNCHAKU"]},
+            "hand": [
+                {"index": 0, "id": "CARD.UPPERCUT", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 13}, {"id": "Power", "value": 1}]},
+                {"index": 1, "id": "CARD.ASHEN_STRIKE", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 3, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.OVICOPTER", "hp": 30, "block": 0, "powers": [], "intents": [{"damage": 13, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.TOUGH_EGG", "hp": 1, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 4, "repeats": 1}]},
+                {"combat_id": 3, "id": "MONSTER.TOUGH_EGG", "hp": 2, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 4, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": card_id, "hand_index": hand_index, "target_id": target}
+                for card_id, hand_index in (("CARD.UPPERCUT", 0), ("CARD.ASHEN_STRIKE", 1), ("CARD.STRIKE_IRONCLAD", 2))
+                for target in (1, 2, 3)
+            ] + [{"type": "end_turn"}],
+        }
+        action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["target_id"], action["decision_source"]), ("CARD.UPPERCUT", 1, "vulnerable_multi_lethal_direct"))
 
     def test_unsafe_rollout_guard_still_rejects_a_kill_the_turn_cannot_reach(self) -> None:
         # Same shape, but 16 damage of hand against 30 HP - no kill, so the guard still blocks.

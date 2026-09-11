@@ -377,6 +377,8 @@ def _card_hit_count(card_id: str | None, energy: int | None = None) -> int:
 def _card_value(action: dict, hand: dict[int, dict], metric: str, energy: int | None = None) -> int:
     card_id = action.get("card_id")
     card = hand.get(action.get("hand_index"), {})
+    if metric == "vulnerable" and card_id in {"CARD.BASH", "CARD.BREAK", "CARD.SQUASH", "CARD.UPPERCUT"}:
+        return 1
     values = []
     calculated = []
     for variable in card.get("vars") or ():
@@ -957,6 +959,22 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     ovicopter = next((enemy for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.OVICOPTER"), None)
     if lethal and ovicopter and not any(ovicopter in lethal_targets(action) for action in lethal):
         finishers = [action for action in cards if action.get("target_id") == ovicopter.get("combat_id") and damage(action, ovicopter) > 0]
+        for setup in (action for action in finishers if card_value(action, "vulnerable") > 0):
+            nunchaku_out = (
+                "RELIC.NUNCHAKU" in player.get("relics", ())
+                and incoming - current_block - defense_block >= hp
+            )
+            budget = card_energy + int(nunchaku_out) - _number(hand[setup.get("hand_index")].get("cost"))
+            total = damage(setup, ovicopter)
+            for action in sorted(finishers, key=lambda candidate: -damage(candidate, ovicopter)):
+                if action.get("hand_index") == setup.get("hand_index"):
+                    continue
+                cost = _number(hand[action.get("hand_index")].get("cost"))
+                if cost <= budget:
+                    budget -= cost
+                    total += damage(action, ovicopter) * 3 // 2
+            if total >= _number(ovicopter.get("hp")) + _number(ovicopter.get("block")):
+                return _tag_action(setup, "vulnerable_multi_lethal_direct")
         for first in finishers:
             for second in finishers:
                 if first.get("hand_index") == second.get("hand_index"):
