@@ -5201,15 +5201,17 @@ class OfficialAgentTest(unittest.TestCase):
         action = rollout_choice(observation, observation["legal_actions"], data, 200)
         self.assertIn("simulations", action)  # the rollout completed rather than crashing
 
-    def test_rollout_does_not_select_a_bound_card(self) -> None:
+    def test_rollout_infers_a_bound_card_from_the_legal_actions(self) -> None:
         with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
             data = json.load(file)
         observation = {
             "seq": 1, "turn": 1,
-            "player": {"hp": 30, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "player": {"hp": 30, "max_hp": 80, "block": 0, "energy": 1, "powers": [
+                {"id": "POWER.CHAINS_OF_BINDING_POWER", "amount": 3},
+            ]},
             "hand": [
-                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "bound": True},
-                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "bound": False},
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack"},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill"},
             ],
             "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
             "enemies": [{

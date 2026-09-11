@@ -2421,8 +2421,29 @@ def _rollout_cards(observation: dict) -> tuple[
                 for card_id in (observation.get("player", {}).get("upgraded_cards") or ())
             )
         )
+    hand = tuple(_observation_card(value) for value in hand_values)
+    if any(
+        power.get("id") == "POWER.CHAINS_OF_BINDING_POWER"
+        for power in observation.get("player", {}).get("powers", ())
+    ):
+        legal_indices = {
+            action.get("hand_index")
+            for action in observation.get("legal_actions", ())
+            if action.get("type") == "card"
+        }
+        energy = _number(observation.get("player", {}).get("energy"))
+        hand = tuple(
+            replace(card, bound=True)
+            if (
+                isinstance(card, Card)
+                and index not in legal_indices
+                and 0 <= _number(value.get("cost"), -1) <= energy
+            )
+            else card
+            for index, (card, value) in enumerate(zip(hand, hand_values))
+        )
     return (
-        tuple(_observation_card(value) for value in hand_values),
+        hand,
         tuple(_observation_card(value) for value in draw_values),
         tuple(_observation_card(value) for value in discard_values),
         tuple(_observation_card(value) for value in exhaust_values),
