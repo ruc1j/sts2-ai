@@ -448,6 +448,21 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.BLOODLETTING", "queen_focus_energy"))
 
+    def test_free_inflame_precedes_attack(self) -> None:
+        strike = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1}
+        observation = {
+            "player": {"hp": 77, "max_hp": 91, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 1, "id": "CARD.INFLAME", "cost": 0, "type": "Power"},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 321, "block": 0, "powers": [], "intents": []}],
+            "legal_actions": [strike, {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 1}, {"type": "end_turn"}],
+        }
+        with patch("official_agent.rollout_choice", return_value=strike):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.INFLAME", "free_inflame_direct"))
+
     def test_rage_yields_to_stronger_defense_when_incoming_exceeds_rage_block(self) -> None:
         for incoming, hp, expected in (
             (0, 30, "CARD.RAGE"),
@@ -645,6 +660,30 @@ class OfficialAgentTest(unittest.TestCase):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual(action["card_id"], "CARD.PILLAGE")
         self.assertEqual(action["decision_source"], "multi_lethal_direct")
+
+    def test_vulnerable_setup_starts_multi_card_lethal(self) -> None:
+        observation = {
+            "player": {"hp": 5, "max_hp": 91, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+                {"index": 1, "id": "CARD.ANGER", "cost": 0, "type": "Attack", "vars": [{"id": "Damage", "value": 12}]},
+                {"index": 2, "id": "CARD.BASH", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 14}, {"id": "VulnerablePower", "value": 2}]},
+                {"index": 3, "id": "CARD.ANGER", "cost": 0, "type": "Attack", "vars": [{"id": "Damage", "value": 12}]},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 40, "block": 0, "powers": [], "intents": [{"damage": 12, "repeats": 2}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.ANGER", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.BASH", "hand_index": 2, "target_id": 1},
+                {"type": "card", "card_id": "CARD.ANGER", "hand_index": 3, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.BASH", "vulnerable_multi_lethal_direct"))
+
+        observation["enemies"][0]["powers"] = [{"id": "POWER.THORNS_POWER", "amount": 5}]
+        self.assertNotEqual(choose(observation, enemy_data={"monsters": []}, simulations=1).get("decision_source"), "vulnerable_multi_lethal_direct")
 
     def test_unsafe_rollout_guard_still_rejects_a_kill_the_turn_cannot_reach(self) -> None:
         # Same shape, but 16 damage of hand against 30 HP - no kill, so the guard still blocks.
@@ -3157,6 +3196,25 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation)
         self.assertEqual(action["target_id"], 2)
         self.assertEqual(action["decision_source"], "generic_multi_primary_focus_direct")
+
+    def test_multi_primary_focus_defers_to_block_before_near_lethal_hit(self) -> None:
+        strike = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2}
+        shrug = {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 1}
+        observation = {
+            "player": {"hp": 27, "max_hp": 87, "block": 0, "energy": 1},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 5}]},
+                {"index": 1, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 9}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 27, "powers": [], "intents": [{"damage": 4, "repeats": 2}]},
+                {"combat_id": 2, "hp": 86, "powers": [], "intents": [{"damage": 16, "repeats": 1}]},
+            ],
+            "legal_actions": [strike, {**strike, "target_id": 1}, shrug, {"type": "end_turn"}],
+        }
+        with patch("official_agent.rollout_choice", return_value=shrug):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.SHRUG_IT_OFF", "rollout_success"))
 
     def test_sets_up_two_card_kill_and_keeps_energy_for_block(self) -> None:
         hand = [

@@ -893,6 +893,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     if not lethal and (turn := choose_crab_facing(observation, cards)):
         return _tag_action(turn, "crab_facing_direct")
 
+    free_inflame = next((
+        action for action in cards
+        if action.get("card_id") == "CARD.INFLAME"
+        and hand.get(action.get("hand_index"), {}).get("cost") == 0
+    ), None)
+    if free_inflame:
+        return _tag_action(free_inflame, "free_inflame_direct")
+
     # In a multi-enemy fight, a modeled rollout can still favor a single-target line because it
     # undervalues the next combined hit. Prefer an available all-enemy card before rolling out
     # when that combined threat is already large; lethal single-target attacks remain untouched.
@@ -1056,7 +1064,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             max(two_card_kills, key=lambda action: (enemy_incoming.get(action["target_id"], 0), card_value(action, "damage"))),
             "two_card_lethal_setup_direct",
         )
-    if len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids:
+    if (
+        len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids
+        and (defense_block <= 0 or incoming * 4 < hp * 3)
+    ):
         source = "generic_multi_primary_focus_direct"
         return _tag_action(
             max(
@@ -1134,6 +1145,37 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             budget -= cost
             total += dealt
         return total >= _number(target.get("hp"))
+
+    if incoming - current_block >= hp:
+        threats = [enemy for enemy in observation.get("enemies", ()) if _intent_incoming(enemy) > 0]
+        if len(threats) == 1:
+            target = threats[0]
+            for setup in focusable:
+                if card_value(setup, "vulnerable") <= 0:
+                    continue
+                budget = card_energy - _number(hand.get(setup.get("hand_index"), {}).get("cost"))
+                followups = sorted(
+                    (
+                        action for action in focusable
+                        if action.get("hand_index") != setup.get("hand_index")
+                        and action.get("target_id") == target.get("combat_id")
+                    ),
+                    key=lambda action: -damage(action, target),
+                )
+                total = damage(setup, target)
+                attack_count = 1
+                for action in followups:
+                    cost = _number(hand.get(action.get("hand_index"), {}).get("cost"))
+                    if cost <= budget:
+                        budget -= cost
+                        total += damage(action, target) * 3 // 2
+                        attack_count += 1
+                thorns = next((
+                    _number(power.get("amount")) for power in target.get("powers", ())
+                    if power.get("id") == "POWER.THORNS_POWER"
+                ), 0)
+                if total >= _number(target.get("hp")) + _number(target.get("block")) and thorns * attack_count < hp:
+                    return _tag_action(setup, "vulnerable_multi_lethal_direct")
 
     if (
         hp <= max(1, max_hp // 4)
