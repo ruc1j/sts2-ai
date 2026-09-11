@@ -2021,3 +2021,19 @@ combat.py の 125定数中、CARD_NAMES 経由で到達できないもの:
 NEOWS_FURY(214)、LANTERN_KEY(166)、DEBT(152)、SPOILS_MAP(57) など。
 
 **ただし採用可否は別問題である。** この検査で見つけた2件のうち、実機で勝ったのは1件だけだった。
+
+### Stratagem の実装は不採用(2026-09-12)
+
+`CARD.STRATAGEM` は手札に1009回来ていたが `CARD_COST` に無く、探索からは一度も使えない死に札
+だった。`POWER.STRATAGEM_POWER` も対応表に無い。Fasten と同じ形の欠落。
+
+実装内容: コスト1(強化で0)の Power カード。`StratagemPower` を1付与する。
+`StratagemPower.AfterShuffle` は捨て札が山札へ戻されるたびに、山札から Amount 枚を手札へ移す。
+`_draw` が reshuffle するのは山札が `count` を賄えないときちょうどなので、
+`_draw_into_combat` でその場合だけ `count` を増やす形で1箇所に実装した。
+
+実機 P3V8N5K2RX(Stratagem が出現する唯一の seed): 戦績は18勝1敗で横ばいだが、**Act 3ボス戦が
+12ターン・QUEEN残151 から 8ターン・残363 へ大幅悪化**したため不採用。
+
+これで「`CARD_NAMES` に無いカードを実装する」検査の打率は**3件中1件**(Fasten 採用、
+Wound 不採用、Stratagem 不採用)。**欠落を見つけることと、埋めて強くなることは別である。**
