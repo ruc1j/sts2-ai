@@ -35,6 +35,7 @@ POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
 POTION_BLOOD, POTION_HEART, POTION_BRONZE = "POTION.BLOOD_POTION", "POTION.HEART_OF_IRON", "POTION.LIQUID_BRONZE"
 ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
+ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -1890,6 +1891,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         energy += sum(card_name(value) in ATTACKS for value in hand)
     player_hp = combat.player_hp
     self_damage = SELF_DAMAGE.get(card, 0)
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and card in ATTACKS:
+        self_damage += 2
     if self_damage:
         # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
         damaged = _apply_player_damage(combat, self_damage, trigger_inferno=True)
@@ -1921,7 +1924,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
     rupture = _power(player_powers, "RupturePower")
-    if rupture and card in SELF_DAMAGE:
+    if rupture and self_damage:
         player_powers = _add_power(player_powers, "StrengthPower", rupture)
     if card == INFLAME:
         player_powers = _add_power(player_powers, "StrengthPower", 2)
@@ -2244,6 +2247,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
         damage += 3
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and card in ATTACKS:
+        damage = damage * 3 // 2
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower") - _tender_penalty(combat)
     combat, vigor = _spend_vigor(combat)
     damage += vigor

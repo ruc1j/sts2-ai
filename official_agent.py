@@ -398,6 +398,8 @@ def _card_value(action: dict, hand: dict[int, dict], metric: str, energy: int | 
 
 def _is_self_damage(action: dict, hand: dict[int, dict]) -> bool:
     card = hand.get(action.get("hand_index"), {})
+    if card.get("enchantment") == "ENCHANTMENT.CORRUPTED":
+        return True
     if action.get("card_id") in UNCOMMITTED_SELF_DAMAGE or card.get("id") in UNCOMMITTED_SELF_DAMAGE:
         return True
     return any(
@@ -414,7 +416,7 @@ def _self_damage_value(action: dict, hand: dict[int, dict]) -> int:
         if any(marker in str(variable.get("id", "")).lower().replace("_", "") for marker in ("selfdamage", "hploss", "healthloss"))
     ]
     card_name = CARD_NAMES.get(action.get("card_id") or card.get("id"), "")
-    return max(observed, default=SELF_DAMAGE.get(card_name, 0))
+    return max(observed, default=SELF_DAMAGE.get(card_name, 0)) + (2 if card.get("enchantment") == "ENCHANTMENT.CORRUPTED" else 0)
 
 
 # Fixed Act 1 Neow order. This intentionally ignores the deck and player HP; other events use
@@ -843,6 +845,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         return bool(lethal_targets(action))
 
     lethal = [action for action in cards if is_lethal(action)]
+    alive_decimillipede_ids = {
+        enemy.get("combat_id")
+        for enemy in enemy_by_id.values()
+        if str(enemy.get("id", "")).startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
+        and _number(enemy.get("hp")) > 0
+    }
+    if len(alive_decimillipede_ids) > 1:
+        lethal = [action for action in lethal if action.get("target_id") not in alive_decimillipede_ids]
     obscura_id = next((enemy.get("combat_id") for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.THE_OBSCURA" and _number(enemy.get("hp")) > 0), None)
     obscura_present = obscura_id is not None
     if obscura_present:
@@ -1063,9 +1073,9 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if str(enemy.get("id", "")).startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
         and _number(enemy.get("hp")) > 0
     }
-    decimillipede_focus_id = min(
+    decimillipede_focus_id = max(
         decimillipede_ids,
-        key=lambda combat_id: (_number(enemy_by_id[combat_id].get("hp")), -enemy_incoming.get(combat_id, 0)),
+        key=lambda combat_id: (_number(enemy_by_id[combat_id].get("hp")), enemy_incoming.get(combat_id, 0)),
         default=None,
     )
     focusable = [
@@ -1320,7 +1330,6 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 and selected.get("target_id") in decimillipede_ids
                 and selected.get("target_id") != decimillipede_focus_id
                 and selected_card.get("type") == "Attack"
-                and not is_lethal(selected)
             ):
                 selected = next((
                     action for action in actions
@@ -1389,6 +1398,25 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
             if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected) and not rupture_self_damage_is_safe and not vulnerable_self_damage_is_safe and not sandpit_self_damage_is_safe):
+                tremble = next((action for action in cards if action.get("card_id") == "CARD.TREMBLE"), None)
+                target = enemy_by_id.get(selected.get("target_id"))
+                if (
+                    tremble
+                    and sandpit_critical
+                    and any(action.get("card_id") == "CARD.BLOODLETTING" for action in cards)
+                    and selected_card.get("type") == "Attack"
+                    and target
+                    and not any(
+                        power.get("id") in {"POWER.VULNERABLE", "POWER.VULNERABLE_POWER"}
+                        and _number(power.get("amount")) > 0
+                        for power in target.get("powers", ())
+                    )
+                    and sum(
+                        _number(hand.get(action.get("hand_index"), {}).get("cost"))
+                        for action in (tremble, selected)
+                    ) <= card_energy
+                ):
+                    return _tag_action(tremble, "rollout_success", "tremble_before_attack")
                 if selected.get("type") == "potion":
                     if potion_context is not None:
                         _LAST_POTION_CONTEXT = potion_context
@@ -1438,13 +1466,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     # MinionPower enemies do not need to die to win; KIN_FOLLOWER is explicitly focused below.
     priority = {"CARD.BASH": 4, "CARD.STRIKE_IRONCLAD": 3, "CARD.DEFEND_IRONCLAD": 2}
     if cards:
-        def score(action: dict) -> tuple[int, int, int, int, int]:
+        def score(action: dict) -> tuple[int, int, int, int, int, int]:
             card = hand.get(action.get("hand_index"), {})
             attack = card.get("type") == "Attack" and action.get("target_id") in enemy_by_id
             # Focus fire: among equal-priority attacks, prefer non-minion enemies, then the weakest.
             return (
                 priority.get(action["card_id"], 3 if card.get("type") == "Attack" else 1),
                 int(kin_focus_id is not None and attack and action.get("target_id") == kin_focus_id),
+                int(decimillipede_focus_id is not None and attack and action.get("target_id") == decimillipede_focus_id),
                 damage(action) if attack else 0,
                 (action.get("target_id") not in minion_ids) if attack else 0,
                 -enemy_by_id[action["target_id"]].get("hp", 0) if attack else 0,

@@ -3104,6 +3104,20 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.rollout_choice", return_value=rolled):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.DEFEND_IRONCLAD")
 
+    def test_rollout_cannot_hide_corrupted_enchantment_self_damage(self) -> None:
+        corrupted = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1}
+        observation = {
+            "player": {"hp": 17, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "enchantment": "ENCHANTMENT.CORRUPTED", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 100, "intents": [{"damage": 0, "repeats": 0}]}],
+            "legal_actions": [corrupted, {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1}, {"type": "end_turn"}],
+        }
+        with patch("official_agent.rollout_choice", return_value=corrupted):
+            self.assertNotEqual(choose(observation, enemy_data={"monsters": []}, simulations=100).get("card_id"), "CARD.STRIKE_IRONCLAD")
+
     def test_rollout_allows_survivable_bloodletting_when_sandpit_is_critical(self) -> None:
         bloodletting = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
         observation = {
@@ -3125,6 +3139,27 @@ class OfficialAgentTest(unittest.TestCase):
         }
         with patch("official_agent.rollout_choice", return_value=bloodletting):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.BLOODLETTING")
+
+    def test_rollout_plays_tremble_before_an_affordable_attack(self) -> None:
+        headbutt = {"type": "card", "card_id": "CARD.HEADBUTT", "hand_index": 0, "target_id": 1}
+        observation = {
+            "player": {"hp": 46, "max_hp": 110, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.HEADBUTT", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 1, "id": "CARD.TREMBLE", "cost": 1, "type": "Skill", "vars": [{"id": "VulnerablePower", "value": 3}]},
+                {"index": 2, "id": "CARD.BLOODLETTING", "cost": 0, "type": "Skill", "vars": [{"id": "HpLoss", "value": 3}]},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 125, "intents": [{"damage": 12, "repeats": 2}], "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}]}],
+            "legal_actions": [
+                headbutt,
+                {"type": "card", "card_id": "CARD.TREMBLE", "hand_index": 1},
+                {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=headbutt):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=100)
+        self.assertEqual(action["card_id"], "CARD.TREMBLE")
 
     def test_rollout_allows_safe_self_damage_with_rupture_active(self) -> None:
         observation = {
@@ -3277,7 +3312,7 @@ class OfficialAgentTest(unittest.TestCase):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.SHRUG_IT_OFF", "rollout_success"))
 
-    def test_decimillipede_attack_focuses_lowest_hp_segment(self) -> None:
+    def test_decimillipede_attack_focuses_highest_hp_segment(self) -> None:
         back = {"type": "card", "card_id": "CARD.IRON_WAVE", "hand_index": 0, "target_id": 3}
         observation = {
             "player": {"hp": 27, "max_hp": 80, "block": 20, "energy": 1},
@@ -3293,7 +3328,26 @@ class OfficialAgentTest(unittest.TestCase):
         }
         with patch("official_agent.rollout_choice", return_value=back):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
-        self.assertEqual((action["target_id"], action["decision_reason"]), (1, "decimillipede_focus"))
+        self.assertEqual((action["target_id"], action["decision_reason"]), (2, "decimillipede_focus"))
+
+    def test_decimillipede_does_not_finish_one_segment_while_others_live(self) -> None:
+        low_segment = {"type": "card", "card_id": "CARD.HEADBUTT", "hand_index": 0, "target_id": 1}
+        observation = {
+            "player": {"hp": 40, "max_hp": 80, "block": 20, "energy": 1},
+            "hand": [{"index": 0, "id": "CARD.HEADBUTT", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 10}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_FRONT", "hp": 5, "powers": [], "intents": [{"damage": 6, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_MIDDLE", "hp": 20, "powers": [], "intents": [{"damage": 6, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                low_segment,
+                {"type": "card", "card_id": "CARD.HEADBUTT", "hand_index": 0, "target_id": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=low_segment):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["target_id"], action["decision_reason"]), (2, "decimillipede_focus"))
 
     def test_sets_up_two_card_kill_and_keeps_energy_for_block(self) -> None:
         hand = [
@@ -3394,7 +3448,7 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 1)
 
-    def test_focus_skips_reviving_decimillipede_segments(self) -> None:
+    def test_fallback_focuses_highest_hp_decimillipede_segment(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "block": 0},
             "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
@@ -3408,7 +3462,7 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
         }
-        self.assertEqual(choose(observation)["target_id"], 2)
+        self.assertEqual(choose(observation)["target_id"], 1)
 
     def test_nonurgent_kin_follower_focus_defers_to_rollout(self) -> None:
         observation = {
