@@ -1057,6 +1057,17 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         if str(enemy.get("id", "")).startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
     }
+    decimillipede_ids = {
+        enemy["combat_id"]
+        for enemy in observation.get("enemies", ())
+        if str(enemy.get("id", "")).startswith("MONSTER.DECIMILLIPEDE_SEGMENT")
+        and _number(enemy.get("hp")) > 0
+    }
+    decimillipede_focus_id = min(
+        decimillipede_ids,
+        key=lambda combat_id: (_number(enemy_by_id[combat_id].get("hp")), -enemy_incoming.get(combat_id, 0)),
+        default=None,
+    )
     focusable = [
         action
         for action in cards
@@ -1295,6 +1306,20 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             ):
                 selected = next((action for action in actions if action.get("hand_index") == selected.get("hand_index") and action.get("target_id") == obscura_id), selected)
                 rollout_decision_reason = "obscura_focus"
+            if (
+                urgent
+                and decimillipede_focus_id is not None
+                and selected.get("target_id") in decimillipede_ids
+                and selected.get("target_id") != decimillipede_focus_id
+                and selected_card.get("type") == "Attack"
+                and not is_lethal(selected)
+            ):
+                selected = next((
+                    action for action in actions
+                    if action.get("hand_index") == selected.get("hand_index")
+                    and action.get("target_id") == decimillipede_focus_id
+                ), selected)
+                rollout_decision_reason = "decimillipede_focus"
             if (
                 kin_focus_id is not None
                 and selected.get("type") == "card"

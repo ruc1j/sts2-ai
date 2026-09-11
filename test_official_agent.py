@@ -3239,6 +3239,24 @@ class OfficialAgentTest(unittest.TestCase):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.SHRUG_IT_OFF", "rollout_success"))
 
+    def test_decimillipede_attack_focuses_lowest_hp_segment(self) -> None:
+        back = {"type": "card", "card_id": "CARD.IRON_WAVE", "hand_index": 0, "target_id": 3}
+        observation = {
+            "player": {"hp": 27, "max_hp": 80, "block": 20, "energy": 1},
+            "hand": [{"index": 0, "id": "CARD.IRON_WAVE", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}, {"id": "Block", "value": 7}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_FRONT", "hp": 17, "powers": [], "intents": [{"damage": 7, "repeats": 2}]},
+                {"combat_id": 2, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_MIDDLE", "hp": 44, "powers": [], "intents": [{"damage": 6, "repeats": 1}]},
+                {"combat_id": 3, "id": "MONSTER.DECIMILLIPEDE_SEGMENT_BACK", "hp": 32, "powers": [], "intents": [{"damage": 8, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {**back, "target_id": target_id} for target_id in (1, 2, 3)
+            ] + [{"type": "end_turn"}],
+        }
+        with patch("official_agent.rollout_choice", return_value=back):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["target_id"], action["decision_reason"]), (1, "decimillipede_focus"))
+
     def test_sets_up_two_card_kill_and_keeps_energy_for_block(self) -> None:
         hand = [
             {"index": 0, "id": "CARD.SETUP_STRIKE", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 5.25}, {"id": "StrengthPower", "value": 2}]},
