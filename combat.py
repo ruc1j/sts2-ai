@@ -1105,6 +1105,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             return combat
     spec, move_id, move = _specs(data)[enemy.model], enemy.move, _state(_specs(data)[enemy.model], enemy.move)
     values, player_hp, player_block = _dict(enemy.values), combat.player_hp, combat.player_block
+    # PaperCutsPower.AfterDamageGiven drains the player's max HP by its amount on every powered
+    # attack of the owner's that gets through with UnblockedDamage > 0. Blocking the hit prevents it
+    # outright, which is the whole reason the model has to know: otherwise it reads these enemies as
+    # ordinary chip damage and never pays for block against them.
+    max_hp_loss = 0
     sandpit = _power(enemy.powers, "SandpitPower")
     if sandpit:
         if sandpit == 1:
@@ -1167,6 +1172,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 player_block -= blocked
                 unblocked = damage - blocked
                 damage_events.append(unblocked)
+                if unblocked > 0:
+                    max_hp_loss += _power(enemy.powers, "PaperCutsPower")
                 if _power(player_powers, "ThornsPower") and enemy.alive:
                     enemy = _damage_enemy(enemy, _power(player_powers, "ThornsPower"), powered=False)
             # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
@@ -1389,8 +1396,12 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             centennial_puzzle_used = True
         if RELIC_SELF_FORMING_CLAY in relics:
             player_powers = _add_power(player_powers, "SelfFormingClayPower", 3)
+    # CreatureCmd.LoseMaxHp also pulls current HP down with the ceiling it just lowered.
+    surviving_max_hp = max(1, combat.player_max_hp - max_hp_loss) if max_hp_loss else combat.player_max_hp
+    if max_hp_loss:
+        player_hp = min(player_hp, surviving_max_hp)
     combat_after_damage = replace(
-        combat, player_hp=player_hp, player_powers=player_powers,
+        combat, player_hp=player_hp, player_powers=player_powers, player_max_hp=surviving_max_hp,
         damage_received_this_turn=damage_received, lizard_tail_used=lizard_tail_used,
         # TearAsunder counts DamageReceivedEntry rows with UnblockedDamage > 0 for the whole
         # combat, so each individual repeat hit that got through counts once.
@@ -1893,6 +1904,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     self_damage = SELF_DAMAGE.get(card, 0)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and card in ATTACKS:
         self_damage += 2
+    # GalvanicPower (enemy buff): BeforeCombatStart and AfterCardEnteredCombat afflict every one of
+    # the player's Power cards with Galvanized, and AfterCardPlayed deals the power's amount as
+    # Unpowered damage back at the player for each afflicted card played. Without this the rollout
+    # plays Inflame/Rupture/Feel No Pain for free against an enemy charging 6 HP a piece.
+    # ponytail: the affliction rides the card, so it outlives the enemy that applied it - taking the
+    # largest amount any enemy in this fight brought (alive or dead) keeps that without tracking
+    # per-card afflictions. Upgrade to per-card state if an enemy ever applies two different amounts.
+    if card in POWERS:
+        self_damage += max((_power(enemy.powers, "GalvanicPower") for enemy in combat.enemies), default=0)
     if self_damage:
         # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
         damaged = _apply_player_damage(combat, self_damage, trigger_inferno=True)

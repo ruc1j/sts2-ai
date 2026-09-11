@@ -2412,3 +2412,26 @@ class CombatTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GalvanicAndPaperCutsTest(unittest.TestCase):
+    """The two enemy mechanics that leave the model optimistic when they are missing."""
+
+    def test_galvanic_charges_hp_for_each_power_card(self) -> None:
+        combat = Combat(
+            enemies=(Enemy(model="MONSTER.DUMMY", hp=30, move="IDLE_MOVE", values=(),
+                           powers=(("GalvanicPower", 6),), primary=True),),
+            hand=(INFLAME,), draw_pile=(), discard_pile=(), energy=3, player_hp=50,
+        )
+        after = step(combat, INFLAME, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 44)
+
+    def test_paper_cuts_drains_max_hp_only_when_the_hit_lands(self) -> None:
+        enemy = Enemy(model="MONSTER.DUMMY", hp=30, move="HIT_MOVE", values=(),
+                      powers=(("PaperCutsPower", 2),), primary=True)
+        base = Combat(enemies=(enemy,), hand=(), draw_pile=(), discard_pile=(),
+                      energy=0, player_hp=50, player_max_hp=80)
+        exposed = step(base, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        blocked = step(replace(base, player_block=99), END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(exposed.player_max_hp, 78)
+        self.assertEqual(blocked.player_max_hp, 80)

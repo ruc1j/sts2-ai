@@ -220,6 +220,10 @@ POWER_NAMES = {
     "POWER.PLOW_POWER": "PlowPower",
     "POWER.RINGING_POWER": "RingingPower",
     "POWER.SANDPIT_POWER": "SandpitPower",
+    # The observation reports these under their own ids; without the mapping combat.py never
+    # sees them (the same gap that made FrailPower dead for every rollout - see CODEWIKI).
+    "POWER.GALVANIC_POWER": "GalvanicPower",
+    "POWER.PAPER_CUTS_POWER": "PaperCutsPower",
     "POWER.SHRINK_POWER": "ShrinkPower",
     "POWER.SLOW_POWER": "SlowPower",
     "POWER.SLUMBER_POWER": "SlumberPower",
