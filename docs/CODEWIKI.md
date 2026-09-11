@@ -1751,3 +1751,173 @@ RuptureとBloodlettingが同時に使える場合はRuptureを先に使い、Str
 Paper PhrogとCrueltyも既存の戦闘モデルと同じ倍率で計算し、低HP・Strength 40以上に限って
 複数枚リーサルを優先する。公式実機run `candidate_vulnlethal_N8CQ4ZKP2W` は19戦全勝、最終HP 7で
 `act_3_complete: true`。固定seed N8CQ4ZKP2WをAct 3まで初めて完走した。
+
+## 2026-09-12セッション: 計測環境の再構築と、後回し評価の実測
+
+### 再現環境が壊れていた(最初に直したこと)
+
+一時runner `/tmp/sts2_goal_run.py` と固定ユーザーデータ `/tmp/sts2-userdata-pin` が両方消えていた。
+pwshが `/opt/homebrew/bin/pwsh` にあるため、リポジトリ純正の `run_official_autoslay.ps1` を呼ぶ薄い
+bashラッパーで置き換えた。ラッパーの役目は3つだけ。固定スナップショットからの復元、artifact名の
+重複拒否、`trap` による復元と `mods/Sts2Ai` 削除。
+
+**`-AgentSimulations` の既定値は 1000 だが、過去のartifactは全て 100 で取られている。**
+消えた旧runnerの引数 `<seed> <artifact> 100 WORKTREE` の「100」がsimulations数だった。これに
+気づかず1000で2本走らせ、「現HEADはP3で12勝1敗、旧基準18勝1敗から退行」という誤った結論を出した。
+実際はsimulations差である。
+
+判別方法: トレースの `simulations` フィールドと、序盤の `search_value`。同一seedで序盤の
+`search_value` がわずかに違うとき(例: seq3が 1.7544 vs 1.75552)は、コード差よりsimulations差を
+先に疑う。
+
+`simulations=100` で現HEAD素の対照runを取り直すと、旧artifact `candidate_tauntdraw_P3V8N5K2RX` と
+**643行バイト単位で一致**した。環境の再現性は証明済み。
+
+### 「Battle Tranceを先に使わない」「殴ってから発火」の実測
+
+ユーザー指摘から調査。根は `_step_score` が即時のダメージとブロックしか点数化しないこと。
+見返りが未来にある札は0点近くになり、エネルギーを使い切った後へ回される。
+
+全トレースで「打てるのに後回しにされたターン数」を集計した。
+
+| 札 | 合計 | `rollout_success` | `lethal_direct`(正当) |
+|---|---:|---:|---:|
+| Battle Trance | 687 | 501 | 121 |
+| Inflame | 228 | 162 | 39 |
+
+`lethal_direct` は敵を倒し切る局面なので後回しで正しい。問題は探索自身の判断である
+`rollout_success` の663ターン。
+
+箇所は2つ。
+
+1. `_step_score` 末尾の `0.3 * max(0, drawn)`。コメントは「ドロー札が最後に回るのを防ぐため」と
+   書いているが、同じコメントが「実ダメージ1点を絶対に超えない」と明言している。Battle Tranceは
+   3枚引いても0.9点で、1ダメージでも出る札すべてに必ず負ける。なお `drawn` は実際の手札増加量を
+   測っているので、手札上限10での溢れとNoDrawによる潰れは既に自動で反映されている。
+   **計器は正しく、重みだけが間違っている。**
+2. `_setup_bonus` のInflame分岐にある `if len(selected) >= 2`。このターン攻撃札を2枚以上打てなければ
+   `return 0` となり、Inflameは無点で後回しになる。
+
+この1つの根に対して局所パッチが5つ積まれている。致死ターンのBattle Trance先行、Sandpit残り1〜2の
+Battle Trance優先、Sandpit 3以上のTaunt先行、0コストInflame先行(`123adc3`)、`_setup_bonus` の
+攻撃2枚ゲート。
+
+### DRAW_VALUE(エネルギー比例のドロー評価)は不採用
+
+`0.3/枚` のcapを外し、「ドローの価値は残りエネルギーで払える分しかない」という形に置き換えた。
+`playable = min(drawn, state.energy)` とし、NoDrawで潰す他のドロー源の枚数を機会費用として差し引く。
+
+オフラインA/Bは良い形だった。2037局面中321件(15.8%)で判断が変化し、Battle Tranceが先行する局面が
+108件、Inflameが18件増えた。逆に**エネルギーが尽きた状態でのBattle Tranceの空打ちを67件やめた**——
+ハードコードせずに出た挙動である。新規例外0件。
+
+実機は逆だった。
+
+| seed | 対照(HEAD素) | DRAW_VALUE=2.0 | DRAW_VALUE=1.0 |
+|---|---|---|---|
+| P3V8N5K2RX | 18勝1敗・QUEEN残151 | 12勝1敗・INSATIABLE残4 | 12勝1敗・INSATIABLE残90 |
+| M7C4Q9V2RH | 17勝1敗・QUEEN残360＋Torch38 | 17勝1敗・QUEEN残372(Torch撃破) | — |
+
+値を変えても同じ戦闘で落ちるので、magnitudeではなく構造の問題。機構としては正しく、オフラインでも
+良い挙動を示したが、**勝率に寄与する証拠がない**ため差し戻した。Chains of Bindingと同じ結論。
+
+構造的な過大評価も残っている: `min(drawn, energy)` はエネルギー全額をドローの手柄にするが、その
+エネルギーは元の手札にも使えたので、ドローの限界価値は「選択肢が増えた分」だけである。再挑戦する
+なら、ここを増分で表現するところから。
+
+### Tremble重複抑制は不採用
+
+報酬とショップで2枚目以降のTrembleを取らない候補。オフラインではP3・M7・Q6の3 seedすべてで発火し、
+合計8枚の重複取得を止める。実機(P3、simulations=100)は戦績18勝1敗で横ばいだが、Act 3ボス戦の中身が
+**12ターン・QUEEN残151から、3ターン・QUEEN残327＋Torch Head残73へ大幅悪化**した。
+デッキ28枚・Tremble 1枚。Vulnerable付与が不足して火力が落ちたと読める。
+「Act 3ショップ30枚上限」(残208→395へ悪化)と同じ形で、**単なるデッキ肥大ではなかった**。
+
+### 休憩所の回復閾値は不採用(勝敗で分布が割れない)
+
+P3の最後の休憩所がHP74から+6回復のためにSMITHを捨てていた(HEALは最大HPの30%上限)。全トレースで
+HEALは1259回、SMITHは334回。しかし勝利runと敗北runで分布がほぼ同じで、判別力がない。
+
+| run | 結果 | 休憩所 |
+|---|---|---|
+| N8CQ4ZKP2W | 勝利 | HATCH 1, HEAL 7, SMITH 3 |
+| H2LV6ZJ4XW | 勝利 | HEAL 9, SMITH 1 |
+| P3V8N5K2RX | 敗北 | HATCH 1, HEAL 8, SMITH 3 |
+
+過去ノートの「4seedで上下に割れ判定不能」は正しかった。
+
+### 突入時HPと敗北率は相関するが、行動可能な判断点ではない
+
+全3385戦の集計。
+
+| 突入時HP% | 戦闘数 | 敗北 | 敗北率 |
+|---|---:|---:|---:|
+| 0-49% | 78 | 41 | 52.6% |
+| 50-79% | 461 | 58 | 12.6% |
+| 80%以上 | 2846 | 125 | 4.4% |
+
+HP50%未満での突入は78戦しかないのに全敗北224件のうち41件を占める。ただし `choose_rest` は既に
+HP75%未満で必ずHEALし、`choose_map` もHP75%以下で休憩所寄せ・Elite回避、33%以下でUnknown回避に
+切り替わる。低HPで突入した局面では**既に安全モードが働いた上での結果**であり、
+「手遅れの症状」であって判断ミスではない。過去ノートの同じ戒めと一致する。
+
+### 未モデルのpower 2件を実装(勝率改善の証拠はない)
+
+トレースの `powers[].id` を対応表と突き合わせる既存手順で4件が挙がった。うちPyre/Ritual/Reattach/
+Imbalanced/Territorial/Swipeは別名で実装済みの誤検出。**本当に無かったのは4件**で、うち敵側2件を
+実装した(`0e87324`)。
+
+- `GalvanicPower`(敵、観測値6): `BeforeCombatStart` と `AfterCardEnteredCombat` でプレイヤーの
+  Powerカード全部にGalvanizedを付与し、`AfterCardPlayed` で付与済みカードを使うたびにamount分の
+  Unpoweredダメージをプレイヤーへ返す。rolloutはInflame/Rupture/Feel No Painを無料だと思っていた。
+- `PaperCutsPower`(敵、観測値2): `AfterDamageGiven` で、所有者の強化攻撃が `UnblockedDamage > 0` で
+  通るたびにプレイヤーの最大HPをamount分削る。**ブロックすれば発生しない。**
+
+**どちらも `POWER_NAMES` に無かったので、実装しても一度も発火しない状態だった**——FrailPowerを
+全rolloutで無効にしていたのと同じ穴。対応表への追加が本体である。
+
+ただし勝率改善の証拠はない。M7C4Q9V2RHの再走はトレースがバイト単位で一致(17勝1敗)し、記録済みの
+PaperCuts 223局面のオフラインA/Bは判断変化0件だった。理由も判明している。
+
+- PaperCuts: 最大HPの減少は戦闘内ではほぼ現在HPに影響しないので、`scored_hp` を見る探索が差を見ない。
+- Galvanic: M7でGalvanic持ちの敵が生存している局面は17、うちPowerカードが手札にあったのは4局面
+  だけで、エージェントは元々1枚も打っていなかった。
+
+Juggernautと同じ扱いで、機構修正としてのみ残す。
+
+### 未解決: Ruptureの使用率が7.1%
+
+Act 3を踏破した2本に共通するエンジン札でありながら、全トレースで手札4888回・支払可能3866回に対し
+使用276回、**使用率7.1%**。他のPowerカードと比べても低い(Inflame 25.9%、Pyre 18.2%、
+Crimson Mantle 17.8%)。Inflameだけは `_setup_bonus` の例外を持つ。
+
+**自傷札(Bloodletting/Offering/Hemokinesis/Blood Wall/Fiend Fire)をデッキに持つ局面に限っても
+7.1%で変わらない**ため、「払戻しがないから使わない」では説明がつかない。
+
+`combat.py` の実装自体は正しい(`RupturePower` を付与し、`self_damage` があればStrengthを加算)。
+問題は評価で、Ruptureの効果は **Rupture→自傷札→Strength→攻撃** と2段先にあり、1手先しか見ない
+greedyには原理的に見えない。`official_agent.py` 側の既存ルールは2つとも極端に狭い。
+
+- `rupture_before_bloodletting`: rolloutが既にBloodlettingを選んだ場合のみ
+- `rupture_before_queen_focus`: QUEEN戦のminion focus時のみ
+
+一般の局面(Ruptureが手札にあり、rolloutが攻撃を選ぶ)には何も働かない。
+
+**ただし自傷札が1枚しかないデッキではRuptureは+1 Strengthにしかならないので、7.1%の一部は正しい
+判断である可能性が残る。** 手をつけるなら、自傷札の枚数で条件を切って発火数を数えるところから。
+実機で前後を測るまで採用しないこと。
+
+### 敗因の分布(17敗)
+
+| 敗因 | 件数 |
+|---|---:|
+| Act 1ボス VANTOM | 5 |
+| Act 2ボス THE_INSATIABLE | 5 |
+| DECIMILLIPEDE | 2 |
+| その他 | 5 |
+
+VANTOMの5件は全て**満タンHP(80〜85)で突入し11〜19ターン戦って負けている**。削られて負けたのでは
+なく173HPを削り切れていない。最長のC7N4V9P2RXは19ターン戦い、デッキ17枚(Strike×5、Defend×3、
+Flame Barrier×2、Shrug×2、Bash、Iron Wave、Rupture、Bloodletting、Clumsy)で、Slippery解除後の
+火力が約10ダメージ/ターン。VANTOMのStrengthは約4ターンごとに+2増えるので、長期戦は構造的に不利。
+この run でもRuptureは19ターン通して一度も使われていない。
