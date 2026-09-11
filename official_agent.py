@@ -949,6 +949,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         if escape:
             return _tag_action(escape, "sandpit_escape")
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
+        battle_trance = next((action for action in draw_cards if action.get("card_id") == "CARD.BATTLE_TRANCE" and _number(hand.get(action.get("hand_index"), {}).get("cost")) == 0), None)
+        if battle_trance and not any(power.get("id") == "POWER.NO_DRAW_POWER" for power in player.get("powers", ())):
+            draw = max(
+                (_number(variable.get("value")) for variable in hand[battle_trance["hand_index"]].get("vars", ()) if variable.get("id") == "Cards"),
+                default=0,
+            )
+            if draw and len(hand) + draw <= 10:
+                return _tag_action(battle_trance, "sandpit_draw")
         if draw_cards:
             return _tag_action(max(draw_cards, key=lambda action: (card_value(action, "block"), card_value(action, "damage"))), "sandpit_draw")
     if not lethal and (turn := choose_crab_facing(observation, cards)):

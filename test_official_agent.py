@@ -2678,6 +2678,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
 
+    def test_sandpit_uses_free_battle_trance_before_paid_draw(self) -> None:
+        observation = {
+            "player": {"hp": 14, "max_hp": 80, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 8}, {"id": "Cards", "value": 1}]},
+                {"index": 1, "id": "CARD.BATTLE_TRANCE", "cost": 0, "type": "Skill", "vars": [{"id": "Cards", "value": 3}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 98, "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}], "intents": [{"damage": 12, "repeats": 2}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.BATTLE_TRANCE", "hand_index": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.BATTLE_TRANCE")
+
     def test_plays_crimson_mantle_before_fiend_fire_on_safe_turn(self) -> None:
         observation = {
             "player": {"hp": 80, "max_hp": 80, "energy": 8},
