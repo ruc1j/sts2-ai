@@ -844,7 +844,11 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     def is_lethal(action: dict) -> bool:
         return bool(lethal_targets(action))
 
-    lethal = [action for action in cards if is_lethal(action)]
+    lethal = [
+        action for action in cards
+        if is_lethal(action)
+        and (not _is_self_damage(action, hand) or _self_damage_value(action, hand) < _number(player.get("hp")))
+    ]
     alive_decimillipede_ids = {
         enemy.get("combat_id")
         for enemy in enemy_by_id.values()
@@ -1239,6 +1243,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 card_value(action, "damage"),
             )), "multi_lethal_direct")
 
+    if (
+        incoming - current_block >= hp
+        and any(power.get("id") == "POWER.UNMOVABLE_POWER" and _number(power.get("amount")) > 0 for power in player.get("powers", ()))
+    ):
+        defenses = [action for action in cards if card_value(action, "block") > 0]
+        best_defense = max(defenses, key=lambda action: card_value(action, "block"), default=None)
+        if best_defense and incoming - current_block - card_value(best_defense, "block") < hp:
+            return _tag_action(best_defense, "unmovable_lethal_defense")
+
     # Fiend Fire destroys the rest of the hand.  On a safe turn, preserve a long-fight power
     # when both cards can be paid for; Z6 otherwise exhausts Crimson Mantle on the Act 2 boss's
     # opening buff turn despite starting with eight energy.
@@ -1441,6 +1454,10 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         for enemy in observation.get("enemies", ())
         for intent in enemy.get("intents") or ()
     )
+    if rollout_reason == "rollout_rejected_self_damage" and incoming == 0 and hp <= max_hp // 2:
+        unmovable = next((action for action in cards if action.get("card_id") == "CARD.UNMOVABLE"), None)
+        if unmovable:
+            return _tag_action(unmovable, "heuristic_fallback", "unmovable_over_wasted_block")
     if hp <= max_hp // 2 or incoming >= max(1, hp // 2):
         safe_cards = [
             action for action in cards
@@ -1451,6 +1468,14 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             cards = safe_cards
         elif cards:
             return _tag_action(next(action for action in actions if action["type"] == "end_turn"), "heuristic_fallback", rollout_reason)
+    if rollout_reason == "rollout_rejected_unsafe" and max(0, incoming - _number(player.get("block"))) >= hp:
+        unmovable = next((action for action in cards if action.get("card_id") == "CARD.UNMOVABLE"), None)
+        block_cards = [action for action in cards if card_value(action, "block") > 0]
+        if unmovable and block_cards:
+            best_block = max(block_cards, key=lambda action: card_value(action, "block"))
+            combined_cost = sum(_number(hand.get(action.get("hand_index"), {}).get("cost")) for action in (unmovable, best_block))
+            if combined_cost <= card_energy and incoming - _number(player.get("block")) - 2 * card_value(best_block, "block") < hp:
+                return _tag_action(unmovable, "heuristic_fallback", "unmovable_before_block")
     if rollout_reason == "rollout_rejected_unsafe" and max(0, incoming - _number(player.get("block"))) >= hp:
         battle_trance = next((action for action in cards if action.get("card_id") == "CARD.BATTLE_TRANCE"), None)
         if battle_trance and not any(power.get("id") == "POWER.NO_DRAW_POWER" for power in player.get("powers", ())):
@@ -1584,6 +1609,14 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     )
     if room_type == "Monster" and not monster_emergency:
         return None
+    snecko = use({"POTION.SNECKO_OIL"})
+    if (
+        snecko
+        and effective_incoming >= hp
+        and len(observation.get("hand") or ()) < 10
+        and (observation.get("draw_pile") or observation.get("discard_pile"))
+    ):
+        return snecko
     lucky = use({"POTION.LUCKY_TONIC"})
     if lucky and incoming > 0 and hp - incoming <= max_hp // 4:
         return lucky
@@ -2464,26 +2497,19 @@ def _rollout_cards(observation: dict) -> tuple[
             )
         )
     hand = tuple(_observation_card(value) for value in hand_values)
-    if any(
-        power.get("id") == "POWER.CHAINS_OF_BINDING_POWER"
-        for power in observation.get("player", {}).get("powers", ())
-    ):
-        legal_indices = {
-            action.get("hand_index")
-            for action in observation.get("legal_actions", ())
-            if action.get("type") == "card"
-        }
-        energy = _number(observation.get("player", {}).get("energy"))
-        hand = tuple(
-            replace(card, bound=True)
-            if (
-                isinstance(card, Card)
-                and index not in legal_indices
-                and 0 <= _number(value.get("cost"), -1) <= energy
-            )
-            else card
-            for index, (card, value) in enumerate(zip(hand, hand_values))
-        )
+    # The live legal actions are authoritative for the rollout's first move. Besides Bound,
+    # temporary cost changes such as Snecko Oil can make the modeled base cost stale.
+    legal_indices = {
+        action.get("hand_index")
+        for action in observation.get("legal_actions", ())
+        if action.get("type") == "card"
+    }
+    hand = tuple(
+        replace(card, bound=True)
+        if isinstance(card, Card) and index not in legal_indices and _number(value.get("cost"), -1) >= 0
+        else card
+        for index, (card, value) in enumerate(zip(hand, hand_values))
+    )
     return (
         hand,
         tuple(_observation_card(value) for value in draw_values),

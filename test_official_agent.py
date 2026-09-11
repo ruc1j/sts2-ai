@@ -1963,6 +1963,16 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["type"], "end_turn")
 
+    def test_certain_death_uses_snecko_oil_when_cards_can_be_drawn(self) -> None:
+        observation = {
+            "legal_actions": [{"type": "potion", "potion_id": "POTION.SNECKO_OIL", "target_id": None}, {"type": "end_turn"}],
+            "player": {"hp": 4, "max_hp": 80, "block": 0},
+            "hand": [{"id": "CARD.NORMALITY"}],
+            "draw_pile": [{"id": "CARD.FLAME_BARRIER"}],
+            "enemies": [{"combat_id": 1, "hp": 41, "intents": [{"damage": 22, "repeats": 1}]}],
+        }
+        self.assertEqual(choose(observation)["potion_id"], "POTION.SNECKO_OIL")
+
     def test_full_hp_two_enemy_fight_skips_foul_potion_fallback(self) -> None:
         # FOUL_POTION damages every creature including the player; "danger" alone triggers on
         # 2+ enemies even at full HP, so it must not be grabbed blindly here.
@@ -3117,6 +3127,77 @@ class OfficialAgentTest(unittest.TestCase):
         }
         with patch("official_agent.rollout_choice", return_value=corrupted):
             self.assertNotEqual(choose(observation, enemy_data={"monsters": []}, simulations=100).get("card_id"), "CARD.STRIKE_IRONCLAD")
+
+    def test_corrupted_lethal_does_not_trade_the_players_last_hp(self) -> None:
+        observation = {
+            "player": {"hp": 2, "max_hp": 80, "block": 0, "energy": 1},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "enchantment": "ENCHANTMENT.CORRUPTED", "vars": [{"id": "Damage", "value": 9}]}],
+            "enemies": [{"combat_id": 1, "hp": 9, "intents": [{"damage": 0, "repeats": 0}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
+
+    def test_plays_unmovable_before_block_when_the_pair_survives_lethal_damage(self) -> None:
+        strike = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 1}
+        observation = {
+            "player": {"hp": 16, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+                {"index": 1, "id": "CARD.UNMOVABLE", "cost": 2, "type": "Power", "vars": []},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 41, "intents": [{"damage": 22, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.UNMOVABLE", "hand_index": 1},
+                strike,
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=strike):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=100)
+        self.assertEqual((action["card_id"], action["decision_reason"]), ("CARD.UNMOVABLE", "unmovable_before_block"))
+
+    def test_plays_unmovable_instead_of_wasting_block_on_a_safe_turn(self) -> None:
+        corrupted = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1}
+        observation = {
+            "player": {"hp": 8, "max_hp": 80, "block": 0, "energy": 2},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "enchantment": "ENCHANTMENT.CORRUPTED", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 1, "id": "CARD.FLAME_BARRIER", "cost": 2, "type": "Skill", "vars": [{"id": "Block", "value": 16}]},
+                {"index": 2, "id": "CARD.UNMOVABLE", "cost": 2, "type": "Power", "vars": []},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 110, "intents": [{"type": "Buff", "damage": 0, "repeats": 0}]}],
+            "legal_actions": [
+                corrupted,
+                {"type": "card", "card_id": "CARD.FLAME_BARRIER", "hand_index": 1},
+                {"type": "card", "card_id": "CARD.UNMOVABLE", "hand_index": 2},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=corrupted):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=100)
+        self.assertEqual((action["card_id"], action["decision_reason"]), ("CARD.UNMOVABLE", "unmovable_over_wasted_block"))
+
+    def test_active_unmovable_uses_the_block_card_that_survives_lethal_damage(self) -> None:
+        observation = {
+            "player": {"hp": 8, "max_hp": 80, "block": 0, "energy": 3, "powers": [{"id": "POWER.UNMOVABLE_POWER", "amount": 1}]},
+            "hand": [
+                {"index": 0, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 8}]},
+                {"index": 1, "id": "CARD.FLAME_BARRIER", "cost": 2, "type": "Skill", "vars": [{"id": "Block", "value": 16}]},
+            ],
+            "enemies": [{"combat_id": 1, "hp": 100, "intents": [{"damage": 22, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.FLAME_BARRIER", "hand_index": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.FLAME_BARRIER", "unmovable_lethal_defense"))
 
     def test_rollout_allows_survivable_bloodletting_when_sandpit_is_critical(self) -> None:
         bloodletting = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
@@ -5313,6 +5394,30 @@ class OfficialAgentTest(unittest.TestCase):
             }],
             "legal_actions": [
                 {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        action = rollout_choice(observation, observation["legal_actions"], data, 20)
+        self.assertNotEqual(action.get("hand_index"), 0)
+
+    def test_rollout_excludes_a_snecko_card_that_is_currently_too_expensive(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 288, "turn": 8,
+            "player": {"hp": 18, "max_hp": 80, "block": 21, "energy": 2, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.RAGE", "cost": 3, "type": "Skill"},
+                {"index": 1, "id": "CARD.ASHEN_STRIKE", "cost": 0, "type": "Attack"},
+            ],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.OVICOPTER", "hp": 47, "block": 0,
+                "powers": [], "intents": [{"damage": 28, "repeats": 1, "raw_damage": 16}],
+                "move": "BIG_ATTACK_MOVE", "history": [], "slot": "boss",
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.ASHEN_STRIKE", "hand_index": 1, "target_id": 1},
                 {"type": "end_turn"},
             ],
         }
