@@ -528,6 +528,26 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["card_id"], "CARD.BATTLE_TRANCE")
         self.assertEqual(action["decision_reason"], "rollout_rejected_unsafe")
 
+    def test_sandpit_taunt_precedes_free_battle_trance(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.BATTLE_TRANCE", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.TAUNT", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.BASH", "hand_index": 2, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 26, "max_hp": 80, "block": 0, "energy": 2, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.BATTLE_TRANCE", "type": "Skill", "cost": 0, "vars": [{"id": "Cards", "value": 4}]},
+                {"index": 1, "id": "CARD.TAUNT", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 8}]},
+                {"index": 2, "id": "CARD.BASH", "type": "Attack", "cost": 2, "vars": [{"id": "Damage", "value": 10}]},
+            ],
+            "draw_pile": [{"id": "CARD.ANGER"}] * 3 + [{"id": "CARD.SHRUG_IT_OFF"}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 77, "block": 0, "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 3}], "intents": [{"damage": 12, "repeats": 2}]}],
+        }
+        action = choose(observation, enemy_data={"monsters": []}, simulations=1)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.TAUNT", "sandpit_taunt_before_draw"))
+
     def test_rollout_guard_uses_unblocked_incoming(self) -> None:
         for hp, expected_card, expected_source in (
             (15, "CARD.STRIKE_IRONCLAD", "rollout_success"),

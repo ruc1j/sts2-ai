@@ -1288,6 +1288,26 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 card_value(action, "damage"),
             )), "multi_lethal_direct")
 
+    taunt = next((action for action in cards if action.get("card_id") == "CARD.TAUNT"), None)
+    battle_trance = next((action for action in cards if action.get("card_id") == "CARD.BATTLE_TRANCE"), None)
+    if (
+        taunt and battle_trance
+        and incoming >= max(1, hp // 2)
+        and any(
+            power.get("id") == "POWER.SANDPIT_POWER" and _number(power.get("amount")) >= 3
+            for enemy in observation.get("enemies", ()) for power in enemy.get("powers", ())
+        )
+        and _number(hand.get(battle_trance.get("hand_index"), {}).get("cost")) == 0
+        and _number(hand.get(taunt.get("hand_index"), {}).get("cost")) <= card_energy
+        and not any(power.get("id") == "POWER.NO_DRAW_POWER" for power in player.get("powers", ()))
+    ):
+        draw = max(
+            (_number(variable.get("value")) for variable in hand[battle_trance["hand_index"]].get("vars", ()) if variable.get("id") == "Cards"),
+            default=0,
+        )
+        if draw and len(hand) + draw <= 10:
+            return _tag_action(taunt, "sandpit_taunt_before_draw")
+
     if (
         incoming - current_block >= hp
         and any(power.get("id") == "POWER.UNMOVABLE_POWER" and _number(power.get("amount")) > 0 for power in player.get("powers", ()))
