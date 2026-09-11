@@ -1154,7 +1154,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
         )
     if (
         len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids
-        and (defense_block <= 0 or incoming * 4 < hp * 3)
+        and (defense_block <= 0 or incoming * 2 < hp)
     ):
         source = "generic_multi_primary_focus_direct"
         return _tag_action(
@@ -1610,6 +1610,11 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         for enemy in observation.get("enemies", ())
     }
     enemy_damage = {enemy["combat_id"]: _intent_incoming(enemy) for enemy in observation.get("enemies", ())}
+    if observation.get("enemies") and all(
+        any(power.get("id") == "POWER.SLIPPERY_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ()))
+        for enemy in observation["enemies"] if _number(enemy.get("hp")) > 0
+    ):
+        actions = [action for action in actions if action.get("potion_id") != "POTION.EXPLOSIVE_AMPOULE"]
     def use(ids: set[str], target_score: dict[int, int] | None = None) -> dict | None:
         candidates = [action for action in actions if action["potion_id"] in ids]
         return max(candidates, key=lambda action: target_score.get(action.get("target_id"), 0) if target_score else 0, default=None)

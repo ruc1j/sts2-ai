@@ -3446,7 +3446,7 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["target_id"], 2)
         self.assertEqual(action["decision_source"], "generic_multi_primary_focus_direct")
 
-    def test_multi_primary_focus_defers_to_block_before_near_lethal_hit(self) -> None:
+    def test_multi_primary_focus_defers_to_block_before_losing_more_than_half_hp(self) -> None:
         strike = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2}
         shrug = {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 1}
         observation = {
@@ -3456,7 +3456,7 @@ class OfficialAgentTest(unittest.TestCase):
                 {"index": 1, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 9}]},
             ],
             "enemies": [
-                {"combat_id": 1, "hp": 27, "powers": [], "intents": [{"damage": 4, "repeats": 2}]},
+                {"combat_id": 1, "hp": 27, "powers": [], "intents": []},
                 {"combat_id": 2, "hp": 86, "powers": [], "intents": [{"damage": 16, "repeats": 1}]},
             ],
             "legal_actions": [strike, {**strike, "target_id": 1}, shrug, {"type": "end_turn"}],
@@ -4954,6 +4954,19 @@ class OfficialAgentTest(unittest.TestCase):
         with patch("official_agent.search", return_value=[("End turn", 0.0)]) as searched:
             rollout_choice(observation, observation["legal_actions"], data, 1)
         self.assertEqual(searched.call_args.args[0].player_potions, ())
+        self.assertEqual(_rollout_allowed_potions(observation, observation["legal_actions"]), ())
+
+    def test_rollout_saves_explosive_ampoule_while_every_enemy_is_slippery(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack"}],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.VANTOM", "hp": 173, "max_hp": 173, "powers": [{"id": "POWER.SLIPPERY_POWER", "amount": 8}], "intents": [{"damage": 7, "repeats": 1}]}],
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.EXPLOSIVE_AMPOULE", "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["type"], "end_turn")
         self.assertEqual(_rollout_allowed_potions(observation, observation["legal_actions"]), ())
 
     def test_rollout_can_choose_an_allowed_block_potion(self) -> None:
