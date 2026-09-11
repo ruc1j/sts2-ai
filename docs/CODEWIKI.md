@@ -1983,3 +1983,41 @@ Breakthrough 9、Offering 4、Hemokinesis 1）。
 0枚でも6.4%打ち（無駄打ち）、2枚あっても6.9%しか打たない。本来なら0枚でほぼ0%、2〜3枚で高く
 なるはず。`combat.py` の実装自体は正しい（`RupturePower` を付与し `self_damage` があればStrengthを
 加算）。Ruptureを使った戦闘の到達Strengthは中央値7、使わなかった戦闘は3（n=273 / 613、相関）。
+
+### Wound/Bad Luck/Beckon の対応表追加は不採用(2026-09-12)
+
+`combat.py` は `WOUND = "Wound"` を定義して `EXHAUST_FODDER`(廃棄して良いゴミ札)に入れているが、
+`official_agent.py` の `CARD_NAMES` に `"CARD.WOUND"` が無いため、観測されたWoundは生のidのまま
+rolloutへ渡り、ゴミ札として認識されていなかった。記録済みトレースで手札に**5761回**。
+`BAD_LUCK` と `BECKON` も同じ状態(ただしこれらは実トレースに出現しない)。
+
+いずれも `CARD_COST` に無いので、対応表へ入れても `legal_actions` には現れない(使用可能には
+ならない)。回帰テストでその不変条件を固定した上で追加した。
+
+**勝利seed2本がどちらも落ちた。**
+
+| seed | 基準 | 対応表追加後 |
+|---|---|---|
+| N8CQ4ZKP2W | 19戦19勝 | 18勝1敗、QUEEN残263 |
+| H2LV6ZJ4XW | 23戦23勝 | 22勝1敗、敵残260 |
+
+差し戻し済み。**「モデルを正確にすれば強くなる」とは限らない**例。Woundがゴミ札として見えると
+Fiend Fire / Second Wind の廃棄価値が上がって使用判断が増えるが、廃棄には手札とエネルギーを
+消費するため、実際には火力や防御が減ったと考えられる。
+
+### 有効だった検査: combat.py にあるのに CARD_NAMES に無い定数
+
+Fasten(採用)もWound(不採用)も、同じ一手で見つかった。`combat.py` のカード名定数と
+`official_agent.py` の `CARD_NAMES` の値集合を突き合わせ、差分を出す。
+
+```
+combat.py の 125定数中、CARD_NAMES 経由で到達できないもの:
+  BAD_LUCK = "Bad Luck" / BECKON = "Beckon" / WOUND = "Wound"
+  (POTION_* と END_TURN / RESPAWN_MOVE は別経路なので除外)
+```
+
+併せて、トレースの手札idを `CARD_NAMES` と突き合わせて「そもそも実装が無い」カードも出る。
+実測で残っているのは STRATAGEM(手札1009)、MAD_SCIENCE(627)、BYRDONIS_EGG(397)、DOUBT(346)、
+NEOWS_FURY(214)、LANTERN_KEY(166)、DEBT(152)、SPOILS_MAP(57) など。
+
+**ただし採用可否は別問題である。** この検査で見つけた2件のうち、実機で勝ったのは1件だけだった。
