@@ -7,6 +7,7 @@ import random
 import time
 import traceback
 from dataclasses import replace
+from itertools import combinations
 
 from combat import (
     ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
@@ -860,7 +861,17 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     obscura_id = next((enemy.get("combat_id") for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.THE_OBSCURA" and _number(enemy.get("hp")) > 0), None)
     obscura_present = obscura_id is not None
     if obscura_present:
-        lethal = [action for action in lethal if any(enemy.get("id") != "MONSTER.PARAFRIGHT" for enemy in lethal_targets(action))]
+        lethal = [
+            action for action in lethal
+            if any(enemy.get("id") != "MONSTER.PARAFRIGHT" for enemy in lethal_targets(action))
+            or (
+                sum(enemy_incoming.values()) - _number(player.get("block")) - card_value(action, "block") >= _number(player.get("hp"))
+                and sum(enemy_incoming.values())
+                - sum(enemy_incoming.get(enemy.get("combat_id"), 0) for enemy in lethal_targets(action))
+                - _number(player.get("block"))
+                - card_value(action, "block") < _number(player.get("hp"))
+            )
+        ]
     incoming_threats = {combat_id for combat_id, value in enemy_incoming.items() if value > 0}
     lethal_attacks = [action for action in lethal if not _is_self_damage(action, hand)]
     lethal_target_ids = {
@@ -872,6 +883,40 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     potion_lethal_now = bool(lethal_attacks) and (
         not incoming_threats or incoming_threats <= lethal_target_ids
     )
+    def affordable_block(excluded_index: int | None, budget: int) -> int:
+        defenses = {
+            action.get("hand_index"): action for action in cards
+            if action.get("hand_index") != excluded_index and card_value(action, "block") > 0
+        }
+        return max((
+            sum(card_value(action, "block") for action in group)
+            for count in range(len(defenses) + 1)
+            for group in combinations(defenses.values(), count)
+            if sum(_number(hand.get(action.get("hand_index"), {}).get("cost")) for action in group) <= budget
+        ), default=0)
+
+    for potion in (action for action in potions if action.get("potion_id") == "POTION.VULNERABLE_POTION"):
+        target = enemy_by_id.get(potion.get("target_id"))
+        if not target or enemy_incoming.get(potion.get("target_id"), 0) <= 0 or any(
+            power.get("id") in {"POWER.VULNERABLE", "POWER.VULNERABLE_POWER"} and _number(power.get("amount")) > 0
+            for power in target.get("powers", ())
+        ):
+            continue
+        if sum(enemy_incoming.values()) - _number(player.get("block")) - affordable_block(None, card_energy) < _number(player.get("hp")):
+            continue
+        for attack in (
+            action for action in cards
+            if action.get("target_id") == potion.get("target_id")
+            and hand.get(action.get("hand_index"), {}).get("type") == "Attack"
+            and not _is_self_damage(action, hand)
+        ):
+            target_hp = _number(target.get("hp")) + _number(target.get("block"))
+            if damage(attack, target) >= target_hp or damage(attack, target) * 3 // 2 < target_hp:
+                continue
+            budget = card_energy - _number(hand.get(attack.get("hand_index"), {}).get("cost"))
+            remaining = sum(enemy_incoming.values()) - enemy_incoming.get(potion.get("target_id"), 0)
+            if remaining - _number(player.get("block")) - card_value(attack, "block") - affordable_block(attack.get("hand_index"), budget) < _number(player.get("hp")):
+                return _tag_action(potion, "vulnerable_survival_potion")
     direct_potion = choose_potion(observation, potions)
     dexterity_potions = {"POTION.DEXTERITY_POTION", "POTION.SPEED_POTION"}
     duplicate_dexterity_potion = (
@@ -1587,6 +1632,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
     block = _number(player.get("block", 0))
     incoming = sum(_intent_incoming(enemy) for enemy in observation.get("enemies", ()))
+    hand = observation.get("hand") or ()
     run = observation.get("run") or {}
     room_type = str(run.get("room_type") or "")
     # Ordinary Monster rooms are the most common source of potion depletion. Preserve potions
@@ -1603,6 +1649,17 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
                 default=0,
             ),
         )
+    legal_card_indices = {
+        action.get("hand_index")
+        for action in observation.get("legal_actions", ())
+        if action.get("type") == "card"
+    }
+    survivable_block_card = effective_incoming >= hp and any(
+        card.get("index") in legal_card_indices
+        and 0 <= _number(card.get("cost"), -1) <= _number(player.get("energy"))
+        and block + max((_number(var.get("value")) for var in card.get("vars", ()) if var.get("id") == "Block"), default=0) + hp > incoming
+        for card in hand
+    )
     monster_emergency = effective_incoming >= hp or (
         hp <= max(1, max_hp // 3)
         and effective_incoming >= max(1, (hp + 1) // 2)
@@ -1626,7 +1683,8 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     healing = {"POTION.BLOOD_POTION", "POTION.CURE_ALL"}
     # Fortifier doubles the current block, so with no block it is wasted (sim19 used it at 0
     # block and gained nothing); only count it once the player already has block this turn.
-    blocking = {"POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE"} | ({"POTION.FORTIFIER"} if block > 0 else set())
+    preserve_fortifier = survivable_block_card or (hp <= max(1, max_hp // 3) and effective_incoming < hp)
+    blocking = {"POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE"} | ({"POTION.FORTIFIER"} if block > 0 and not preserve_fortifier else set())
     # Speed Potion just grants Dexterity via SpeedPotionPower - same effect as Dexterity Potion.
     defensive_buffs = {
         "POTION.DEXTERITY_POTION", "POTION.SPEED_POTION", "POTION.GHOST_IN_A_JAR", "POTION.REGEN_POTION",
@@ -1677,7 +1735,6 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
     # Skill Potion is a hand-dependent gamble; save it for a turn whose incoming damage is
     # substantial enough to justify spending a scarce potion slot.
     offensive_now = offensive if threatening else offensive - {"POTION.SKILL_POTION"}
-    hand = observation.get("hand") or ()
     has_slot = any(enemy.get("slot") for enemy in observation.get("enemies", ()))
     boss_slot = any(str(enemy.get("slot")).lower() == "boss" for enemy in observation.get("enemies", ()))
     boss_floor = {0: 17, 1: 16, 2: 15}.get(_number(run.get("act")))
@@ -1750,7 +1807,7 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
         # rather than a speculative damage potion, even when a high-HP regular still reserves
         # other boss potions.
         fysh = use({"POTION.FYSH_OIL"}) if incoming > 0 and hp <= max(1, (max_hp * 3) // 5) else None
-        binding = use({"POTION.POTION_OF_BINDING"}) if boss_context and incoming > 0 else None
+        binding = use({"POTION.POTION_OF_BINDING"}) if boss_context and incoming >= max(1, hp // 2) else None
         # Skill Potion is also worth firing on any attacking boss turn: unlike a regular fight,
         # the next hit is part of a sustained sequence, so waiting for HP/2 can leave no safe
         # turn to spend the generated block card.

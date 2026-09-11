@@ -708,6 +708,53 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["target_id"], action["decision_source"]), ("CARD.UPPERCUT", 1, "vulnerable_multi_lethal_direct"))
 
+    def test_kills_parafright_when_ignoring_its_revival_would_be_fatal(self) -> None:
+        observation = {
+            "player": {"hp": 1, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [{"index": 0, "id": "CARD.UPPERCUT", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 13}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.THE_OBSCURA", "hp": 60, "block": 0, "powers": [], "intents": []},
+                {"combat_id": 3, "id": "MONSTER.PARAFRIGHT", "hp": 9, "block": 0, "powers": [{"id": "POWER.ILLUSION_POWER", "amount": 1}], "intents": [{"damage": 19, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.UPPERCUT", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.UPPERCUT", "hand_index": 0, "target_id": 3},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation)
+        self.assertEqual((action["target_id"], action["decision_source"]), (3, "lethal_direct"))
+
+    def test_vulnerable_potion_kills_attacker_when_remaining_block_survives(self) -> None:
+        observation = {
+            "player": {"hp": 1, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 16}]},
+                {"index": 2, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.THE_OBSCURA", "hp": 61, "block": 0, "powers": [], "intents": [{"damage": 19, "repeats": 1}]},
+                {"combat_id": 3, "id": "MONSTER.PARAFRIGHT", "hp": 9, "block": 0, "powers": [], "intents": [{"damage": 25, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 3},
+                {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 2},
+                {"type": "potion", "potion_id": "POTION.VULNERABLE_POTION", "target_id": 1},
+                {"type": "potion", "potion_id": "POTION.VULNERABLE_POTION", "target_id": 3},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation)
+        self.assertEqual((action["potion_id"], action["target_id"], action["decision_source"]), ("POTION.VULNERABLE_POTION", 3, "vulnerable_survival_potion"))
+        observation["hand"][0]["vars"][0]["value"] = 10
+        observation["enemies"][0]["intents"] = []
+        observation["enemies"][1]["hp"] = 15
+        observation["enemies"][1]["intents"][0]["damage"] = 16
+        self.assertNotEqual(choose(observation).get("decision_source"), "vulnerable_survival_potion")
+
     def test_unsafe_rollout_guard_still_rejects_a_kill_the_turn_cannot_reach(self) -> None:
         # Same shape, but 16 damage of hand against 30 HP - no kill, so the guard still blocks.
         selected = {"type": "card", "card_id": "CARD.SETUP_STRIKE", "hand_index": 0, "target_id": 1}
@@ -2250,7 +2297,7 @@ class OfficialAgentTest(unittest.TestCase):
         observation["player"]["hp"] = 49
         self.assertEqual(choose(observation)["type"], "end_turn")
 
-    def test_uses_binding_on_the_first_attacking_boss_turn(self) -> None:
+    def test_uses_binding_on_the_first_threatening_boss_turn(self) -> None:
         observation = {
             "run": {"act": 1, "floor": 16},
             "legal_actions": [
@@ -2259,9 +2306,11 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "end_turn"},
             ],
             "player": {"hp": 66, "max_hp": 80},
-            "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 302, "intents": [{"damage": 12, "repeats": 1}]}],
+            "enemies": [{"combat_id": 7, "id": "MONSTER.KNOWLEDGE_DEMON", "hp": 302, "intents": [{"damage": 40, "repeats": 1}]}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.POTION_OF_BINDING")
+        observation["enemies"][0]["intents"][0]["damage"] = 12
+        self.assertEqual(choose(observation)["potion_id"], "POTION.STRENGTH_POTION")
 
     def test_saves_colorless_potion_on_a_safe_boss_turn(self) -> None:
         observation = {
@@ -2520,6 +2569,29 @@ class OfficialAgentTest(unittest.TestCase):
             "enemies": [{"combat_id": 1, "hp": 40, "intents": [{"damage": 35, "repeats": 1}]}],
         }
         self.assertEqual(choose(observation)["potion_id"], "POTION.FORTIFIER")
+
+    def test_saves_fortifier_when_current_or_affordable_block_survives(self) -> None:
+        observation = {
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.FLAME_BARRIER", "hand_index": 0},
+                {"type": "potion", "potion_id": "POTION.FORTIFIER", "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 7, "max_hp": 80, "block": 14, "energy": 3},
+            "hand": [{"index": 0, "id": "CARD.FLAME_BARRIER", "cost": 2, "type": "Skill", "vars": [{"id": "Block", "value": 32}]}],
+            "enemies": [
+                {"combat_id": 1, "hp": 21, "intents": [{"damage": 16, "repeats": 1}]},
+                {"combat_id": 2, "hp": 100, "intents": [{"damage": 10, "repeats": 1}]},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.FLAME_BARRIER")
+        observation["legal_actions"] = [
+            {"type": "potion", "potion_id": "POTION.FORTIFIER", "target_id": None},
+            {"type": "end_turn"},
+        ]
+        observation["player"]["block"] = 20
+        observation["hand"] = []
+        self.assertEqual(choose(observation)["type"], "end_turn")
 
     def test_saves_fortifier_when_no_block(self) -> None:
         # With zero block Fortifier gains nothing (it doubles current block), so it must be
