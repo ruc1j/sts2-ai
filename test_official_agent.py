@@ -2592,6 +2592,22 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.CRIMSON_MANTLE")
 
+    def test_plays_offering_before_fiend_fire_on_safe_turn(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "energy": 2},
+            "hand": [
+                {"index": 0, "id": "CARD.OFFERING", "cost": 0, "type": "Skill", "vars": [{"id": "HpLossRect", "value": 6}]},
+                {"index": 1, "id": "CARD.FIEND_FIRE", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 7}]},
+            ],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 321, "intents": [{"damage": 0, "repeats": 0}]}],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.OFFERING", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.FIEND_FIRE", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.OFFERING")
+
     def test_uses_cheapest_frantic_escape_when_duplicates_are_legal(self) -> None:
         observation = {
             "player": {"energy": 3},
@@ -3087,6 +3103,28 @@ class OfficialAgentTest(unittest.TestCase):
         rolled = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
         with patch("official_agent.rollout_choice", return_value=rolled):
             self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.DEFEND_IRONCLAD")
+
+    def test_rollout_allows_survivable_bloodletting_when_sandpit_is_critical(self) -> None:
+        bloodletting = {"type": "card", "card_id": "CARD.BLOODLETTING", "hand_index": 0, "target_id": None}
+        observation = {
+            "player": {"hp": 46, "max_hp": 110, "block": 0, "energy": 1, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.BLOODLETTING", "cost": 0, "type": "Skill", "vars": [{"id": "HpLoss", "value": 3}]},
+                {"index": 1, "id": "CARD.STONE_ARMOR", "cost": 1, "type": "Power"},
+            ],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.THE_INSATIABLE", "hp": 105,
+                "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}],
+                "intents": [{"damage": 12, "repeats": 2}],
+            }],
+            "legal_actions": [
+                bloodletting,
+                {"type": "card", "card_id": "CARD.STONE_ARMOR", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        with patch("official_agent.rollout_choice", return_value=bloodletting):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["card_id"], "CARD.BLOODLETTING")
 
     def test_rollout_allows_safe_self_damage_with_rupture_active(self) -> None:
         observation = {

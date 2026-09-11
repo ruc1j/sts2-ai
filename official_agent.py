@@ -1233,7 +1233,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     # when both cards can be paid for; Z6 otherwise exhausts Crimson Mantle on the Act 2 boss's
     # opening buff turn despite starting with eight energy.
     fiend_fire = next((action for action in cards if action.get("card_id") == "CARD.FIEND_FIRE"), None)
+    offering = next((action for action in cards if action.get("card_id") == "CARD.OFFERING"), None)
     crimson_mantle = next((action for action in cards if action.get("card_id") == "CARD.CRIMSON_MANTLE"), None)
+    if fiend_fire and offering and incoming == 0:
+        combined_cost = sum(
+            _number(hand.get(action.get("hand_index"), {}).get("cost"))
+            for action in (fiend_fire, offering)
+        )
+        if combined_cost <= card_energy and _self_damage_value(offering, hand) < hp:
+            return _tag_action(offering, "offering_before_fiend_fire")
     if fiend_fire and crimson_mantle and incoming == 0:
         combined_cost = sum(
             _number(hand.get(action.get("hand_index"), {}).get("cost"))
@@ -1372,10 +1380,15 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
                 and card_value(selected, "damage") > 0
                 and _self_damage_value(selected, hand) + max(0, incoming - current_block) < hp
             )
+            sandpit_self_damage_is_safe = (
+                sandpit_critical
+                and selected.get("card_id") == "CARD.BLOODLETTING"
+                and _self_damage_value(selected, hand) + max(0, incoming - current_block) < hp
+            )
             # Keep the fallback's self-damage guard in front of rollouts too.  A rollout can
             # rationally trade 3 HP for Bloodletting's energy even when the live turn is already
             # dangerous; that is not a safe real-game choice unless it kills the target now.
-            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected) and not rupture_self_damage_is_safe and not vulnerable_self_damage_is_safe):
+            if not rollout_is_unsafe and not (_is_self_damage(selected, hand) and card_value(selected, "block") <= 0 and (hp <= max_hp // 2 or incoming >= max(1, hp // 2)) and not is_lethal(selected) and not rupture_self_damage_is_safe and not vulnerable_self_damage_is_safe and not sandpit_self_damage_is_safe):
                 if selected.get("type") == "potion":
                     if potion_context is not None:
                         _LAST_POTION_CONTEXT = potion_context
