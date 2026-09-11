@@ -11,6 +11,7 @@ from combat import (
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
+    FASTEN, CARD_BLOCK,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -2435,3 +2436,25 @@ class GalvanicAndPaperCutsTest(unittest.TestCase):
         blocked = step(replace(base, player_block=99), END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
         self.assertEqual(exposed.player_max_hp, 78)
         self.assertEqual(blocked.player_max_hp, 80)
+
+
+class FastenTest(unittest.TestCase):
+    """FastenPower boosts block from CardTag.Defend cards only - Defend, not Shrug It Off."""
+
+    def _combat(self, hand, powers=()):
+        return Combat(
+            enemies=(Enemy(model="MONSTER.DUMMY", hp=30, move="IDLE_MOVE", values=(), primary=True),),
+            hand=hand, draw_pile=(), discard_pile=(), energy=3, player_hp=50, player_powers=powers,
+        )
+
+    def test_fasten_grants_the_power(self) -> None:
+        after = step(self._combat((FASTEN,)), FASTEN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "FastenPower"), 4)
+
+    def test_fasten_boosts_defend_but_not_shrug(self) -> None:
+        powers = (("FastenPower", 4),)
+        defended = step(self._combat((DEFEND,), powers), DEFEND, DUMMY_DATA, random.Random(0))
+        shrugged = step(self._combat((SHRUG,), powers), SHRUG, DUMMY_DATA, random.Random(0))
+        plain = step(self._combat((DEFEND,)), DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(defended.player_block, plain.player_block + 4)
+        self.assertEqual(shrugged.player_block, CARD_BLOCK.get(SHRUG, shrugged.player_block))

@@ -18,6 +18,7 @@ TOXIC, BURN, DAZED, FLAME_BARRIER, INFECTION = "Toxic", "Burn", "Dazed", "Flame 
 MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Yet", "Offering", "Pacts End", "Pommel Strike"
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
 RUPTURE, INFERNO, CRUELTY = "Rupture", "Inferno", "Cruelty"
+FASTEN = "Fasten"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -51,7 +52,7 @@ HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3, DECAY: 2}
 HAND_END_UNBLOCKABLE = {BECKON: 6, BAD_LUCK: 13}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
-    STRIKE: 1, DEFEND: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
+    STRIKE: 1, DEFEND: 1, FASTEN: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, INFERNO: 1, CRUELTY: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3, BARRICADE: 3, PYRE: 2, BLOOD_WALL: 2,
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
@@ -105,13 +106,13 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER}
+POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -327,6 +328,8 @@ def _apply_enemy_debuff(enemy: Enemy, power: str, amount: int) -> Enemy:
 
 
 BLOCK_CARDS = set(CARD_BLOCK) | {SHRUG, RELAX, TAUNT, SECOND_WIND}
+# Cards declaring CardTag.Defend, which is what FastenPower keys off.
+DEFEND_TAGGED = {DEFEND, ULTIMATE_DEFEND}
 DEBUFF_CARDS = set(CARD_VULNERABLE_TARGET) | {TAUNT, TREMBLE, THUNDERCLAP, DOMINATE, MOLTEN_FIST, UPPERCUT}
 
 
@@ -1925,6 +1928,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     player_powers = combat.player_powers
     if card == RUPTURE:
         player_powers = _add_power(player_powers, "RupturePower", 1)
+    if card == FASTEN:
+        # Fasten.OnPlay applies FastenPower with its ExtraBlock var (4, upgraded 6).
+        player_powers = _add_power(player_powers, "FastenPower", 6 if card_was_upgraded else 4)
     if card == AGGRESSION:
         player_powers = _add_power(player_powers, "AggressionPower", 1)
     if card == DARK_EMBRACE:
@@ -2020,6 +2026,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         base = CARD_BLOCK[card]
         if card_was_upgraded:
             base += 4 if card == BLOOD_WALL else 3 if card in {DEFEND, EVIL_EYE, COLOSSUS} else 2 if card in {TRUE_GRIT, TORIC_TOUGHNESS} else 0 if card == ARMAMENTS else 1
+        # FastenPower.ModifyBlockAdditive adds its amount to block from any card carrying
+        # CardTag.Defend. In the decompiled card pool exactly two of the Ironclad's cards declare
+        # that tag - DefendIronclad and UltimateDefend - so Shrug It Off, Iron Wave and the rest
+        # are NOT boosted. Fasten does not tag itself either; it only looks the tag up for a tooltip.
+        if card in DEFEND_TAGGED:
+            base += _power(combat.player_powers, "FastenPower")
         before = combat.player_block
         combat = _grant_block(combat, base, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         if card == TORIC_TOUGHNESS:
@@ -2081,7 +2093,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
     if card == VICIOUS:
         return replace(combat, player_powers=_add_power(combat.player_powers, "ViciousPower", 2 if card_was_upgraded else 1))
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
