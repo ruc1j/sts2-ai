@@ -80,6 +80,7 @@ CARD_NAMES = {
     "CARD.THRUMMING_HATCHET": "Thrumming Hatchet",
     "CARD.ULTIMATE_DEFEND": "Ultimate Defend",
     "CARD.FASTEN": "Fasten",
+    "CARD.DEMON_FORM": "Demon Form",
     "CARD.ULTIMATE_STRIKE": "Ultimate Strike",
     "CARD.FLAME_BARRIER": "Flame Barrier",
     "CARD.MOLTEN_FIST": "Molten Fist",
@@ -222,6 +223,7 @@ POWER_NAMES = {
     "POWER.RINGING_POWER": "RingingPower",
     "POWER.SANDPIT_POWER": "SandpitPower",
     "POWER.FASTEN_POWER": "FastenPower",
+    "POWER.DEMON_FORM_POWER": "DemonFormPower",
     # The observation reports these under their own ids; without the mapping combat.py never
     # sees them (the same gap that made FrailPower dead for every rollout - see CODEWIKI).
     "POWER.GALVANIC_POWER": "GalvanicPower",

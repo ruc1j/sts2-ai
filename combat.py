@@ -19,6 +19,7 @@ MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Y
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
 RUPTURE, INFERNO, CRUELTY = "Rupture", "Inferno", "Cruelty"
 FASTEN = "Fasten"
+DEMON_FORM = "Demon Form"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -52,7 +53,7 @@ HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3, DECAY: 2}
 HAND_END_UNBLOCKABLE = {BECKON: 6, BAD_LUCK: 13}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
 CARD_COST = {
-    STRIKE: 1, DEFEND: 1, FASTEN: 1, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
+    STRIKE: 1, DEFEND: 1, FASTEN: 1, DEMON_FORM: 3, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, INFERNO: 1, CRUELTY: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3, BARRICADE: 3, PYRE: 2, BLOOD_WALL: 2,
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
@@ -106,13 +107,13 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN}
+POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -1621,6 +1622,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         if block_next:
             extra_block += block_next
             player_powers = _add_power(player_powers, "BlockNextTurnPower", -block_next)
+        # DemonFormPower.AfterSideTurnStart grants its amount as Strength at the start of every
+        # one of the player's turns, so the damage curve keeps climbing for the whole fight.
+        demon_form = _power(player_powers, "DemonFormPower")
+        if demon_form:
+            player_powers = _add_power(player_powers, "StrengthPower", demon_form)
         if RELIC_BRIMSTONE in relics:
             player_powers = _add_power(player_powers, "StrengthPower", 2)
             enemies = [replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1)) if enemy.alive else enemy for enemy in enemies]
@@ -1928,6 +1934,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     player_powers = combat.player_powers
     if card == RUPTURE:
         player_powers = _add_power(player_powers, "RupturePower", 1)
+    if card == DEMON_FORM:
+        # DemonForm.OnPlay applies DemonFormPower with its StrengthPower var (2, upgraded 3).
+        player_powers = _add_power(player_powers, "DemonFormPower", 3 if card_was_upgraded else 2)
     if card == FASTEN:
         # Fasten.OnPlay applies FastenPower with its ExtraBlock var (4, upgraded 6).
         player_powers = _add_power(player_powers, "FastenPower", 6 if card_was_upgraded else 4)
@@ -2093,7 +2102,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
     if card == VICIOUS:
         return replace(combat, player_powers=_add_power(combat.player_powers, "ViciousPower", 2 if card_was_upgraded else 1))
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
