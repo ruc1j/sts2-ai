@@ -80,6 +80,7 @@ CARD_NAMES = {
     "CARD.THRUMMING_HATCHET": "Thrumming Hatchet",
     "CARD.ULTIMATE_DEFEND": "Ultimate Defend",
     "CARD.FASTEN": "Fasten",
+    "CARD.NEOWS_FURY": "Neow's Fury",
     "CARD.DEMON_FORM": "Demon Form",
     "CARD.ULTIMATE_STRIKE": "Ultimate Strike",
     "CARD.FLAME_BARRIER": "Flame Barrier",
