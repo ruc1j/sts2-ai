@@ -1767,12 +1767,6 @@ class CombatTest(unittest.TestCase):
         upgraded = step(Combat(80, (MAUL,), (), (), (enemy,), upgraded_cards=(MAUL,)), f"{MAUL}@0", {}, random.Random(0))
         self.assertEqual((upgraded.enemies[0].hp, upgraded.maul_bonus), (88, 2))  # 6 damage, Increase 2
 
-    def test_maul_uses_the_per_copy_damage_the_bridge_reports(self) -> None:
-        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
-        grown = Card(MAUL, damage_override=9)
-        after = step(Combat(80, (grown,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
-        self.assertEqual(after.enemies[0].hp, 82)  # the copy has already grown to 9 per hit
-
     def test_thrash_exhausts_an_attack_from_hand_and_absorbs_its_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
         after = step(Combat(80, (THRASH, STRIKE, DEFEND), (), (), (enemy,)), f"{THRASH}@0", {}, random.Random(0))

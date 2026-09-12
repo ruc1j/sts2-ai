@@ -207,10 +207,6 @@ class Card:
     variant: str | None = None
     rider: str | None = None
     variant_value: int = 0
-    # Maul and Thrash permanently raise their own Damage BaseValue as they are played, so the
-    # damage a given copy deals is whatever the bridge reports for that copy right now, not the
-    # printed 5/4 in CARD_DAMAGE.
-    damage_override: int = 0
 
 
 CardValue = str | Card
@@ -2424,8 +2420,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     elif card == FIEND_FIRE:
         damage = 7
     elif card in {MAUL, THRASH}:
-        observed = played_value.damage_override if isinstance(played_value, Card) else 0
-        damage = (observed or CARD_DAMAGE[card] + (CARD_UPGRADE_DAMAGE[card] if card_was_upgraded else 0))
+        # Both cards raise their own Damage BaseValue permanently, and that growth survives the
+        # fight, so a copy met mid-run already hits harder than its printed 5/4. The bridge's
+        # `vars` cannot supply the real number: DamageVar.UpdateCardPreview runs the whole
+        # ModifyDamage hook chain, so the reported Damage already has Strength, Weak, Frail and
+        # enchantments folded in - reading it here would double-count everything below. The model
+        # therefore starts from the printed value and only adds the growth it sees itself, which
+        # under-rates a long-carried copy rather than over-rating one.
+        damage = CARD_DAMAGE[card] + (CARD_UPGRADE_DAMAGE[card] if card_was_upgraded else 0)
         damage += combat.maul_bonus if card == MAUL else combat.thrash_bonus
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
@@ -2570,8 +2572,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
 def _thrash_gain(value: CardValue) -> int:
     """Damage Thrash absorbs from the attack it exhausts (its Damage var, not its full effect)."""
     name = card_name(value)
-    if isinstance(value, Card) and value.damage_override:
-        return value.damage_override
     damage = CARD_DAMAGE.get(name, ALL_ENEMY_DAMAGE.get(name, 0))
     if isinstance(value, Card) and value.upgraded and damage:
         damage += CARD_UPGRADE_DAMAGE.get(name, 3)
