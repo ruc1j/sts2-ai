@@ -1720,6 +1720,27 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(len(after.exhaust_pile), 1)
         self.assertEqual(sorted(after.hand), sorted({STRIKE, DEFEND} - set(after.exhaust_pile)))
 
+    def test_clarity_draws_one_extra_card_and_counts_down(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        draw = (STRIKE,) * 8
+        combat = Combat(80, (), draw, (), (enemy,), player_powers=(("ClarityPower", 2),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(after.hand), 6)
+        self.assertEqual(_power(after.player_powers, "ClarityPower"), 1)
+
+    def test_mayhem_plays_cards_off_the_draw_pile_at_turn_start(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (), (STRIKE,) * 8, (), (enemy,), player_powers=(("MayhemPower", 1),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 94)  # one free Strike before the player may act
+
+    def test_flex_potion_strength_expires_at_the_players_turn_end(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (), (), (), (enemy,), player_powers=(("StrengthPower", 5), ("FlexPotionPower", 3)))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 2)
+        self.assertEqual(_power(after.player_powers, "FlexPotionPower"), 0)
+
     def test_cascade_plays_x_cards_off_the_draw_pile_for_free(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         combat = Combat(80, (CASCADE,), (STRIKE, STRIKE, DEFEND), (), (enemy,), energy=2)

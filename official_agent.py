@@ -234,6 +234,9 @@ POWER_NAMES = {
     "POWER.FASTEN_POWER": "FastenPower",
     "POWER.DEMON_FORM_POWER": "DemonFormPower",
     "POWER.STAMPEDE_POWER": "StampedePower",
+    "POWER.CLARITY_POWER": "ClarityPower",
+    "POWER.MAYHEM_POWER": "MayhemPower",
+    "POWER.FLEX_POTION_POWER": "FlexPotionPower",
     # The observation reports these under their own ids; without the mapping combat.py never
     # sees them (the same gap that made FrailPower dead for every rollout - see CODEWIKI).
     "POWER.GALVANIC_POWER": "GalvanicPower",

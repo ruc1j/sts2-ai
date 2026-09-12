@@ -1587,6 +1587,17 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                     "DexterityPower", -speed_dexterity,
                 ),
             )
+        # FlexPotionPower (TemporaryStrengthPower).AfterSideTurnEnd: removes itself and the
+        # Strength it granted once the player's own turn ends.
+        flex_strength = _power(combat.player_powers, "FlexPotionPower")
+        if flex_strength:
+            combat = replace(
+                combat,
+                player_powers=_add_power(
+                    _add_power(combat.player_powers, "FlexPotionPower", -flex_strength),
+                    "StrengthPower", -flex_strength,
+                ),
+            )
         setup_strike = _power(combat.player_powers, "SetupStrikePower")
         if setup_strike:
             combat = replace(
@@ -1771,6 +1782,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             extra_draw += 3
         if RELIC_PAELS_BLOOD in relics:
             extra_draw += 1
+        # ClarityPower.ModifyHandDraw: +1 card, then AfterSideTurnStart decrements the counter.
+        clarity = _power(player_powers, "ClarityPower")
+        if clarity:
+            extra_draw += 1
+            player_powers = _add_power(player_powers, "ClarityPower", -1)
         draw_count = max(0, 5 + extra_draw - _power(player_powers, "MindRotPower"))
         hand = list(combat.hand)
         discard = list(combat.discard_pile)
@@ -1805,7 +1821,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
         )
-        return _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
+        combat = _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
+        # MayhemPower.AfterAutoPrePlayPhaseEntered: plays Amount cards off the draw pile before
+        # the player may act.
+        return _autoplay_from_draw_pile(combat, _power(combat.player_powers, "MayhemPower"), data, rng)
 
     action_card, _, target = action.partition("@")
     card_index = None
