@@ -22,6 +22,9 @@ FASTEN = "Fasten"
 DEMON_FORM = "Demon Form"
 NEOWS_FURY = "Neow's Fury"
 MAD_SCIENCE = "Mad Science"
+MAUL, THRASH = "Maul", "Thrash"
+STAMPEDE = "Stampede"
+CASCADE = "Cascade"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -45,6 +48,8 @@ ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
 # PileType.Discard by Wriggler's WRIGGLE_MOVE and only bites once it's drawn into a later hand.
 WOUND, DECAY, NORMALITY = "Wound", "Decay", "Normality"
+# Unplayable curses whose only effect fires while they sit in hand at the player's turn end.
+DOUBT, REGRET, SHAME = "Doubt", "Regret", "Shame"
 BECKON, BAD_LUCK = "Beckon", "Bad Luck"
 # Decay is a Curse that starts in the deck rather than being injected mid-combat, but its
 # OnTurnEndInHand is the same 2 flat Unpowered damage.
@@ -64,16 +69,17 @@ CARD_COST = {
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
+    MAUL: 1, THRASH: 1, STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
     FEED: 10, NEOWS_FURY: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, SQUASH: 10, TEAR_ASUNDER: 5, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7, SWORD_BOOMERANG: 3,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
-    MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
+    MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4,
 }
-CARD_HITS = {TWIN_STRIKE: 2}
-CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2}
+CARD_HITS = {TWIN_STRIKE: 2, MAUL: 2, THRASH: 2}
+CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
@@ -98,6 +104,7 @@ ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, NEOWS_FURY, SQUASH, TEAR_ASUNDER, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
+    MAUL, THRASH,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -113,20 +120,20 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM}
+POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY}
@@ -268,6 +275,12 @@ class Combat:
     toric_pending: tuple[tuple[int, int], ...] = ()
     # Times the player has taken unblocked damage this combat; Tear Asunder's hit count is 1 + this.
     unblocked_hits: int = 0
+    # Maul.OnPlay buffs the Damage BaseValue of every Maul the player owns by Increase (1, 2 when
+    # upgraded); Thrash.OnPlay exhausts a random attack from hand and adds its damage to itself.
+    # Both are permanent, so within one rollout they stack on top of the per-copy damage the
+    # bridge reported at the start of the search.
+    maul_bonus: int = 0
+    thrash_bonus: int = 0
     bellows_used: bool = False
     burning_sticks_used: bool = False
     joss_paper_count: int = 0
@@ -683,6 +696,53 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     return _autoplay_drawn_strikes(combat, drawn, data, rng)
 
 
+def _autoplay_from_draw_pile(combat: Combat, count: int, data: dict, rng: random.Random) -> Combat:
+    """Play `count` cards off the draw pile for free (Cascade). Cards the model cannot play from
+    hand - statuses, curses, a card with no legal target - are left in hand instead of vanishing."""
+    for _ in range(count):
+        if combat.terminal or not combat.draw_pile:
+            break
+        draw = list(combat.draw_pile)
+        value = draw.pop(rng.randrange(len(draw)))
+        hand_index = len(combat.hand)
+        combat = replace(combat, draw_pile=tuple(draw), hand=combat.hand + (value,), free_cards=combat.free_cards + (value,))
+        alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
+        if not alive:
+            break
+        base = f"card:{hand_index}" if isinstance(value, Card) else card_name(value)
+        action = next(
+            (candidate for candidate in (f"{base}@{rng.choice(alive)}", base) if candidate in legal_actions(combat)),
+            None,
+        )
+        if action is None:
+            continue
+        combat = step(combat, action, data, rng)
+    return combat
+
+
+def _autoplay_stampede(combat: Combat, data: dict, rng: random.Random) -> Combat:
+    """StampedePower.AfterAutoPostPlayPhaseEntered: once the player ends the turn and before the
+    turn-end hand effects, auto-play Amount random attacks left in hand, each free of energy."""
+    for _ in range(_power(combat.player_powers, "StampedePower")):
+        if combat.terminal:
+            break
+        alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
+        candidates = [
+            index for index, value in enumerate(combat.hand)
+            if card_name(value) in ATTACKS and card_name(value) != WHIRLWIND
+        ]
+        if not alive or not candidates:
+            break
+        hand_index = rng.choice(candidates)
+        value = combat.hand[hand_index]
+        action = f"card:{hand_index}@{rng.choice(alive)}" if isinstance(value, Card) else f"{card_name(value)}@{rng.choice(alive)}"
+        candidate = replace(combat, free_cards=combat.free_cards + (value,))
+        if action not in legal_actions(candidate):
+            continue
+        combat = step(candidate, action, data, rng)
+    return combat
+
+
 def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp: int = 80) -> Combat:
     encounters = {encounter["id"]: encounter for encounter in data["encounters"]}
     encounter = encounters[encounter_id]
@@ -931,6 +991,10 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             continue
         seen_cards.add(card_value)
         action_name = f"card:{hand_index}" if isinstance(card_value, Card) else name
+        if name == CASCADE:
+            if combat.energy > 0 or card_value in combat.free_cards:
+                actions.append(action_name)
+            continue
         if name == WHIRLWIND:
             if combat.energy > 0 or card_value in combat.free_cards:
                 actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
@@ -1498,6 +1562,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             enemies[int(target)] = _damage_enemy(enemies[int(target)], 20 if potion == POTION_FIRE else 15, powered=False)
         return replace(combat, enemies=tuple(enemies))
     if action == END_TURN:
+        combat = _autoplay_stampede(combat, data, rng)
+        if combat.terminal:
+            return combat
         speed_dexterity = _power(combat.player_powers, "SpeedPotionPower")
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
         # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
@@ -1520,6 +1587,17 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                     "DexterityPower", -speed_dexterity,
                 ),
             )
+        # FlexPotionPower (TemporaryStrengthPower).AfterSideTurnEnd: removes itself and the
+        # Strength it granted once the player's own turn ends.
+        flex_strength = _power(combat.player_powers, "FlexPotionPower")
+        if flex_strength:
+            combat = replace(
+                combat,
+                player_powers=_add_power(
+                    _add_power(combat.player_powers, "FlexPotionPower", -flex_strength),
+                    "StrengthPower", -flex_strength,
+                ),
+            )
         setup_strike = _power(combat.player_powers, "SetupStrikePower")
         if setup_strike:
             combat = replace(
@@ -1533,8 +1611,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # hand when the player's turn ends, then the hand is cleared to discard as normal - a
         # monster move can inject fresh copies straight into the (now empty) hand during its own
         # turn below, and those survive to be drawn alongside next turn's hand.
+        # Regret.OnTurnEndInHand: unblockable damage equal to the hand size captured at
+        # BeforeSideTurnEnd, once per copy (each copy counts the whole hand, itself included).
+        regret_damage = len(combat.hand) * sum(1 for card in combat.hand if card_name(card) == REGRET)
+        # Doubt/Shame apply Weak/Frail with SkipNextDurationTick, so the stack survives the tick at
+        # the end of the enemy side and costs the player their next turn.
+        doubt_weak = sum(1 for card in combat.hand if card_name(card) == DOUBT)
+        shame_frail = sum(1 for card in combat.hand if card_name(card) == SHAME)
         hand_damage = sum(HAND_INJECTED_STATUS.get(card_name(card), 0) for card in combat.hand)
-        unblockable_hand_damage = sum(HAND_END_UNBLOCKABLE.get(card_name(card), 0) for card in combat.hand)
+        unblockable_hand_damage = sum(HAND_END_UNBLOCKABLE.get(card_name(card), 0) for card in combat.hand) + regret_damage
         relics = combat.player_relics
         # CloakClasp.BeforeSideTurnEnd: block equal to 1 per card still in hand, granted before
         # the hand is cleared to discard (and before the enemy turn below, so it can help block).
@@ -1608,6 +1693,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # VulnerablePower/WeakPower.AfterSideTurnEnd tick down after the enemy side, for both
         # player and enemy owners (the decompiled powers gate on side == CombatSide.Enemy).
         player_powers = _tick_down_power(_tick_down_power(_tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower"), "ColossusPower")
+        if doubt_weak:
+            player_powers = _add_power(player_powers, "WeakPower", doubt_weak)
+        if shame_frail:
+            player_powers = _add_power(player_powers, "FrailPower", shame_frail)
         enemies = [replace(enemy, powers=_tick_down_power(_tick_down_power(enemy.powers, "VulnerablePower"), "WeakPower")) for enemy in enemies]
         combat = replace(combat, enemies=tuple(enemies), player_powers=player_powers)
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
@@ -1693,6 +1782,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             extra_draw += 3
         if RELIC_PAELS_BLOOD in relics:
             extra_draw += 1
+        # ClarityPower.ModifyHandDraw: +1 card, then AfterSideTurnStart decrements the counter.
+        clarity = _power(player_powers, "ClarityPower")
+        if clarity:
+            extra_draw += 1
+            player_powers = _add_power(player_powers, "ClarityPower", -1)
         draw_count = max(0, 5 + extra_draw - _power(player_powers, "MindRotPower"))
         hand = list(combat.hand)
         discard = list(combat.discard_pile)
@@ -1727,7 +1821,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
         )
-        return _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
+        combat = _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
+        # MayhemPower.AfterAutoPrePlayPhaseEntered: plays Amount cards off the draw pile before
+        # the player may act.
+        return _autoplay_from_draw_pile(combat, _power(combat.player_powers, "MayhemPower"), data, rng)
 
     action_card, _, target = action.partition("@")
     card_index = None
@@ -1908,7 +2005,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         hand = list(combat.hand)
     # Enlightenment.OnPlay (reduceOnly): once played, every card costs at most 1 for the rest of
     # the turn. WHIRLWIND's X cost is exempt - it isn't a fixed cost to reduce.
-    if card in {WHIRLWIND, VOLLEY}:
+    if card in {WHIRLWIND, VOLLEY, CASCADE}:
         spent = combat.energy
     else:
         spent = card_cost
@@ -1947,6 +2044,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     player_powers = combat.player_powers
     if card == RUPTURE:
         player_powers = _add_power(player_powers, "RupturePower", 1)
+    if card == STAMPEDE:
+        # Stampede.OnPlay applies StampedePower with its Power var (1); the upgrade only makes the
+        # card cheaper, it does not raise the counter.
+        player_powers = _add_power(player_powers, "StampedePower", 1)
     if card == DEMON_FORM:
         # DemonForm.OnPlay applies DemonFormPower with its StrengthPower var (2, upgraded 3).
         player_powers = _add_power(player_powers, "DemonFormPower", 3 if card_was_upgraded else 2)
@@ -2152,7 +2253,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         elif rider == "Wisdom":
             combat = _draw_into_combat(combat, 3, data, rng)
         return combat
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM}:
+    if card == CASCADE:
+        # Cascade.OnPlay: AutoPlayFromDrawPile(X, Top) - X cards off the draw pile are played for
+        # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
+        # pile unordered, so "top" is the same random pick _draw makes.
+        return _autoplay_from_draw_pile(combat, whirlwind_x + (1 if card_was_upgraded else 0), data, rng)
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
@@ -2332,9 +2438,19 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage = combat.player_block
     elif card == FIEND_FIRE:
         damage = 7
+    elif card in {MAUL, THRASH}:
+        # Both cards raise their own Damage BaseValue permanently, and that growth survives the
+        # fight, so a copy met mid-run already hits harder than its printed 5/4. The bridge's
+        # `vars` cannot supply the real number: DamageVar.UpdateCardPreview runs the whole
+        # ModifyDamage hook chain, so the reported Damage already has Strength, Weak, Frail and
+        # enchantments folded in - reading it here would double-count everything below. The model
+        # therefore starts from the printed value and only adds the growth it sees itself, which
+        # under-rates a long-carried copy rather than over-rating one.
+        damage = CARD_DAMAGE[card] + (CARD_UPGRADE_DAMAGE[card] if card_was_upgraded else 0)
+        damage += combat.maul_bonus if card == MAUL else combat.thrash_bonus
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM}:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM, MAUL, THRASH}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
         damage += 3
@@ -2379,6 +2495,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 amount,
             ),
         )
+    if card == MAUL:
+        combat = replace(combat, maul_bonus=combat.maul_bonus + (2 if card_was_upgraded else 1))
+    if card == THRASH:
+        attacks = [index for index, value in enumerate(hand) if card_name(value) in ATTACKS]
+        if attacks:
+            exhausted = hand.pop(attacks[rng.randrange(len(attacks))])
+            gained = _thrash_gain(exhausted)
+            combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (exhausted,), thrash_bonus=combat.thrash_bonus + gained)
+            combat = _after_exhaust(combat, (exhausted,), rng, data)
     if card == CINDER and hand:
         sacrificed = hand.pop(rng.randrange(len(hand)))
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
@@ -2461,6 +2586,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     combat = replace(combat, player_powers=player_powers, enemies=tuple(enemies))
     combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
     return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
+
+
+def _thrash_gain(value: CardValue) -> int:
+    """Damage Thrash absorbs from the attack it exhausts (its Damage var, not its full effect)."""
+    name = card_name(value)
+    damage = CARD_DAMAGE.get(name, ALL_ENEMY_DAMAGE.get(name, 0))
+    if isinstance(value, Card) and value.upgraded and damage:
+        damage += CARD_UPGRADE_DAMAGE.get(name, 3)
+    return damage
 
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:
