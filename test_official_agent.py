@@ -5570,3 +5570,39 @@ class OfficialAgentTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DoomedTurnFallbackTest(unittest.TestCase):
+    """When block cannot prevent the death, the unsafe fallback should swing instead."""
+
+    def _observation(self, incoming: int) -> dict:
+        return {
+            "player": {"hp": 7, "max_hp": 80, "block": 0, "energy": 3, "powers": [], "relics": []},
+            "hand": [
+                {"index": 0, "id": "CARD.EVIL_EYE", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 8}]},
+                {"index": 1, "id": "CARD.POMMEL_STRIKE", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+            ],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 200, "block": 0, "powers": [],
+                "intents": [{"type": "SingleAttackIntent", "damage": incoming, "repeats": 1}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.EVIL_EYE", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.POMMEL_STRIKE", "hand_index": 1, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+
+    def _choose(self, incoming: int) -> dict:
+        observation = self._observation(incoming)
+        # A non-blocking, non-lethal rollout pick against lethal incoming is what marks the turn
+        # unsafe and hands control to the heuristic tail.
+        attack = observation["legal_actions"][1]
+        with patch("official_agent.rollout_choice", return_value=attack):
+            return choose(observation, enemy_data={"monsters": []}, simulations=1)
+
+    def test_attacks_when_no_amount_of_block_saves_the_turn(self) -> None:
+        self.assertEqual(self._choose(incoming=60)["card_id"], "CARD.POMMEL_STRIKE")
+
+    def test_still_blocks_when_block_can_survive_the_turn(self) -> None:
+        self.assertEqual(self._choose(incoming=12)["card_id"], "CARD.EVIL_EYE")

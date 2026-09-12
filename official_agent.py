@@ -1568,6 +1568,21 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             if draw and len(hand) + draw <= 10:
                 return _tag_action(battle_trance, "heuristic_fallback", rollout_reason)
     defenses = [action for action in cards if card_value(action, "block") > 0]
+    if rollout_reason == "rollout_rejected_unsafe" and defenses:
+        # The search already said this turn kills us. Block is only worth energy if it can actually
+        # prevent that death - otherwise every point spent on it is a point not spent on the one
+        # line that still wins, killing the enemy. sweepF_1HQFTX7N3N died to VANTOM with the boss
+        # on 1 HP after this branch spent 2 of 3 energy on Evil Eye + Defend (13 block) against
+        # incoming that went straight through it, leaving only Pommel Strike's 9 damage on the table.
+        remaining, reachable = card_energy, 0
+        for action in sorted(defenses, key=lambda action: -card_value(action, "block")):
+            cost = _number(hand.get(action.get("hand_index"), {}).get("cost"))
+            if cost > remaining:
+                continue
+            remaining -= cost
+            reachable += card_value(action, "block")
+        if incoming - _number(player.get("block")) - reachable >= hp:
+            defenses = []
     if (observation.get("player", {}).get("block", 0) < incoming or summon_pending) and defenses:
         return _tag_action(max(defenses, key=lambda action: card_value(action, "block")), "heuristic_fallback", rollout_reason)
     # MinionPower enemies do not need to die to win; KIN_FOLLOWER is explicitly focused below.
