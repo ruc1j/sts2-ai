@@ -47,6 +47,8 @@ ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
 # PileType.Discard by Wriggler's WRIGGLE_MOVE and only bites once it's drawn into a later hand.
 WOUND, DECAY, NORMALITY = "Wound", "Decay", "Normality"
+# Unplayable curses whose only effect fires while they sit in hand at the player's turn end.
+DOUBT, REGRET, SHAME = "Doubt", "Regret", "Shame"
 BECKON, BAD_LUCK = "Beckon", "Bad Luck"
 # Decay is a Curse that starts in the deck rather than being injected mid-combat, but its
 # OnTurnEndInHand is the same 2 flat Unpowered damage.
@@ -1573,8 +1575,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # hand when the player's turn ends, then the hand is cleared to discard as normal - a
         # monster move can inject fresh copies straight into the (now empty) hand during its own
         # turn below, and those survive to be drawn alongside next turn's hand.
+        # Regret.OnTurnEndInHand: unblockable damage equal to the hand size captured at
+        # BeforeSideTurnEnd, once per copy (each copy counts the whole hand, itself included).
+        regret_damage = len(combat.hand) * sum(1 for card in combat.hand if card_name(card) == REGRET)
+        # Doubt/Shame apply Weak/Frail with SkipNextDurationTick, so the stack survives the tick at
+        # the end of the enemy side and costs the player their next turn.
+        doubt_weak = sum(1 for card in combat.hand if card_name(card) == DOUBT)
+        shame_frail = sum(1 for card in combat.hand if card_name(card) == SHAME)
         hand_damage = sum(HAND_INJECTED_STATUS.get(card_name(card), 0) for card in combat.hand)
-        unblockable_hand_damage = sum(HAND_END_UNBLOCKABLE.get(card_name(card), 0) for card in combat.hand)
+        unblockable_hand_damage = sum(HAND_END_UNBLOCKABLE.get(card_name(card), 0) for card in combat.hand) + regret_damage
         relics = combat.player_relics
         # CloakClasp.BeforeSideTurnEnd: block equal to 1 per card still in hand, granted before
         # the hand is cleared to discard (and before the enemy turn below, so it can help block).
@@ -1648,6 +1657,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # VulnerablePower/WeakPower.AfterSideTurnEnd tick down after the enemy side, for both
         # player and enemy owners (the decompiled powers gate on side == CombatSide.Enemy).
         player_powers = _tick_down_power(_tick_down_power(_tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower"), "ColossusPower")
+        if doubt_weak:
+            player_powers = _add_power(player_powers, "WeakPower", doubt_weak)
+        if shame_frail:
+            player_powers = _add_power(player_powers, "FrailPower", shame_frail)
         enemies = [replace(enemy, powers=_tick_down_power(_tick_down_power(enemy.powers, "VulnerablePower"), "WeakPower")) for enemy in enemies]
         combat = replace(combat, enemies=tuple(enemies), player_powers=player_powers)
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
