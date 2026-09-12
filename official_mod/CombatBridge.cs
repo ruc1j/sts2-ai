@@ -13,6 +13,7 @@ using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.MonsterMoves.Intents;
 using MegaCrit.Sts2.Core.Models;
+using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Potions;
 using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes;
@@ -135,6 +136,10 @@ internal static class CombatBridge
                     rarity = card.Rarity.ToString(),
                     pool = card.Pool.Id.ToString(),
                     vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
+                    // Mad Science rolls a per-copy CardType and RiderEffect. `type` already carries
+                    // the former; without the latter the agent cannot tell a 3-hit Violence copy
+                    // from a single hit, or know a Power copy grants Strength+Dexterity.
+                    rider = (card as MadScience)?.TinkerTimeRider.ToString(),
                     target = card.TargetType.ToString(),
                 }),
                 draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
@@ -260,6 +265,7 @@ internal static class CombatBridge
                 rarity = card.Rarity.ToString(),
                 pool = card.Pool.Id.ToString(),
                 vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
+                rider = (card as MadScience)?.TinkerTimeRider.ToString(),
                 target = card.TargetType.ToString(),
             }),
             draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),

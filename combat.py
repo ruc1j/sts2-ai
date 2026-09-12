@@ -21,6 +21,7 @@ RUPTURE, INFERNO, CRUELTY = "Rupture", "Inferno", "Cruelty"
 FASTEN = "Fasten"
 DEMON_FORM = "Demon Form"
 NEOWS_FURY = "Neow's Fury"
+MAD_SCIENCE = "Mad Science"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -61,7 +62,7 @@ CARD_COST = {
     BOLAS: 0, DRAMATIC_ENTRANCE: 0, FISTICUFFS: 1, LIFT: 1, THRUMMING_HATCHET: 1, ULTIMATE_DEFEND: 1, ULTIMATE_STRIKE: 1,
     FLAME_BARRIER: 2, MOLTEN_FIST: 1, NOT_YET: 2, OFFERING: 0, PACTS_END: 0, POMMEL_STRIKE: 1, DRUM_OF_BATTLE: 1, MASTER_OF_STRATEGY: 0, PRODUCTION: 0, ARMAMENTS: 1, UNMOVABLE: 2, EXPECT_A_FIGHT: 2, AGGRESSION: 1, DARK_EMBRACE: 2, CRIMSON_MANTLE: 1, FORGOTTEN_RITUAL: 1, SWORD_BOOMERANG: 1, HELLRAISER: 2,
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
-    HEADBUTT: 1, NEOWS_FURY: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
+    HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
@@ -194,6 +195,11 @@ class Card:
     # expensive for the rest of the combat every time that same copy is played.
     extra_cost: int = 0
     bound: bool = False
+    # Mad Science rolls a CardType and a RiderEffect per copy, so two copies of the same card id
+    # can be a 3-hit attack and a Strength power. The bridge reports both per copy.
+    variant: str | None = None
+    rider: str | None = None
+    variant_value: int = 0
 
 
 CardValue = str | Card
@@ -943,7 +949,9 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             if not targets:
                 actions.append(action_name)
             continue
-        if name in UNTARGETED:
+        # Mad Science targets an enemy only on the copies that rolled Attack; Skill and Power
+        # copies are self-targeted like any other untargeted card.
+        if name in UNTARGETED or (name == MAD_SCIENCE and not (isinstance(card_value, Card) and card_value.variant == "Attack")):
             actions.append(action_name)
         else:
             actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
@@ -2107,6 +2115,43 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
     if card == VICIOUS:
         return replace(combat, player_powers=_add_power(combat.player_powers, "ViciousPower", 2 if card_was_upgraded else 1))
+    if card == MAD_SCIENCE:
+        # MadScience.OnPlay switches on the copy's TinkerTimeType, then applies its RiderEffect.
+        # The bridge reports both, and DynamicVars already carry this copy's scaled Damage/Block.
+        variant = played_value.variant if isinstance(played_value, Card) else None
+        rider = played_value.rider if isinstance(played_value, Card) else None
+        amount = played_value.variant_value if isinstance(played_value, Card) else 0
+        enemies = list(combat.enemies)
+        player_powers = combat.player_powers
+        if variant == "Attack" and target is not None:
+            index = int(target)
+            hits = 3 if rider == "Violence" else 1
+            for _ in range(hits):
+                if enemies[index].alive:
+                    enemies[index] = _damage_enemy(enemies[index], amount + _power(player_powers, "StrengthPower"))
+            combat = replace(combat, enemies=tuple(enemies))
+        elif variant == "Skill":
+            combat = _grant_block(combat, amount, rng)
+        elif variant == "Power" and rider == "Expertise":
+            player_powers = _add_power(player_powers, "StrengthPower", 2)
+            player_powers = _add_power(player_powers, "DexterityPower", 2)
+            combat = replace(combat, player_powers=player_powers)
+        # Riders that stack on top of whichever half ran above. Chaos adds a random free card to
+        # hand, which the model cannot name, so it is left out - a safe-direction omission.
+        enemies, player_powers = list(combat.enemies), combat.player_powers
+        if rider == "Sapping" and target is not None:
+            index = int(target)
+            enemies[index] = replace(enemies[index], powers=_add_power(_add_power(enemies[index].powers, "WeakPower", 2), "VulnerablePower", 2))
+            combat = replace(combat, enemies=tuple(enemies))
+        elif rider == "Choking" and target is not None:
+            index = int(target)
+            enemies[index] = replace(enemies[index], powers=_add_power(enemies[index].powers, "StranglePower", 6))
+            combat = replace(combat, enemies=tuple(enemies))
+        elif rider == "Energized":
+            combat = replace(combat, energy=combat.energy + 2)
+        elif rider == "Wisdom":
+            combat = _draw_into_combat(combat, 3, data, rng)
+        return combat
     if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM}:
         return combat
     enemies = list(combat.enemies)

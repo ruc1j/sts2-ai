@@ -80,6 +80,7 @@ CARD_NAMES = {
     "CARD.THRUMMING_HATCHET": "Thrumming Hatchet",
     "CARD.ULTIMATE_DEFEND": "Ultimate Defend",
     "CARD.FASTEN": "Fasten",
+    "CARD.MAD_SCIENCE": "Mad Science",
     "CARD.NEOWS_FURY": "Neow's Fury",
     "CARD.DEMON_FORM": "Demon Form",
     "CARD.ULTIMATE_STRIKE": "Ultimate Strike",
@@ -2582,9 +2583,22 @@ def _observation_card(value: object) -> str | Card:
         # Frantic Escape is the one card whose copies drift above their base cost during a combat
         # (EnergyCost.AddThisCombat), and the observation reports each copy's current cost.
         extra_cost = max(_number(value.get("cost")) - 1, 0) if card_id == "CARD.FRANTIC_ESCAPE" else 0
+        # Mad Science rolls a CardType and a RiderEffect per copy; the bridge reports `type` and
+        # `rider`, and this copy's scaled Damage/Block sits in its own vars.
+        variant = rider = None
+        variant_value = 0
+        if card_id == "CARD.MAD_SCIENCE":
+            variant = value.get("type") if isinstance(value.get("type"), str) else None
+            rider = value.get("rider") if isinstance(value.get("rider"), str) else None
+            wanted = "Block" if variant == "Skill" else "Damage"
+            variant_value = next(
+                (_number(variable.get("value")) for variable in value.get("vars") or () if variable.get("id") == wanted),
+                0,
+            )
         return Card(
             name, _number(value.get("upgrade")) > 0,
             enchantment=enchantment, extra_cost=extra_cost, bound=bool(value.get("bound")),
+            variant=variant, rider=rider, variant_value=variant_value,
         )
     name = card_name(value)
     return CARD_NAMES.get(name, name)

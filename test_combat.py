@@ -11,7 +11,7 @@ from combat import (
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
-    FASTEN, DEMON_FORM, NEOWS_FURY, CARD_BLOCK,
+    FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -2504,3 +2504,41 @@ class NeowsFuryTest(unittest.TestCase):
         combat = self._combat((STRIKE, WOUND, WOUND))
         after = step(combat, NEOWS_FURY + "@0", DUMMY_DATA, random.Random(0))
         self.assertEqual([card_name(c) for c in after.hand], [STRIKE])
+
+
+class MadScienceTest(unittest.TestCase):
+    """Each Mad Science copy rolls its own CardType and RiderEffect; the bridge reports both."""
+
+    def _combat(self, card):
+        return Combat(
+            enemies=(Enemy(model="MONSTER.DUMMY", hp=80, move="IDLE_MOVE", values=(), primary=True),),
+            hand=(card,), draw_pile=(STRIKE,) * 5, discard_pile=(), energy=3, player_hp=50,
+        )
+
+    def test_attack_copy_hits_once(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Attack", variant_value=16)
+        after = step(self._combat(card), "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 64)
+
+    def test_violence_rider_hits_three_times(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Attack", rider="Violence", variant_value=16)
+        after = step(self._combat(card), "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 80 - 48)
+
+    def test_skill_copy_blocks_and_needs_no_target(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Skill", variant_value=8)
+        combat = self._combat(card)
+        self.assertIn("card:0", legal_actions(combat))
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 8)
+
+    def test_power_copy_with_expertise_grants_strength_and_dexterity(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Power", rider="Expertise")
+        after = step(self._combat(card), "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 2)
+        self.assertEqual(_power(after.player_powers, "DexterityPower"), 2)
+
+    def test_energized_rider_refunds_energy(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Skill", rider="Energized", variant_value=8)
+        after = step(self._combat(card), "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 3 - 1 + 2)
