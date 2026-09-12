@@ -1720,6 +1720,30 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(len(after.exhaust_pile), 1)
         self.assertEqual(sorted(after.hand), sorted({STRIKE, DEFEND} - set(after.exhaust_pile)))
 
+    def test_toasty_mittens_gains_strength_and_exhausts_a_card_every_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (), (STRIKE,) * 8, (), (enemy,), player_relics=("RELIC.TOASTY_MITTENS",))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 1)
+        self.assertEqual(len(after.exhaust_pile), 1)
+        again = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(again.player_powers, "StrengthPower"), 2)  # it stacks every turn
+
+    def test_gremlin_horn_pays_energy_and_a_card_for_a_kill(self) -> None:
+        dying = Enemy("MONSTER.DUMMY", 6, "IDLE_MOVE", ())
+        other = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (STRIKE,), (DEFEND, DEFEND), (), (dying, other), player_relics=("RELIC.GREMLIN_HORN",))
+        after = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertFalse(after.enemies[0].alive)
+        self.assertEqual(after.energy, 3)  # 3 - 1 for the Strike, + 1 for the kill
+        self.assertEqual(len(after.hand), 1)
+
+    def test_unceasing_top_draws_when_the_hand_runs_out(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (STRIKE,), (DEFEND, DEFEND), (), (enemy,), player_relics=("RELIC.UNCEASING_TOP",))
+        after = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.hand, (DEFEND,))
+
     def test_clarity_draws_one_extra_card_and_counts_down(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         draw = (STRIKE,) * 8

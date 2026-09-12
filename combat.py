@@ -149,6 +149,7 @@ RELIC_BRIMSTONE, RELIC_MERCURY_HOURGLASS, RELIC_ART_OF_WAR = "RELIC.BRIMSTONE", 
 RELIC_SCREAMING_FLAGON, RELIC_CLOAK_CLASP = "RELIC.SCREAMING_FLAGON", "RELIC.CLOAK_CLASP"
 RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_HORN_CLEAT = "RELIC.CANDELABRA", "RELIC.CAPTAINS_WHEEL", "RELIC.HORN_CLEAT"
 RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY = "RELIC.LOST_WISP", "RELIC.PAPER_PHROG", "RELIC.STRIKE_DUMMY"
+RELIC_GREMLIN_HORN, RELIC_UNCEASING_TOP, RELIC_TOASTY_MITTENS = "RELIC.GREMLIN_HORN", "RELIC.UNCEASING_TOP", "RELIC.TOASTY_MITTENS"
 RELIC_BRILLIANT_SCARF = "RELIC.BRILLIANT_SCARF"
 # BrilliantScarf.ShouldModifyCost fires only while exactly Cards-1 cards have been played
 # this turn, i.e. the turn's fifth card is free.
@@ -1511,12 +1512,23 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     one of those call sites and missing one.
     """
     vicious = _power(combat.player_powers, "ViciousPower")
-    if not vicious or action == END_TURN:
-        return _step(combat, action, data, rng)
     before = _enemy_vulnerable_total(combat)
+    alive_before = sum(1 for enemy in combat.enemies if enemy.alive)
     after = _step(combat, action, data, rng)
-    if _enemy_vulnerable_total(after) > before and not after.terminal:
-        return _draw_into_combat(after, vicious, data, rng)
+    if vicious and action != END_TURN and _enemy_vulnerable_total(after) > before and not after.terminal:
+        after = _draw_into_combat(after, vicious, data, rng)
+    if action == END_TURN or after.terminal:
+        return after
+    relics = after.player_relics
+    # GremlinHorn.AfterDeath: 1 energy and 1 card for every enemy that dies.
+    kills = alive_before - sum(1 for enemy in after.enemies if enemy.alive)
+    if kills > 0 and RELIC_GREMLIN_HORN in relics:
+        after = _draw_into_combat(replace(after, energy=after.energy + kills), kills, data, rng)
+    # UnceasingTop.AfterHandEmptied: draws a card whenever the hand runs out during the play
+    # phase. The relic deliberately does not fire around the hand draw or the hand flush, which
+    # is why this sits on the player's own actions only.
+    if RELIC_UNCEASING_TOP in relics and not after.hand and not after.terminal:
+        after = _draw_into_combat(after, 1, data, rng)
     return after
 
 
@@ -1782,6 +1794,18 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             extra_draw += 3
         if RELIC_PAELS_BLOOD in relics:
             extra_draw += 1
+        # ToastyMittens.BeforeHandDraw: exhausts the top card of the draw pile and grants a
+        # permanent +1 Strength, every single turn. The draw pile is unordered here, so the
+        # exhausted card is a random one.
+        if RELIC_TOASTY_MITTENS in relics:
+            player_powers = _add_power(player_powers, "StrengthPower", 1)
+            mittens_pile = list(combat.draw_pile)
+            if mittens_pile:
+                mittens_exhausted = mittens_pile.pop(rng.randrange(len(mittens_pile)))
+                combat = replace(
+                    combat, draw_pile=tuple(mittens_pile),
+                    exhaust_pile=combat.exhaust_pile + (mittens_exhausted,),
+                )
         # ClarityPower.ModifyHandDraw: +1 card, then AfterSideTurnStart decrements the counter.
         clarity = _power(player_powers, "ClarityPower")
         if clarity:
