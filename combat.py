@@ -23,6 +23,7 @@ DEMON_FORM = "Demon Form"
 NEOWS_FURY = "Neow's Fury"
 MAD_SCIENCE = "Mad Science"
 MAUL, THRASH = "Maul", "Thrash"
+STAMPEDE = "Stampede"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -65,7 +66,7 @@ CARD_COST = {
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
-    MAUL: 1, THRASH: 1,
+    MAUL: 1, THRASH: 1, STAMPEDE: 2,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -116,13 +117,13 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM}
+POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -694,6 +695,29 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     if not _power(combat.player_powers, "HellraiserPower"):
         return combat
     return _autoplay_drawn_strikes(combat, drawn, data, rng)
+
+
+def _autoplay_stampede(combat: Combat, data: dict, rng: random.Random) -> Combat:
+    """StampedePower.AfterAutoPostPlayPhaseEntered: once the player ends the turn and before the
+    turn-end hand effects, auto-play Amount random attacks left in hand, each free of energy."""
+    for _ in range(_power(combat.player_powers, "StampedePower")):
+        if combat.terminal:
+            break
+        alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
+        candidates = [
+            index for index, value in enumerate(combat.hand)
+            if card_name(value) in ATTACKS and card_name(value) != WHIRLWIND
+        ]
+        if not alive or not candidates:
+            break
+        hand_index = rng.choice(candidates)
+        value = combat.hand[hand_index]
+        action = f"card:{hand_index}@{rng.choice(alive)}" if isinstance(value, Card) else f"{card_name(value)}@{rng.choice(alive)}"
+        candidate = replace(combat, free_cards=combat.free_cards + (value,))
+        if action not in legal_actions(candidate):
+            continue
+        combat = step(candidate, action, data, rng)
+    return combat
 
 
 def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp: int = 80) -> Combat:
@@ -1511,6 +1535,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             enemies[int(target)] = _damage_enemy(enemies[int(target)], 20 if potion == POTION_FIRE else 15, powered=False)
         return replace(combat, enemies=tuple(enemies))
     if action == END_TURN:
+        combat = _autoplay_stampede(combat, data, rng)
+        if combat.terminal:
+            return combat
         speed_dexterity = _power(combat.player_powers, "SpeedPotionPower")
         # RingingPower.AfterSideTurnEnd (Ceremonial Beast): removes itself once the player's own
         # turn ends, clearing the Ringing one-card-per-turn restriction for next turn.
@@ -1960,6 +1987,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     player_powers = combat.player_powers
     if card == RUPTURE:
         player_powers = _add_power(player_powers, "RupturePower", 1)
+    if card == STAMPEDE:
+        # Stampede.OnPlay applies StampedePower with its Power var (1); the upgrade only makes the
+        # card cheaper, it does not raise the counter.
+        player_powers = _add_power(player_powers, "StampedePower", 1)
     if card == DEMON_FORM:
         # DemonForm.OnPlay applies DemonFormPower with its StrengthPower var (2, upgraded 3).
         player_powers = _add_power(player_powers, "DemonFormPower", 3 if card_was_upgraded else 2)
@@ -2165,7 +2196,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         elif rider == "Wisdom":
             combat = _draw_into_combat(combat, 3, data, rng)
         return combat
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
