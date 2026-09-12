@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
-    MAUL, THRASH, STAMPEDE, DOUBT, REGRET, SHAME,
+    MAUL, THRASH, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1719,6 +1719,18 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(upgraded.enemies[0].hp, 16)
         self.assertEqual(len(after.exhaust_pile), 1)
         self.assertEqual(sorted(after.hand), sorted({STRIKE, DEFEND} - set(after.exhaust_pile)))
+
+    def test_cascade_plays_x_cards_off_the_draw_pile_for_free(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (CASCADE,), (STRIKE, STRIKE, DEFEND), (), (enemy,), energy=2)
+        after = step(combat, CASCADE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 0)  # the X cost takes everything
+        self.assertEqual(len(after.draw_pile), 1)  # two cards left the pile and resolved
+        self.assertLess(after.enemies[0].hp, 100)
+
+    def test_cascade_needs_energy(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        self.assertEqual(legal_actions(Combat(80, (CASCADE,), (STRIKE,), (), (enemy,), energy=0)), (END_TURN,))
 
     def test_curses_left_in_hand_hit_the_player_at_turn_end(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())

@@ -23,6 +23,7 @@ CARD_NAMES = {
     "CARD.MAUL": "Maul",
     "CARD.THRASH": "Thrash",
     "CARD.STAMPEDE": "Stampede",
+    "CARD.CASCADE": "Cascade",
     "CARD.DOUBT": "Doubt",
     "CARD.REGRET": "Regret",
     "CARD.SHAME": "Shame",

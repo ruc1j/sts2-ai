@@ -24,6 +24,7 @@ NEOWS_FURY = "Neow's Fury"
 MAD_SCIENCE = "Mad Science"
 MAUL, THRASH = "Maul", "Thrash"
 STAMPEDE = "Stampede"
+CASCADE = "Cascade"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -68,7 +69,7 @@ CARD_COST = {
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
-    MAUL: 1, THRASH: 1, STAMPEDE: 2,
+    MAUL: 1, THRASH: 1, STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -125,14 +126,14 @@ UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY}
@@ -699,6 +700,30 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     return _autoplay_drawn_strikes(combat, drawn, data, rng)
 
 
+def _autoplay_from_draw_pile(combat: Combat, count: int, data: dict, rng: random.Random) -> Combat:
+    """Play `count` cards off the draw pile for free (Cascade). Cards the model cannot play from
+    hand - statuses, curses, a card with no legal target - are left in hand instead of vanishing."""
+    for _ in range(count):
+        if combat.terminal or not combat.draw_pile:
+            break
+        draw = list(combat.draw_pile)
+        value = draw.pop(rng.randrange(len(draw)))
+        hand_index = len(combat.hand)
+        combat = replace(combat, draw_pile=tuple(draw), hand=combat.hand + (value,), free_cards=combat.free_cards + (value,))
+        alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
+        if not alive:
+            break
+        base = f"card:{hand_index}" if isinstance(value, Card) else card_name(value)
+        action = next(
+            (candidate for candidate in (f"{base}@{rng.choice(alive)}", base) if candidate in legal_actions(combat)),
+            None,
+        )
+        if action is None:
+            continue
+        combat = step(combat, action, data, rng)
+    return combat
+
+
 def _autoplay_stampede(combat: Combat, data: dict, rng: random.Random) -> Combat:
     """StampedePower.AfterAutoPostPlayPhaseEntered: once the player ends the turn and before the
     turn-end hand effects, auto-play Amount random attacks left in hand, each free of energy."""
@@ -970,6 +995,10 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
             continue
         seen_cards.add(card_value)
         action_name = f"card:{hand_index}" if isinstance(card_value, Card) else name
+        if name == CASCADE:
+            if combat.energy > 0 or card_value in combat.free_cards:
+                actions.append(action_name)
+            continue
         if name == WHIRLWIND:
             if combat.energy > 0 or card_value in combat.free_cards:
                 actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
@@ -1961,7 +1990,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         hand = list(combat.hand)
     # Enlightenment.OnPlay (reduceOnly): once played, every card costs at most 1 for the rest of
     # the turn. WHIRLWIND's X cost is exempt - it isn't a fixed cost to reduce.
-    if card in {WHIRLWIND, VOLLEY}:
+    if card in {WHIRLWIND, VOLLEY, CASCADE}:
         spent = combat.energy
     else:
         spent = card_cost
@@ -2209,6 +2238,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         elif rider == "Wisdom":
             combat = _draw_into_combat(combat, 3, data, rng)
         return combat
+    if card == CASCADE:
+        # Cascade.OnPlay: AutoPlayFromDrawPile(X, Top) - X cards off the draw pile are played for
+        # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
+        # pile unordered, so "top" is the same random pick _draw makes.
+        return _autoplay_from_draw_pile(combat, whirlwind_x + (1 if card_was_upgraded else 0), data, rng)
     if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE}:
         return combat
     enemies = list(combat.enemies)
