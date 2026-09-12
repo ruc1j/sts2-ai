@@ -86,6 +86,10 @@ CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, SQUASH: 2}
 # Flat card draw with no other effect - a Skill that just replaces itself with more options.
 CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE: 1, OFFERING: 3}
+# Score per drawn card inside _greedy_action's one-ply ordering, bounded by the energy left to
+# spend on it. Deliberately below a Strike's 6 damage so a draw reorders around zero-score plays
+# without outranking a real attack. Tuning knob.
+GREEDY_DRAW_VALUE = 1.5
 # Cards that require an enemy target because they deal damage (AllEnemies/RandomEnemy attacks
 # still take an index here even though the actual targeting ignores it - see WHIRLWIND).
 ATTACKS = {
@@ -2513,6 +2517,25 @@ def _greedy_action(combat: Combat, data: dict) -> str:
         # that so they are played before the attacks they boost.
         if card in {BASH, TREMBLE}:
             score += sum(CARD_DAMAGE.get(card_name(value), 0) // 2 for value in state.hand if card_name(value) in ATTACKS and card_name(value) != card and CARD_COST.get(card_name(value), 99) <= state.energy)
+        # Drawing is worth what the extra options are worth, and search() already prices that in:
+        # its rollout plays the rest of the turn out of the bigger hand and the better line shows up
+        # as final HP. _step_score must therefore NOT pay for it again - crediting it there once
+        # cost 6 fights on P3V8N5K2RX by double-counting into search()'s own immediate term.
+        #
+        # This scorer is the part that is genuinely blind: search() only chooses the FIRST move of a
+        # turn and _greedy_action plays every move after it, one ply at a time. A draw card scores 0
+        # on damage and block, so here - and only here - it lost to anything dealing a single point
+        # and got played once the energy was already gone, arriving with nothing left to spend on
+        # what it drew. Measured across every recorded trace, that happened on 501 turns for Battle
+        # Trance and 162 for Inflame under `rollout_success`.
+        #
+        # The credit is bounded by the energy still left after the play, so a draw card taken when
+        # the bar is empty - exactly the late play this is meant to stop - still scores 0. Hand-cap
+        # overflow and a draw wasted under NoDraw need no special case: `drawn` measures the hand
+        # growth that actually happened.
+        drawn = len(state.hand) - (len(combat.hand) - 1)
+        if drawn > 0:
+            score += GREEDY_DRAW_VALUE * min(drawn, max(0, state.energy))
         score += _setup_bonus(combat, state, card_value, data)
         if score > best_score:
             best, best_score = action, score
