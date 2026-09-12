@@ -12,6 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
+    MAUL, THRASH,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1718,6 +1719,35 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(upgraded.enemies[0].hp, 16)
         self.assertEqual(len(after.exhaust_pile), 1)
         self.assertEqual(sorted(after.hand), sorted({STRIKE, DEFEND} - set(after.exhaust_pile)))
+
+    def test_maul_hits_twice_and_each_play_buffs_every_copy(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        after = step(Combat(80, (MAUL, MAUL), (), (), (enemy,)), f"{MAUL}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 90)  # 5 damage, 2 hits
+        self.assertEqual(after.maul_bonus, 1)
+        again = step(after, f"{MAUL}@0", {}, random.Random(0))
+        self.assertEqual(again.enemies[0].hp, 78)  # (5 + 1) * 2
+        upgraded = step(Combat(80, (MAUL,), (), (), (enemy,), upgraded_cards=(MAUL,)), f"{MAUL}@0", {}, random.Random(0))
+        self.assertEqual((upgraded.enemies[0].hp, upgraded.maul_bonus), (88, 2))  # 6 damage, Increase 2
+
+    def test_maul_uses_the_per_copy_damage_the_bridge_reports(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        grown = Card(MAUL, damage_override=9)
+        after = step(Combat(80, (grown,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 82)  # the copy has already grown to 9 per hit
+
+    def test_thrash_exhausts_an_attack_from_hand_and_absorbs_its_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        after = step(Combat(80, (THRASH, STRIKE, DEFEND), (), (), (enemy,)), f"{THRASH}@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 92)  # 4 damage, 2 hits
+        self.assertEqual(after.exhaust_pile, (STRIKE,))  # only the attack can be taken
+        self.assertEqual(after.hand, (DEFEND,))
+        self.assertEqual(after.thrash_bonus, 6)
+
+    def test_thrash_without_an_attack_in_hand_only_hits(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        after = step(Combat(80, (THRASH, DEFEND), (), (), (enemy,)), f"{THRASH}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.exhaust_pile, after.thrash_bonus), (92, (), 0))
 
     def test_perfected_strike_scales_with_strike_tagged_cards(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())

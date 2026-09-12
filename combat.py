@@ -22,6 +22,7 @@ FASTEN = "Fasten"
 DEMON_FORM = "Demon Form"
 NEOWS_FURY = "Neow's Fury"
 MAD_SCIENCE = "Mad Science"
+MAUL, THRASH = "Maul", "Thrash"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -64,16 +65,17 @@ CARD_COST = {
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
+    MAUL: 1, THRASH: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
     FEED: 10, NEOWS_FURY: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, SQUASH: 10, TEAR_ASUNDER: 5, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7, SWORD_BOOMERANG: 3,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
-    MOLTEN_FIST: 10, POMMEL_STRIKE: 9,
+    MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4,
 }
-CARD_HITS = {TWIN_STRIKE: 2}
-CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2}
+CARD_HITS = {TWIN_STRIKE: 2, MAUL: 2, THRASH: 2}
+CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
@@ -98,6 +100,7 @@ ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, NEOWS_FURY, SQUASH, TEAR_ASUNDER, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
+    MAUL, THRASH,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -200,6 +203,10 @@ class Card:
     variant: str | None = None
     rider: str | None = None
     variant_value: int = 0
+    # Maul and Thrash permanently raise their own Damage BaseValue as they are played, so the
+    # damage a given copy deals is whatever the bridge reports for that copy right now, not the
+    # printed 5/4 in CARD_DAMAGE.
+    damage_override: int = 0
 
 
 CardValue = str | Card
@@ -268,6 +275,12 @@ class Combat:
     toric_pending: tuple[tuple[int, int], ...] = ()
     # Times the player has taken unblocked damage this combat; Tear Asunder's hit count is 1 + this.
     unblocked_hits: int = 0
+    # Maul.OnPlay buffs the Damage BaseValue of every Maul the player owns by Increase (1, 2 when
+    # upgraded); Thrash.OnPlay exhausts a random attack from hand and adds its damage to itself.
+    # Both are permanent, so within one rollout they stack on top of the per-copy damage the
+    # bridge reported at the start of the search.
+    maul_bonus: int = 0
+    thrash_bonus: int = 0
     bellows_used: bool = False
     burning_sticks_used: bool = False
     joss_paper_count: int = 0
@@ -2332,9 +2345,13 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage = combat.player_block
     elif card == FIEND_FIRE:
         damage = 7
+    elif card in {MAUL, THRASH}:
+        observed = played_value.damage_override if isinstance(played_value, Card) else 0
+        damage = (observed or CARD_DAMAGE[card] + (CARD_UPGRADE_DAMAGE[card] if card_was_upgraded else 0))
+        damage += combat.maul_bonus if card == MAUL else combat.thrash_bonus
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM}:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM, MAUL, THRASH}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
         damage += 3
@@ -2379,6 +2396,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 amount,
             ),
         )
+    if card == MAUL:
+        combat = replace(combat, maul_bonus=combat.maul_bonus + (2 if card_was_upgraded else 1))
+    if card == THRASH:
+        attacks = [index for index, value in enumerate(hand) if card_name(value) in ATTACKS]
+        if attacks:
+            exhausted = hand.pop(attacks[rng.randrange(len(attacks))])
+            gained = _thrash_gain(exhausted)
+            combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (exhausted,), thrash_bonus=combat.thrash_bonus + gained)
+            combat = _after_exhaust(combat, (exhausted,), rng, data)
     if card == CINDER and hand:
         sacrificed = hand.pop(rng.randrange(len(hand)))
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
@@ -2461,6 +2487,17 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     combat = replace(combat, player_powers=player_powers, enemies=tuple(enemies))
     combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
     return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
+
+
+def _thrash_gain(value: CardValue) -> int:
+    """Damage Thrash absorbs from the attack it exhausts (its Damage var, not its full effect)."""
+    name = card_name(value)
+    if isinstance(value, Card) and value.damage_override:
+        return value.damage_override
+    damage = CARD_DAMAGE.get(name, ALL_ENEMY_DAMAGE.get(name, 0))
+    if isinstance(value, Card) and value.upgraded and damage:
+        damage += CARD_UPGRADE_DAMAGE.get(name, 3)
+    return damage
 
 
 def _step_score(combat: Combat, state: Combat, data: dict) -> float:

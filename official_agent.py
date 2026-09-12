@@ -20,6 +20,8 @@ CARD_NAMES = {
     "CARD.STRIKE_IRONCLAD": "Strike",
     "CARD.DEFEND_IRONCLAD": "Defend",
     "CARD.BASH": "Bash",
+    "CARD.MAUL": "Maul",
+    "CARD.THRASH": "Thrash",
     "CARD.ANGER": "Anger",
     "CARD.AGGRESSION": "Aggression",
     "CARD.DARK_EMBRACE": "Dark Embrace",
@@ -2587,6 +2589,14 @@ def _observation_card(value: object) -> str | Card:
         # `rider`, and this copy's scaled Damage/Block sits in its own vars.
         variant = rider = None
         variant_value = 0
+        # Maul and Thrash raise their own printed Damage every time they are played, so each copy
+        # carries its current value in its own vars.
+        damage_override = 0
+        if card_id in ("CARD.MAUL", "CARD.THRASH"):
+            damage_override = next(
+                (_number(variable.get("value")) for variable in value.get("vars") or () if variable.get("id") == "Damage"),
+                0,
+            )
         if card_id == "CARD.MAD_SCIENCE":
             variant = value.get("type") if isinstance(value.get("type"), str) else None
             rider = value.get("rider") if isinstance(value.get("rider"), str) else None
@@ -2599,6 +2609,7 @@ def _observation_card(value: object) -> str | Card:
             name, _number(value.get("upgrade")) > 0,
             enchantment=enchantment, extra_cost=extra_cost, bound=bool(value.get("bound")),
             variant=variant, rider=rider, variant_value=variant_value,
+            damage_override=damage_override,
         )
     name = card_name(value)
     return CARD_NAMES.get(name, name)
