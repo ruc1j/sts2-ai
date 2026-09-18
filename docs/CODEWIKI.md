@@ -2305,3 +2305,20 @@ Frantic Escape を打った瞬間の Sandpit 値(全runの128回):
 Maul/Thrash の成長分をここから読もうとして一度実装し、二重計上になるため取り消した。
 **`vars` の値を「カードの基礎値」として使ってはいけない。**
 
+### 休憩所のSMITH優先を現行コードで再測定し採用(2026-09-19)
+
+2026-09-19の未対応カード・レリック実装後のコードで、SMITH候補とSMITHなしの対照を同じ固定条件で測定した。ゲーム v0.107.1、固定ユーザーデータ、`simulations=100`、Act 3まで、各seed 1 runである。採否は終了コードではなく、traceの`won`合計で判定した。
+
+| seed | SMITHなし | SMITH優先 | 差分 |
+|---|---:|---:|---:|
+| 9X9WQB4QIH | 11 | 13 | +2 |
+| NFH3RMVJ6D | 15 | 15 | 0 |
+| EAIF2UUVCK | 14 | 14 | 0 |
+| 73P61QQZNU | 13 | 13 | 0 |
+| AM8C6YXHSG | 15 | 18 | +3 |
+| VTW80ZJA2G | 12 | 12 | 0 |
+| GEFYYKH1YK | 7 | 7 | 0 |
+| SWRUL944UU | 6 | 6 | 0 |
+| **合計** | **93** | **98** | **+5** |
+
+SMITH優先を採用する。candidateのtraceは`data/codex_smith_candidate_20260919_*`、対照のtraceは`/Users/mao/.sts2/wt-dev/data/codex_smith_base_20260919_*`に保存している。候補実装と回帰テストはmainに採用する。

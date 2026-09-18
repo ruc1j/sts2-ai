@@ -4941,6 +4941,15 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertTrue({"CARD.BYRD_SWOOP", "CARD.PILLAGE", "CARD.EQUILIBRIUM"} <= set(CARD_NAMES))
         self.assertEqual(CARD_NAMES["CARD.BLOOD_WALL"], "Blood Wall")
 
+    def test_recently_modeled_cards_and_retain_power_are_registered(self) -> None:
+        self.assertEqual(
+            {CARD_NAMES[card_id] for card_id in (
+                "CARD.FIGHT_ME", "CARD.JUGGERNAUT", "CARD.PURITY", "CARD.SALVO", "CARD.FLASH_OF_STEEL",
+            )},
+            {"Fight Me", "Juggernaut", "Purity", "Salvo", "Flash of Steel"},
+        )
+        self.assertEqual(POWER_NAMES["POWER.RETAIN_HAND_POWER"], "RetainHandPower")
+
     def test_rollout_runs_with_one_unknown_card_in_hand(self) -> None:
         # The rollout gate used to require ALL hand cards to be modeled (any unknown card
         # disabled the search entirely); one unknown card must not abandon the rollout.
@@ -5606,3 +5615,30 @@ class DoomedTurnFallbackTest(unittest.TestCase):
 
     def test_still_blocks_when_block_can_survive_the_turn(self) -> None:
         self.assertEqual(self._choose(incoming=12)["card_id"], "CARD.EVIL_EYE")
+
+
+class RestForgeTest(unittest.TestCase):
+    """A heal at a small deficit throws most of its value away; forge instead."""
+
+    def _rest(self, hp: int, max_hp: int = 80, floor: int = 5) -> str:
+        observation = {
+            "player": {"hp": hp, "max_hp": max_hp},
+            "run": {"floor": floor},
+            "legal_actions": [
+                {"option_id": "HEAL"}, {"option_id": "SMITH"},
+            ],
+        }
+        return choose_rest(observation)["option_id"]
+
+    def test_forges_when_the_heal_would_be_mostly_wasted(self) -> None:
+        # 74/80: a 24-point heal would restore 6.
+        self.assertEqual(self._rest(74), "SMITH")
+
+    def test_forges_even_next_to_the_boss(self) -> None:
+        self.assertEqual(self._rest(74, floor=14), "SMITH")
+
+    def test_still_heals_when_the_deficit_is_worth_it(self) -> None:
+        self.assertEqual(self._rest(50), "HEAL")
+
+    def test_still_heals_when_hp_is_dangerous(self) -> None:
+        self.assertEqual(self._rest(30), "HEAL")

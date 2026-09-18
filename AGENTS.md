@@ -25,6 +25,21 @@ Use `python` instead of `python3` on Windows. Building requires .NET 9 and an in
 
 Use four-space indentation. Python uses `snake_case`, `PascalCase` classes, uppercase constants, and type hints. C# members and PowerShell parameters use `PascalCase`. No formatter or linter is configured; match surrounding code. Write code and comments in English, documentation in Japanese.
 
+## Semantic Code Search (Serena)
+
+Serena is available through the Codex MCP integration for this repository. Use it for efficient symbol-aware code search before broad file reads: call `initial_instructions` first, then prefer `get_symbols_overview`, `find_symbol`, `find_referencing_symbols`, and `search_for_pattern` as appropriate. The project is configured in `.serena/project.yml` for Python, C#, and PowerShell.
+
+Initial setup or recovery:
+
+```bash
+uv tool install -p 3.13 serena-agent
+serena project health-check .
+serena project index .
+serena setup codex
+```
+
+After changing Serena configuration, restart Codex before relying on the MCP server. Serena reports zero-based line numbers.
+
 ## Testing Guidelines
 
 Tests use `unittest`; name files `test_<module>.py` and methods `test_<behavior>`. Add the smallest regression test, run its module, then the full suite. Replace pinned artifacts only after a real run with the recorded seed and version.

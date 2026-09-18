@@ -23,6 +23,7 @@ DEMON_FORM = "Demon Form"
 NEOWS_FURY = "Neow's Fury"
 MAD_SCIENCE = "Mad Science"
 MAUL, THRASH = "Maul", "Thrash"
+FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL = "Fight Me", "Juggernaut", "Purity", "Salvo", "Flash of Steel"
 STAMPEDE = "Stampede"
 CASCADE = "Cascade"
 SECOND_WIND = "Second Wind"
@@ -69,17 +70,18 @@ CARD_COST = {
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
-    MAUL: 1, THRASH: 1, STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
+    MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0,
+    STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
     FEED: 10, NEOWS_FURY: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, SQUASH: 10, TEAR_ASUNDER: 5, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7, SWORD_BOOMERANG: 3,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
-    MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4,
+    MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4, FIGHT_ME: 5, SALVO: 12, FLASH_OF_STEEL: 5,
 }
-CARD_HITS = {TWIN_STRIKE: 2, MAUL: 2, THRASH: 2}
-CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2}
+CARD_HITS = {TWIN_STRIKE: 2, MAUL: 2, THRASH: 2, FIGHT_ME: 2}
+CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2, FIGHT_ME: 1, SALVO: 4, FLASH_OF_STEEL: 3}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3}
 ALL_ENEMY_HITS = {EXTERMINATE: 4}
@@ -93,7 +95,7 @@ CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, SQUASH: 2}
 # Flat card draw with no other effect - a Skill that just replaces itself with more options.
-CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE: 1, OFFERING: 3}
+CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE: 1, OFFERING: 3, FLASH_OF_STEEL: 1}
 # Score per drawn card inside _greedy_action's one-ply ordering, bounded by the energy left to
 # spend on it. Deliberately below a Strike's 6 damage so a draw reorders around zero-score plays
 # without outranking a real attack. Tuning knob.
@@ -104,7 +106,7 @@ ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, NEOWS_FURY, SQUASH, TEAR_ASUNDER, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
-    MAUL, THRASH,
+    MAUL, THRASH, FIGHT_ME, SALVO, FLASH_OF_STEEL,
 }
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
@@ -120,23 +122,23 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM}
+POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
-EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY}
+EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE}
 
@@ -907,6 +909,15 @@ def _choose_exhaust_from_hand(combat: Combat, rng: random.Random) -> CardValue:
     return pool[rng.randrange(len(pool))]
 
 
+def _choose_exhaustible_from_hand(combat: Combat, count: int) -> tuple[CardValue, ...]:
+    """Choose up to ``count`` dead-weight cards for an optional hand exhaust effect."""
+    candidates = [
+        card for card in combat.hand
+        if card_name(card) in EXHAUST_FODDER or card_name(card) not in CARD_COST
+    ]
+    return tuple(candidates[:count])
+
+
 def _tender_penalty(combat: Combat) -> int:
     """TenderPower drops Strength and Dexterity by 1 for every card already played this turn and
     hands the whole lot back at the side turn end. Reading it off cards_played_this_turn keeps the
@@ -1620,9 +1631,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 ),
             )
         # HasTurnEndInHandEffect (Toxic, Burn): flat Unpowered damage for each copy still in
-        # hand when the player's turn ends, then the hand is cleared to discard as normal - a
-        # monster move can inject fresh copies straight into the (now empty) hand during its own
-        # turn below, and those survive to be drawn alongside next turn's hand.
+        # hand when the player's turn ends. RetainHandPower skips the normal hand flush, so the
+        # retained cards stay in hand while the turn-end effects still resolve first.
         # Regret.OnTurnEndInHand: unblockable damage equal to the hand size captured at
         # BeforeSideTurnEnd, once per copy (each copy counts the whole hand, itself included).
         regret_damage = len(combat.hand) * sum(1 for card in combat.hand if card_name(card) == REGRET)
@@ -1638,12 +1648,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         cloak_clasp_block = len(combat.hand) if RELIC_CLOAK_CLASP in relics else 0
         # ScreamingFlagon.BeforeSideTurnEnd: 20 damage to every enemy if the hand ended up empty.
         screaming_flagon = RELIC_SCREAMING_FLAGON in relics and not combat.hand
+        retain_hand = _power(combat.player_powers, "RetainHandPower") > 0
+        flushed_hand = tuple(
+            replace(card, bound=False) if isinstance(card, Card) and card.bound else card
+            for card in combat.hand
+        )
         combat = replace(
             combat, player_block=combat.player_block + cloak_clasp_block,
-            discard_pile=combat.discard_pile + tuple(
-                replace(card, bound=False) if isinstance(card, Card) and card.bound else card
-                for card in combat.hand
-            ), hand=(),
+            discard_pile=combat.discard_pile + (() if retain_hand else flushed_hand),
+            hand=combat.hand if retain_hand else (),
             paels_tears_pending=RELIC_PAELS_TEARS in relics and combat.energy > 0,
         )
         plating = _power(combat.player_powers, "PlatingPower")
@@ -1704,7 +1717,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 )
         # VulnerablePower/WeakPower.AfterSideTurnEnd tick down after the enemy side, for both
         # player and enemy owners (the decompiled powers gate on side == CombatSide.Enemy).
-        player_powers = _tick_down_power(_tick_down_power(_tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower"), "ColossusPower")
+        player_powers = _tick_down_power(
+            _tick_down_power(
+                _tick_down_power(
+                    _tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower"
+                ),
+                "ColossusPower",
+            ),
+            "RetainHandPower",
+        )
         if doubt_weak:
             player_powers = _add_power(player_powers, "WeakPower", doubt_weak)
         if shame_frail:
@@ -2093,6 +2114,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         player_powers = _add_power(player_powers, "InfernoSelfDamage", 1)
     if card == CRUELTY:
         player_powers = _add_power(player_powers, "CrueltyPower", 50 if card_was_upgraded else 25)
+    if card == JUGGERNAUT:
+        player_powers = _add_power(player_powers, "JuggernautPower", 8 if card_was_upgraded else 6)
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
@@ -2214,6 +2237,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
             combat = _after_exhaust(combat, (sacrificed,), rng, data)
         return _draw_into_combat(combat, 2 + (1 if card_was_upgraded else 0), data, rng)
+    if card == PURITY:
+        selected = _choose_exhaustible_from_hand(combat, 5 if card_was_upgraded else 3)
+        if selected:
+            hand = list(combat.hand)
+            for value in selected:
+                hand.remove(value)
+            combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + selected)
+            combat = _after_exhaust(combat, selected, rng, data)
+        return combat
     if card == BRAND:
         if combat.hand:
             sacrificed = _choose_exhaust_from_hand(combat, rng)
@@ -2282,7 +2314,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
         # pile unordered, so "top" is the same random pick _draw makes.
         return _autoplay_from_draw_pile(combat, whirlwind_x + (1 if card_was_upgraded else 0), data, rng)
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
@@ -2533,6 +2565,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         combat = replace(combat, hand=tuple(hand), exhaust_pile=combat.exhaust_pile + (sacrificed,))
         combat = _after_exhaust(combat, (sacrificed,), rng, data)
     player_powers = combat.player_powers
+    if card == FIGHT_ME:
+        player_powers = _add_power(player_powers, "StrengthPower", 4 if card_was_upgraded else 3)
+        enemies[int(target)] = replace(
+            enemies[int(target)],
+            powers=_add_power(enemies[int(target)].powers, "StrengthPower", 1),
+        )
+    if card == SALVO:
+        player_powers = _add_power(player_powers, "RetainHandPower", 1)
     if card == SETUP_STRIKE:
         amount = 3 if card_was_upgraded else 2
         player_powers = _add_power(_add_power(player_powers, "StrengthPower", amount), "SetupStrikePower", amount)

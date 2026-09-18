@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
-    MAUL, THRASH, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME,
+    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1888,6 +1888,45 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(combat.player_powers, (("StrengthPower", 2),))
         after = step(combat, f"{STRIKE}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 32)  # 6 + 2 strength
+
+    def test_fight_me_hits_twice_and_applies_strength_to_both_sides(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (FIGHT_ME,), (), (), (enemy,), energy=2)
+        after = step(combat, f"{FIGHT_ME}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "StrengthPower")), (90, 1))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 3)
+        upgraded = step(replace(combat, upgraded_cards=(FIGHT_ME,)), f"{FIGHT_ME}@0", {}, random.Random(0))
+        self.assertEqual((upgraded.enemies[0].hp, _power(upgraded.player_powers, "StrengthPower")), (88, 4))
+
+    def test_juggernaut_converts_block_to_unpowered_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (JUGGERNAUT, DEFEND), (), (), (enemy,), energy=3)
+        after_power = step(combat, JUGGERNAUT, {}, random.Random(0))
+        self.assertEqual(_power(after_power.player_powers, "JuggernautPower"), 6)
+        after_block = step(after_power, DEFEND, {}, random.Random(0))
+        self.assertEqual((after_block.player_block, after_block.enemies[0].hp), (5, 94))
+
+    def test_purity_exhausts_only_dead_weight_from_hand(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (PURITY, WOUND, SLIMED, STRIKE, DEFEND), (), (), (enemy,))
+        after = step(combat, PURITY, {}, random.Random(0))
+        self.assertEqual(after.exhaust_pile, (PURITY, WOUND, SLIMED))
+        self.assertEqual(after.hand, (STRIKE, DEFEND))
+
+    def test_salvo_draws_retained_hand_through_the_enemy_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (SALVO, DEFEND), (STRIKE,) * 8, (), (enemy,), energy=1)
+        after_salvo = step(combat, f"{SALVO}@0", {}, random.Random(0))
+        self.assertEqual((after_salvo.enemies[0].hp, _power(after_salvo.player_powers, "RetainHandPower")), (88, 1))
+        after_turn = step(after_salvo, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertIn(DEFEND, after_turn.hand)
+        self.assertEqual(_power(after_turn.player_powers, "RetainHandPower"), 0)
+
+    def test_flash_of_steel_hits_and_draws(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (FLASH_OF_STEEL,), (STRIKE,), (), (enemy,))
+        after = step(combat, f"{FLASH_OF_STEEL}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.hand), (95, (STRIKE,)))
 
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))

@@ -22,6 +22,11 @@ CARD_NAMES = {
     "CARD.BASH": "Bash",
     "CARD.MAUL": "Maul",
     "CARD.THRASH": "Thrash",
+    "CARD.FIGHT_ME": "Fight Me",
+    "CARD.JUGGERNAUT": "Juggernaut",
+    "CARD.PURITY": "Purity",
+    "CARD.SALVO": "Salvo",
+    "CARD.FLASH_OF_STEEL": "Flash of Steel",
     "CARD.STAMPEDE": "Stampede",
     "CARD.CASCADE": "Cascade",
     "CARD.DOUBT": "Doubt",
@@ -251,6 +256,7 @@ POWER_NAMES = {
     "POWER.SELF_FORMING_CLAY_POWER": "SelfFormingClayPower",
     "POWER.RUPTURE_POWER": "RupturePower",
     "POWER.JUGGERNAUT_POWER": "JuggernautPower",
+    "POWER.RETAIN_HAND_POWER": "RetainHandPower",
     "POWER.INFERNO_POWER": "InfernoPower",
     "POWER.CRUELTY_POWER": "CrueltyPower",
     "POWER.TAINTED_POWER": "TaintedPower",
@@ -2567,6 +2573,14 @@ def choose_rest(observation: dict) -> dict:
     actions = observation["legal_actions"]
     hp, max_hp = observation["player"]["hp"], observation["player"]["max_hp"]
     near_boss = _number((observation.get("run") or {}).get("floor")) >= 13  # boss sits on the last of ~15-16 floors
+    # HEAL restores 30% of max HP and is capped by the missing HP, so resting at a small deficit
+    # throws most of it away: across the recent runs 72 of 234 heals recovered half their value or
+    # less, 38 of them a third or less. A forge is permanent damage, which is what the runs die
+    # for - THE_INSATIABLE needs ~35 damage a turn and the decks manage 22. Only give up the heal
+    # when it would genuinely be mostly wasted and the HP left is not itself dangerous.
+    heal_waste = hp * 2 >= max_hp and (max_hp - hp) * 2 < max_hp * 30 // 100
+    if heal_waste and any(action["option_id"] == "SMITH" for action in actions):
+        return next(action for action in actions if action["option_id"] == "SMITH")
     if hp < max_hp and (near_boss or hp * 4 < max_hp * 3):
         heal = next((action for action in actions if action["option_id"] == "HEAL"), None)
         if heal:

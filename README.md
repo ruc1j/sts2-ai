@@ -102,6 +102,19 @@ pwsh -File .\run_official_autoslay.ps1 -Seed FV2EVHXLCW
 
 `-AgentScript` を渡さないとゲーム内蔵の AutoSlay AI が打ちます。`-AgentMaxCombats` を省くと最初の 1 戦だけが外部エージェント担当になり、以降は内蔵 AI に戻ります。`-StopAfterAct` を省くと Act 1 クリア時点で終了します。**いずれも失敗を報告せず、黙って別のものを走らせます。**
 
+### 4. Serena（意味解析 MCP）
+
+Serena はシンボル検索・参照検索・安全なリファクタリングを提供する MCP ツールです。公式の `uv` インストールを使います。
+
+```bash
+uv tool install -p 3.13 serena-agent   # 初回のみ
+serena init                            # 初回のみ
+serena setup codex                     # CodexへMCPサーバーを登録（初回のみ）
+serena project index .                 # `.serena/project.yml` の言語サーバーを再インデックス
+```
+
+このリポジトリには Python／C#／PowerShell 用の `.serena/project.yml` を含めています。Serena の設定変更後やクローン直後は `serena project index .` を実行し、Codexの再起動後に利用してください。登録される起動コマンドは `serena start-mcp-server --context=codex --project-from-cwd` です。
+
 ## プロジェクト構成
 
 | ファイル | 役割 |

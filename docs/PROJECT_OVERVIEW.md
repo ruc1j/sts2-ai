@@ -30,6 +30,8 @@ data/                        敵・マップ・trace・実行結果
 test_*.py                    unittest と成果物検証
 ```
 
+C# BridgeとPythonエージェントは observation.json と action.json をポーリングし、seq 検証とタイムアウト付きの合法フォールバックを適用する。
+
 `official_mod/Sts2Ai.csproj` は `net9.0` を対象に、ゲームの `sts2.dll`、`0Harmony.dll`、`GodotSharp.dll` を参照する。manifestの最小ゲームバージョンは `v0.107.1` である。
 
 ## ビルドと実行
