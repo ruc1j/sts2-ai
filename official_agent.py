@@ -29,6 +29,7 @@ CARD_NAMES = {
     "CARD.FLASH_OF_STEEL": "Flash of Steel",
     "CARD.STAMPEDE": "Stampede",
     "CARD.CASCADE": "Cascade",
+    "CARD.APOTHEOSIS": "Apotheosis",
     "CARD.DOUBT": "Doubt",
     "CARD.REGRET": "Regret",
     "CARD.SHAME": "Shame",

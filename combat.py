@@ -26,6 +26,7 @@ MAUL, THRASH = "Maul", "Thrash"
 FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL = "Fight Me", "Juggernaut", "Purity", "Salvo", "Flash of Steel"
 STAMPEDE = "Stampede"
 CASCADE = "Cascade"
+APOTHEOSIS = "Apotheosis"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -72,6 +73,7 @@ CARD_COST = {
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
     MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0,
     STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
+    APOTHEOSIS: 2,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -117,8 +119,16 @@ INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
 # What a player actually picks when a card asks them to exhaust one card from hand: dead weight
 # first. Frantic Escape is deliberately absent - it is the only answer to Sandpit.
 EXHAUST_FODDER = {WOUND, DAZED, SLIMED, TOXIC, BURN, INFECTION, DECAY, BECKON, BAD_LUCK}
+# Cards the game refuses to upgrade: every one of these overrides MaxUpgradeLevel => 0 in the
+# decompiled model (curses and status cards, plus Frantic Escape), so Apotheosis never touches
+# them. Only names this model knows are listed.
+NON_UPGRADABLE = {
+    WOUND, DAZED, SLIMED, TOXIC, BURN, INFECTION, DECAY, BECKON, BAD_LUCK,
+    DOUBT, REGRET, SHAME, NORMALITY, FRANTIC_ESCAPE,
+}
 STOKE_GENERATION = tuple(sorted(
-    set(CARD_COST) - {STRIKE, DEFEND, BASH, SLIMED, FRANTIC_ESCAPE, TOXIC, BURN, DAZED, INFECTION, DECAY, WOUND, BECKON, BAD_LUCK}
+    # Apotheosis sits in EventCardPool, so CardFactory.GetForCombat never generates it here.
+    set(CARD_COST) - {STRIKE, DEFEND, BASH, SLIMED, FRANTIC_ESCAPE, TOXIC, BURN, DAZED, INFECTION, DECAY, WOUND, BECKON, BAD_LUCK, APOTHEOSIS}
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
@@ -128,17 +138,17 @@ UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY, APOTHEOSIS,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY, APOTHEOSIS,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
-EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY}
+EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE}
 
@@ -306,6 +316,13 @@ class Combat:
 
 def card_is_upgraded(combat: Combat, card: CardValue) -> bool:
     return card.upgraded if isinstance(card, Card) else card in combat.upgraded_cards
+
+
+def _is_upgradable_copy(combat: Combat, card: CardValue) -> bool:
+    """A copy the game will accept an upgrade on: a card this model has a value for, one that
+    does not override MaxUpgradeLevel 0 (curses and status cards), and not already upgraded."""
+    name = card_name(card)
+    return name in CARD_COST and name not in NON_UPGRADABLE and not card_is_upgraded(combat, card)
 
 
 def _upgrade_card(card: CardValue) -> CardValue:
@@ -844,6 +861,8 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
     cost = CARD_COST.get(name, 0)
     if isinstance(card, Card) and card.enchantment == ENCHANTMENT_TEZCATARAS_EMBER:
         cost = 0
+    if name == APOTHEOSIS and card_is_upgraded(combat, card):
+        cost = 1
     if name == BODY_SLAM and card_is_upgraded(combat, card):
         cost = 0
     if name == BARRICADE and card_is_upgraded(combat, card):
@@ -2171,6 +2190,29 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         combat = replace(combat, max_energy=combat.max_energy + (2 if card_was_upgraded else 1))
     combat = _sync_red_skull(combat)
     combat = _after_exhaust(combat, (played_value,) if exhaust else (), rng, data)
+    if card == APOTHEOSIS:
+        # Apotheosis.OnPlay runs CardCmd.Upgrade on every other upgradable copy in every pile
+        # (hand, draw, discard, exhaust). The game keeps that upgrade for the rest of the run, but
+        # a rollout only sees this fight, so the card scores what the rest of the current combat
+        # gets out of the rewrite. Curses and status cards (MaxUpgradeLevel 0) are skipped.
+        targets = tuple(
+            value
+            for pile in (combat.hand, combat.draw_pile, combat.discard_pile, combat.exhaust_pile, combat.free_cards)
+            for value in pile
+            if value != played_value and _is_upgradable_copy(combat, value)
+        )
+        def _upgraded(value: CardValue) -> CardValue:
+            return _upgrade_card(value) if _is_upgradable_copy(combat, value) else value
+
+        return replace(
+            combat,
+            hand=tuple(_upgraded(value) for value in combat.hand),
+            draw_pile=tuple(_upgraded(value) for value in combat.draw_pile),
+            discard_pile=tuple(_upgraded(value) for value in combat.discard_pile),
+            exhaust_pile=tuple(_upgraded(value) for value in combat.exhaust_pile),
+            free_cards=tuple(_upgraded(value) for value in combat.free_cards),
+            upgraded_cards=_remember_legacy_upgrades(combat, targets),
+        )
     if card in POWERS:
         combat = _after_power_play(combat, rng, data)
     fiend_fire_count = 0

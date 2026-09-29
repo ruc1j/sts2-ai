@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
-    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME,
+    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, APOTHEOSIS,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -305,6 +305,36 @@ class CombatTest(unittest.TestCase):
         after_upgraded = step(upgraded, ARMAMENTS, DUMMY_DATA, random.Random(0))
         self.assertEqual(after_upgraded.player_block, 5)
         self.assertEqual(after_upgraded.upgraded_cards, (ARMAMENTS, STRIKE, DEFEND))
+
+    def test_apotheosis_upgrades_every_upgradable_copy_in_every_pile(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())
+        combat = Combat(
+            80,
+            (Card(APOTHEOSIS, upgraded=True), Card(BASH)),
+            (Card(DEFEND), Card(TOXIC)),
+            (STRIKE,),
+            (enemy,),
+            energy=3,
+        )
+        self.assertEqual(_effective_cost(combat, Card(APOTHEOSIS)), 2)
+        self.assertEqual(_effective_cost(combat, Card(APOTHEOSIS, upgraded=True)), 1)
+        self.assertIn("card:0", legal_actions(combat))
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        # Exhaust keyword fires, and the played copy is never its own upgrade target.
+        self.assertEqual(after.exhaust_pile, (Card(APOTHEOSIS, upgraded=True),))
+        upgraded = {
+            card_name(value)
+            for pile in (after.hand, after.draw_pile, after.discard_pile)
+            for value in pile
+            if getattr(value, "upgraded", False)
+        }
+        # TOXIC sits in the draw pile but overrides MaxUpgradeLevel 0, so Apotheosis skips it.
+        self.assertEqual(upgraded, {BASH, DEFEND})
+        # A legacy name-string copy is remembered through upgraded_cards.
+        self.assertEqual(after.upgraded_cards, (STRIKE,))
+        # The upgrade is visible to the rest of the fight: BASH is 8 + 2 upgraded.
+        played = step(after, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(played.enemies[0].hp, 20 - 10)
 
     def test_card_instances_keep_individual_upgrades_across_piles(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
