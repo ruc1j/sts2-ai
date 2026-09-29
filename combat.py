@@ -1313,6 +1313,10 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                     continue
             if effect["target"] == "base.Creature":
                 enemy = replace(enemy, powers=_add_power(enemy.powers, effect["model"], amount))
+                if effect["model"] == "RitualPower":
+                    # RitualPower.AfterApplied flags an enemy owner once, so the turn end right after
+                    # the application does not add Strength.
+                    enemy = replace(enemy, powers=_add_power(enemy.powers, "RitualPendingPower", 1))
             # HexMove uses the singular "target" for the player; Ovicopter uses the same
             # exporter alias for a newly summoned egg, so do not treat every "target" as player-side.
             elif effect["target"] == "targets" or (
@@ -1453,6 +1457,21 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         # generic Cmd. DEAD_MOVE and REATTACH_MOVE are both no-op turns, so the segment sits out
         # two of its own turns before resuming attacks.
         enemy = replace(enemy, hp=enemy.hp + 25)
+    # RitualPower.AfterSideTurnEnd (cultists) adds Strength equal to its stack at the end of the
+    # owner's turn, but the turn on which it was applied is skipped: AfterApplied sets a one-shot
+    # flag when the owner is an enemy. The flag is not exported or observed, so the model carries it
+    # as RitualPendingPower when an enemy applies the power.
+    ritual = _power(enemy.powers, "RitualPower")
+    if ritual and enemy.alive:
+        if _power(enemy.powers, "RitualPendingPower"):
+            enemy = replace(enemy, powers=_add_power(enemy.powers, "RitualPendingPower", -1))
+        else:
+            enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", ritual))
+    # HighVoltagePower.AfterSideTurnEnd (Zapbot) adds Strength every enemy turn end with no skip.
+    # Zapbot applies it at combat start, so it only reaches the model through the observation.
+    high_voltage = _power(enemy.powers, "HighVoltagePower")
+    if high_voltage and enemy.alive:
+        enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", high_voltage))
     if enemy.model == "MONSTER.BYRDONIS":
         # TerritorialPower.AfterSideTurnEnd (not exported): +1 Strength unconditionally every
         # turn, regardless of which move was performed.

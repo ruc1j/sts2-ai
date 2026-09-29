@@ -251,6 +251,8 @@ POWER_NAMES = {
     "POWER.SLOW_POWER": "SlowPower",
     "POWER.SLUMBER_POWER": "SlumberPower",
     "POWER.JUGGLING_POWER": "JugglingPower",
+    "POWER.RITUAL_POWER": "RitualPower",
+    "POWER.HIGH_VOLTAGE_POWER": "HighVoltagePower",
     "POWER.SOAR_POWER": "SoarPower",
     "POWER.DEXTERITY": "DexterityPower",
     "POWER.DEXTERITY_POWER": "DexterityPower",

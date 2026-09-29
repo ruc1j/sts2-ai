@@ -362,6 +362,25 @@ class CombatTest(unittest.TestCase):
         ended = step(third, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(ended.attacks_played_this_turn, 0)
 
+    def test_ritual_power_stacks_strength_at_enemy_turn_end_after_its_apply_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", (), powers=(("RitualPower", 2), ("RitualPendingPower", 1)))
+        combat = Combat(80, (), (), (), (enemy,), energy=3)
+        applied = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        # AfterApplied flags an enemy owner once: the turn end right after the cast adds nothing.
+        self.assertEqual((_power(applied.enemies[0].powers, "RitualPendingPower"), _power(applied.enemies[0].powers, "StrengthPower")), (0, 0))
+        later = step(applied, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(later.enemies[0].powers, "StrengthPower"), 2)
+
+    def test_high_voltage_power_stacks_strength_every_enemy_turn_end(self) -> None:
+        # Zapbot applies HighVoltagePower at combat start, so this only arrives through the
+        # observation's powers, which is why POWER_NAMES needed the mapping.
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", (), powers=(("HighVoltagePower", 1),))
+        combat = Combat(80, (), (), (), (enemy,), energy=3)
+        first = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(first.enemies[0].powers, "StrengthPower"), 1)
+        second = step(first, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(second.enemies[0].powers, "StrengthPower"), 2)
+
     def test_card_instances_keep_individual_upgrades_across_piles(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         combat = Combat(
