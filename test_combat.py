@@ -391,6 +391,17 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(after.energy, 0)
         self.assertEqual(_power(after.player_powers, "DemonFormPower"), 2)
 
+    def test_imbalanced_stuns_the_attacker_after_a_fully_blocked_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 20, "HIT_MOVE", (), powers=(("ImbalancedPower", 1),))
+        combat = Combat(30, (), (), (), (enemy,), player_block=10)
+        blocked = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(blocked.player_hp, 30)
+        self.assertEqual(_power(blocked.enemies[0].powers, "StunnedPower"), 1)
+        skipped = step(blocked, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(skipped.player_hp, 30)
+        resumed = step(skipped, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(resumed.player_hp, 20)
+
     def test_card_instances_keep_individual_upgrades_across_piles(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         combat = Combat(

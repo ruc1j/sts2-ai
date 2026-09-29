@@ -1201,6 +1201,14 @@ def _decimillipede_teammates_dead(enemies: tuple[Enemy, ...], index: int) -> boo
 
 def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> Combat:
     enemy = replace(combat.enemies[index], block=0)
+    # CreatureCmd.Stun (from ImbalancedPower.AfterDamageGiven, see the attack branch below) skips the
+    # owner's next turn without advancing its state machine, so the skip is carried as a synthetic
+    # power and consumed here.
+    stun = _power(enemy.powers, "StunnedPower")
+    if stun:
+        enemies = list(combat.enemies)
+        enemies[index] = replace(enemy, powers=_add_power(enemy.powers, "StunnedPower", -stun))
+        return replace(combat, enemies=tuple(enemies))
     if enemy.model == TEST_SUBJECT and enemy.move == RESPAWN_MOVE:
         values = _dict(enemy.values)
         respawns = enemy.respawns + 1
@@ -1296,6 +1304,17 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                     max_hp_loss += _power(enemy.powers, "PaperCutsPower")
                 if _power(player_powers, "ThornsPower") and enemy.alive:
                     enemy = _damage_enemy(enemy, _power(player_powers, "ThornsPower"), powered=False)
+            # ImbalancedPower.AfterDamageGiven: when the owner's own attack lands with
+            # WasFullyBlocked the attacker is stunned for its next turn. Bowlbug Rock is the
+            # exception - it flips IsOffBalance instead (see _condition). This is a custom power
+            # method the static exporter cannot see, so the model carries it as a synthetic power.
+            if (
+                damage > 0
+                and _power(enemy.powers, "ImbalancedPower")
+                and enemy.model != "MONSTER.BOWLBUG_ROCK"
+                and all(event == 0 for event in damage_events[len(damage_events) - repeats:])
+            ):
+                enemy = replace(enemy, powers=_add_power(enemy.powers, "StunnedPower", 1))
             # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
             # once per attack (approximated the same way as the symmetric enemy-side ThornsPower,
             # not per individual repeat hit).
