@@ -250,6 +250,7 @@ POWER_NAMES = {
     "POWER.SHRINK_POWER": "ShrinkPower",
     "POWER.SLOW_POWER": "SlowPower",
     "POWER.SLUMBER_POWER": "SlumberPower",
+    "POWER.JUGGLING_POWER": "JugglingPower",
     "POWER.SOAR_POWER": "SoarPower",
     "POWER.DEXTERITY": "DexterityPower",
     "POWER.DEXTERITY_POWER": "DexterityPower",

@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
-    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, APOTHEOSIS,
+    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, APOTHEOSIS, JUGGLING,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -335,6 +335,32 @@ class CombatTest(unittest.TestCase):
         # The upgrade is visible to the rest of the fight: BASH is 8 + 2 upgraded.
         played = step(after, "card:0@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(played.enemies[0].hp, 20 - 10)
+
+    def test_juggling_power_clones_the_third_attack_played_in_a_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(
+            80,
+            (Card(JUGGLING), Card(STRIKE), Card(STRIKE), Card(STRIKE)),
+            (),
+            (),
+            (enemy,),
+            energy=5,
+        )
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "JugglingPower"), 1)
+        first = step(after, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(first.attacks_played_this_turn, 1)
+        self.assertEqual(len(first.hand), 2)
+        second = step(first, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(second.attacks_played_this_turn, 2)
+        self.assertEqual(len(second.hand), 1)
+        third = step(second, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(third.attacks_played_this_turn, 3)
+        # The third Attack puts a clone of itself into hand.
+        self.assertEqual([card_name(value) for value in third.hand], [STRIKE])
+        # The counter is per-turn: the next turn starts clean.
+        ended = step(third, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(ended.attacks_played_this_turn, 0)
 
     def test_card_instances_keep_individual_upgrades_across_piles(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())

@@ -27,6 +27,7 @@ FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL = "Fight Me", "Juggernaut", 
 STAMPEDE = "Stampede"
 CASCADE = "Cascade"
 APOTHEOSIS = "Apotheosis"
+JUGGLING = "Juggling"
 SECOND_WIND = "Second Wind"
 ENLIGHTENMENT = "Enlightenment"
 MIND_BLAST, BODY_SLAM, BELIEVE_IN_YOU, FINESSE = "Mind Blast", "Body Slam", "Believe in You", "Finesse"
@@ -73,7 +74,7 @@ CARD_COST = {
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
     MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0,
     STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
-    APOTHEOSIS: 2,
+    APOTHEOSIS: 2, JUGGLING: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -132,13 +133,13 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT}
+POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT, JUGGLING}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY, APOTHEOSIS,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY, APOTHEOSIS, JUGGLING,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
@@ -2135,6 +2136,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         player_powers = _add_power(player_powers, "CrueltyPower", 50 if card_was_upgraded else 25)
     if card == JUGGERNAUT:
         player_powers = _add_power(player_powers, "JuggernautPower", 8 if card_was_upgraded else 6)
+    if card == JUGGLING:
+        # Juggling.OnPlay applies JugglingPower(1). Its upgrade only adds the Innate keyword, so
+        # the counter amount never changes.
+        player_powers = _add_power(player_powers, "JugglingPower", 1)
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
@@ -2215,6 +2220,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         )
     if card in POWERS:
         combat = _after_power_play(combat, rng, data)
+    juggling_amount = _power(combat.player_powers, "JugglingPower")
+    if juggling_amount and card in ATTACKS and attacks_this_turn == 3:
+        # JugglingPower.AfterCardPlayed: the 3rd Attack played during the player's side puts one
+        # clone of that Attack into hand. The counter is per-turn (AfterSideTurnEnd resets it), and
+        # JugglingPower.AfterApplied seeds it with the attacks already played this turn.
+        combat = replace(combat, hand=combat.hand + tuple(_copy_card(card, played_value) for _ in range(juggling_amount)))
     fiend_fire_count = 0
     if card == FIEND_FIRE:
         # Fiend Fire exhausts the remaining hand, then hits once per exhausted card.
@@ -2356,7 +2367,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
         # pile unordered, so "top" is the same random pick _draw makes.
         return _autoplay_from_draw_pile(combat, whirlwind_x + (1 if card_was_upgraded else 0), data, rng)
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT, JUGGLING}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
