@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, SHOP_POTION_SCORES, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_potion, choose_rest, choose_shop, rollout_choice
-from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, legal_actions as combat_legal_actions, step
+from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WOUND, CARD_BLOCK, CARD_COST, CARD_DAMAGE, legal_actions as combat_legal_actions, step
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -266,6 +266,15 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(POWER_NAMES["POWER.PLATING_POWER"], "PlatingPower")
         self.assertEqual(POWER_NAMES["POWER.FEEL_NO_PAIN_POWER"], "FeelNoPainPower")
         self.assertTrue({"CARD.STONE_ARMOR", "CARD.FEEL_NO_PAIN"} <= set(CARD_NAMES))
+
+    def test_every_playable_card_in_the_combat_model_is_reachable_from_the_observation(self) -> None:
+        # A card implemented in combat.py stays invisible to legal_actions() and search() unless
+        # CARD_NAMES maps the observation id to it. Juggling was implemented and still never fired
+        # in live play for exactly that reason: the reward policy rated it C so it got picked, then
+        # the model could not name it.
+        tables = set(CARD_COST) | set(CARD_DAMAGE) | set(CARD_BLOCK)
+        unplayable = {WOUND}  # Unplayable status/curse cards never get an action built for them
+        self.assertEqual(sorted(tables - set(CARD_NAMES.values()) - unplayable), [])
 
     def test_maps_bridge_status_cards_for_rollouts(self) -> None:
         self.assertEqual(

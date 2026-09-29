@@ -24,6 +24,7 @@ CARD_NAMES = {
     "CARD.THRASH": "Thrash",
     "CARD.FIGHT_ME": "Fight Me",
     "CARD.JUGGERNAUT": "Juggernaut",
+    "CARD.JUGGLING": "Juggling",
     "CARD.PURITY": "Purity",
     "CARD.SALVO": "Salvo",
     "CARD.FLASH_OF_STEEL": "Flash of Steel",
