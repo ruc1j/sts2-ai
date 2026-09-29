@@ -381,6 +381,16 @@ class CombatTest(unittest.TestCase):
         second = step(first, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(second.enemies[0].powers, "StrengthPower"), 2)
 
+    def test_curious_power_discounts_the_players_power_cards(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ())
+        combat = Combat(80, (DEMON_FORM,), (), (), (enemy,), energy=1, player_powers=(("CuriousPower", 2),))
+        # Demon Form is 3; Mad Science's CuriousPower stack of 2 makes it 1, so at 1 energy it is
+        # playable - without the discount the rollout never sees it as legal.
+        self.assertIn(DEMON_FORM, legal_actions(combat))
+        after = step(combat, DEMON_FORM, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 0)
+        self.assertEqual(_power(after.player_powers, "DemonFormPower"), 2)
+
     def test_card_instances_keep_individual_upgrades_across_piles(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         combat = Combat(

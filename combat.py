@@ -860,6 +860,13 @@ def _spawn_wrigglers(data: dict, rng: random.Random) -> tuple[Enemy, ...]:
 def _effective_cost(combat: Combat, card: CardValue) -> int:
     name = card_name(card)
     cost = CARD_COST.get(name, 0)
+    # CuriousPower (MadScience.OnPlay) lowers the energy cost of the owner's Power cards by its
+    # stack, floored at 0. The bridge reports the already-modified cost in legal_actions, so without
+    # this the rollout treats a powered-up Power card as unaffordable and never plays it.
+    if name in POWERS:
+        curious = _power(combat.player_powers, "CuriousPower")
+        if curious:
+            cost = max(cost - curious, 0)
     if isinstance(card, Card) and card.enchantment == ENCHANTMENT_TEZCATARAS_EMBER:
         cost = 0
     if name == APOTHEOSIS and card_is_upgraded(combat, card):

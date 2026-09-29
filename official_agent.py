@@ -252,6 +252,7 @@ POWER_NAMES = {
     "POWER.SLUMBER_POWER": "SlumberPower",
     "POWER.JUGGLING_POWER": "JugglingPower",
     "POWER.RITUAL_POWER": "RitualPower",
+    "POWER.CURIOUS_POWER": "CuriousPower",
     "POWER.HIGH_VOLTAGE_POWER": "HighVoltagePower",
     "POWER.SOAR_POWER": "SoarPower",
     "POWER.DEXTERITY": "DexterityPower",
