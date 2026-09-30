@@ -955,6 +955,29 @@ class CombatTest(unittest.TestCase):
         combat = Combat(60, (), (), (), (enemy,), energy=0)
         after = step(combat, END_TURN, forgotten_data, random.Random(0))
         self.assertEqual(after.player_hp, 45)
+        # Miasma steals 2 Dexterity from the player and hands it to the monster, so the next DREAD
+        # reads 17 as the stack grows (the game's own intent display shows the same numbers).
+        growth = {"monsters": [{"id": "MONSTER.THE_FORGOTTEN", "values": {"DebilitatingSmogDexStealAmount": 2},
+                                "initial_state": "MIASMA",
+                                "states": [
+                                    {"id": "MIASMA", "type": "MoveState", "next": "DREAD",
+                                     "intents": [{"type": "DebuffIntent"}],
+                                     "effects": [{"command": "PowerCmd.Apply", "model": "DexterityPower",
+                                                  "target": "targets", "amount": "-DebilitatingSmogDexStealAmount"},
+                                                 {"command": "PowerCmd.Apply", "model": "DexterityPower",
+                                                  "target": "base.Creature", "amount": "DebilitatingSmogDexStealAmount"}]},
+                                    {"id": "DREAD", "type": "MoveState", "next": "MIASMA",
+                                     "intents": [{"type": "SingleAttackIntent", "repeats": 1}], "effects": []},
+                                ]}]}
+        fight = Combat(70, (), (), (), (Enemy("MONSTER.THE_FORGOTTEN", 106, "MIASMA", (("DebilitatingSmogDexStealAmount", 2),)),), energy=0)
+        first = step(fight, END_TURN, growth, random.Random(0))
+        self.assertEqual((first.player_hp, _power(first.enemies[0].powers, "DexterityPower")), (70, 2))
+        second = step(first, END_TURN, growth, random.Random(0))
+        self.assertEqual((second.player_hp, _power(second.enemies[0].powers, "DexterityPower")), (55, 2))
+        third = step(second, END_TURN, growth, random.Random(0))
+        self.assertEqual((third.player_hp, _power(third.enemies[0].powers, "DexterityPower")), (55, 4))
+        fourth = step(third, END_TURN, growth, random.Random(0))
+        self.assertEqual((fourth.player_hp, _power(fourth.enemies[0].powers, "DexterityPower")), (38, 4))
 
     def test_step_score_rewards_reducing_next_attack(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", ())
