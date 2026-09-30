@@ -4868,32 +4868,6 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_event(observation)["type"], "event_fallback")
 
-    def test_event_scores_options_that_used_to_fall_back_to_the_random_handler(self) -> None:
-        # DENSE_VEGETATION: TRUDGE_ON costs 8 unblockable HP, REST is a rest-site heal.
-        dense = {
-            "phase": "event",
-            "event_id": "DENSE_VEGETATION",
-            "player": {"hp": 20, "max_hp": 80},
-            "legal_actions": [
-                {"type": "event_option", "option_index": 0, "text_key": "DENSE_VEGETATION.pages.INITIAL.options.TRUDGE_ON"},
-                {"type": "event_option", "option_index": 1, "text_key": "DENSE_VEGETATION.pages.INITIAL.options.REST"},
-            ],
-        }
-        self.assertEqual(choose_event(dense)["option_index"], 1)
-
-        # COLOSSAL_FLOWER: the bigger prize costs 5-7 unblockable HP, so it is only taken when the
-        # HP cost is not dangerous. The option key carries the dig-count suffix.
-        flower = {
-            "phase": "event",
-            "event_id": "COLOSSAL_FLOWER",
-            "legal_actions": [
-                {"type": "event_option", "option_index": 0, "text_key": "COLOSSAL_FLOWER.pages.INITIAL.options.EXTRACT_CURRENT_PRIZE_2"},
-                {"type": "event_option", "option_index": 1, "text_key": "COLOSSAL_FLOWER.pages.INITIAL.options.REACH_DEEPER_2"},
-            ],
-        }
-        self.assertEqual(choose_event(dict(flower, player={"hp": 12, "max_hp": 80}))["option_index"], 0)
-        self.assertEqual(choose_event(dict(flower, player={"hp": 60, "max_hp": 80}))["option_index"], 1)
-
     def test_event_with_only_proceed_option_can_close(self) -> None:
         observation = {
             "phase": "event",

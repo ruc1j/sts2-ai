@@ -626,21 +626,6 @@ EVENT_OPTION_SCORES = {
     "THIS_OR_THAT": {"ORNATE": 60},
     "JUNGLE_MAZE_ADVENTURE": {"JOIN_FORCES": 60},
     "SELF_HELP_BOOK": {},  # scored below from the deck's current block needs
-    # Ten events had no entry here, so the policy emitted the bridge fallback for them and the
-    # game's own handler decided: "Handles event rooms by selecting random choices"
-    # (EventRoomHandler.cs). Across the fixed panel 26 of 81 event decisions came back as
-    # invalid_event_action. These scores are taken from the decompiled option bodies and prefer the
-    # option with no HP cost when one exists.
-    "BUGSLAYER": {"EXTERMINATION": 2, "SQUASH": 1},  # both add an Event card free; Exterminate is 8x4
-    "SAPPHIRE_SEED": {"EAT": 2, "PLANT": 1},  # heal 9 + upgrade one card vs the Sown enchantment
-    "SPIRIT_GRAFTER": {"LET_IT_IN": 2, "REJECTION": 0},  # heal 25 + Metamorphosis vs 10 HP loss
-    "BRAIN_LEECH": {"SHARE_KNOWLEDGE": 2, "RIP": 0},  # pick 1 of 5 cards free vs 5 HP loss
-    "COLOSSAL_FLOWER": {},  # scored below: the option key carries the dig-count suffix
-    "LOST_WISP": {"SEARCH": 2, "CLAIM": 1},  # 60 gold vs the LostWisp relic plus a Decay curse
-    "DENSE_VEGETATION": {"REST": 2, "TRUDGE_ON": 0},  # rest-site heal vs 8 HP loss
-    "THE_LEGENDS_WERE_TRUE": {"NAB_THE_MAP": 2, "SLOWLY_FIND_AN_EXIT": 0},  # free card vs 8 HP loss
-    "WHISPERING_HOLLOW": {},  # scored below: HUG costs 9 HP, GOLD spends gold for two potions
-    "THE_LANTERN_KEY": {"RETURN_THE_KEY": 2, "KEEP_THE_KEY": 0},  # 100 gold vs starting a fight
 }
 
 
@@ -720,21 +705,6 @@ def choose_event(observation: dict) -> dict:
                 return -1
             if option in {"READ_THE_BACK", "READ_PASSAGE"}:
                 return 0
-        if event_id == "COLOSSAL_FLOWER":
-            # EXTRACT_CURRENT_PRIZE_<n> takes the current prize (35 gold), REACH_DEEPER_<n> costs
-            # 5-7 unblockable HP for the next one (75, then 135). Take the bigger prize when the HP
-            # cost is not dangerous. The option key carries the dig-count suffix, so match on prefix.
-            player = observation.get("player", {})
-            hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
-            if option.startswith("REACH_DEEPER"):
-                return 2 if hp * 2 >= max_hp else 0
-            return 1
-        if event_id == "WHISPERING_HOLLOW":
-            # GOLD spends gold for two potions; HUG transforms one card for 9 unblockable HP.
-            # Prefer the free-but-damaging option only when the HP cost is not dangerous.
-            player = observation.get("player", {})
-            hp, max_hp = player.get("hp", 0), player.get("max_hp", 1)
-            return 1 if option == "HUG" and hp * 2 >= max_hp else 0
         return scores.get(text_key, scores.get(option))
 
     scored = [(option_score(action), action) for action in actions]
