@@ -1081,7 +1081,14 @@ def _enemy_attack_damage(
     move = next((state for state in spec["states"] if state["id"] == enemy.move), None)
     if not move:
         return 0
-    attack = next((intent for intent in move.get("intents", ()) if "damage" in intent), {})
+    attack = next((intent for intent in move.get("intents", ()) if "damage" in intent), None)
+    if attack is None:
+        # A state with no attack intent deals nothing this turn (SALIVATE_MOVE only applies
+        # StrengthPower), so Strength and Tainted ride on the *next* attack move, not on this one:
+        # `_enemy_turn` applies no damage here and the game's own intent display shows 0. Across the
+        # fixed panel's 2621 recorded combat decisions this forecast was over by the Strength
+        # contribution on 90 decisions, inflating `min(blocked, exposed)` in `_step_score`.
+        return 0
     damage = (
         int(attack.get("damage", 0))
         + _power(enemy.powers, "StrengthPower")

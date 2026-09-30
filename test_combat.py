@@ -898,6 +898,21 @@ class CombatTest(unittest.TestCase):
             18,
         )
 
+    def test_enemy_attack_forecast_is_zero_when_the_move_has_no_attack_intent(self) -> None:
+        # SALIVATE_MOVE applies StrengthPower only: the game displays damage 0 for it and
+        # `_enemy_turn` applies nothing, so Strength must not be carried into this turn's forecast.
+        buff_only_data = {
+            "monsters": [
+                {
+                    "id": "MONSTER.DUMMY",
+                    "values": {},
+                    "states": [{"id": "SALIVATE_MOVE", "intents": [{"type": "BuffIntent"}]}],
+                }
+            ]
+        }
+        enemy = Enemy("MONSTER.DUMMY", 40, "SALIVATE_MOVE", (), powers=(("StrengthPower", 2),))
+        self.assertEqual(_enemy_attack_damage(enemy, buff_only_data, (("TaintedPower", 1),)), 0)
+
     def test_step_score_rewards_reducing_next_attack(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", ())
         combat = Combat(80, (), (), (), (enemy,))
