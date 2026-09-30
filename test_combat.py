@@ -2319,6 +2319,15 @@ class CombatTest(unittest.TestCase):
         # Hemokinesis would deal 2 self-damage and kill the player; the policy must not pick it.
         self.assertEqual(_greedy_action(combat, hive), f"{STRIKE}@0")
 
+    def test_greedy_prefers_the_block_that_survives_over_a_doomed_attack(self) -> None:
+        # The greedy scorer priced only the play, so a doomed attack (Bash for 8, then the enemy
+        # hits for 10 at 8 HP) beat the block card that keeps the player alive. search() prices the
+        # enemy phase because its rollout runs it, so this made the continuation inconsistent with
+        # the value it reports.
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
+        combat = Combat(8, (BASH, DEFEND), (), (), (enemy,), energy=2)
+        self.assertEqual(_greedy_action(combat, ATTACKING_DUMMY_DATA), DEFEND)
+
     def test_greedy_prefers_boss_kill_over_minion(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

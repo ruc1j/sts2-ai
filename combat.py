@@ -103,6 +103,10 @@ CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE
 # spend on it. Deliberately below a Strike's 6 damage so a draw reorders around zero-score plays
 # without outranking a real attack. Tuning knob.
 GREEDY_DRAW_VALUE = 1.5
+# A line that dies to the incoming enemy phase is a loss whatever it deals, so it must rank below
+# any line that survives. Applied as a penalty rather than a skip so that among doomed lines the
+# one dealing damage still wins (test_greedy_action_avoids_self_kill pins that). Tuning knob.
+GREEDY_DEATH_PENALTY = 100.0
 # Cards that require an enemy target because they deal damage (AllEnemies/RandomEnemy attacks
 # still take an index here even though the actual targeting ignores it - see WHIRLWIND).
 ATTACKS = {
@@ -2892,12 +2896,19 @@ def _greedy_action(combat: Combat, data: dict) -> str:
     actions = legal_actions(combat)[:-1]  # exclude End turn
     if not actions:
         return END_TURN
-    best, best_score = None, -1.0
+    best, best_score = None, None
+    incoming = sum(_enemy_attack_damage(enemy, data, combat.player_powers) for enemy in combat.enemies if enemy.alive)
     for action in actions:
         state = step(combat, action, data, random.Random(0))
         # Skip actions that kill the player unless they win the fight outright.
         if state.player_hp <= 0 and any(enemy.alive for enemy in state.enemies):
             continue
+        # The same rule must hold for the enemy phase: a line that cannot survive the incoming hit
+        # is a loss, so it must not outscore a line that survives. search() prices this because its
+        # rollout runs the enemy turn, but _greedy_action scored only the play, so a buff or attack
+        # beat the block card that keeps the player alive. Death is applied as a penalty, not a skip,
+        # so among doomed lines the one that still deals damage stays preferred.
+        doomed = any(enemy.alive for enemy in state.enemies) and state.player_hp - max(0, incoming - state.player_block) <= 0
         score = _step_score(combat, state, data)
         card_value = _action_card(combat, action)
         card = card_name(card_value)
@@ -2925,7 +2936,9 @@ def _greedy_action(combat: Combat, data: dict) -> str:
         if drawn > 0:
             score += GREEDY_DRAW_VALUE * min(drawn, max(0, state.energy))
         score += _setup_bonus(combat, state, card_value, data)
-        if score > best_score:
+        if doomed:
+            score -= GREEDY_DEATH_PENALTY
+        if best_score is None or score > best_score:
             best, best_score = action, score
     return best if best is not None else END_TURN
 
