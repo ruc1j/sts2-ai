@@ -2322,3 +2322,17 @@ Maul/Thrash の成長分をここから読もうとして一度実装し、二�
 | **合計** | **93** | **98** | **+5** |
 
 SMITH優先を採用する。candidateのtraceは`data/codex_smith_candidate_20260919_*`、対照のtraceは`/Users/mao/.sts2/wt-dev/data/codex_smith_base_20260919_*`に保存している。候補実装と回帰テストはmainに採用する。
+
+### 固定panelの Act 3 踏破は采点で届かない（2026-10-01、ceilingとして記録）
+
+固定8 seed panel（`9X9WQB4QIH NFH3RMVJ6D EAIF2UUVCK 73P61QQZNU AM8C6YXHSG VTW80ZJA2G GEFYYKH1YK SWRUL944UU`）は commit `29ec088` 対照で win 合計98、Act 3 踏破 **0/8**。7/8 seed が Act 2 boss `MONSTER.THE_INSATIABLE`（HP 321）で死亡する。これは采点の改善で動かせない、ということを三つの独立した測定で確定した。
+
+1. **実 deck の模型 win rate**（記録から `Enemy`/`Combat` を再構成し greedy rollout 150回）が全 seed **0.00**、HP を最大値へ振っても 0.00–0.04。実走の死亡と一致するので replay の boss state machine と采点は正しい。
+2. **oracle deck**（各 card_reward で `CARD_DAMAGE` 最大の offer を選んだ形、energy 経済込みの damage/energy 最大の形、run 中に出現した最高 card だけ積んだ god deck）でも **全 seed 0.00**。reward policy が win を残している仮説は否定される。
+3. **采点に無関係な上界**：1ターンで damage card か block card のどちらかだけ、3 energy を単一カード種別に使うという現実的な形で、届く damage 合計は **30–45**（block と damage を同一ターンで両方最大化する甘い形でも 105–162）。boss HP 321 に対して1桁足りない。生存が 2–5 turn で潰れる（boss incoming ≈36.8/turn 対 deck の block 21–33/turn）。
+
+population（固定8 seed外、`data/act3_pop2_*` 10 seed）でも Act 3 win chance は 1 seed（`R8V2H6N4ZB`、full HP・27 card）の 3% だけで 0/10。よって 33%（3 seed 踏破）は panel 固有の運ではなく、この分布で policy から生じない。future session はこの再測定に4hの実走を使わない。
+
+**closed lever（reach = panel の decision 数、noise閾値 3件/3 seed）**：boss DPS-greedy 588/1028（policy 上書きなので実走対象外）、safety-branch elite 重み 18（flip 0）、boss damage-potion 340（flip 0）、event damage-relic 4（1 seed）、rest HEAL/SMITH 3（`test_rest_heals_near_boss` が落ちる、かつ 2026-09-08 に同じ方向が上下に割れて不採用記録済み）、rest SMITH 対象 card 2、shop weakest-card removal 1、survival-potion 1、reward heavy-hitter 0、conditional damage-priority 1、applier tie-break 0、same-turn booster credit 0、enemy phase 込み采点 0、boss 選択 0（panel/population に boss を2つ並べて提示する decision が無い）。
+
+panel で effect 0 だが正しさの fix として commit したものは `fdb0d7e`（greedy continuation の `GREEDY_DEATH_PENALTY`、707 OK）。vulnerable credit 系は panel で負（対照98→unguarded 91→guarded 80）なので不採用。
