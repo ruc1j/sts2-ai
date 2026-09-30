@@ -1070,6 +1070,20 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
     return tuple(actions) + (END_TURN,)
 
 
+def _attack_base_damage(enemy: Enemy, attack_intent: dict) -> int:
+    """Base damage of an attack intent, before Strength/Tainted and the multiplicative powers."""
+    if enemy.model == "MONSTER.THE_FORGOTTEN":
+        # TheForgotten.DreadDamage is `13 + its own DexterityPower` and the value is a lambda, so
+        # `export_enemies.ps1` leaves this state with no damage at all. The monster steals 2
+        # Dexterity from the player on every Miasma turn (`DebilitatingSmogDexStealAmount`), which
+        # is why the game's intent display reads 15/17/19 as the stacks grow. Without this the
+        # forecast is 0 for the whole fight (15 recorded decisions in the new 10-seed population;
+        # no decision on the fixed panel, so the panel cannot show it), and `_enemy_turn` used to
+        # raise KeyError on the missing key, pushing every TheForgotten fight to the heuristic tail.
+        return 13 + _power(enemy.powers, "DexterityPower")
+    return int(attack_intent.get("damage") or 0)
+
+
 def _enemy_attack_damage(
     enemy: Enemy,
     data: dict,
@@ -1082,6 +1096,10 @@ def _enemy_attack_damage(
     if not move:
         return 0
     attack = next((intent for intent in move.get("intents", ()) if "damage" in intent), None)
+    if attack is None and enemy.model == "MONSTER.THE_FORGOTTEN":
+        # Its DREAD intent is exported without a damage value (the value is a lambda), so the
+        # generic "no damage key" check cannot see it.
+        attack = next((intent for intent in move.get("intents", ()) if "Attack" in (intent.get("type") or "")), None)
     if attack is None:
         # A state with no attack intent deals nothing this turn (SALIVATE_MOVE only applies
         # StrengthPower), so Strength and Tainted ride on the *next* attack move, not on this one:
@@ -1089,8 +1107,9 @@ def _enemy_attack_damage(
         # fixed panel's 2621 recorded combat decisions this forecast was over by the Strength
         # contribution on 90 decisions, inflating `min(blocked, exposed)` in `_step_score`.
         return 0
+    base = _attack_base_damage(enemy, attack)
     damage = (
-        int(attack.get("damage", 0))
+        base
         + _power(enemy.powers, "StrengthPower")
         + _power(player_powers, "TaintedPower")
     )
@@ -1270,7 +1289,10 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     # the correct branch after move-resolution (see the ENTOMANCER special case further down).
     entomancer_spit = enemy.model == "MONSTER.ENTOMANCER" and move_id == "PHEROMONE_SPIT_MOVE"
     effects = move.get("effects", ())
-    if not effects and "damage" in attack_intent:
+    if not effects and ("damage" in attack_intent or enemy.model == "MONSTER.THE_FORGOTTEN"):
+        # TheForgotten reaches this branch through the model branch because its exported intent has
+        # no damage key at all (DreadDamage is a lambda), so the generic check alone would leave the
+        # attack silent and `_attack_base_damage` would never run.
         # Some monsters (e.g. the Decimillipede segments) export a real SingleAttackIntent/
         # MultiAttackIntent but an entirely empty effects list - the static exporter found no
         # DamageCmd.Attack call in the move's decompiled body. Left as-is, these attacks were
@@ -1283,7 +1305,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         if command == "DamageCmd.Attack":
             # TaintedPower.ModifyDamageAdditive: flat bonus to every powered attack against the
             # player while it's up (see step()'s SKILLS handling for how it's granted/cleared).
-            base_damage = int(attack_intent["damage"])
+            base_damage = _attack_base_damage(enemy, attack_intent)
             if enemy.model == "MONSTER.WATERFALL_GIANT" and move_id == "EXPLODE_MOVE":
                 base_damage = _amount(effect["amount"], values)
             damage = (

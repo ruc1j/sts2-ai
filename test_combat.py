@@ -913,6 +913,49 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 40, "SALIVATE_MOVE", (), powers=(("StrengthPower", 2),))
         self.assertEqual(_enemy_attack_damage(enemy, buff_only_data, (("TaintedPower", 1),)), 0)
 
+    def test_enemy_attack_forecast_uses_the_forgotten_dexterity_formula(self) -> None:
+        # TheForgotten.DreadDamage => 13 + own DexterityPower, and the exported JSON has no damage
+        # value for that state because the value is a lambda. The monster steals 2 Dexterity from
+        # the player per Miasma turn, so the game's intent display reads 15 then 17.
+        forgotten_data = {
+            "monsters": [
+                {
+                    "id": "MONSTER.THE_FORGOTTEN",
+                    "values": {},
+                    "states": [{"id": "DREAD", "intents": [{"type": "SingleAttackIntent", "repeats": 1}]}],
+                }
+            ]
+        }
+        enemy = Enemy("MONSTER.THE_FORGOTTEN", 111, "DREAD", (), powers=(("DexterityPower", 2),))
+        self.assertEqual(_enemy_attack_damage(enemy, forgotten_data, ()), 15)
+        enemy = Enemy("MONSTER.THE_FORGOTTEN", 111, "DREAD", (), powers=(("DexterityPower", 4),))
+        self.assertEqual(_enemy_attack_damage(enemy, forgotten_data, ()), 17)
+
+    def test_the_forgotten_dread_actually_damages_through_the_enemy_turn(self) -> None:
+        # `_enemy_turn` used to raise KeyError on the missing damage key, so a TheForgotten fight
+        # never ran through the simulator and every decision fell to the heuristic tail.
+        forgotten_data = {
+            "monsters": [
+                {
+                    "id": "MONSTER.THE_FORGOTTEN",
+                    "values": {},
+                    "initial_state": "DREAD",
+                    "states": [
+                        {
+                            "id": "DREAD",
+                            "type": "MoveState",
+                            "next": "DREAD",
+                            "intents": [{"type": "SingleAttackIntent", "repeats": 1}],
+                        }
+                    ],
+                }
+            ]
+        }
+        enemy = Enemy("MONSTER.THE_FORGOTTEN", 111, "DREAD", (), powers=(("DexterityPower", 2),))
+        combat = Combat(60, (), (), (), (enemy,), energy=0)
+        after = step(combat, END_TURN, forgotten_data, random.Random(0))
+        self.assertEqual(after.player_hp, 45)
+
     def test_step_score_rewards_reducing_next_attack(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "HIT_MOVE", ())
         combat = Combat(80, (), (), (), (enemy,))
