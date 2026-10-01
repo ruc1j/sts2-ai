@@ -2393,7 +2393,7 @@ trace の観測 id 集計で洗った（player powers 56 id 中 8、relic 40 id 
 
 | 追加 | 機構（decompile 由来） | corpus の観測回数 |
 |---|---|---:|
-| Wither | Curse、`HasTurnEndInHandEffect` で 3 flat Unpowered。`Unblockable` が無いので block が吸収する（Beckon / Bad Luck と違う）。`CARD_NAMES` 対応 + `HAND_INJECTED_STATUS` | 12 |
+| Wither | Curse、`HasTurnEndInHandEffect` で 3 flat Unpowered。`Unblockable` が無いので block が吸収する（Beckon / Bad Luck と違う）。`CARD_NAMES` 対応 + `HAND_INJECTED_STATUS` | 0（corpus 未観測、decompile からの補完） |
 | Fiddle | `ModifyHandDrawLate` +2、`ShouldDraw` が hand draw 以外のドローを拒否 | 242 |
 | Blood-Soaked Rose | `ModifyMaxEnergy` +1 を毎ターンの energy reset で加算 | 70 |
 | Forgotten Soul | `AfterCardExhausted`：1 Unpowered を**ランダム1体**へ（Charon's Ashes の全体とは違う） | 74 |
