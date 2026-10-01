@@ -2526,6 +2526,10 @@ def choose_card_reward(observation: dict) -> dict:
         return 2
 
     selected = max(actions, key=lambda action: (
+        # EXPERIMENT (wholesale override, flagged): the strength-axis term sits ahead of
+        # core/tier so the reward lever can be measured by official run on the fixed panel.
+        # The recorded tie-break form (synergy +1 inside priority) flips nothing on the panel.
+        1 if (STRENGTH_CARDS & deck_ids) and action["card_id"] in STRENGTH_CARDS else 0,
         0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
         bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
         _boss_card_bonus(observation, action["card_id"]),
