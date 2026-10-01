@@ -194,6 +194,8 @@ RELIC_MUMMIFIED_HAND, RELIC_ORICHALCUM, RELIC_PARRYING_SHIELD = "RELIC.MUMMIFIED
 RELIC_PEN_NIB, RELIC_PERMAFROST, RELIC_PETRIFIED_TOAD = "RELIC.PEN_NIB", "RELIC.PERMAFROST", "RELIC.PETRIFIED_TOAD"
 RELIC_POCKETWATCH, RELIC_RAINBOW_RING, RELIC_RAZOR_TOOTH, RELIC_PAELS_BLOOD = "RELIC.POCKETWATCH", "RELIC.RAINBOW_RING", "RELIC.RAZOR_TOOTH", "RELIC.PAELS_BLOOD"
 RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_VERY_HOT_COCOA = "RELIC.PAELS_FLESH", "RELIC.PAELS_TEARS", "RELIC.VERY_HOT_COCOA"
+RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_POLLINOUS_CORE = "RELIC.FIDDLE", "RELIC.BLOOD_SOAKED_ROSE", "RELIC.POLLINOUS_CORE"
+RELIC_FORGOTTEN_SOUL = "RELIC.FORGOTTEN_SOUL"
 RELIC_RED_SKULL, RELIC_REPTILE_TRINKET, RELIC_RIPPLE_BASIN = "RELIC.RED_SKULL", "RELIC.REPTILE_TRINKET", "RELIC.RIPPLE_BASIN"
 RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_STURDY_CLAMP = "RELIC.RUINED_HELMET", "RELIC.SELF_FORMING_CLAY", "RELIC.STURDY_CLAMP"
 RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE = "RELIC.TUNGSTEN_ROD", "RELIC.UNSETTLING_LAMP", "RELIC.VAMBRACE"
@@ -483,6 +485,19 @@ def _after_exhaust(combat: Combat, cards: tuple[CardValue, ...], rng: random.Ran
         for _ in cards:
             enemies = [_damage_enemy(enemy, 3, powered=False) if enemy.alive else enemy for enemy in enemies]
         combat = replace(combat, enemies=tuple(enemies))
+    if RELIC_FORGOTTEN_SOUL in relics:
+        # ForgottenSoul.AfterCardExhausted: 1 unpowered damage to one random hittable enemy per
+        # exhausted card (Rng.CombatTargets), not to all of them like Charon's Ashes.
+        for _ in cards:
+            alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
+            if not alive:
+                break
+            target = rng.choice(alive)
+            enemies = [
+                _damage_enemy(enemy, 1, powered=False) if index == target and enemy.alive else enemy
+                for index, enemy in enumerate(enemies)
+            ]
+        combat = replace(combat, enemies=tuple(enemies))
     draw_n = _power(combat.player_powers, "DarkEmbracePower") * len(cards)
     if draw_n:
         combat = _draw_into_combat(combat, draw_n, data, rng)
@@ -736,6 +751,10 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     # NoDrawPower.ShouldDraw allows the turn-start hand draw and blocks every other draw until it
     # is removed at the side turn end.
     if not from_hand_draw and _power(combat.player_powers, "NoDrawPower"):
+        return combat
+    # Fiddle.ShouldDraw: every draw that is not the start-of-turn hand draw is refused for the
+    # owner (AfterPreventingDraw only flashes the relic). It still adds 2 to the hand draw.
+    if not from_hand_draw and RELIC_FIDDLE in combat.player_relics:
         return combat
     drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, count, rng)
     # ChainsOfBindingPower.AfterCardDrawn afflicts every card the player draws with Bound, up to
@@ -1978,6 +1997,13 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         if clarity:
             extra_draw += 1
             player_powers = _add_power(player_powers, "ClarityPower", -1)
+        # Fiddle.ModifyHandDrawLate: +2 on the start-of-turn hand draw, every turn.
+        if RELIC_FIDDLE in relics:
+            extra_draw += 2
+        # BloodSoakedRose.ModifyMaxEnergy: +1 energy at every energy reset (it also plants the
+        # Enthralled curse in the deck on pickup, which has no combat effect by itself).
+        if RELIC_BLOOD_SOAKED_ROSE in relics:
+            extra_energy += 1
         draw_count = max(0, 5 + extra_draw - _power(player_powers, "MindRotPower"))
         hand = list(combat.hand)
         discard = list(combat.discard_pile)

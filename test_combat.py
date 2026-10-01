@@ -8,9 +8,9 @@ from combat import (
     CRUELTY, DECAY, CONFLAGRATION, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
-    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
+    RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
+    _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
     MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING,
 )
@@ -1668,6 +1668,32 @@ class CombatTest(unittest.TestCase):
         # The cap is per turn: drawing further cards adds no Bound once 3 are afflicted.
         after = _draw_into_combat(after, 2, DUMMY_DATA, random.Random(0))
         self.assertEqual(sum(1 for card in after.hand if isinstance(card, Card) and card.bound), 3)
+
+    def test_fiddle_adds_two_to_the_hand_draw_and_refuses_every_other_draw(self) -> None:
+        combat = Combat(
+            80, (), (STRIKE,) * 12, (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),),
+            player_relics=(RELIC_FIDDLE,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(after.hand), 7)  # 5 + Fiddle.ModifyHandDrawLate
+        # Dark Embrace would draw 1 per exhausted card, but Fiddle's ShouldDraw refuses it.
+        after = replace(after, player_powers=(("DarkEmbracePower", 1),))
+        after = _after_exhaust(after, (STRIKE,), random.Random(0), DUMMY_DATA)
+        self.assertEqual(len(after.hand), 7)
+
+    def test_blood_soaked_rose_grants_one_energy_at_every_energy_reset(self) -> None:
+        combat = Combat(
+            80, (), (STRIKE,) * 12, (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),),
+            player_relics=(RELIC_BLOOD_SOAKED_ROSE,),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 4)
+
+    def test_forgotten_soul_damage_lands_on_one_random_enemy_per_exhausted_card(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()))
+        combat = Combat(80, (), (STRIKE,) * 12, (), enemies, player_relics=(RELIC_FORGOTTEN_SOUL,))
+        after = _after_exhaust(combat, (STRIKE, STRIKE), random.Random(0), DUMMY_DATA)
+        self.assertEqual(sum(enemy.hp for enemy in after.enemies), 20 - 2)
 
     def test_battle_trance_blocks_further_draws_until_the_next_turn(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
