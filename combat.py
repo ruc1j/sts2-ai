@@ -1342,15 +1342,27 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 damage = damage * 3 // 2
             if _power(player_powers, "ColossusPower") and _power(enemy.powers, "VulnerablePower"):
                 damage //= 2
+            buffer = _power(player_powers, "BufferPower")
             for _ in range(repeats):
                 blocked = min(player_block, damage)
                 player_block -= blocked
                 unblocked = damage - blocked
-                damage_events.append(unblocked)
                 if unblocked > 0:
                     max_hp_loss += _power(enemy.powers, "PaperCutsPower")
+                if unblocked > 0 and buffer > 0:
+                    # BufferPower.ModifyHpLostAfterOstyLate zeroes the HP loss for the next damage
+                    # instance to its owner and then decrements.  Block is still consumed because the
+                    # hook runs after it (Late, so effects that already zeroed the damage win first,
+                    # which is why a fully blocked hit leaves the buffer standing).  Observed on
+                    # GEFYYKH1YK seq 150: Byrdonis' 21 against block 10 with BufferPower 1 cost no HP;
+                    # the model previously read that hit as 11 damage.
+                    buffer -= 1
+                    unblocked = 0
+                damage_events.append(unblocked)
                 if _power(player_powers, "ThornsPower") and enemy.alive:
                     enemy = _damage_enemy(enemy, _power(player_powers, "ThornsPower"), powered=False)
+            if buffer_consumed := (_power(player_powers, "BufferPower") - buffer):
+                player_powers = _add_power(player_powers, "BufferPower", -buffer_consumed)
             # ImbalancedPower.AfterDamageGiven: when the owner's own attack lands with
             # WasFullyBlocked the attacker is stunned for its next turn. Bowlbug Rock is the
             # exception - it flips IsOffBalance instead (see _condition). This is a custom power

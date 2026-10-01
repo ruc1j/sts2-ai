@@ -1351,6 +1351,20 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "RagePower"), 0)
 
+    def test_buffer_power_zeroes_the_next_unblocked_enemy_hit(self) -> None:
+        # BufferPower.ModifyHpLostAfterOstyLate runs after block is consumed, so the hit still spends
+        # block but its HP loss becomes 0 and the power decrements.  Observed on GEFYYKH1YK seq 150:
+        # Byrdonis' 21 against block 10 with BufferPower 1 cost no HP.  A fully blocked hit leaves the
+        # buffer standing, because the Late hook only fires when damage actually reached HP.
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
+        combat = Combat(20, (), (), (), (enemy,), energy=0, player_block=5, player_powers=(("BufferPower", 1),))
+        after = step(combat, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block, _power(after.player_powers, "BufferPower")), (20, 0, 0))
+
+        blocked_only = Combat(20, (), (), (), (enemy,), energy=0, player_block=10, player_powers=(("BufferPower", 1),))
+        after = step(blocked_only, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block, _power(after.player_powers, "BufferPower")), (20, 0, 1))
+
     def test_thorns_reflection_is_absorbed_by_block(self) -> None:
         # ThornsPower.BeforeDamageReceived fires before the attack's own DamageCmd, so block is still
         # standing (Unpowered is not Unblockable).  Observed on EAIF2UUVCK seq 294: block 7 absorbed a
