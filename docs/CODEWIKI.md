@@ -149,6 +149,8 @@ S段位のみ通す(自傷・消耗の未確定ペナルティで減点された
 
 **休憩の価値は「その休憩に到達した時点で実際に欠損しているHP」で足切りする(2026-09-19、commit `ef63c66`)。** heal は bank できない——HP満杯の休憩で26 HPの価値を数えるのは誤り。コストの休憩項を、path上のHP推移(Monster -17 / Elite -32 / 休憩で `min(26, max_hp - hp)` を回復、0でclamp)で得したHPに置き換えた。測定の注意：固定8 seed panelで「flip 53/61・8 seed」と書いた数字は **invalid**。あれは各休憩を decision 時点の欠損HPで評価しており、path上に複数の休憩があると同じ欠損HPを多重計上する。path上でHPを移動させた正実装は flip **4 decisions / 4 seeds**（9X9WQB4QIH (2,4)、EAIF2UUVCK (3,4)、AM8C6YXHSG (0,5)、VTW80ZJA2G (6,7)）で、閾値（decision ≥3 かつ seed ≥3）を越える。pin: `test_map_route_vals_rest_by_hp_missing_when_reached`。
 
+**実走結果（commit `ef63c66` vs 同一 commit の対照 `1d5dd5c`、固定8 seed panel、`-StopAfterAct 3`）：採点 92 → 99（+7）、Act 3踏破 0/8（両臂同じ）。** 公式runで経路が分岐したのは 4 decisions / 3 seeds（9X9WQB4QIH 1件、AM8C6YXHSG 2件、VTW80ZJA2G 1件）で、分岐した seed の採点は +1 / +5 / +1、分岐しなかった5 seed は対照と完全一致。この対応が機序の本体で、HPの価値を足切っても**boss 到達時の HP は4件すべて delta 0**だった（capped 形では `hp_cost = -(boss 時点の HP - decision 時点の HP)` そのもの）。つまりこの変更は HP を貯えるのではなく、同一 HP の経路之間で room 構成（エリート・宝箱・ショップ）を選ぶ方向に動く。AM8C6YXHSG は分岐でエリート `(0,8)` を通し、Act 3 boss QUEEN 戦で Amalgam を 95 → 1 HP まで削った（対照 arm は Act 2 boss で敗退)。機序が正しく、指標は悪化していないので**正しさの改善として採用**したが、Act 3勝率には効かない（1 seed の単発差はノイズ）。
+
 途中の失敗も記録する。**まず「エリートを休憩より優先して避ける」順序入れ替えを試したが機序が発火しなかった**——競合していたのはエリート対休憩ではなくMonster対エリートで、直す場所を間違えていた。**次に戦闘側だけを実測コストにしたら、Act 2のエリートは2→0に減った代わりに休憩が7→5に減り、K7M2QX9BTRはボスに辿り着く前のfloor 13で死んだ**。片側だけ実測値にすると、もう片側が犠牲になる。休憩も同じ尺度に載せて解決した。
 
 固定環境4seedでの比較(いずれも0勝): 合計戦闘50→51、個別の勝ち46→47、Act 2エリート2→1、休憩7→7、Act 2ボス開始HP 82→85と61→62。**差は1〜2でノイズの範囲であり「良くなった」とは言えない**が、設計どおりに機序が動き、どの指標も悪化していない。
@@ -217,6 +219,8 @@ Stokeは当初この理由で保留にしていた(全試走で手札27回・`ro
 Spoils Map(`CARD.SPOILS_MAP`)はUnplayableのQuestカードで、Act 1のマップのTreasure地点にクエストを付け、そこへ行くと600ゴールド。戦闘での未対応ではないが、`choose_map` はこの地点を優先していない。
 
 Byrdonis Egg(`CARD.BYRDONIS_EGG`)は手札に41回来て1度も使われないが、これは `CardKeyword.Unplayable` のQuestカードなのでモデル化の欠落ではない。休憩所の `HATCH` を選ぶと `Byrdpip` レリックを得てデッキから消える。`choose_rest` はHP75%以上のときだけHATCHを選ぶため、それまでは戦闘中ずっと手札を1枚潰す。
+
+**HATCHは恒久的なStrengthではない**（`HatchPower` は `AfterSideTurnEnd` で decrement する counter stack）し、pet（`Byrdpip`）は `combat.py` にモデルが無い——`search()` は HATCH の価値を一切評価できない。「HATCHが選べるなら常にHATCH」はpopulationのrest record 611件で flip **88 decisions / 20 seeds**（engine cardがoptionに出るcard_rewardと同様に、固定8 seed panelでは測れない）だが、`heal_waste → SMITH` という記録済み criterion の wholesale override で、pin 3件（`test_rest_heals_near_boss`、`test_forges_even_next_to_the_boss`、`test_forges_when_the_heal_would_be_mostly_wasted`）を壊す。壊さないことと正しいことは別なので**閉じた**。
 
 **プレイヤーが選ぶ効果をランダムで実装すると、そのカードは探索から永久に避けられる。** `CardSelectCmd.FromHand` を使う Burning Pact と Brand、および**強化版**True Gritは「手札から1枚選んでExhaust」だが、`combat.py` は3つとも常にランダムに選んでいた。結果Burning Pactは「手札の最良札を焼くかもしれない賭け」に見え、`astra_seed2_K7M2QX9BTR` では手札に**55回**来て `rollout_success` は0回だった。`_choose_exhaust_from_hand` を追加し、`EXHAUST_FODDER`(Wound/Dazed/Slimed/Toxic/Burn/Infection/Decay/Beckon/Bad Luck)とモデル未対応カードを優先して捨てる。**Frantic Escapeは意図的に除外**——Sandpitへの唯一の解答だから。未強化のTrue Gritだけは実際に `Rng.CombatCardSelection` なのでランダムのまま。**`CardSelectCmd` が出てきたら、ランダムで代用していないか確認すること。**
 
