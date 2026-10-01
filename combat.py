@@ -160,7 +160,10 @@ SKILLS = {
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS}
 # Cards tagged as Strike, used by Perfected Strike scaling.
-STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE}
+# CanonicalTags per decompiled card (v0.107.1): Pommel Strike is tagged Strike too, so Perfected
+# Strike counts it.  Panel replay over the Perfected Strike decisions resolved 27 of 31 mismatches
+# once Pommel Strike was included (the remaining 4 have other causes).
+STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE, POMMEL_STRIKE}
 
 # Relics with an automatic in-combat effect the search() rollout needs to see to project future
 # turns correctly (verified against each relic's decompiled OnPlay-equivalent hook body). Relics

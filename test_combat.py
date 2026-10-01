@@ -1386,6 +1386,15 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, data, random.Random(0))
         self.assertEqual((after.player_hp, _power(after.player_powers, "BufferPower")), (20, 0))
 
+    def test_perfected_strike_counts_pommel_strike_as_a_strike(self) -> None:
+        # PommelStrike carries CardTag.Strike (decompiled v0.107.1), so Perfected Strike's multiplier
+        # counts it: 6 base + 2 per Strike-tagged card in the combat state = 10 here (was 8 before the
+        # tag was added, which is what the panel replay mismatched on).
+        perfected = Card(PERFECTED_STRIKE, False)
+        pommel = Card(POMMEL_STRIKE, False)
+        combat = Combat(80, (perfected,), (pommel,), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),), energy=3)
+        self.assertEqual(step(combat, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 90)
+
     def test_thorns_reflection_is_absorbed_by_block(self) -> None:
         # ThornsPower.BeforeDamageReceived fires before the attack's own DamageCmd, so block is still
         # standing (Unpowered is not Unblockable).  Observed on EAIF2UUVCK seq 294: block 7 absorbed a
