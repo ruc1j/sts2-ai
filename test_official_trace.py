@@ -82,14 +82,14 @@ class OfficialAgentTraceTest(unittest.TestCase):
 
     def test_reward_trace_records_the_fields_needed_to_replay_a_decision(self) -> None:
         # The trace is the persisted artifact for card_reward. Without legal_actions / player / run
-        # a reward decision cannot be replayed from artifacts (only cards and deck were written).
+        # and full card objects (not just ids) a reward decision cannot be replayed from artifacts.
         bridge = Path("official_mod/RewardBridge.cs").read_text(encoding="utf-8")
-        for field in (
-            "legal_actions = legalActions, player = playerInfo, run = runInfo",
-        ):
-            occurrences = bridge.count(field)
-            with self.subTest(field=field):
-                self.assertEqual(occurrences, 2, "both reward trace calls must carry the fields")
+        trace_calls = [line for line in bridge.splitlines() if "AgentIo.Trace(new {" in line and 'phase = "card_reward"' in line]
+        self.assertEqual(len(trace_calls), 2)
+        for line in trace_calls:
+            for field in ("cards = cardInfo", "legal_actions = legalActions", "player = playerInfo", "run = runInfo"):
+                with self.subTest(field=field):
+                    self.assertIn(field, line)
 
     def test_act_three_boss_smith_prioritizes_rupture(self) -> None:
         bridge = Path("official_mod/RestBridge.cs").read_text(encoding="utf-8")

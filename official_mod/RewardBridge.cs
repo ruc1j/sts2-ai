@@ -138,7 +138,7 @@ internal static class RewardBridge
             cardIndex >= 0 && cardIndex < cards.Count && action.CardId == cards[cardIndex].Card.Id.ToString())
         {
             var holder = screen.GetCardHolder(cards[cardIndex].Card);
-            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, card_index = cardIndex, card_id = action.CardId, cards = cards.Select(result => result.Card.Id.ToString()), deck = deckIds, legal_actions = legalActions, player = playerInfo, run = runInfo, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, card_index = cardIndex, card_id = action.CardId, cards = cardInfo, deck = deckIds, legal_actions = legalActions, player = playerInfo, run = runInfo, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             holder.EmitSignal(NCardHolder.SignalName.Pressed, holder);
         }
         else if (action.Type == "card_reward_alternative" && action.OptionIndex is int optionIndex &&
@@ -147,7 +147,7 @@ internal static class RewardBridge
             var buttons = screen.GetNode<Control>("UI/RewardAlternatives").GetChildren().OfType<NCardRewardAlternativeButton>().ToArray();
             if (optionIndex >= buttons.Length)
                 throw new InvalidOperationException($"card reward option button unavailable: {optionIndex}");
-            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, option_index = optionIndex, option_id = action.OptionId, cards = cards.Select(result => result.Card.Id.ToString()), deck = deckIds, legal_actions = legalActions, player = playerInfo, run = runInfo, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, option_index = optionIndex, option_id = action.OptionId, cards = cardInfo, deck = deckIds, legal_actions = legalActions, player = playerInfo, run = runInfo, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             buttons[optionIndex].EmitSignal(NClickableControl.SignalName.Released, buttons[optionIndex]);
             skippedSet = action.OptionId == "Skip";
         }
