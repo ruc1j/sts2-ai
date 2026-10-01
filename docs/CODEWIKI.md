@@ -2385,3 +2385,30 @@ fact 上 strict に優る選択は `LOST_WISP` の CLAIM だけで、reach 1（�
 実測で確認（panel 8 seed + astra 107 run の全 `decision_reason`）：`invalid_shop_action` / `invalid_potion_action` / `potion_slots_full` は 0件。curse がいて removal が offer されている shop decision 63件で policy は 63/63 removal を選んだ。`choose_shop` の skip は terminal branch（line 2155）で、removal が affordable で curse が無い case の skip は 0件 → policy は自分の criteria に対して整合的。
 
 gold は shop 間で持ち越されるが、最後の shop 以降の gold は combat に効かない（value 0）。astra 107 run の final gold median 121（59 run が ≥100）で、これは「bar を下回った item ばかりだった」ことを意味するだけで defect は無い（bar が高いかは policy choice の話、path closed）。
+
+## 未モデルだった power / relic / curse を実装（2026-10-04、実走測定前）
+
+「対応表にあっても combat.py が消費しなければ一度も発火しない」という既知の欠落 class を、
+trace の観測 id 集計で洗った（player powers 56 id 中 8、relic 40 id 中 29 が未対応だった）。
+
+| 追加 | 機構（decompile 由来） | corpus の観測回数 |
+|---|---|---:|
+| Wither | Curse、`HasTurnEndInHandEffect` で 3 flat Unpowered。`Unblockable` が無いので block が吸収する（Beckon / Bad Luck と違う）。`CARD_NAMES` 対応 + `HAND_INJECTED_STATUS` | 12 |
+| Fiddle | `ModifyHandDrawLate` +2、`ShouldDraw` が hand draw 以外のドローを拒否 | 242 |
+| Blood-Soaked Rose | `ModifyMaxEnergy` +1 を毎ターンの energy reset で加算 | 70 |
+| Forgotten Soul | `AfterCardExhausted`：1 Unpowered を**ランダム1体**へ（Charon's Ashes の全体とは違う） | 74 |
+| Chains of Binding | `AfterCardDrawn` が自分のドローを Amount 枚まで Bound にする。live の hand は bridge の `bound` で既に正しかったが、rollout 内のドローが対応していなかった | 3849 |
+| Duplication / OneTwoPunch | `ModifyCardPlayCount +1`：その play の解決がもう1回走る。Attack は hit が倍、block card は grant が倍。play で消費され、turn end で除去 | 69 / 10 |
+| Gigantification | 最初に打った powered Attack の damage を ×3、その command で decrement | 38 |
+| Panache | `AfterCardPlayed`：適用した play は数えず（`alreadyApplied`）、以降5枚目の play で Amount（10/14）を全敵へ Unpowered、counter リセット | 20 |
+
+機構としての正しさは test_combat の追加分で固定した。実走 panel を回していないので**勝率への効果は未評価**。
+
+### 残っている未モデル
+
+- **PollinousCore**：counter が戦闘横断の `SavedProperty` で観測に無い。phase が不明なので modelable でない（relic counter は観測不能、という既存の結論どおり）
+- **BigMushroom / RoyalPoison / Lantern / BagOfMarbles / Vajra / Gorget / Bronze Scales**：effect が combat 開始時または turn 1 だけ。最初の観測が既に反映しているので rollout に影響しない
+- **GamblingChip**：player の選択（何枚捨てるか）が模型外
+- **ImprovementPower**：`AfterCombatEnd` で deck を upgrade。戦闘内の decision に無関係
+- **StratagemPower**：機構は正しいが 2026-09-12 の実走で QUEEN 残 151→363 へ悪化、不採用
+- **Enthralled / Wound / Dazed**：combat effect が無い（Eternal / Unplayable のみ）。Dazed は draw pile の汚れとしてのみモデル
