@@ -2336,3 +2336,32 @@ population（固定8 seed外、`data/act3_pop2_*` 10 seed）でも Act 3 win cha
 **closed lever（reach = panel の decision 数、noise閾値 3件/3 seed）**：boss DPS-greedy 588/1028（policy 上書きなので実走対象外）、safety-branch elite 重み 18（flip 0）、boss damage-potion 340（flip 0）、event damage-relic 4（1 seed）、rest HEAL/SMITH 3（`test_rest_heals_near_boss` が落ちる、かつ 2026-09-08 に同じ方向が上下に割れて不採用記録済み）、rest SMITH 対象 card 2、shop weakest-card removal 1、survival-potion 1、reward heavy-hitter 0、conditional damage-priority 1、applier tie-break 0、same-turn booster credit 0、enemy phase 込み采点 0、boss 選択 0（panel/population に boss を2つ並べて提示する decision が無い）。
 
 panel で effect 0 だが正しさの fix として commit したものは `fdb0d7e`（greedy continuation の `GREEDY_DEATH_PENALTY`、707 OK）。vulnerable credit 系は panel で負（対照98→unguarded 91→guarded 80）なので不採用。
+
+## event の option effect（v0.107.1、ilspycmd で確認、panel の reach 付き）
+
+`choose_event` は `EVENT_OPTION_SCORES` に entry の無い event について `{"type": "event_fallback"}` を返し、`EventBridge.cs`（line 141-152、pin `test_official_agent.py:4869`）はそれを `invalid_event_action` として game の fallback に投げる。panel では 81 decision 中 26件（6 seed）がこれに該当する。実走で測れない理由は、trace の event record に**選ばれた option しか残っていない**こと（observation の `options`/`legal_actions` が残っていない）。
+
+panel で出現した未coverage event の effect（decompile 済み）：
+
+| event | option → effect | panel reach |
+| --- | --- | --- |
+| `SPIRIT_GRAFTER` | LET_IT_IN = heal 25 + `Metamorphosis` を deck に追加 / REJECTION = 1枚 upgrade + 10 Unblockable damage | 2 |
+| `THE_LEGENDS_WERE_TRUE` | NAB_THE_MAP = `SpoilsMap`（curse）追加 / SLOWLY_FIND_AN_EXIT = 8 Unblockable damage | 2 |
+| `BRAIN_LEECH` | SHARE_KNOWLEDGE = colorless pool から card 1枚 / RIP = 5 Unblockable damage | 2 |
+| `DOLL_ROOM` | RANDOM / TAKE_SOME_TIME = 5 damage / EXAMINE = 15 damage（RANDOM の中身は event state 依存） | 1 |
+| `WHISPERING_HOLLOW` | GOLD = 35 gold / HUG = HP loss + Transform | 1 |
+| `LOST_WISP` | CLAIM = 60 gold + `Decay`(curse) / SEARCH = `Decay`(curse) のみ → **CLAIM が fact 上 strict に良い** | 1 |
+| `FIELD_OF_MAN_SIZED_HOLES` | RESIST = `Normality`(curse) / ENTER_YOUR_HOLE = `PerfectFit` enchantment + gold | 1 |
+| `THE_LANTERN_KEY` | RETURN_THE_KEY = 100 gold / KEEP_THE_KEY = fight | 1 |
+| `TEA_MASTER` | `BoneTea` / `EmberTea` / `TeaOfDiscourtesy` の relic 選択（observation に relic_id が載らない） | 1 |
+| `TINKER_TIME` | card type を選んで効果（12 damage / 8 block / Weak 2 / Vulnerable 2 / Strangle 6 / energy 2 / Strength 2 / Dexterity 2） | 1 |
+| `POTION_COURIER` | GRAB_POTIONS = `FoulPotion` / RANSACK | 1 |
+| `INFESTED_AUTOMATON` | STUDY / TOUCH_CORE | 1 |
+| `DENSE_VEGETATION` | TRUDGE_ON = HP loss / REST → FIGHT | 1 |
+| `WELCOME_TO_WONGOS` | BARGAIN_BIN / FEATURED_ITEM / MYSTERY_BOX / LEAVE（purchase） | 1 |
+| `TRIAL` | curse（`Regret` / `Shame`）分岐 | 1 |
+| `BUGSLAYER` | EXTERMINATION = `Exterminate`（未モデル化） / SQUASH = `Squash`（cost 1、damage 10） | 3 |
+| `SAPPHIRE_SEED` | EAT = heal 9 / PLANT = `Sown` enchantment | 2 |
+| `COLOSSAL_FLOWER` | gold 35/75/135 で dig、damage 5/6/7 | 1 |
+
+fact 上 strict に優る選択は `LOST_WISP` の CLAIM だけで、reach 1（閾値 3 件/3 seed 未満）。残りは「heal/gold/curse/upgrade の trade-off」で、policy の既存 criterion（block-starved、low HP、relic axis）と同じ方向なので、单独の lever として测る意味が無い。よって event scores は追加分を書かない（reach ≥3 が出るまで書かない）。
