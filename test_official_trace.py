@@ -80,6 +80,17 @@ class OfficialAgentTraceTest(unittest.TestCase):
                 self.assertIn("decision_source = action.DecisionSource", source)
                 self.assertIn("decision_reason = action.DecisionReason", source)
 
+    def test_reward_trace_records_the_fields_needed_to_replay_a_decision(self) -> None:
+        # The trace is the persisted artifact for card_reward. Without legal_actions / player / run
+        # a reward decision cannot be replayed from artifacts (only cards and deck were written).
+        bridge = Path("official_mod/RewardBridge.cs").read_text(encoding="utf-8")
+        for field in (
+            "legal_actions = legalActions, player = playerInfo, run = runInfo",
+        ):
+            occurrences = bridge.count(field)
+            with self.subTest(field=field):
+                self.assertEqual(occurrences, 2, "both reward trace calls must carry the fields")
+
     def test_act_three_boss_smith_prioritizes_rupture(self) -> None:
         bridge = Path("official_mod/RestBridge.cs").read_text(encoding="utf-8")
         self.assertIn('_queenBoss = act == 2 && _nearBoss;', bridge)

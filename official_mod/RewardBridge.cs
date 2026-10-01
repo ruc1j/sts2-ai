@@ -73,57 +73,63 @@ internal static class RewardBridge
         var run = RunManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("run state unavailable");
         var player = LocalContext.GetMe(run) ?? throw new InvalidOperationException("local player unavailable");
         var deckIds = player.Deck.Cards.Select(card => card.Id.ToString()).ToArray();
+        // The trace is the persisted artifact, so the fields the policy reads must be recorded
+        // there too: without legal_actions / player / run the reward decision cannot be replayed.
+        var runInfo = new
+        {
+            act = run.CurrentActIndex,
+            floor = run.ActFloor,
+            boss_encounter_id = run.Act.BossEncounter?.Id.ToString(),
+            second_boss_encounter_id = run.Act.SecondBossEncounter?.Id.ToString(),
+        };
+        var playerInfo = new
+        {
+            hp = player.Creature.CurrentHp,
+            max_hp = player.Creature.MaxHp,
+            gold = player.Gold,
+            deck = player.Deck.Cards.Select(card => new
+            {
+                id = card.Id.ToString(),
+                upgrade = card.CurrentUpgradeLevel,
+                cost = card.EnergyCost.GetWithModifiers(CostModifiers.All),
+            }),
+        };
+        var cardInfo = cards.Select((result, index) => new
+        {
+            index,
+            id = result.Card.Id.ToString(),
+            type = result.Card.Type.ToString(),
+            rarity = result.Card.Rarity.ToString(),
+            cost = result.Card.EnergyCost.GetWithModifiers(CostModifiers.All),
+            upgrade = result.Card.CurrentUpgradeLevel,
+            pool = result.Card.Pool.Id.ToString(),
+        });
+        var legalActions = cards.Select((result, index) => (object)new
+            {
+                type = "card_reward",
+                card_index = index,
+                card_id = result.Card.Id.ToString(),
+                option_index = (int?)null,
+                option_id = (string?)null,
+            })
+            .Concat(alternatives.Select((option, index) => (object)new
+            {
+                type = "card_reward_alternative",
+                card_index = (int?)null,
+                card_id = (string?)null,
+                option_index = index,
+                option_id = option.OptionId,
+            })).ToArray();
         int seq = AgentIo.NextSequence();
         AgentIo.WriteObservation(new
         {
             seq,
             terminal = false,
             phase = "card_reward",
-            run = new
-            {
-                act = run.CurrentActIndex,
-                floor = run.ActFloor,
-                boss_encounter_id = run.Act.BossEncounter?.Id.ToString(),
-                second_boss_encounter_id = run.Act.SecondBossEncounter?.Id.ToString(),
-            },
-            player = new
-            {
-                hp = player.Creature.CurrentHp,
-                max_hp = player.Creature.MaxHp,
-                gold = player.Gold,
-                deck = player.Deck.Cards.Select(card => new
-                {
-                    id = card.Id.ToString(),
-                    upgrade = card.CurrentUpgradeLevel,
-                    cost = card.EnergyCost.GetWithModifiers(CostModifiers.All),
-                }),
-            },
-            cards = cards.Select((result, index) => new
-            {
-                index,
-                id = result.Card.Id.ToString(),
-                type = result.Card.Type.ToString(),
-                rarity = result.Card.Rarity.ToString(),
-                cost = result.Card.EnergyCost.GetWithModifiers(CostModifiers.All),
-                upgrade = result.Card.CurrentUpgradeLevel,
-                pool = result.Card.Pool.Id.ToString(),
-            }),
-            legal_actions = cards.Select((result, index) => (object)new
-                {
-                    type = "card_reward",
-                    card_index = index,
-                    card_id = result.Card.Id.ToString(),
-                    option_index = (int?)null,
-                    option_id = (string?)null,
-                })
-                .Concat(alternatives.Select((option, index) => (object)new
-                {
-                    type = "card_reward_alternative",
-                    card_index = (int?)null,
-                    card_id = (string?)null,
-                    option_index = index,
-                    option_id = option.OptionId,
-                })),
+            run = runInfo,
+            player = playerInfo,
+            cards = cardInfo,
+            legal_actions = legalActions,
         });
 
         var action = await AgentIo.AwaitAction<RewardAction>(seq, ct);
@@ -132,7 +138,7 @@ internal static class RewardBridge
             cardIndex >= 0 && cardIndex < cards.Count && action.CardId == cards[cardIndex].Card.Id.ToString())
         {
             var holder = screen.GetCardHolder(cards[cardIndex].Card);
-            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, card_index = cardIndex, card_id = action.CardId, cards = cards.Select(result => result.Card.Id.ToString()), deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, card_index = cardIndex, card_id = action.CardId, cards = cards.Select(result => result.Card.Id.ToString()), deck = deckIds, legal_actions = legalActions, player = playerInfo, run = runInfo, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             holder.EmitSignal(NCardHolder.SignalName.Pressed, holder);
         }
         else if (action.Type == "card_reward_alternative" && action.OptionIndex is int optionIndex &&
@@ -141,7 +147,7 @@ internal static class RewardBridge
             var buttons = screen.GetNode<Control>("UI/RewardAlternatives").GetChildren().OfType<NCardRewardAlternativeButton>().ToArray();
             if (optionIndex >= buttons.Length)
                 throw new InvalidOperationException($"card reward option button unavailable: {optionIndex}");
-            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, option_index = optionIndex, option_id = action.OptionId, cards = cards.Select(result => result.Card.Id.ToString()), deck = deckIds, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "card_reward", action.Type, option_index = optionIndex, option_id = action.OptionId, cards = cards.Select(result => result.Card.Id.ToString()), deck = deckIds, legal_actions = legalActions, player = playerInfo, run = runInfo, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             buttons[optionIndex].EmitSignal(NClickableControl.SignalName.Released, buttons[optionIndex]);
             skippedSet = action.OptionId == "Skip";
         }
