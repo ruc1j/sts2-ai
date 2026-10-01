@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, CONFLAGRATION, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -481,6 +481,17 @@ class CombatTest(unittest.TestCase):
         upgraded = replace(base, upgraded_cards=(PECK,))
         self.assertEqual(step(base, "Peck@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 94)
         self.assertEqual(step(upgraded, "Peck@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 92)
+
+    def test_conflagration_hits_all_enemies_four_times_and_upgrades_hits(self) -> None:
+        # Decompiled (v0.107.1): Conflagration is a 1-energy AllEnemies attack with DamageVar(2) and
+        # RepeatVar(4); the upgrade adds a repeat, not damage.  It was missing from the model, so a
+        # deck holding it left the card invisible to legal_actions and search (astra hands showed it
+        # with the decision falling through to the heuristic tail).
+        enemies = (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY2", 100, "IDLE_MOVE", ()))
+        combat = Combat(80, (CONFLAGRATION,), (), (), enemies, energy=1)
+        upgraded = replace(combat, upgraded_cards=(CONFLAGRATION,))
+        self.assertEqual([enemy.hp for enemy in step(combat, "Conflagration@0", DUMMY_DATA, random.Random(0)).enemies], [92, 92])
+        self.assertEqual([enemy.hp for enemy in step(upgraded, "Conflagration@0", DUMMY_DATA, random.Random(0)).enemies], [90, 90])
 
     def test_exterminate_hits_all_enemies_four_times_and_upgrades_damage(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY2", 100, "IDLE_MOVE", ()))

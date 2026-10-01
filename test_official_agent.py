@@ -5616,6 +5616,25 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertTrue(known <= CARD_TIERS.keys())
         self.assertEqual({CARD_TIERS[card] for card in known}, {"D"})
 
+    def test_conflagration_is_playable_in_the_model_not_just_ranked_for_rewards(self) -> None:
+        # Conflagration was in the reward tier list but had no entry in combat.py, so a deck holding it
+        # was invisible to legal_actions and search: the model could never consider playing it, and the
+        # turn fell through to the heuristic tail.
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [
+            {"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}]}]}
+        observation = {
+            "seq": 1, "turn": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.CONFLAGRATION", "cost": 1, "upgrade": 0, "type": "Attack", "target": "AllEnemies"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [],
+                          "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss"}],
+            "legal_actions": [{"type": "card", "hand_index": 0, "card_id": "CARD.CONFLAGRATION", "target_id": 1},
+                              {"type": "end_turn"}],
+        }
+        action = choose(observation, data, 20)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.CONFLAGRATION", "rollout_success"))
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -127,6 +127,7 @@ CARD_NAMES = {
     "CARD.MANGLE": "Mangle",
     "CARD.PECK": "Peck",
     "CARD.EXTERMINATE": "Exterminate",
+    "CARD.CONFLAGRATION": "Conflagration",
     "CARD.SETUP_STRIKE": "Setup Strike",
     "CARD.EVIL_EYE": "Evil Eye",
     "CARD.BRAND": "Brand",
@@ -2376,7 +2377,7 @@ STRONG_BLOCK_CARDS = {
 ALL_ENEMY_CARDS = {
     "CARD.BREAKTHROUGH", "CARD.HOWL_FROM_BEYOND", "CARD.DRAMATIC_ENTRANCE",
     "CARD.THUNDERCLAP", "CARD.PACTS_END", "CARD.STOMP", "CARD.EXTERMINATE",
-    "CARD.WHIRLWIND",
+    "CARD.CONFLAGRATION", "CARD.WHIRLWIND",
 }
 
 # Boss-specific axes are intentionally small: the bridge only exposes the encounter identity,
