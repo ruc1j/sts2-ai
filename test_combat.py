@@ -1351,6 +1351,23 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "RagePower"), 0)
 
+    def test_thorns_reflection_is_absorbed_by_block(self) -> None:
+        # ThornsPower.BeforeDamageReceived fires before the attack's own DamageCmd, so block is still
+        # standing (Unpowered is not Unblockable).  Observed on EAIF2UUVCK seq 294: block 7 absorbed a
+        # 5 reflection with no HP loss.
+        thorns = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("ThornsPower", 5),))
+        combat = Combat(80, (STRIKE,), (), (), (thorns,), energy=1, player_block=7)
+        after = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block, after.enemies[0].hp), (80, 2, 94))
+
+    def test_thorns_reflection_hits_hp_only_after_block_is_spent(self) -> None:
+        # One reflection per hit, each absorbed by whatever block is left at that moment: VTW80ZJA2G
+        # seq 279, Twin Strike (2 hits) against Thorns 5 with block 5 lost exactly 5 HP.
+        thorns = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("ThornsPower", 5),))
+        combat = Combat(80, (TWIN_STRIKE,), (), (), (thorns,), energy=1, player_block=5)
+        after = step(combat, f"{TWIN_STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block, after.enemies[0].hp), (75, 0, 90))
+
     def test_colossus_blocks_and_halves_attacks_from_vulnerable_enemy(self) -> None:
         vulnerable = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", (), powers=(("VulnerablePower", 1),))
         combat = step(Combat(80, (COLOSSUS,), (), (), (vulnerable,), energy=1), COLOSSUS, ATTACKING_DUMMY_DATA, random.Random(0))

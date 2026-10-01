@@ -437,6 +437,20 @@ def _apply_player_damage(combat: Combat, amount: int, *, trigger_inferno: bool =
     return _trigger_inferno(updated) if trigger_inferno else updated
 
 
+def _apply_reflected_damage(combat: Combat, amount: int) -> Combat:
+    """Apply a ThornsPower reflection.
+
+    ThornsPower.BeforeDamageReceived runs before the attack's own DamageCmd, so the player's block is
+    still standing and absorbs the reflection first (Unpowered is not Unblockable).  Two panel
+    decisions show it: EAIF2UUVCK seq 294 (block 7, Thorns 5, one hit) lost no HP, and VTW80ZJA2G
+    seq 279 (block 5, Thorns 5, two hits) lost exactly the 5 that block could not cover.
+    """
+    if amount <= 0:
+        return combat
+    blocked = min(combat.player_block, amount)
+    return _apply_player_damage(replace(combat, player_block=combat.player_block - blocked), amount - blocked)
+
+
 def _after_exhaust(combat: Combat, cards: tuple[CardValue, ...], rng: random.Random, data: dict) -> Combat:
     """Resolve recurring exhaust hooks for one or more exhausted cards."""
     if not cards:
@@ -2512,7 +2526,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         hive = sum(_power(enemy.powers, "PersonalHivePower") for enemy in before if enemy.alive)
         _apply_curl_up(tuple(before), enemies, card)
         combat = replace(combat, enemies=tuple(enemies))
-        combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+        combat = _apply_reflected_damage(combat, reflected)
         return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == TREMBLE:
         enemy = enemies[int(target)]
@@ -2561,7 +2575,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
         _apply_curl_up(before, enemies, card)
         combat = replace(combat, enemies=tuple(enemies))
-        combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+        combat = _apply_reflected_damage(combat, reflected)
         return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     if card == VOLLEY:
         damage = 14 if card_was_upgraded else 10
@@ -2598,7 +2612,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 enemies[index] = replace(enemies[index], move="DEAD_MOVE")
         _apply_curl_up(before, enemies, card)
         combat = replace(combat, enemies=tuple(enemies))
-        combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+        combat = _apply_reflected_damage(combat, reflected)
         return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     before = tuple(enemies)
     enemy = enemies[int(target)]
@@ -2779,7 +2793,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     hive = _power(enemy.powers, "PersonalHivePower")
     _apply_curl_up(before, enemies, card)
     combat = replace(combat, player_powers=player_powers, enemies=tuple(enemies))
-    combat = _apply_player_damage(combat, reflected, trigger_inferno=True)
+    combat = _apply_reflected_damage(combat, reflected)
     return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
 
 
