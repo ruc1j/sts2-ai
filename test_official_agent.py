@@ -4010,6 +4010,26 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FEED")
 
+    def test_shop_never_picks_a_card_that_is_not_in_legal_actions(self) -> None:
+        # ShopBridge lists only affordable slots in legal_actions (ShopBridge.cs lines 143-194).
+        # The policy scores cards through legal_actions, so an unaffordable core card listed only in
+        # the observation's `cards` must not be selected even though it outranks the affordable one.
+        observation = {
+            "phase": "shop",
+            "gold": 60,
+            "deck": ["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            "cards": [
+                {"index": 0, "id": "CARD.PERFECTED_STRIKE", "type": "Attack", "rarity": "Common", "energy_cost": 1, "cost": 120, "affordable": False},
+                {"index": 1, "id": "CARD.ANGER", "type": "Attack", "rarity": "Common", "energy_cost": 1, "cost": 40, "affordable": True},
+            ],
+            "legal_actions": [
+                {"type": "buy_card", "index": 1, "card_index": 1, "slot_index": 1, "card_id": "CARD.ANGER"},
+                {"type": "skip"},
+            ],
+        }
+        action = choose(observation)
+        self.assertEqual(action["card_id"], "CARD.ANGER")
+
     def test_shop_buys_one_missing_required_card(self) -> None:
         observation = {
             "phase": "shop",

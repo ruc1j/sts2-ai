@@ -2365,3 +2365,11 @@ panel で出現した未coverage event の effect（decompile 済み）：
 | `COLOSSAL_FLOWER` | gold 35/75/135 で dig、damage 5/6/7 | 1 |
 
 fact 上 strict に優る選択は `LOST_WISP` の CLAIM だけで、reach 1（閾値 3 件/3 seed 未満）。残りは「heal/gold/curse/upgrade の trade-off」で、policy の既存 criterion（block-starved、low HP、relic axis）と同じ方向なので、单独の lever として测る意味が無い。よって event scores は追加分を書かない（reach ≥3 が出るまで書かない）。
+
+## shop の affordability は bridge の filter が source（v0.107.1、code + 全 trace で確認）
+
+`ShopBridge.cs`（line 143-194）は observation の `cards`/`relics`/`potions`/`removal` に `cost` と `affordable` を载せ、`legal_actions` には `IsStocked && EnoughGold` の slot だけを追加する。potion はさらに free slot が無いと列挙されない（line 193）。`choose_shop` は `legal_actions` だけで采点するので、**policy が购买できない item を選ぶことは構造上無い**。pin：`test_shop_never_picks_a_card_that_is_not_in_legal_actions`。
+
+実測で確認（panel 8 seed + astra 107 run の全 `decision_reason`）：`invalid_shop_action` / `invalid_potion_action` / `potion_slots_full` は 0件。curse がいて removal が offer されている shop decision 63件で policy は 63/63 removal を選んだ。`choose_shop` の skip は terminal branch（line 2155）で、removal が affordable で curse が無い case の skip は 0件 → policy は自分の criteria に対して整合的。
+
+gold は shop 間で持ち越されるが、最後の shop 以降の gold は combat に効かない（value 0）。astra 107 run の final gold median 121（59 run が ≥100）で、これは「bar を下回った item ばかりだった」ことを意味するだけで defect は無い（bar が高いかは policy choice の話、path closed）。
