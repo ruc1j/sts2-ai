@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
     MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING,
@@ -1694,6 +1694,80 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (), (STRIKE,) * 12, (), enemies, player_relics=(RELIC_FORGOTTEN_SOUL,))
         after = _after_exhaust(combat, (STRIKE, STRIKE), random.Random(0), DUMMY_DATA)
         self.assertEqual(sum(enemy.hp for enemy in after.enemies), 20 - 2)
+
+    def test_duplication_power_resolves_the_next_play_twice(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(
+            80, (TWIN_STRIKE,), (), (), (enemy,), energy=1,
+            player_powers=(("DuplicationPower", 1),),
+        )
+        after = step(combat, f"{TWIN_STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 40 - 4 * 5)  # 2 hits, each resolving twice
+        self.assertEqual(_power(after.player_powers, "DuplicationPower"), 0)
+
+    def test_duplication_power_doubles_the_next_block_card_grant(self) -> None:
+        combat = Combat(
+            80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),), energy=1,
+            player_powers=(("DuplicationPower", 1),),
+        )
+        after = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 10)  # 5 base, applied twice
+        self.assertEqual(_power(after.player_powers, "DuplicationPower"), 0)
+
+    def test_one_two_punch_card_grants_the_power_and_doubles_attacks_only(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (ONE_TWO_PUNCH, STRIKE, DEFEND), (), (), (enemy,), energy=3)
+        after = step(combat, ONE_TWO_PUNCH, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "OneTwoPunchPower"), 1)
+        after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 40 - 12)  # Attack: the play resolves twice
+        self.assertEqual(_power(after.player_powers, "OneTwoPunchPower"), 0)
+        after = step(after, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 5)  # consumed by the Attack, so not doubled
+
+    def test_gigantification_multiplies_only_the_first_attack_of_the_turn(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ())
+        combat = Combat(
+            80, (STRIKE, STRIKE), (), (), (enemy,), energy=2,
+            player_powers=(("GigantificationPower", 1),),
+        )
+        first = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((first.enemies[0].hp, _power(first.player_powers, "GigantificationPower")), (60 - 18, 0))
+        second = step(first, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(second.enemies[0].hp, 60 - 18 - 6)
+
+    def test_panache_damage_fires_after_five_cards_played_in_the_turn(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 30, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 30, "IDLE_MOVE", ()))
+        combat = Combat(80, (PANACHE, DEFEND, DEFEND, DEFEND, DEFEND, DEFEND), (), (), enemies, energy=5)
+        combat = step(combat, PANACHE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(combat.player_powers, "PanachePower"), 10)
+        for _ in range(4):
+            combat = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+            self.assertEqual(sum(enemy.hp for enemy in combat.enemies), 60)  # the applying play is not counted
+        combat = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(sum(enemy.hp for enemy in combat.enemies), 60 - 20)  # 10 Unpowered to each
+        self.assertEqual(combat.panache_cards_this_turn, 0)  # CardsLeft resets to 5
+
+    def test_play_count_powers_are_removed_at_the_end_of_the_player_turn(self) -> None:
+        combat = Combat(
+            80, (), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),),
+            player_powers=(("DuplicationPower", 1), ("OneTwoPunchPower", 1)),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(
+            (_power(after.player_powers, "DuplicationPower"), _power(after.player_powers, "OneTwoPunchPower")),
+            (0, 0),
+        )
+
+    def test_duplicator_and_gigantification_potions_apply_their_powers(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (), (), (), (enemy,), player_potions=(POTION_DUPLICATOR, POTION_GIGANTIFICATION))
+        self.assertIn(f"potion:{POTION_DUPLICATOR}", legal_actions(combat))
+        self.assertIn(f"potion:{POTION_GIGANTIFICATION}@0", legal_actions(combat))
+        after = step(combat, f"potion:{POTION_DUPLICATOR}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "DuplicationPower"), 1)
+        after = step(after, f"potion:{POTION_GIGANTIFICATION}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "GigantificationPower"), 1)
 
     def test_battle_trance_blocks_further_draws_until_the_next_turn(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())

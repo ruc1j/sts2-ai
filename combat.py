@@ -41,8 +41,13 @@ SETUP_STRIKE = "Setup Strike"
 TORIC_TOUGHNESS, SQUASH, TEAR_ASUNDER = "Toric Toughness", "Squash", "Tear Asunder"
 HAVOC, STOKE, METAMORPHOSIS = "Havoc", "Stoke", "Metamorphosis"
 VICIOUS = "Vicious"
-PANACHE = "Panache"
+PANACHE, ONE_TWO_PUNCH = "Panache", "One-Two Punch"
 PANACHE_TRIGGER_CARDS = 5  # PanachePower's CardsLeft base value
+POTION_DUPLICATOR, POTION_GIGANTIFICATION = "POTION.DUPLICATOR", "POTION.GIGANTIFICATION"
+# Play-count powers. DuplicationPower (Duplicator) adds one extra resolution to the play it
+# modifies; OneTwoPunchPower (One-Two Punch) does the same for Attacks only. Both are consumed by
+# that play and removed at the end of the player's turn, so the model treats the extra resolution
+# as the card's damage or block applying twice.
 ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER = "Armaments", "Unmovable", "Expect a Fight", "Aggression", "Dark Embrace", "Crimson Mantle", "Forgotten Ritual", "Sword Boomerang", "Hellraiser"
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
@@ -78,7 +83,7 @@ CARD_COST = {
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
     MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0,
     STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
-    APOTHEOSIS: 2, JUGGLING: 1,
+    APOTHEOSIS: 2, JUGGLING: 1, PANACHE: 0, ONE_TWO_PUNCH: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -145,20 +150,20 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT, JUGGLING}
+POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT, JUGGLING, PANACHE}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
-    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY, APOTHEOSIS, JUGGLING,
+    TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY, APOTHEOSIS, JUGGLING, PANACHE, ONE_TWO_PUNCH,
 }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
-    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY, APOTHEOSIS,
+    TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY, APOTHEOSIS, ONE_TWO_PUNCH,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS}
@@ -279,6 +284,13 @@ class Combat:
     # Enlightenment.OnPlay: caps every hand card's cost at 1 for the rest of this turn (reduceOnly
     # - never raises a cheaper card). Reset alongside the other per-turn counters.
     enlightened_this_turn: bool = False
+    # DuplicationPower / OneTwoPunchPower add one extra resolution to the play being resolved, so
+    # that play's damage or block applies twice. Set per action, cleared at the start of every
+    # action and every turn.
+    play_duplicated: bool = False
+    # PanachePower's CardsLeft: 5 cards played after the Panache play deal its damage to every
+    # hittable enemy, then reset. The play that applied the power does not count.
+    panache_cards_this_turn: int = 0
     # Whole-combat cumulative counters (Nunchaku/Tuning Fork) - never reset until the fight ends.
     attacks_played_combat: int = 0
     skills_played_combat: int = 0
@@ -1033,6 +1045,9 @@ def _grant_block(
         block *= 2
     if unmovable_double:
         block *= 2
+    if combat.play_duplicated:
+        # The play resolves a second time, so the block grant is applied twice.
+        block *= 2
     enemies = list(combat.enemies)
     juggernaut = _power(combat.player_powers, "JuggernautPower")
     alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
@@ -1120,9 +1135,9 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         else:
             actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     for potion in dict.fromkeys(combat.player_potions):
-        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE}:
+        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR}:
             actions.append(f"potion:{potion}")
-        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK}:
+        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_GIGANTIFICATION}:
             actions.extend(
                 f"potion:{potion}@{index}"
                 for index, enemy in enumerate(combat.enemies)
@@ -1745,6 +1760,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 7))
         if potion == POTION_BRONZE:
             return replace(combat, player_powers=_add_power(combat.player_powers, "ThornsPower", 3))
+        if potion == POTION_DUPLICATOR:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "DuplicationPower", 1))
+        if potion == POTION_GIGANTIFICATION:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "GigantificationPower", 1))
         enemies = list(combat.enemies)
         if potion == POTION_EXPLOSIVE:
             enemies = [_damage_enemy(enemy, 10, powered=False) if enemy.alive else enemy for enemy in enemies]
@@ -1905,6 +1924,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         player_powers = _add_power(player_powers, "TaintedPower", -_power(player_powers, "TaintedPower"))
         player_powers = _add_power(player_powers, "FlameBarrierPower", -_power(player_powers, "FlameBarrierPower"))
         player_powers = _add_power(player_powers, "ReptileTrinketPower", -_power(player_powers, "ReptileTrinketPower"))
+        # DuplicationPower (Duplicator) and OneTwoPunchPower (One-Two Punch) remove themselves at the
+        # end of the player's turn, so an unused counter never carries into the next turn.
+        for play_count_power in ("DuplicationPower", "OneTwoPunchPower"):
+            amount = _power(player_powers, play_count_power)
+            if amount:
+                player_powers = _add_power(player_powers, play_count_power, -amount)
         # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
         # upcoming turn). new_turn is the turn number the player is about to begin.
         new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
@@ -2039,6 +2064,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hellraiser_autoplays_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
+            play_duplicated=False,
         )
         combat = _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
         # MayhemPower.AfterAutoPrePlayPhaseEntered: plays Amount cards off the draw pile before
@@ -2053,6 +2079,33 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     else:
         played_value = action_card
     card = card_name(played_value)
+    # Play-count powers. DuplicationPower (Duplicator potion) adds one extra resolution to the play
+    # it modifies and OneTwoPunchPower (One-Two Punch) does the same for Attacks only; the counter
+    # is consumed by that play (AfterModifyingCardPlayCount) and both powers are removed at the end
+    # of the player's turn. For an Attack the extra resolution is one more hit of the same damage,
+    # and for a block card the grant is applied twice.
+    play_duplicated = bool(
+        _power(combat.player_powers, "DuplicationPower")
+        or (card in ATTACKS and _power(combat.player_powers, "OneTwoPunchPower"))
+    )
+    # GigantificationPower marks the first powered Attack played on the turn and multiplies that
+    # command's damage by 3, then decrements.
+    gigantified = bool(
+        card in ATTACKS
+        and combat.attacks_played_this_turn == 0
+        and _power(combat.player_powers, "GigantificationPower")
+    )
+    if play_duplicated:
+        power_name = "DuplicationPower" if _power(combat.player_powers, "DuplicationPower") else "OneTwoPunchPower"
+        combat = replace(
+            combat,
+            player_powers=_add_power(combat.player_powers, power_name, -1),
+        )
+    # The flag describes this play only, so it is reset for every action, not just the duplicated
+    # one - a leftover True from an earlier play would double the next card's block for free.
+    combat = replace(combat, play_duplicated=play_duplicated)
+    if gigantified:
+        combat = replace(combat, player_powers=_add_power(combat.player_powers, "GigantificationPower", -1))
     hand = list(combat.hand)
     if RELIC_BELLOWS in combat.player_relics and combat.turn == 1 and not combat.bellows_used:
         hand = [_upgrade_card(value) for value in hand]
@@ -2299,6 +2352,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # Juggling.OnPlay applies JugglingPower(1). Its upgrade only adds the Innate keyword, so
         # the counter amount never changes.
         player_powers = _add_power(player_powers, "JugglingPower", 1)
+    if card == PANACHE:
+        # Panache.OnPlay applies PanachePower with its PanacheDamage var (10, upgraded 14).
+        player_powers = _add_power(player_powers, "PanachePower", 14 if card_was_upgraded else 10)
+    if card == ONE_TWO_PUNCH:
+        # OneTwoPunch.OnPlay applies OneTwoPunchPower with its Attacks var (1, upgraded 2).
+        player_powers = _add_power(player_powers, "OneTwoPunchPower", 2 if card_was_upgraded else 1)
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
@@ -2385,6 +2444,21 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # clone of that Attack into hand. The counter is per-turn (AfterSideTurnEnd resets it), and
         # JugglingPower.AfterApplied seeds it with the attacks already played this turn.
         combat = replace(combat, hand=combat.hand + tuple(_copy_card(card, played_value) for _ in range(juggling_amount)))
+    panache = _power(combat.player_powers, "PanachePower")
+    if panache and card != PANACHE:
+        # PanachePower.AfterCardPlayed: 5 cards played after the Panache play deal its amount as
+        # unpowered damage to every hittable enemy, then the 5-card counter resets. The play that
+        # applied the power is not counted (its `alreadyApplied` flag).
+        cards = combat.panache_cards_this_turn + 1
+        if cards >= PANACHE_TRIGGER_CARDS:
+            cards = 0
+            enemies = [
+                _damage_enemy(enemy, panache, powered=False) if enemy.alive else enemy
+                for enemy in combat.enemies
+            ]
+            combat = replace(combat, enemies=tuple(enemies), panache_cards_this_turn=cards)
+        else:
+            combat = replace(combat, panache_cards_this_turn=cards)
     fiend_fire_count = 0
     if card == FIEND_FIRE:
         # Fiend Fire exhausts the remaining hand, then hits once per exhausted card.
@@ -2526,7 +2600,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
         # pile unordered, so "top" is the same random pick _draw makes.
         return _autoplay_from_draw_pile(combat, whirlwind_x + (1 if card_was_upgraded else 0), data, rng)
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT, JUGGLING}:
+    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT, JUGGLING, PANACHE, ONE_TWO_PUNCH}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
@@ -2692,6 +2766,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         hits = 1 + combat.unblocked_hits
     else:
         hits = fiend_fire_count if card == FIEND_FIRE else CARD_HITS.get(card, 1)
+    if play_duplicated:
+        hits *= 2
     if card == PERFECTED_STRIKE:
         strikes = sum(
             1 for value in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile
@@ -2738,6 +2814,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage = damage * 7 // 10
     if pen_nib_double:
         damage *= 2
+    if gigantified:
+        # GigantificationPower marks exactly one powered Attack command per play (the first one on
+        # the turn) and multiplies that command's damage by 3.
+        damage = damage * 3
     if _power(enemy.powers, "VulnerablePower"):
         damage = _vulnerable_damage(combat, enemy, damage)
     # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage taken per

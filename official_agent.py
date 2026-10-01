@@ -50,6 +50,8 @@ CARD_NAMES = {
     "CARD.DAZED": "Dazed",
     "CARD.INFECTION": "Infection",
     "CARD.DECAY": "Decay",
+    "CARD.PANACHE": "Panache",
+    "CARD.ONE_TWO_PUNCH": "One-Two Punch",
     # Without this the observation id passes raw and combat.py never sees the card, so its
     # OnTurnEndInHand damage can never fire (the same class of gap as POWER.FRAIL_POWER).
     "CARD.WITHER": "Wither",
@@ -259,6 +261,12 @@ POWER_NAMES = {
     "POWER.SLOW_POWER": "SlowPower",
     "POWER.SLUMBER_POWER": "SlumberPower",
     "POWER.JUGGLING_POWER": "JugglingPower",
+    # Counter powers that reach the model only through the observation, so without the mapping
+    # combat.py never sees them (the same class of gap as POWER.FRAIL_POWER).
+    "POWER.DUPLICATION_POWER": "DuplicationPower",
+    "POWER.GIGANTIFICATION_POWER": "GigantificationPower",
+    "POWER.PANACHE_POWER": "PanachePower",
+    "POWER.ONE_TWO_PUNCH_POWER": "OneTwoPunchPower",
     "POWER.RITUAL_POWER": "RitualPower",
     "POWER.CURIOUS_POWER": "CuriousPower",
     "POWER.IMBALANCED_POWER": "ImbalancedPower",
