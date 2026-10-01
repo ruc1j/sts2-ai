@@ -625,6 +625,10 @@ EVENT_OPTION_SCORES = {
     "WOOD_CARVINGS": {"TORUS": 100, "BIRD": 50},
     "THIS_OR_THAT": {"ORNATE": 60},
     "JUNGLE_MAZE_ADVENTURE": {"JOIN_FORCES": 60},
+    # Decompiled (v0.107.1): both LOST_WISP options add the Decay curse to the deck, but CLAIM
+    # also pays 60 gold.  Same downside, strictly more upside, so it is a fact-based dominance
+    # rather than a preference.
+    "LOST_WISP": {"CLAIM": 100},
     "SELF_HELP_BOOK": {},  # scored below from the deck's current block needs
 }
 

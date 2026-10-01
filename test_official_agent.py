@@ -4860,6 +4860,17 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_event(observation)["option_index"], 1)
 
+    def test_lost_wisp_claim_beats_search_for_the_same_curse(self) -> None:
+        observation = {
+            "phase": "event",
+            "event_id": "LOST_WISP",
+            "legal_actions": [
+                {"type": "event_option", "option_index": 0, "text_key": "LOST_WISP.pages.INITIAL.options.SEARCH"},
+                {"type": "event_option", "option_index": 1, "text_key": "LOST_WISP.pages.INITIAL.options.CLAIM"},
+            ],
+        }
+        self.assertEqual(choose_event(observation)["option_index"], 1)
+
     def test_unknown_event_returns_bridge_fallback(self) -> None:
         observation = {
             "phase": "event",
