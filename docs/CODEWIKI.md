@@ -314,6 +314,8 @@ Wrigglerの`WRIGGLE_MOVE`は自身へのStrength+2に加え、`CardPileCmd.AddTo
 
 `_greedy_action` の評価には3つの補正がある。(1) primary(ボス)を倒した場合はその残りHPぶんを加算し、復活するミニオンよりボスのトドメを優先する。(2) Slipperyを剥がした分を加算し、Slippery持ちのボス(例: VANTOM)への攻撃を促す。(3) BASH/TREMBLEのようなVulnerable付与カードには、手札の後続アタックの強化分(ダメージの1/2)を加算し、弱体付与を先に打つ。プレイヤーのStrengthは攻撃ダメージに加算され、Ashen Strikeはexhaust山の枚数、Perfected StrikeはStrikeタグ数で増加する。IllusionPowerを持つミニオン(例: Parafright)は敵フェイズ終了時に最大HPで復活し、SAILのような味方バフは自分以外の生存敵に適用される。
 
+`STRIKE_TAGGED`はgameの`CardTag.Strike`と同じ集合で、Pommel StrikeもStrikeタグを持つ(decompile v0.107.1の`CanonicalTags`)。panel実測のPerfected Strike乖離31件中27件がこの欠落の説明だった。policy側の`STRIKE_TAGGED_REWARDS`はreward tier用の別集合でPommelを含まないが、panelのcard_reward 103件でPommel Strikeがoptionとして出たrecordが0件なので、ここを変える意味はmeasureできない(変更しない)。
+
 ### `ironclad.py`
 
 公式Bridgeとは独立した単一敵モデルである。`State`、`legal_actions`、`step`、深さ60のMCTS (`search`) を持ち、初期状態はHP80、Strike 5、Defend 4、Bash 1である。`load_enemy` は敵JSONのclass名を正規化して読む。
@@ -402,6 +404,10 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 `run_official_autoslay.ps1`は`-AgentScript`を明示しないと`--sts2ai-agent`フラグ自体が付かず、**ゲーム内蔵のAutoSlay AIがコストを無視するような挙動でプレイする**(Pythonエージェントは一切関与しない)。さらに`-AgentMaxCombats`のデフォルトは1で、指定した戦闘数を超えると`CombatBridge.cs`の`ReachedAgentLimit`が働き**2戦目以降は同じくゲーム内蔵AIへ自動的に切り替わる**(実機検証中、「初戦だけコストが減って次戦から減らない」という報告で発覚)。Act単位でエージェントの実力を検証する時は必ず`-AgentScript official_agent.py -AgentMaxCombats 999`のように明示すること——省略すると一見ランが進んでいるように見えても、Python側の改修が何一つ検証されていない。
 
 **戦闘中に自動発動するレリック効果**は元々`combat.py`に一切モデル化されておらず、`CombatBridge.cs`の観測にも`player.Relics`が含まれていなかった(先生からの質問で発覚)。`PlayerCombatState.MaxEnergy`(レリック補正込み)を`max_energy`として観測に追加したのに続き、`player.Relics`も`relics`として追加し、`Combat`に`player_relics`フィールドを新設した。デコンパイルでIroncladRelicPool+SharedRelicPoolの126種を監査し、戦闘関連フックを持つ68種のうち、`TurnNumber <= 1`一発限定の効果(Anchor・Akabekoなど13種)は**初回observationの時点で既に反映済みのため未対応でよい**と判断(searchはturn1を再シミュレートしない)。残る55種のうち、21種はターン跨ぎのロールアウト予測に直結する頻出パターンとして先行実装し、続く34種(BeatingRemnant・RainbowRing・RedSkull・SelfFormingClayなど)は、29種をロールアウトの状態遷移として追加した。BookOfFiveRings・LavaLamp・LuckyFysh・PetrifiedToad・VenerableTeaSetの5種は、初回observation、報酬、ショップ、次戦闘の状態へゲーム本体が反映するため、重複した戦闘状態を持たせずライブ観測を利用する。EventRelicPool(Pael/Orobas/Tezcatara等のAncientイベント専用レリック、約140種)は別系統として未監査である。DemonTongue/CentennialPuzzleは自傷カード(Hemokinesis等)由来の被弾には反応しない近似(FlameBarrierPowerと同じ簡略化方針)である。
+
+レリックには**counter(発動回数)があるが観測に載らない**(`CombatBridge.cs`はrelic idだけを書く。game側は`ShowCounter`/`DisplayAmount`を持つ)。modelは`attacks_played_combat`を自分で数えるが、decisionごとにstateを再構築するのでcounterは常に0から始まる。`0 % 10 == 0`は「発動済み」と読んでしまい、Pen Nib(10攻撃目に発動しその攻撃を倍)とNunchaku(10攻撃ごとにenergy)が**毎戦闘の1発目から発動扱い**だった。実走traceの敵HP乖離(NFH3RMVJ6DのStrike 3件。gameは10攻撃目に倍、modelは1発目で倍)がこれを指していた。counterがunknownのときは「発動していない」と扱うのが正しいので、`attacks_combat >= 10`の条件を追加した。同じ理由で、per-instanceの保存値(ToricToughnessPowerがcardごとに保存したblock、CrimsonMantlePowerの`SelfDamage`)も観測に現れないため、replay照合では復元不能な値として除外している。
+
+
 
 ## 既知の未モデル領域(2026-08-15 監査)
 
