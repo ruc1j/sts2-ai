@@ -6,7 +6,7 @@ import unittest
 from unittest.mock import patch
 
 from official_agent import CARD_NAMES, CARD_TIERS, SHOP_POTION_SCORES, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_potion, choose_rest, choose_shop, rollout_choice
-from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WOUND, CARD_BLOCK, CARD_COST, CARD_DAMAGE, legal_actions as combat_legal_actions, step
+from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND, CARD_BLOCK, CARD_COST, CARD_DAMAGE, legal_actions as combat_legal_actions, step
 
 
 class OfficialAgentTest(unittest.TestCase):
@@ -278,8 +278,8 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_maps_bridge_status_cards_for_rollouts(self) -> None:
         self.assertEqual(
-            {CARD_NAMES[card_id] for card_id in ("CARD.TOXIC", "CARD.BURN", "CARD.DAZED", "CARD.INFECTION")},
-            {TOXIC, BURN, DAZED, INFECTION},
+            {CARD_NAMES[card_id] for card_id in ("CARD.TOXIC", "CARD.BURN", "CARD.DAZED", "CARD.INFECTION", "CARD.WITHER")},
+            {TOXIC, BURN, DAZED, INFECTION, WITHER},
         )
 
     def test_rollout_maps_toxic_hand_card_to_turn_end_damage_model(self) -> None:

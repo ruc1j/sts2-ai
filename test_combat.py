@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
-    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, APOTHEOSIS, JUGGLING,
+    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1639,6 +1639,18 @@ class CombatTest(unittest.TestCase):
         combat = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
         self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
+
+    def test_wither_curse_deals_damage_at_turn_end_and_block_absorbs_it(self) -> None:
+        # Wither is a Curse (MaxUpgradeLevel 0) with HasTurnEndInHandEffect: 3 flat Unpowered
+        # damage, not Unblockable, so the block still standing when the hook runs absorbs it.
+        # Before this the card was invisible to the model because CARD_NAMES had no entry, so
+        # the raw observation id never matched the name the turn-end hook looks up.
+        wither = Combat(80, (WITHER,), (STRIKE,) * 10, (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),))
+        after = step(wither, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 80 - 3)
+        blocked = replace(wither, player_block=2)
+        after = step(blocked, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block), (79, 0))
 
     def test_battle_trance_blocks_further_draws_until_the_next_turn(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())

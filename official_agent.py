@@ -50,6 +50,9 @@ CARD_NAMES = {
     "CARD.DAZED": "Dazed",
     "CARD.INFECTION": "Infection",
     "CARD.DECAY": "Decay",
+    # Without this the observation id passes raw and combat.py never sees the card, so its
+    # OnTurnEndInHand damage can never fire (the same class of gap as POWER.FRAIL_POWER).
+    "CARD.WITHER": "Wither",
     "CARD.NORMALITY": "Normality",
     "CARD.FRANTIC_ESCAPE": "Frantic Escape",
     "CARD.IRON_WAVE": "Iron Wave",
