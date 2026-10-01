@@ -605,6 +605,15 @@ class CombatTest(unittest.TestCase):
         after = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 38)
 
+    def test_pen_nib_does_not_double_before_the_counter_has_been_counted(self) -> None:
+        # The observation carries relic ids but no counters, so a rebuilt decision state always has
+        # attacks_played_combat = 0.  `0 % 10 == 0` read that as "activated" and doubled the first
+        # attack of every combat (the same guard now protects the Nunchaku rule).
+        combat = Combat(80, (STRIKE,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), energy=1,
+            player_relics=(RELIC_PEN_NIB,))
+        after = step(combat, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 44)
+
     def test_vambrace_doubles_first_block_card(self) -> None:
         combat = Combat(80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_VAMBRACE,))
         self.assertEqual(step(combat, DEFEND, DUMMY_DATA, random.Random(0)).player_block, 10)

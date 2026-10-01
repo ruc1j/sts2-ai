@@ -2063,7 +2063,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     skills_combat = combat.skills_played_combat + (1 if card in SKILLS else 0)
     cards_this_turn = combat.cards_played_this_turn + 1
     powers_this_turn = combat.powers_played_this_turn + (1 if card in POWERS else 0)
-    pen_nib_double = RELIC_PEN_NIB in relics and card in ATTACKS and attacks_combat % 10 == 0
+    # Relic counters (Pen Nib's attacks-played, Nunchaku's) are not in the observation - the bridge
+    # writes relic ids only - so attacks_played_combat is 0 when a decision state is rebuilt.
+    # `0 % 10 == 0` read that as "already activated", doubling every first attack of every combat.
+    # The game activates these at the 10th attack, so treat them as inactive until the model has
+    # counted 10 itself.
+    pen_nib_double = RELIC_PEN_NIB in relics and card in ATTACKS and attacks_combat >= 10 and attacks_combat % 10 == 0
     helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (card_cost >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
     vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and card in BLOCK_CARDS
     lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
@@ -2091,7 +2096,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             if alive:
                 hit = rng.choice(alive)
                 combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6, powered=False)
-        if RELIC_NUNCHAKU in relics and attacks_combat % 10 == 0 and energy_gain_allowed:
+        if RELIC_NUNCHAKU in relics and attacks_combat >= 10 and attacks_combat % 10 == 0 and energy_gain_allowed:
             combo_energy += 1
     if card in SKILLS:
         if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0:
