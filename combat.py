@@ -738,6 +738,19 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     if not from_hand_draw and _power(combat.player_powers, "NoDrawPower"):
         return combat
     drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, count, rng)
+    # ChainsOfBindingPower.AfterCardDrawn afflicts every card the player draws with Bound, up to
+    # its amount per turn. Bound cards cannot be played, so the counter is exactly the number of
+    # still-bound cards in hand plus the ones being marked here.
+    chains = _power(combat.player_powers, "ChainsOfBindingPower")
+    if chains:
+        already_bound = sum(1 for value in combat.hand if isinstance(value, Card) and value.bound)
+        marked = []
+        for value in drawn:
+            if isinstance(value, Card) and already_bound < chains:
+                value = replace(value, bound=True)
+                already_bound += 1
+            marked.append(value)
+        drawn = tuple(marked)
     combat = replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard)
     if not _power(combat.player_powers, "HellraiserPower"):
         return combat

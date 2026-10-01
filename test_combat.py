@@ -1652,6 +1652,23 @@ class CombatTest(unittest.TestCase):
         after = step(blocked, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual((after.player_hp, after.player_block), (79, 0))
 
+    def test_chains_of_binding_afflicts_cards_drawn_during_the_rollout(self) -> None:
+        # The live hand already carries the game's Bound flags, but a card drawn inside a rollout
+        # has to be afflicted by the power itself, or the model treats it as playable.
+        combat = Combat(
+            80, (), tuple(Card(name) for name in (STRIKE, DEFEND, BASH, ANGER, BLUDGEON, STOMP, IRON_WAVE)),
+            (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),),
+            player_powers=(("ChainsOfBindingPower", 3),),
+        )
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        bound = sum(1 for card in after.hand if isinstance(card, Card) and card.bound)
+        self.assertEqual((len(after.hand), bound), (5, 3))
+        # Every card here is a distinct copy, so the 2 unbound ones are the only playable actions.
+        self.assertEqual(len([action for action in legal_actions(after) if action.startswith("card:")]), 2)
+        # The cap is per turn: drawing further cards adds no Bound once 3 are afflicted.
+        after = _draw_into_combat(after, 2, DUMMY_DATA, random.Random(0))
+        self.assertEqual(sum(1 for card in after.hand if isinstance(card, Card) and card.bound), 3)
+
     def test_battle_trance_blocks_further_draws_until_the_next_turn(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
         combat = Combat(80, (BATTLE_TRANCE, DRUM_OF_BATTLE), (STRIKE,) * 12, (), (enemy,))

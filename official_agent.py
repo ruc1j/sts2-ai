@@ -246,6 +246,9 @@ POWER_NAMES = {
     "POWER.DEMON_FORM_POWER": "DemonFormPower",
     "POWER.STAMPEDE_POWER": "StampedePower",
     "POWER.CLARITY_POWER": "ClarityPower",
+    # Queen's PUPPET_STRINGS_MOVE applies ChainsOfBindingPower to the player. Without the mapping
+    # the id passed raw and the rollout treated every drawn card as playable.
+    "POWER.CHAINS_OF_BINDING_POWER": "ChainsOfBindingPower",
     "POWER.MAYHEM_POWER": "MayhemPower",
     "POWER.FLEX_POTION_POWER": "FlexPotionPower",
     # The observation reports these under their own ids; without the mapping combat.py never

@@ -16,6 +16,11 @@ class OfficialAgentTest(unittest.TestCase):
     def test_maps_ceremonial_beast_ringing_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.RINGING_POWER"], "RingingPower")
 
+    def test_maps_queens_chains_of_binding_power_for_rollouts(self) -> None:
+        # Without this the Queen fight's most frequent player power (3849 observations across the
+        # corpus) never reached combat.py, so drawn cards were treated as playable.
+        self.assertEqual(POWER_NAMES["POWER.CHAINS_OF_BINDING_POWER"], "ChainsOfBindingPower")
+
     def test_maps_waterfall_steam_eruption_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.STEAM_ERUPTION_POWER"], "SteamEruptionPower")
 
