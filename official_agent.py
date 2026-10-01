@@ -2308,10 +2308,25 @@ def choose_map(observation: dict) -> dict:
         # Act 2 fight costs 17.0 HP, an elite 32.2, and a rest site restores about 26. Ranking the
         # counts instead had the planner trade one ordinary fight for one elite (about fifteen HP
         # worse), and pricing only the fights had it trade away rest sites it needed.
+        # The rest term is capped by the HP actually missing when the rest is reached: a run at
+        # full HP cannot bank a 26 HP heal, so a rest at full HP must not outrank a route that
+        # arrives at the rest while damaged.
+        max_hp = player.get("max_hp", 0) or 0
+        hp = player.get("hp", max_hp)
+        heal_value = 0
+        for room_type in types:
+            if room_type == "Monster":
+                hp -= 17
+            elif room_type == "Elite":
+                hp -= 32
+            elif room_type == "RestSite":
+                heal = min(26, max_hp - hp)
+                heal_value += heal
+                hp = min(max_hp, hp + heal)
         hp_cost = (
             types.count("Monster") * 17
             + types.count("Elite") * 32
-            - types.count("RestSite") * 26
+            - heal_value
         )
         return (
             unrested_elites,

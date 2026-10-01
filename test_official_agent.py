@@ -1149,6 +1149,24 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_map(observation)["col"], 1)
 
+    def test_map_route_vals_rest_by_hp_missing_when_reached(self) -> None:
+        # A heal cannot be banked: at 70/80 a rest restores 10, but a rest reached after a fight
+        # restores the full 26. With a flat 26 per rest site these two routes tied; charging the
+        # rest at the HP actually missing at that point prefers the route that fights first.
+        observation = {
+            "player": {"hp": 70, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 0, "type": "Shop", "children": [{"col": 0, "row": 1}, {"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "RestSite", "children": [{"col": 0, "row": 2}]},
+                {"col": 0, "row": 2, "type": "Monster", "children": [{"col": 0, "row": 3}]},
+                {"col": 1, "row": 1, "type": "Monster", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "RestSite", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 1}, {"type": "map", "col": 1, "row": 1}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
     def test_map_route_falls_back_to_value_without_boss(self) -> None:
         # No boss point on the map: the route planner is skipped and the value heuristic decides.
         observation = {
