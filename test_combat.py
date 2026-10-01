@@ -1365,6 +1365,16 @@ class CombatTest(unittest.TestCase):
         after = step(blocked_only, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
         self.assertEqual((after.player_hp, after.player_block, _power(after.player_powers, "BufferPower")), (20, 0, 1))
 
+    def test_buffer_power_only_covers_one_hit_of_a_multi_hit_attack(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "intents": [{"type": "MultiAttackIntent", "damage": 10.0, "repeats": 2}],
+            "next": "HIT_MOVE", "effects": [{"command": "DamageCmd.Attack", "arguments": ["Damage"], "amount": 10}],
+        }]}]}
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
+        combat = Combat(30, (), (), (), (enemy,), energy=0, player_powers=(("BufferPower", 1),))
+        after = step(combat, END_TURN, data, random.Random(0))
+        self.assertEqual((after.player_hp, _power(after.player_powers, "BufferPower")), (20, 0))
+
     def test_thorns_reflection_is_absorbed_by_block(self) -> None:
         # ThornsPower.BeforeDamageReceived fires before the attack's own DamageCmd, so block is still
         # standing (Unpowered is not Unblockable).  Observed on EAIF2UUVCK seq 294: block 7 absorbed a
