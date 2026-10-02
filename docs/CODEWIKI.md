@@ -2512,3 +2512,18 @@ decompile 上、`Regret.OnTurnEndInHand` は hand size ぶんの **Unblockable**
 同じ hook だが block で absorb される側・されない側が違う）、`Doubt` は Weak 1、`Shame` は Frail 1
 （`SkipNextDurationTick` で次の tick を飛ばす＝player の次のターンに効く）。
 `Debt` は `PlayerCmd.LoseGold(min(10, gold))` だけで戦闘効果が無い → model 外（gold 経済を扱わない）なので実装不要。
+
+sample の分歧116件を機構別に分解（record に複数の機構が同時に在る場合はあるので件数は機構別、合計は116超になりうる）：
+
+| 機構 | flip | seed数 |
+|---|---:|---:|
+| `RELIC.FIDDLE`（hand draw 以外を拒否＋hand draw +2） | **76** | 4 |
+| `POWER.CHAINS_OF_BINDING_POWER`（rollout 内のドローを Bound） | **34** | 5 |
+| `RELIC.FORGOTTEN_SOUL`（exhaust 1枚につき random 1体へ1） | 24 | 1 |
+| `RELIC.BLOOD_SOAKED_ROSE`（毎ターン energy +1） | 8 | 4 |
+| `POWER.DUPLICATION_POWER` / `CARD.ONE_TWO_PUNCH` | 2 / 2 | 2 / 2 |
+| `CARD.PANACHE` | 1 | 1 |
+
+Fiddle と Chains が分歧の主成分（rollout 内のドロー挙動を変える機構）。Gigantification は sample に
+分歧なし（0件）。到達性の内訳が機構ごとに偏っているので、panel 実走は「機構まとめて1本」ではなく
+この内訳が実際に勝敗へ伝わるかを見る測定として扱う。
