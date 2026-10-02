@@ -28,3 +28,20 @@ data/*_mapdebug.jsonl
 data/dashboard.html
 data/dashboard_gen.log
 data/*_observations.jsonl
+data/*.err
+# the same output written under a per-run subdirectory (panel arms live there)
+data/**/*_agent.jsonl
+data/**/*.log
+data/**/*_map.json
+
+# measurement helpers: the run scripts and the recorded decision they replay. The panel
+# artifacts they read (traces, results, logs) are already ignored above, so these stay out to
+# keep a run reproducible-only.
+data/sweep*.sh
+data/replay_*.json
+
+# detached worktrees that hold a same-commit baseline for A/B measurement
+.wt-*/
+
+# leftover artifact of a write-permission probe, not repo content
+*_write_test_*.txt
