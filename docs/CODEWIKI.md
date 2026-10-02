@@ -2720,3 +2720,18 @@ start 時の HEAD で、実際に使われた file 内容ではない。この4 
 heuristic_fallback 33件で exception は0。つまり汚染 run では agent が fall out して game 側が default
 （skip）を取っている。再走後は `*_agent.err` が空であること＋`agent_exception_fallback` が0件であることを
 確認してから結果を使う。
+
+### run safety：もう一つの失敗（同時に run を started した）
+
+再走 script を書いたとき、実行中の sweep があることを確認せずに呼んだ。`run_official_autoslay.ps1` は
+「Slay the Spire 2 is already running」で throw するので**測定は行われなかった**（4 seed全部 exit=1、
+stdout は exception だけ）。ただし sweep の `trap` がユーザーデータを snapshot へ復元したので、走行中の
+run の環境へ割り込んだ。artifact は削除済み。
+
+`/Users/mao/.sts2/scripts/rerun_mechpanel.sh` の guard（両方実失敗から）：
+
+- game process が在る then refuse（同時に run を start しない）
+- `official_agent.py` / `combat.py` が HEAD と違则 refuse（汚染）
+
+再走は4 seed：`N8CQ4ZKP2W` `H2LV6ZJ4XW` `AM8C6YXHSG` `R8V2H6N4ZB`（tag `mechpanel_arm_rerun`）。
+条件は panel と同一（固定ユーザーデータ、`simulations=100`、Act 3まで、1 run/seed）。
