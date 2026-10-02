@@ -2678,3 +2678,26 @@ Fiddle を持つ run で、draw 系札（Pommel・Shrug・Evil Eye・Battle Tran
 
 Fiddle は panel の sample で分歧76件（11 seed 中の最大）＝機構単独で最もreachのある筋。
 run レベルで測れるのは両腕が Fiddle を持った seed だけ（control 腕では AM8 が所持）。
+
+### Bound は play を阻止しない（commit `5d8bf18`）
+
+`ChainsOfBindingPower.ShouldPlay`：Bound 札を阻止するのは**そのターンに Bound 札を1枚打った後**だけ
+（`BeforeCardPlayed` がフラグを立て、`BeforeSideTurnEnd` でフラグと affliction を両方 clear）。
+＝第一 choice のゲート前、game は Bound 札を playable として出す。
+
+実測：corpus で**Bound 札を打った decision 279件**（3 seed）、うち **45ターンで1ターンに2枚以上**
+打っている。 blanket「Bound は打てない」は忠実でなかった。
+
+model の形の修正：
+
+- `Card.bound` = affliction マーカー（それ自体は play を阻止しない）
+- `Combat.bound_played_this_turn` = ShouldPlay のターン内ゲート
+- `Card.unplayable_this_turn` = game の legal_actions がその decision で除外したという判定（first move
+  では game の list が権威。Snecko の一時的な高コスト等もここに入る）。これを `bound` と同一字段に
+  していたのが、忠実でない方向へねじれていた
+- `legal_actions`：`unplayable_this_turn` は常に skip、`bound` はゲートが立ってから skip
+
+テスト `test_chains_of_binding_afflicts_cards_drawn_during_the_rollout` をゲート rule へ更新
+（play 前は5枚とも legal、bound を1枚打つと残りの bound 2枚は skip、unbound は playable のまま）。
+suite **733件成功**。mechanism panel の arm 腕はこの commit を通るので、Chains の sample 到達性34件は
+この rule の下で数え直す（gate 前は playable、gate 後だけ skip）。
