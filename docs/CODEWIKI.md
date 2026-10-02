@@ -2537,3 +2537,19 @@ Fiddle と Chains が分歧の主成分（rollout 内のドロー挙動を変え
 sample の分歧主成分（Fiddle 76・Chains 34）は機構の正しさではなく「rollout が将来引く札をどう数えるか」の差。
 実走で測れるのは、その差が胜敗へ伝播する seed があるか。panel の control 腕で `N8CQ4ZKP2W` は 5勝1敗
 （Act 1 F14 elite で死亡）＝この seed では機構の有無以前に commit 差が勝敗を決めている例。
+
+### run レベルの A/B は「両腕で同じ機構が出た」ときにのみ機構を測れる
+
+機構の出現は path 依存：Fiddle・Blood-Soaked Rose・Forgotten Soul は relic 報酬（自動取得）で、
+どの報酬・休憩・戦闘が来るかは policy の分岐で変わる。だから同一 seed でも arm 側で発火して
+control 側で発火しないことがある。その seed は A/B として**attribution 不能**（機構の実装差ではなく
+game が違った offer を出した）。同じ observation を両commitで replay した到達性計算だけが
+「機構単独の差」を隔離できる（上の sample：620件で116分歧）。
+
+mechanism panel の control 腕（`e808bdf`）でこれまでの発火は 0：`N8CQ4ZKP2W` 5W1L・fired none、
+`H2LV6ZJ4XW` 12W0L・fired none。`data/compare_panel.py` は tag/seed を引数で受け取る形にした
+（commit `bbf0abd`）。panel の判定は per-seed だけでなく **fired を両腕で確認してから**使う。
+
+参考：同じ seed の古い record では FIDDLE が数千行に出る（N8 の `candidate` run 3,419行、
+H2 の `candidate` run で FORGOTTEN_SOUL 3,249行）＝取得している run では恒久的に観測へ出る。
+control 腕の run が取得していない＝route/reward が違う。
