@@ -2582,8 +2582,8 @@ panel 8 seed を両腕で洗うと、機構が **両腕の record に出る** se
 ### 同一 commit・同一 seed の再走は decision列が完全一致（再現性の確認）
 
 mechanism panel の control 腕で `AM8C6YXHSG` を `e808bdf` に再走した。先行した `ctrl20261004_AM8C6YXHSG`
-（351件）と比較し、**再走の285件が決定列（seq・card_id・decision_source）まで完全一致**。条件は同一：
-固定ユーザーデータ、`simulations=100`、Act 3まで、単一 game instance。
+（351件）と比較し、**再走分の決定列（seq・card_id・decision_source）が全件一致**（2026-10-03 09:40 時点で
+351/351、再走は走行継続中）。条件は同一：固定ユーザーデータ、`simulations=100`、Act 3まで、単一 game instance。
 
 これで「同じ决定列なら outcome も同じ（game の RNG は seed 由来）」が harness 側でも確認できた。
 panel の ±0 が本当に「決定が変わっていない」かどうかの判定は、この再現性の上で使える。
