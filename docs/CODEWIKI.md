@@ -2611,3 +2611,8 @@ Paels Flesh の branch は残る：turn 2 の観測は 3 を報告するので�
 mechanism panel の sample で Rose に紐づいていた分歧8件は、この除去で消える（機構単独の到達性は
 Fiddle 76・Chains 34・Forgotten Soul 24・OneTwoPunch 2・Panache 1 へ）。arm 腕の run はこの commit を
 含むので、panel の結果を読むときは Rose 分を机构差として数えない。
+
+修正後の同じ record（`gdv_9X9WQB4QIH` の turn 1、relic 所持、max_energy 4）での END_TURN rollout：
+model の turn 2 energy は **4**（修正前は5）。game が報告する有効値と一致する形になった。
+実走 panel（control 腕）では `R8V2H6N4ZB` が BLOOD_SOAKED_ROSE を所持して発火しているが、
+修正後の model にとってこの relic は decision に効かない（観測に既にある） → R8 で動くのは他の機構だけ。
