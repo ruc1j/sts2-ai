@@ -2487,3 +2487,28 @@ decision列を件数で照合した：
 通すので、model が Basic（Strike/Defend/Bash）を生成集合から除いているのは忠実。忠実な集合は
 「model が knows ∧ character pool ∧ non-Basic」で、commit `77120b2` の形がそれ。
 実走の生成 record（hand に現れた札）で Basic が一度も出ていないのも一致。
+
+## 機構単独の到達性（2026-10-03、sample）と mechanism panel
+
+固定8 seed panel は機構がほぼ発火しない（12,841件の内、panel 分の発火は 9X9 の DuplicationPower 1回
+だけ）ので、この panel では機構の実走効果を測れない。corpus 512 trace の集計：
+
+- 機構 id を含む combat record（`legal_actions` 付き）：**12,841件 / 139 seed**
+- decision_source：rollout_success 8,070 / **heuristic_fallback 2,655** / lethal系 672 / direct_potion 266
+- 機構の札そのものを打った record：13件（One-Two Punch 10、Panache 3）
+
+同一 observation を両commitで replay した（`STOKE_GENERATION` を control の形へ固定して生成プールの
+副作用を隔離、1-in-12 sample）：**照合620件で分歧116件 / 15 seed**。内訳（多い順）
+`N8CQ4ZKP2W` 57、`H2LV6ZJ4XW` 24、`AM8C6YXHSG` 15、`R8V2H6N4ZB` 4、`D1W9Y3B7FC` 3、
+`P3V8N5K2RX` 2、`B3N8V5T1WQ` 2、`Q6N3V8K2MT` 2、ほか1件ずつ。→ 閾値（≥3 decisions かつ ≥3 seeds）超。
+
+実走：mechanism panel 8 seed（上の順）で control `e808bdf` → arm HEAD（`77120b2` 以降）の順で
+16 run を直列実行。生 data は `data/mechpanel_ctrl_*` と `data/mechpanel_arm_*`（git除外）。
+
+### 訂正：curses は実装済み
+
+「残っている未モデル」に並んでいた DOUBT・REGRET・SHAME は main で実装済み（`test_curses_left_in_hand_hit_the_player_at_turn_end` が pin）。
+decompile 上、`Regret.OnTurnEndInHand` は hand size ぶんの **Unblockable** Unpowered damage（`Beckon`/`Bad Luck` と
+同じ hook だが block で absorb される側・されない側が違う）、`Doubt` は Weak 1、`Shame` は Frail 1
+（`SkipNextDurationTick` で次の tick を飛ばす＝player の次のターンに効く）。
+`Debt` は `PlayerCmd.LoseGold(min(10, gold))` だけで戦闘効果が無い → model 外（gold 経済を扱わない）なので実装不要。
