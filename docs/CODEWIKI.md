@@ -2553,3 +2553,15 @@ mechanism panel の control 腕（`e808bdf`）でこれまでの発火は 0：`N
 参考：同じ seed の古い record では FIDDLE が数千行に出る（N8 の `candidate` run 3,419行、
 H2 の `candidate` run で FORGOTTEN_SOUL 3,249行）＝取得している run では恒久的に観測へ出る。
 control 腕の run が取得していない＝route/reward が違う。
+
+### Forgotten Soul の実走証拠（decompile だけでなく record で確認）
+
+`data/candidate_headbutt_D6A1F8C3E5_agent.jsonl` の seq 379・380：`CARD.TREMBLE`（damage 0 の
+exhaust 札）を打った turn で、confound しうるレリック（Charon's Ashes・Nunchaku・Pendulum）は
+未所持、enemy の `hp+block` が **ちょうど1** 減っている。`ForgottenSoul.AfterCardExhausted` の
+「exhaust 1枚につき random 1 hittable 体へ 1 unpowered」そのもの。全体へ出す Charon's Ashes とは
+違う、という実装の主張が record 側でも立った。
+
+同じ条件の record は corpus でこれ以外の0件（drop 0 の反例も無し）＝サンプルは小さいが、
+機構の方向性は正しい。Fiddle・Chains・Duplication・Gigantification・Panache・One-Two Punch は
+現物照合（hook 名と条件）で固定済み。
