@@ -1681,13 +1681,16 @@ class CombatTest(unittest.TestCase):
         after = _after_exhaust(after, (STRIKE,), random.Random(0), DUMMY_DATA)
         self.assertEqual(len(after.hand), 7)
 
-    def test_blood_soaked_rose_grants_one_energy_at_every_energy_reset(self) -> None:
+    def test_blood_soaked_rose_is_not_double_counted_at_energy_reset(self) -> None:
+        # The bridge reports the game's effective max_energy for the observed turn, so a run holding
+        # Blood-Soaked Rose already shows 4 at turn 1. A state built from an observation must reset to
+        # the same 4, not 4 + 1.
         combat = Combat(
             80, (), (STRIKE,) * 12, (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),),
-            player_relics=(RELIC_BLOOD_SOAKED_ROSE,),
+            max_energy=4, energy=4, player_relics=(RELIC_BLOOD_SOAKED_ROSE,),
         )
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
-        self.assertEqual(after.energy, 4)
+        self.assertEqual((after.turn, after.energy, after.max_energy), (2, 4, 4))
 
     def test_forgotten_soul_damage_lands_on_one_random_enemy_per_exhausted_card(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()), Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()))

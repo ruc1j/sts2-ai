@@ -2041,10 +2041,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # Fiddle.ModifyHandDrawLate: +2 on the start-of-turn hand draw, every turn.
         if RELIC_FIDDLE in relics:
             extra_draw += 2
-        # BloodSoakedRose.ModifyMaxEnergy: +1 energy at every energy reset (it also plants the
-        # Enthralled curse in the deck on pickup, which has no combat effect by itself).
-        if RELIC_BLOOD_SOAKED_ROSE in relics:
-            extra_energy += 1
+        # BloodSoakedRose.ModifyMaxEnergy: +1 at every energy reset. The bridge's `max_energy` is the
+        # game's effective value for the turn being observed, so a run holding the relic already
+        # reports 4 at turn 1 - adding 1 again here double counts. Nothing to model: the effect is
+        # already in the observation.
         draw_count = max(0, 5 + extra_draw - _power(player_powers, "MindRotPower"))
         hand = list(combat.hand)
         discard = list(combat.discard_pile)
