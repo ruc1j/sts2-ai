@@ -2482,3 +2482,8 @@ decision列を件数で照合した：
 7 seed は decision列が control と完全一致。同じ决定列なら outcome も同じ（game の RNG は seed 由来）
 なので、この7件は watchdog の有無に関係なく「測定不能」が確定。AM8 の分歧は seq 244（SWORD_BOOMERANG）
 からで、件数差は arm が早く負けたぶん。
+
+`CardFactory.FilterForCombat` は `CanBeGeneratedInCombat && Rarity != Basic/Ancient/Event` を
+通すので、model が Basic（Strike/Defend/Bash）を生成集合から除いているのは忠実。忠実な集合は
+「model が knows ∧ character pool ∧ non-Basic」で、commit `77120b2` の形がそれ。
+実走の生成 record（hand に現れた札）で Basic が一度も出ていないのも一致。
