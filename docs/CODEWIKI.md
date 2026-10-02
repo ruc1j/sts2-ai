@@ -2748,3 +2748,15 @@ sample の Chains 分歧34件は「Bound 札を打てない」という**忠実�
 → 忠実なゲートの到達性は45ターンを上限として replay で数え直す（control にはゲートが無いので、
 ゲート単独の差）。Fiddle（76件）は rule が忠実と確認済みなのでそのまま。panel 実走で測れるのは、
 両腕が同じ機構を見た seed だけ、という条件もそのまま。
+
+### D1：决定は61件違うが outcome は同じ（14勝1敗）
+
+mechanism panel の `D1W9Y3B7FC`：control 14勝1敗、arm（clean code、例外0件）14勝1敗。
+decision列は arm 294件 / control 306件で **61件分歧**（first divergence seq 82）。この seed は
+**両腕の run とも機構を見ていない**（control 側 fired none、arm 側も none）ので、分歧は機構の実装差
+では説明できない。機構が1つも state に入っていない run で arm/control が違いうる通路は
+`STOKE_GENERATION` の形（忠実化で32名を除いた）だけ。
+
+→ decision の分歧は outcome へ伝わらないことがある、の実例。panel の判定は per-seed の増減ではなく
+母集団の合計、かつ「両腕で同じ機構を見た」seed だけを使う、という rule がそのまま生きる。
+D1 の ±0 は「効果なし」ではなく、機構について言えば**測定不能**（分歧の成因が機構と無関係）。
