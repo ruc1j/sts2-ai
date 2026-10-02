@@ -2412,3 +2412,53 @@ trace の観測 id 集計で洗った（player powers 56 id 中 8、relic 40 id 
 - **ImprovementPower**：`AfterCombatEnd` で deck を upgrade。戦闘内の decision に無関係
 - **StratagemPower**：機構は正しいが 2026-09-12 の実走で QUEEN 残 151→363 へ悪化、不採用
 - **Enthralled / Wound / Dazed**：combat effect が無い（Eternal / Unplayable のみ）。Dazed は draw pile の汚れとしてのみモデル
+
+## 固定8 seed panel の A/B 完走（2026-10-03）と −6 の原因
+
+arm = HEAD（未モデル power/relic/curse 実装）、control = `e808bdf`（同一条件で取り直した基準）。
+game v0.107.1、固定ユーザーデータ、`simulations=100`、Act 3まで、各 seed 1 run。判定はトレースの `won`。
+
+| seed | control | arm | delta | arm の発火 | decision列 |
+|---|---:|---:|---:|---|---|
+| 9X9WQB4QIH | 14 | 14 | 0 | DuplicationPower 1回 | 完全一致 |
+| NFH3RMVJ6D | 15 | 15 | 0 | なし | 完全一致 |
+| EAIF2UUVCK | 14 | 14 | 0 | なし | 完全一致 |
+| 73P61QQZNU | 13 | 13 | 0 | なし | 完全一致 |
+| AM8C6YXHSG | 17 | 11 | **−6** | なし | seq 244 から分歧 |
+| VTW80ZJA2G | 13 | 13 | 0 | なし | 完全一致 |
+| GEFYYKH1YK | 7 | 7 | 0 | なし | 完全一致 |
+| SWRUL944UU | 6 | 6 | 0 | なし | 完全一致 |
+| **合計** | **99** | **93** | **−6** | | |
+
+7 seed は decision列が control と完全一致＝測定不能（発火がないのでarm/controlが同じ選ぶ）。
+panel 全体で唯一動いた AM8 の −6 は、**機構の実装ではなく生成プールの副作用**だった。
+
+### seq 243 の切り分け（`data/replay_243.py`）
+
+同一 observation を両commitで replay すると記録値がそのまま再現される（arm 1.9925 / control 1.956875）。
+hand・draw pile・enemies・powers・relics は完全一致。差の原因は `STOKE_GENERATION` の中身：
+
+```
+arm : (..., 'Offering', 'One-Two Punch', 'Pacts End', 'Panache', 'Peck', ...)
+ctrl: (..., 'Offering', 'Pacts End', 'Peck', ...)
+```
+
+`STOKE_GENERATION` は `CARD_COST` から導出されるので、PANACHE と ONE_TWO_PUNCH を `CARD_COST`
+へ足した時点で生成プールが silently に広がっていた。生成セットを control の形へ戻すと arm が
+control の記録値（1.956875）を完全再現する。つまり AM8 の −6 は「正しく機構を教えた」ことによる
+変化ではなく、近似プールの要素追加による rollout の分岐。
+
+### 生成プールはキャラクター自身のプールだけ（commit `77120b2`）
+
+`Stoke.cs` / `InfernalBlade.cs`（decompile）は `Owner.Character.CardPool.GetUnlockedCards(...)` から
+生成する。Ironclad の pool（`IroncladCardPool.cs`、87枚）に Panache は無い — Panache は
+`ColorlessCardPool`。したがって Ironclad run で Stoke が Panache を生成することは無い。
+One-Two Punch は Ironclad pool に在るので生成しうる（この方の追加は忠実）。
+
+model は知っている札しか生成できないので、忠実な近似は「model が knows ∧ character pool」の集合。
+`CARDS_OUTSIDE_THE_CHARACTER_POOL` として固定し、`STOKE_GENERATION` と `INFERNAL_BLADE_ATTACKS`
+から除いた（32名）。回帰テスト `test_generated_cards_come_only_from_the_characters_own_pool`。
+実走の照合：panel の Stoke 使用 6件で生成された札はすべて `CARD_POOL.IRONCLAD_CARD_POOL` — 一致。
+
+生成プールの限定の決定レベル到達性（arm 記録の replay）：AM8 **11件 / 1 seed**、9X9・NFH3・EAIF・73P で 0。
+1 seed の増減は採用根拠にしない rule のまま、正しさ（デコンパイル）で commit した。勝率への効果は未測定。
