@@ -2663,3 +2663,7 @@ noise 未満 → 実走対象にしない）。
 **4件 / 2 seed**（`N8CQ4ZKP2W` seq 126・135・141、`Z2K7D9F4VX` seq 462）→ 閾値（≥3 decisions かつ
 ≥3 seeds）未満。機構の形（play 全体をもう1回走らせる）は正しいが、この panel では測れない。
 実装を変えない（「multi-effect の第二解決が model に無い」として記録だけ）。
+
+mechanism panel の両腕は bridge（C#）が同一：`git diff --name-only e808bdf..HEAD` に `.cs` は 0件。
+panel の差は Python 側（policy/模型）だけなので、run 間の差を「DLL が違う」で説明できない。
+control 腕 = `e808bdf` worktree、arm 腕 = HEAD（`77120b2` と `a328b5c` を含む）。
