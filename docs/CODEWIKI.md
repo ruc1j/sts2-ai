@@ -2565,3 +2565,16 @@ exhaust 札）を打った turn で、confound しうるレリック（Charon's 
 同じ条件の record は corpus でこれ以外の0件（drop 0 の反例も無し）＝サンプルは小さいが、
 機構の方向性は正しい。Fiddle・Chains・Duplication・Gigantification・Panache・One-Two Punch は
 現物照合（hook 名と条件）で固定済み。
+
+### 固定 panel で「両腕が同じ機構を見た」 pair は2件だけ
+
+panel 8 seed を両腕で洗うと、機構が **両腕の record に出る** seed は：
+
+| seed | 機構 | decision diff |
+|---|---|---:|
+| `9X9WQB4QIH` | `POWER.DUPLICATION_POWER`（両腕） | 0 |
+| `73P61QQZNU` | `CARD.ONE_TWO_PUNCH`（両腕） | 0 |
+
+`AM8C6YXHSG` は control 側だけ FIDDLE・FORGOTTEN_SOUL・CHAINS・OneTwoPunch を持っていて、**arm 側の run は一つも見ていない**（機構を引く/route が違った）。だから AM8 の分歧は機構の実装差ではなく、確認済みの生成プール（`STOKE_GENERATION`）の差だけが効いた。EAIF・NFH3・VTW・GEFYY・SWRUL は両腕で発火ゼロ。
+
+→ 固定 panel で機構単独を測れた pair は 2件、reach 0。機構の実走効果は mechanism panel（control 腕完走後に arm 腕）を待つ。
