@@ -2808,3 +2808,13 @@ leak は artifact。panel の arm 腕は `f8f3966` の code で8 seed 再走し�
 
 再走は7 seed（`mechpanel_arm_clean`）。Q6 は clean code で start した最初の run。
 control 腕（`e808bdf`）の8 seed 結果（合計121勝）はそのまま基準。
+
+### Chains の忠実なゲートは3 seed にmaterialに効く（651 record）
+
+game の legal_actions が Bound 札を除外していた record（＝ゲートが立っていた）：**651件 / 3 seed**
+（`N8CQ4ZKP2W` 399、`H2LV6ZJ4XW` 224、`D6A1F8C3E5` 28）。同じ条件で Bound 札が legal_actions に
+**入っていた** record は622件（ゲート前、両treeが playable 扱い → 差が出ない）。
+
+sample の Chains 分歧34件は blanket rule（常時 skip）の下で数えたので、忠実なゲート下的の分歧件数は
+この651件の上で数え直す。panel の arm 腕 re-run（`f8f3966`）が走っている間は CPU を game に譲る（25 ms
+ポーリングのdelay → watchdog risk）ので、replay は sweep 完了後。
