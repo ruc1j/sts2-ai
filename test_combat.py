@@ -2195,6 +2195,18 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(_power(after.player_powers, "WeakPower"), 1)  # Doubt, past the tick
         self.assertEqual(_power(after.player_powers, "FrailPower"), 1)  # Shame
 
+    def test_the_per_turn_unplayable_marker_does_not_leak_into_the_next_turn(self) -> None:
+        marked = Card(STRIKE, unplayable_this_turn=True)
+        combat = Combat(80, (marked,), (), (), (Enemy("MONSTER.DUMMY", 10, "IDLE_MOVE", ()),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertFalse(any(isinstance(card, Card) and card.unplayable_this_turn for card in after.discard_pile))
+        # RetainHandPower keeps the copy in hand across the flush; the marker must still be cleared.
+        retained = step(
+            replace(combat, player_powers=(("RetainHandPower", 1),)), END_TURN, DUMMY_DATA, random.Random(0)
+        )
+        self.assertTrue(any(isinstance(card, Card) and card.name == STRIKE for card in retained.hand))
+        self.assertFalse(any(isinstance(card, Card) and card.unplayable_this_turn for card in retained.hand))
+
     def test_curses_are_never_playable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         self.assertEqual(legal_actions(Combat(80, (DOUBT, REGRET, SHAME), (), (), (enemy,))), (END_TURN,))

@@ -1864,14 +1864,26 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # ScreamingFlagon.BeforeSideTurnEnd: 20 damage to every enemy if the hand ended up empty.
         screaming_flagon = RELIC_SCREAMING_FLAGON in relics and not combat.hand
         retain_hand = _power(combat.player_powers, "RetainHandPower") > 0
+        # Both markers are per-turn. `bound` is cleared by ChainsOfBindingPower.BeforeSideTurnEnd;
+        # `unplayable_this_turn` is the game's verdict for the turn that was observed, so it must not
+        # leak into the next turn of the rollout (it used to ride on the same field as bound and got
+        # cleared by accident).
         flushed_hand = tuple(
-            replace(card, bound=False) if isinstance(card, Card) and card.bound else card
+            replace(card, bound=False, unplayable_this_turn=False)
+            if isinstance(card, Card) and (card.bound or card.unplayable_this_turn)
+            else card
+            for card in combat.hand
+        )
+        retained_hand = tuple(
+            replace(card, unplayable_this_turn=False)
+            if isinstance(card, Card) and card.unplayable_this_turn
+            else card
             for card in combat.hand
         )
         combat = replace(
             combat, player_block=combat.player_block + cloak_clasp_block,
             discard_pile=combat.discard_pile + (() if retain_hand else flushed_hand),
-            hand=combat.hand if retain_hand else (),
+            hand=retained_hand if retain_hand else (),
             paels_tears_pending=RELIC_PAELS_TEARS in relics and combat.energy > 0,
         )
         plating = _power(combat.player_powers, "PlatingPower")
