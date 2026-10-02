@@ -2701,3 +2701,16 @@ model の形の修正：
 （play 前は5枚とも legal、bound を1枚打つと残りの bound 2枚は skip、unbound は playable のまま）。
 suite **733件成功**。mechanism panel の arm 腕はこの commit を通るので、Chains の sample 到達性34件は
 この rule の下で数え直す（gate 前は playable、gate 後だけ skip）。
+
+###  contaminated: arm 腕の4 run は無効（working tree に未commitの実験コードが入っていた）
+
+mechanism panel の arm 腕で `N8CQ4ZKP2W` 0勝1敗、`H2LV6ZJ4XW` 0勝1敗、`AM8C6YXHSG` 1勝1敗、
+`R8V2H6N4ZB` 0勝1敗。原因は機構ではなく**agent の exception**：`rollout_choice` に途中入れた
+「game の legal_actions に無い action を skip する」guard を、テストが壊れたので revert した但し
+revert 前に start した run がそのコードで走っていた（agent は run の開始時に file を読む）。
+error log: `IndexError: list index out of range`（N8 9件、H2 9件、AM8 16件、R8 9件）。
+agent が fall out すると game は 2分の wait deadline 後に safe default（多くは skip）を取る＝勝てない。
+
+rule：run が走っている間に policy code を編集してはいけない。`sweep2.sh` が print する commit は
+start 時の HEAD で、実際に使われた file 内容ではない。この4 seedは `5d8bf18` の code で再走が必要。
+`D1W9Y3B7FC`（clean code で start）は正常に decision を出しており有効（sources: rollout_success ほか）。
