@@ -2658,3 +2658,8 @@ Rose だけが二重計上だった。ほかは観測と二重計上にならな
 panel の sample で Duplication の分歧は2件（1-in-12 sample、`POWER.DUPLICATION_POWER` を持つ record 上）。
 多效果札で duplication が消費された case を洗ってから、埋める価値があるかを判断する（現時点で reach 2、
 noise 未満 → 実走対象にしない）。
+
+件数：play-count power が active で Shrug It Off（block + draw の multi-effect）が選ばれた record は
+**4件 / 2 seed**（`N8CQ4ZKP2W` seq 126・135・141、`Z2K7D9F4VX` seq 462）→ 閾値（≥3 decisions かつ
+≥3 seeds）未満。機構の形（play 全体をもう1回走らせる）は正しいが、この panel では測れない。
+実装を変えない（「multi-effect の第二解決が model に無い」として記録だけ）。
