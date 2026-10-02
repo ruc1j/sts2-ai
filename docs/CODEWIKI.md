@@ -2629,3 +2629,18 @@ seed 別（post-fix）：`N8CQ4ZKP2W` 57、`H2LV6ZJ4XW` 24、`AM8C6YXHSG` 15、`
 （あの2 seed の分歧は除去した bug branch 由来）。この2 seed の ±0 は判定へ使えない。
 使えるのは N8・H2・AM8・D1・P3・Q6 の6 seed（AM8は生成プールの忠実化と混かる）。
 R8 の control run（22勝1敗）はすでに完了済みなので記録として残す。
+
+### 二重計上の点検（panel 実走中に機構別で確認）
+
+Rose だけが二重計上だった。ほかは観測と二重計上にならない構造：
+
+- `Fiddle`：`ShouldDraw` は hand draw（`fromHandDraw=True`）を許可、owner の side 中のそれ以外を拒否。
+  model は未来ターンのドローだけを変え、hand の枚数（＝game が既に引いた結果）には触らない
+- `ChainsOfBinding`：live hand の bound は bridge が `bound` field で正しく出す。model は rollout 内の
+  future draw にのみ Afflict を再現
+- `Duplication` / `OneTwoPunch` / `Gigantification` / `Panache`：観測 powers の counter を、 hypothetical
+  play（rollout）へ適用する形。decision 時点の effect は観測に既にあるので加算は未来分だけ
+- `Forgotten Soul`：exhaust の解決は rollout 内で再現（観測の exhaust pile は過去分）。実走証拠は
+  `test_curses_left_in_hand_hit_the_player_at_turn_end` ではなく record 側（TREMBLE play で enemy ちょうど1減）
+
+→ 実走 panel の arm 腕は `a328b5c` 以後の code。arm 腕で Rose 分が効かないのはこのため。
