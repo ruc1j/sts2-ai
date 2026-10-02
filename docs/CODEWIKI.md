@@ -2818,3 +2818,13 @@ game の legal_actions が Bound 札を除外していた record（＝ゲート�
 sample の Chains 分歧34件は blanket rule（常時 skip）の下で数えたので、忠実なゲート下的の分歧件数は
 この651件の上で数え直す。panel の arm 腕 re-run（`f8f3966`）が走っている間は CPU を game に譲る（25 ms
 ポーリングのdelay → watchdog risk）ので、replay は sweep 完了後。
+
+### control era の bound-hand decision では469件が heuristic_fallback に落ちている
+
+control（`d429b4d` 以前、bound の概念が無い）で、hand に Bound 札が在る decision 1,273件の内訳：
+heuristic_fallback **469**、rollout_success 467、queen_minion_direct 233、ほか。heuristic_fallback に
+落ちたのは、model が game の legal_actions に無い札（Bound）を top に並べて mapping が fail したため。
+忠実な形（ゲート前は playable、ゲート後は skip）では、この469件で model が game-legal の中から
+rank する → 第一手が変わりうる。母数は上の651件（gate-active）の上で replay して数える。
+
+seed 別（heuristic_fallback）：`N8CQ4ZKP2W` 336、`H2LV6ZJ4XW` 117、`D6A1F8C3E5` 16。
