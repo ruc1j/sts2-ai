@@ -2828,3 +2828,23 @@ heuristic_fallback **469**、rollout_success 467、queen_minion_direct 233、ほ
 rank する → 第一手が変わりうる。母数は上の651件（gate-active）の上で replay して数える。
 
 seed 別（heuristic_fallback）：`N8CQ4ZKP2W` 336、`H2LV6ZJ4XW` 117、`D6A1F8C3E5` 16。
+
+### panel の第一読取（arm 腕は再走中）と忠実なゲートの分歧率
+
+panel 8 seed（control `e808bdf` vs arm）：
+
+| seed | control | arm（使用 code） | 扱えるか |
+|---|---:|---|---|
+| `N8CQ4ZKP2W` | 5 | 0（例外9） | 再走 |
+| `H2LV6ZJ4XW` | 20 | 0（例外9） | 再走 |
+| `AM8C6YXHSG` | 17 | 1（例外16） | 再走 |
+| `R8V2H6N4ZB` | 22 | 0（例外9） | 再走 |
+| `D1W9Y3B7FC` | 14 | 14（漏れ込み） | 再走 |
+| `P3V8N5K2RX` | 15 | 13（漏れ込み） | 再走 |
+| `B3N8V5T1WQ` | 16 | 19（漏れ込み） | 再走 |
+| `Q6N3V8K2MT` | 12 | **12（clean code）** | 有効。ただし両腕で発火0 → 機構については測定不能 |
+
+忠実なゲート（Bound playable、第一 play 後 skip）の分歧率を gate-active record の30件/seed sample で測った：
+**88件で第一手分歧15件（約17%）、control 側の mapping fail 0件**。651件へ外挿すると約110件の决定分歧、
+3 seed に分布 → 閾値（≥3 decisions かつ ≥3 seeds）超。re-run（tag `mechpanel_arm_clean`、job `bash-296`）
+が走っている間、gate の分歧件数を full で数える。
