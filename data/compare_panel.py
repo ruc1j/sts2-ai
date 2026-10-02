@@ -68,6 +68,7 @@ def main() -> None:
     control_dir = sys.argv[4] if len(sys.argv) > 4 else ".wt-ctrl-e808bdf"
     seeds = sys.argv[5:] or PANEL
     arm_total = control_total = 0
+    measurable_seeds = measurable_arm = measurable_control = 0
     for seed in seeds:
         arm, control = scan(arm_tag, seed, arm_dir), scan(control_tag, seed, control_dir)
         arm_total += arm["wins"]
@@ -78,15 +79,23 @@ def main() -> None:
         )
         # A run-level A/B only measures a mechanism when the mechanism is present in BOTH arms:
         # relic acquisition is path-dependent, so one arm can simply never encounter it.
+        shared = sorted(set(arm["fired"]) & set(control["fired"]))
+        if shared:
+            measurable_seeds += 1
+            measurable_arm += arm["wins"]
+            measurable_control += control["wins"]
         print(
             f"{seed}: control {control['wins']}W/{control['losses']}L "
             f"arm {arm['wins']}W/{arm['losses']}L "
             f"delta {arm['wins'] - control['wins']:+d} "
+            f"pair={shared or 'none'} "
             f"arm_fired={dict(arm['fired']) or 'none'} control_fired={dict(control['fired']) or 'none'} "
             f"first_divergence={divergence} "
             f"act3 arm={arm['act3']} control={control['act3']}"
         )
     print(f"TOTAL control {control_total} arm {arm_total} delta {arm_total - control_total:+d}")
+    print(f"MEASURABLE (mechanism seen by both arms) {measurable_seeds} seeds: "
+          f"control {measurable_control} arm {measurable_arm} delta {measurable_arm - measurable_control:+d}")
 
 
 if __name__ == "__main__":
