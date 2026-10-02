@@ -2578,3 +2578,13 @@ panel 8 seed を両腕で洗うと、機構が **両腕の record に出る** se
 `AM8C6YXHSG` は control 側だけ FIDDLE・FORGOTTEN_SOUL・CHAINS・OneTwoPunch を持っていて、**arm 側の run は一つも見ていない**（機構を引く/route が違った）。だから AM8 の分歧は機構の実装差ではなく、確認済みの生成プール（`STOKE_GENERATION`）の差だけが効いた。EAIF・NFH3・VTW・GEFYY・SWRUL は両腕で発火ゼロ。
 
 → 固定 panel で機構単独を測れた pair は 2件、reach 0。機構の実走効果は mechanism panel（control 腕完走後に arm 腕）を待つ。
+
+### 同一 commit・同一 seed の再走は decision列が完全一致（再現性の確認）
+
+mechanism panel の control 腕で `AM8C6YXHSG` を `e808bdf` に再走した。先行した `ctrl20261004_AM8C6YXHSG`
+（351件）と比較し、**再走の285件が決定列（seq・card_id・decision_source）まで完全一致**。条件は同一：
+固定ユーザーデータ、`simulations=100`、Act 3まで、単一 game instance。
+
+これで「同じ决定列なら outcome も同じ（game の RNG は seed 由来）」が harness 側でも確認できた。
+panel の ±0 が本当に「決定が変わっていない」かどうかの判定は、この再現性の上で使える。
+（決定列が一致しない場合の原因は policy 差か path 差かの切り分けが要る、という既存の rule はそのまま。）
