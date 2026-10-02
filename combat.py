@@ -252,6 +252,11 @@ class Card:
     # expensive for the rest of the combat every time that same copy is played.
     extra_cost: int = 0
     bound: bool = False
+    # A card the game's own legal actions excluded at this decision (the Bound gate after the first
+    # Bound play of the turn, a Snecko card that is currently too expensive, ...). The live legal
+    # actions are authoritative for the rollout's first move, so this stays separate from the
+    # affliction flag `bound`, which by itself does not block play.
+    unplayable_this_turn: bool = False
     # Mad Science rolls a CardType and a RiderEffect per copy, so two copies of the same card id
     # can be a 3-hit attack and a Strength power. The bridge reports both per copy.
     variant: str | None = None
@@ -293,6 +298,10 @@ class Combat:
     # Every card play, any type - drives SlowPower's damage-taken ramp (Bygone Effigy). Also
     # reset at the start of every player turn.
     cards_played_this_turn: int = 0
+    # ChainsOfBindingPower.ShouldPlay: a Bound card is playable until one Bound card has been played
+    # this turn, then the remaining Bound cards are gated off (the flag is cleared at turn end, and
+    # the afflictions themselves are cleared there too).
+    bound_played_this_turn: bool = False
     # HellraiserPower safety cap: AutoPlay can recurse through exhaust-triggered draws.
     hellraiser_autoplays_this_turn: int = 0
     # Enlightenment.OnPlay: caps every hand card's cost at 1 for the rest of this turn (reduceOnly
@@ -1114,7 +1123,13 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
     seen_cards = set()
     for hand_index, card_value in enumerate(combat.hand):
         name = card_name(card_value)
-        if isinstance(card_value, Card) and card_value.bound:
+        # Bound is an affliction marker, not a blanket play blocker: `ShouldPlay` gates a Bound card
+        # only after one Bound card has already been played this turn (real runs played Bound cards
+        # 279 times, 45 turns playing two or more in the same turn). `unplayable_this_turn` is the
+        # game's own verdict for the current decision and always wins.
+        if isinstance(card_value, Card) and (
+            card_value.unplayable_this_turn or (card_value.bound and combat.bound_played_this_turn)
+        ):
             continue
         if card_value in seen_cards:
             continue
@@ -2075,6 +2090,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             upgraded_cards=upgraded_cards,
             paels_tears_pending=False,
             attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
+            bound_played_this_turn=False,
             hellraiser_autoplays_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
@@ -2093,6 +2109,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     else:
         played_value = action_card
     card = card_name(played_value)
+    if isinstance(played_value, Card) and played_value.bound:
+        # BeforeCardPlayed sets this before the play resolves, so the next Bound card in the same turn
+        # is gated off by ShouldPlay (real runs played Bound cards 279 times).
+        combat = replace(combat, bound_played_this_turn=True)
     # Play-count powers. DuplicationPower (Duplicator potion) adds one extra resolution to the play
     # it modifies and OneTwoPunchPower (One-Two Punch) does the same for Attacks only; the counter
     # is consumed by that play (AfterModifyingCardPlayCount) and both powers are removed at the end

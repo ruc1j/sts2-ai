@@ -2699,7 +2699,7 @@ def _rollout_cards(observation: dict) -> tuple[
         if action.get("type") == "card"
     }
     hand = tuple(
-        replace(card, bound=True)
+        replace(card, unplayable_this_turn=True)
         if isinstance(card, Card) and index not in legal_indices and _number(value.get("cost"), -1) >= 0
         else card
         for index, (card, value) in enumerate(zip(hand, hand_values))

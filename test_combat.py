@@ -1663,9 +1663,27 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         bound = sum(1 for card in after.hand if isinstance(card, Card) and card.bound)
         self.assertEqual((len(after.hand), bound), (5, 3))
-        # Every card here is a distinct copy, so the 2 unbound ones are the only playable actions.
-        self.assertEqual(len([action for action in legal_actions(after) if action.startswith("card:")]), 2)
+        # Before any Bound card is played, every Bound card is playable (ShouldPlay gates only after
+        # the first Bound play of the turn). Real runs played Bound cards 279 times, including 45 turns
+        # where two or more were played in the same turn.
+        self.assertEqual(len([action for action in legal_actions(after) if action.startswith("card:")]), 5)
+        # Once one Bound card is played, the rest of that turn's Bound cards are gated off.
+        bound_action = next(
+            action for action in legal_actions(after)
+            if action.startswith("card:")
+            and isinstance(after.hand[int(action[5:].split("@")[0])], Card)
+            and after.hand[int(action[5:].split("@")[0])].bound
+        )
+        after_play = step(after, bound_action, DUMMY_DATA, random.Random(0))
+        self.assertTrue(after_play.bound_played_this_turn)
+        remaining = [index for index, card in enumerate(after_play.hand) if isinstance(card, Card) and card.bound]
+        self.assertEqual(len(remaining), 2)
+        playable = {int(action[5:].split("@")[0]) for action in legal_actions(after_play) if action.startswith("card:")}
+        # The unbound copies are still playable; the bound ones are gated off for the rest of the turn.
+        self.assertEqual(playable, set(range(len(after_play.hand))) - set(remaining))
         # The cap is per turn: drawing further cards adds no Bound once 3 are afflicted.
+        after = _draw_into_combat(after, 2, DUMMY_DATA, random.Random(0))
+        self.assertEqual(sum(1 for card in after.hand if isinstance(card, Card) and card.bound), 3)
         after = _draw_into_combat(after, 2, DUMMY_DATA, random.Random(0))
         self.assertEqual(sum(1 for card in after.hand if isinstance(card, Card) and card.bound), 3)
 
