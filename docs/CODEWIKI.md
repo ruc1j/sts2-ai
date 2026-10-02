@@ -2792,3 +2792,19 @@ Strength・Crimson Mantle、relics に機構なし。record を両treeで replay
 机构単独の到達性は Fiddle（76、rule 忠実と実走1,436件で確認）と Chains のゲート（上限45ターン）が本体で、
 leak は artifact。panel の arm 腕は `f8f3966` の code で8 seed 再走して、`agent_exception_fallback` 0件と
 両腕の発火の揃いを確認してから判定する。
+
+### arm 腕の run ごとの code 状態（どれが使えるか）
+
+| seed | arm run | 使用 code | 扱えるか |
+|---|---|---|---|
+| `N8CQ4ZKP2W` | 0勝1敗・例外9 | 未commitの guard | 無効 |
+| `H2LV6ZJ4XW` | 0勝1敗・例外9 | 未commitの guard | 無効 |
+| `AM8C6YXHSG` | 1勝1敗・例外16 | 未commitの guard | 無効 |
+| `R8V2H6N4ZB` | 0勝1敗・例外9 | 未commitの guard | 無効 |
+| `D1W9Y3B7FC` | 14勝1敗・例外0 | `5d8bf18`（漏れ込み） | 機構測定の根拠にできない |
+| `P3V8N5K2RX` | 13勝1敗・例外0 | `5d8bf18`（漏れ込み） | 同上 |
+| `B3N8V5T1WQ` | 19勝1敗・例外0 | `5d8bf18`（漏れ込み） | 同上 |
+| `Q6N3V8K2MT` | 走行中 | `f8f3966`（clean） | run 自体は使えるが、この seed は control 側で発火0 |
+
+再走は7 seed（`mechpanel_arm_clean`）。Q6 は clean code で start した最初の run。
+control 腕（`e808bdf`）の8 seed 結果（合計121勝）はそのまま基準。
