@@ -6,7 +6,10 @@ mechanics appear in that run, and the first decision where the two arms differ. 
 occurrence of any mechanic cannot show an effect, so a +/-0 there is "unmeasurable", not "no
 effect". Control artifacts live in the control worktree's data/ directory.
 
-Usage: python3 data/compare_panel.py <arm_tag> <control_tag> [control_dir]
+Usage: python3 data/compare_panel.py <arm_tag> <control_tag> [arm_dir] [control_dir] [seed ...]
+
+With no seeds given the fixed 8-seed panel is used. Pass seeds to compare another panel, for
+example the mechanism panel where the newly modeled ids actually appear in the records.
 """
 import glob
 import json
@@ -63,8 +66,9 @@ def main() -> None:
     arm_tag, control_tag = sys.argv[1], sys.argv[2]
     arm_dir = sys.argv[3] if len(sys.argv) > 3 else "."
     control_dir = sys.argv[4] if len(sys.argv) > 4 else ".wt-ctrl-e808bdf"
+    seeds = sys.argv[5:] or PANEL
     arm_total = control_total = 0
-    for seed in PANEL:
+    for seed in seeds:
         arm, control = scan(arm_tag, seed, arm_dir), scan(control_tag, seed, control_dir)
         arm_total += arm["wins"]
         control_total += control["wins"]
