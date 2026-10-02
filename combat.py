@@ -128,12 +128,25 @@ ATTACKS = {
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, NEOWS_FURY, SQUASH, TEAR_ASUNDER, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
     MAUL, THRASH, FIGHT_ME, SALVO, FLASH_OF_STEEL, CONFLAGRATION,
 }
+# Cards the game can never generate for this model's character: Stoke and Infernal Blade both draw
+# from `Owner.Character.CardPool.GetUnlockedCards(...)` (decompiled), which is the character's own
+# pool only - never the colorless pool.  The model can still score these cards when they enter the
+# deck through rewards or events, so only the generation sets exclude them.
+CARDS_OUTSIDE_THE_CHARACTER_POOL = {
+    "Believe in You", "Bolas", "Byrd Swoop", "Dramatic Entrance", "Enlightenment", "Equilibrium",
+    "Exterminate", "Fasten", "Finesse", "Fisticuffs", "Flash of Steel", "Giant Rock", "Impatience",
+    "Lift", "Mad Science", "Master of Strategy", "Maul", "Metamorphosis", "Mind Blast",
+    "Neow's Fury", "Panache", "Peck", "Production", "Purity", "Relax", "Salvo", "Squash",
+    "Thrumming Hatchet", "Toric Toughness", "Ultimate Defend", "Ultimate Strike", "Volley",
+}
 # ponytail: generation pool is limited to modeled non-Basic attacks; expand it with the full
 # CardPool when generated-card coverage becomes a measured bottleneck.
-INFERNAL_BLADE_ATTACKS = tuple(sorted(ATTACKS - {STRIKE, BASH}))
+# Infernal Blade (decompiled) filters `Owner.Character.CardPool.GetUnlockedCards(...)` by
+# CardType.Attack, so the same character-pool restriction as STOKE_GENERATION applies here.
+INFERNAL_BLADE_ATTACKS = tuple(sorted((ATTACKS - {STRIKE, BASH}) - CARDS_OUTSIDE_THE_CHARACTER_POOL))
 # ponytail: Stoke draws from the character's whole unlocked pool; this model can only generate
-# cards it knows, so the pool is every modeled non-Basic, non-Status card. Widen it when the
-# generated mix is shown to matter.
+# cards it knows, so the pool is every modeled non-Basic, non-Status card that is also in that
+# pool. Widen it when generated-card coverage becomes a measured bottleneck.
 # What a player actually picks when a card asks them to exhaust one card from hand: dead weight
 # first. Frantic Escape is deliberately absent - it is the only answer to Sandpit.
 EXHAUST_FODDER = {WOUND, DAZED, SLIMED, TOXIC, BURN, INFECTION, DECAY, BECKON, BAD_LUCK}
@@ -147,6 +160,7 @@ NON_UPGRADABLE = {
 STOKE_GENERATION = tuple(sorted(
     # Apotheosis sits in EventCardPool, so CardFactory.GetForCombat never generates it here.
     set(CARD_COST) - {STRIKE, DEFEND, BASH, SLIMED, FRANTIC_ESCAPE, TOXIC, BURN, DAZED, INFECTION, DECAY, WOUND, BECKON, BAD_LUCK, APOTHEOSIS}
+    - CARDS_OUTSIDE_THE_CHARACTER_POOL
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.

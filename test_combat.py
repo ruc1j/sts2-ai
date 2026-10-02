@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
-    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING,
+    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -1909,6 +1909,20 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(sorted(map(card_name, after.exhaust_pile)), sorted([STRIKE, DEFEND, BASH]))
         self.assertTrue(all(card_name(card) in STOKE_GENERATION for card in after.hand))
         self.assertEqual(after.discard_pile, (STOKE,))
+
+    def test_generated_cards_come_only_from_the_characters_own_pool(self) -> None:
+        # Stoke.cs and InfernalBlade.cs both draw from `Owner.Character.CardPool.GetUnlockedCards`,
+        # so a colorless card can never be the generated card in an Ironclad run even when the model
+        # knows it (Fasten, Lift, Panache are ColorlessCardPool members).  Adding a card to
+        # CARD_COST used to widen the generation set silently through this derivation.
+        self.assertNotIn(PANACHE, STOKE_GENERATION)
+        self.assertNotIn(FASTEN, STOKE_GENERATION)
+        self.assertNotIn(LIFT, STOKE_GENERATION)
+        # One-Two Punch is in IroncladCardPool, so it is a legal generation.
+        self.assertIn(ONE_TWO_PUNCH, STOKE_GENERATION)
+        self.assertIn(PERFECTED_STRIKE, INFERNAL_BLADE_ATTACKS)
+        self.assertFalse(set(STOKE_GENERATION) & CARDS_OUTSIDE_THE_CHARACTER_POOL)
+        self.assertFalse(set(INFERNAL_BLADE_ATTACKS) & CARDS_OUTSIDE_THE_CHARACTER_POOL)
 
     def test_tangled_surcharges_attacks_for_one_turn_only(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
