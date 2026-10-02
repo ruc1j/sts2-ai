@@ -2714,3 +2714,9 @@ agent が fall out すると game は 2分の wait deadline 後に safe default�
 rule：run が走っている間に policy code を編集してはいけない。`sweep2.sh` が print する commit は
 start 時の HEAD で、実際に使われた file 内容ではない。この4 seedは `5d8bf18` の code で再走が必要。
 `D1W9Y3B7FC`（clean code で start）は正常に decision を出しており有効（sources: rollout_success ほか）。
+
+汚染の判定は decision_source で立つ：contaminated run（`mechpanel_arm_N8CQ4ZKP2W`）は
+`agent_exception_fallback` が9件、clean run（`mechpanel_arm_D1W9Y3B7FC`）は rollout_success 97件・
+heuristic_fallback 33件で exception は0。つまり汚染 run では agent が fall out して game 側が default
+（skip）を取っている。再走後は `*_agent.err` が空であること＋`agent_exception_fallback` が0件であることを
+確認してから結果を使う。
