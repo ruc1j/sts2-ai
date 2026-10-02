@@ -2588,3 +2588,7 @@ mechanism panel の control 腕で `AM8C6YXHSG` を `e808bdf` に再走した。
 これで「同じ决定列なら outcome も同じ（game の RNG は seed 由来）」が harness 側でも確認できた。
 panel の ±0 が本当に「決定が変わっていない」かどうかの判定は、この再現性の上で使える。
 （決定列が一致しない場合の原因は policy 差か path 差かの切り分けが要る、という既存の rule はそのまま。）
+
+`AM8C6YXHSG` の control 再走は **outcome まで一致**した：決定列351件完全一致、勝敗も 17勝1敗で
+先行 run（`ctrl20261004_AM8C6YXHSG`）と同値（job `bash-116` の RESULT）。同一 commit・同一 seed・同一
+固定ユーザーデータの run は決定列も outcome も再現される。panel の ±0 判定はこの再現性の上で使える。
