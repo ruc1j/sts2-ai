@@ -2462,3 +2462,23 @@ model は知っている札しか生成できないので、忠実な近似は�
 
 生成プールの限定の決定レベル到達性（arm 記録の replay）：AM8 **11件 / 1 seed**、9X9・NFH3・EAIF・73P で 0。
 1 seed の増減は採用根拠にしない rule のまま、正しさ（デコンパイル）で commit した。勝率への効果は未測定。
+
+### 一致の件数（再走5 seed の内訳）
+
+5 seed は AutoSlay watchdog timeout で終了（exit=1、`result.json` なし）→ 判定はトレースの `won`。
+decision列を件数で照合した：
+
+| seed | arm rows | control rows | decision diff | wins arm/control |
+|---|---:|---:|---:|---|
+| 9X9WQB4QIH | 265 | 265 | 0 | 14 / 14 |
+| NFH3RMVJ6D | 275 | 275 | 0 | 15 / 15 |
+| EAIF2UUVCK | 276 | 276 | 0 | 14 / 14 |
+| 73P61QQZNU | 243 | 243 | 0 | 13 / 13 |
+| AM8C6YXHSG | 216 | 351 | **52** | 11 / 17 |
+| VTW80ZJA2G | 269 | 269 | 0 | 13 / 13 |
+| GEFYYKH1YK | 164 | 164 | 0 | 7 / 7 |
+| SWRUL944UU | 120 | 120 | 0 | 6 / 6 |
+
+7 seed は decision列が control と完全一致。同じ决定列なら outcome も同じ（game の RNG は seed 由来）
+なので、この7件は watchdog の有無に関係なく「測定不能」が確定。AM8 の分歧は seq 244（SWORD_BOOMERANG）
+からで、件数差は arm が早く負けたぶん。
