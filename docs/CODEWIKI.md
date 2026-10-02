@@ -2592,3 +2592,22 @@ panel の ±0 が本当に「決定が変わっていない」かどうかの判
 `AM8C6YXHSG` の control 再走は **outcome まで一致**した：決定列351件完全一致、勝敗も 17勝1敗で
 先行 run（`ctrl20261004_AM8C6YXHSG`）と同値（job `bash-116` の RESULT）。同一 commit・同一 seed・同一
 固定ユーザーデータの run は決定列も outcome も再現される。panel の ±0 判定はこの再現性の上で使える。
+
+### Blood-Soaked Rose は model で二重計上していた（commit `a328b5c`）
+
+`BloodSoakedRose.ModifyMaxEnergy` は毎ターの energy reset で +1。bridge の `max_energy` は**観測された
+ターンの有効値**なので、relic を持っている run は turn 1 から 4 を報告する（実測：`gdv_9X9WQB4QIH` の
+turn 1 record が max_energy 4）。model は turn start で `extra_energy += 1` を足していたので、rollout の
+turn 2 が **5** になった（same record で再現：model turn2 energy 5）。二重計上。
+
+実測の分布：relic 所持 record の `max_energy` は 4（767件）と 5（255件）。5 の record は Paels Flesh
+（turn 3 以降 +1、永続）との併有で、game は両方の加算を already 反映した値を報告している：
+`act3_pop2_head_R8V2H6N4ZB` turn 3 = base3 + Flesh1 + Rose1 = 5。
+
+→ 機構として model に載せるものがない（observation に既にある）。branch を除去し、
+`test_blood_soaked_rose_is_not_double_counted_at_energy_reset`（state の max_energy 4 → turn 2 energy 4）で固定。
+Paels Flesh の branch は残る：turn 2 の観測は 3 を報告するので、model が turn 3 へ跨ぐときに +1 するのは正しい。
+
+mechanism panel の sample で Rose に紐づいていた分歧8件は、この除去で消える（機構単独の到達性は
+Fiddle 76・Chains 34・Forgotten Soul 24・OneTwoPunch 2・Panache 1 へ）。arm 腕の run はこの commit を
+含むので、panel の結果を読むときは Rose 分を机构差として数えない。
