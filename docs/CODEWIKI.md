@@ -2644,3 +2644,17 @@ Rose だけが二重計上だった。ほかは観測と二重計上にならな
   `test_curses_left_in_hand_hit_the_player_at_turn_end` ではなく record 側（TREMBLE play で enemy ちょうど1減）
 
 → 実走 panel の arm 腕は `a328b5c` 以後の code。arm 腕で Rose 分が効かないのはこのため。
+
+### play-count powers の model は multi-effect 札で部分忠実（記録）
+
+`DuplicationPower` / `OneTwoPunchPower`（OneTwoPunch は `CardType.Attack` 限定）は
+`ModifyCardPlayCount +1`、`AfterModifyingCardPlayCount` で decrement、player turn end で remove。
+＝その play の**解決全体**がもう1回走る。model は damage と block を2回適用する形で再現しているので、
+
+- 単效果札（Strike・Defend・Shrug 等）：忠実
+- 多效果札（Burning Pact の exhaust＋damage、draw を伴う Skill、power 適用）：game は exhaust・draw・
+  power 適用まで2回走らせる。model は damage/block 分だけ2回 → **部分忠実**
+
+panel の sample で Duplication の分歧は2件（1-in-12 sample、`POWER.DUPLICATION_POWER` を持つ record 上）。
+多效果札で duplication が消費された case を洗ってから、埋める価値があるかを判断する（現時点で reach 2、
+noise 未満 → 実走対象にしない）。
