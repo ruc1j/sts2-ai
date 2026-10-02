@@ -2667,3 +2667,14 @@ noise 未満 → 実走対象にしない）。
 mechanism panel の両腕は bridge（C#）が同一：`git diff --name-only e808bdf..HEAD` に `.cs` は 0件。
 panel の差は Python 側（policy/模型）だけなので、run 間の差を「DLL が違う」で説明できない。
 control 腕 = `e808bdf` worktree、arm 腕 = HEAD（`77120b2` と `a328b5c` を含む）。
+
+### Fiddle のドロー拒否は実走側でも確認できた（1,436件）
+
+Fiddle を持つ run で、draw 系札（Pommel・Shrug・Evil Eye・Battle Trance・Production・Master of Strategy 等）
+を打った decision と**同じ turn の次の decision** を照合：hand が伸びた case は **0件**、伸びない case
+**1,436件**。＝ game は owner の effect ドローを拒否している（`ShouldDraw` の `fromHandDraw` 以外の拒否）
+ので、model の拒否は推測ではなく実走一致。hand draw（turn start）の +2 も同レリックの
+`ModifyHandDrawLate` で、view 側の hand には出ないので rollout 加算として扱うのが正しい。
+
+Fiddle は panel の sample で分歧76件（11 seed 中の最大）＝機構単独で最もreachのある筋。
+run レベルで測れるのは両腕が Fiddle を持った seed だけ（control 腕では AM8 が所持）。
