@@ -2780,3 +2780,15 @@ D1 の ±0 は「効果なし」ではなく、機構について言えば**測�
 **panel の arm 腕は `5d8bf18` を通った run（D1・P3・B3・Q6）も bug 込み**なので、機構単独の測定には
 8 seed 全部を `f8f3966` の code で再走する（tag `mechpanel_arm_clean`）。control 腕（`e808bdf`、機構を
 教える前の code）はそのまま基準として使える。
+
+### leak の実測：B3 の第一分歧も机构と無関係（post-fix で両tree一致）
+
+`mechpanel_arm_B3N8V5T1WQ` の第一分歧 seq 136：hand に BASH（energy 1 で game は除外）、powers は
+Strength・Crimson Mantle、relics に機構なし。record を両treeで replay（`f8f3966`）すると両treeが
+`CARD.DEFEND_IRONCLAD` で一致 → run 側で arm が STRIKE を選んだのは漏れたマーカー（BASH が翌ターンでも
+打てない扱い）の効果。D1（seq 82）と P3（seq 186）も同じ形で確認済み。
+
+→ これまでの arm 腕（D1・P3・B3・Q6）の decision 分歧は、機構が state に出た場合を除いて漏れの効果。
+机构単独の到達性は Fiddle（76、rule 忠実と実走1,436件で確認）と Chains のゲート（上限45ターン）が本体で、
+leak は artifact。panel の arm 腕は `f8f3966` の code で8 seed 再走して、`agent_exception_fallback` 0件と
+両腕の発火の揃いを確認してから判定する。
