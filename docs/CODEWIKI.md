@@ -2628,4 +2628,4 @@ seed 別（post-fix）：`N8CQ4ZKP2W` 57、`H2LV6ZJ4XW` 24、`AM8C6YXHSG` 15、`
 → mechanism panel の8 seedのうち **`B3N8V5T1WQ` と `R8V2H6N4ZB` は post-fix で到達性 0**
 （あの2 seed の分歧は除去した bug branch 由来）。この2 seed の ±0 は判定へ使えない。
 使えるのは N8・H2・AM8・D1・P3・Q6 の6 seed（AM8は生成プールの忠実化と混かる）。
-R8 の control run（22勝1敗）は已经完了 so 記録として残す。
+R8 の control run（22勝1敗）はすでに完了済みなので記録として残す。
