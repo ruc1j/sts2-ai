@@ -2735,3 +2735,16 @@ run の環境へ割り込んだ。artifact は削除済み。
 
 再走は4 seed：`N8CQ4ZKP2W` `H2LV6ZJ4XW` `AM8C6YXHSG` `R8V2H6N4ZB`（tag `mechpanel_arm_rerun`）。
 条件は panel と同一（固定ユーザーデータ、`simulations=100`、Act 3まで、1 run/seed）。
+
+### Chains の到達性は blanket rule 由来。忠実なゲートでは再計算が必要（上限45ターン）
+
+sample の Chains 分歧34件は「Bound 札を打てない」という**忠実でない rule**の下で数えた。
+修正後（`5d8bf18`）の忠実な形では、ゲートが効くのは「そのターンに Bound 札を1枚打った後、
+まだ Bound 札が hand に残っている」case だけ。実測の上限は：
+
+- Bound 札を打った decision 279件 / 3 seed（`N8CQ4ZKP2W` 182、`H2LV6ZJ4XW` 79、`D6A1F8C3E5` 18）
+- そのうち **1ターンに2枚以上 Bound を打った turn = 45ターン**（ゲートが実際に効く位置）
+
+→ 忠実なゲートの到達性は45ターンを上限として replay で数え直す（control にはゲートが無いので、
+ゲート単独の差）。Fiddle（76件）は rule が忠実と確認済みなのでそのまま。panel 実走で測れるのは、
+両腕が同じ機構を見た seed だけ、という条件もそのまま。
