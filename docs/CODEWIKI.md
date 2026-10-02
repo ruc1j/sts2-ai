@@ -2760,3 +2760,23 @@ decision列は arm 294件 / control 306件で **61件分歧**（first divergence
 → decision の分歧は outcome へ伝わらないことがある、の実例。panel の判定は per-seed の増減ではなく
 母集団の合計、かつ「両腕で同じ機構を見た」seed だけを使う、という rule がそのまま生きる。
 D1 の ±0 は「効果なし」ではなく、機構について言えば**測定不能**（分歧の成因が機構と無関係）。
+
+### P3 の分歧は機構ではなくマーカー漏れだった（commit `f8f3966`）
+
+`P3V8N5K2RX` は control 15勝1敗 / arm 13勝1敗で、両腕の run が `POWER.DUPLICATION_POWER` を見た
+最初の pair。だが第一分歧（seq 186）の record を両treeで replay すると、机构は state に出ていない
+（powers は DexterityPower だけ、hand に Stoke も無い）。違いは `Card.unplayable_this_turn` が
+ターン跨ぎで**消えない**ことだった：decision 時点で game の legal_actions が除外した札（energy 0 で
+打てなかった Strike / Pommel Strike）が、rollout の後続ターンでもPlayable扱いされず、
+`legal_actions` が arm と control で違った。
+
+修正（`f8f3966`）：hand を flush する場合、`bound`（Chains のゲートはターン終了で clear される）と
+`unplayable_this_turn`（game のそのターンの判定）を双方クリア。RetainHandPower で hand に残る copy
+も同じ。テスト `test_the_per_turn_unplayable_marker_does_not_leak_into_the_next_turn`。
+
+修正後の同じ record：両treeの search が一致（0.7658 `card:3@0` / 0.4666 `card:2` / 0.1209 End turn）
+→ P3 の −2 は機構の差ではなくこの bug の差。
+
+**panel の arm 腕は `5d8bf18` を通った run（D1・P3・B3・Q6）も bug 込み**なので、機構単独の測定には
+8 seed 全部を `f8f3966` の code で再走する（tag `mechpanel_arm_clean`）。control 腕（`e808bdf`、機構を
+教える前の code）はそのまま基準として使える。
