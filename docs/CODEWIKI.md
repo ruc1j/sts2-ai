@@ -2527,3 +2527,13 @@ sample の分歧116件を機構別に分解（record に複数の機構が同時
 Fiddle と Chains が分歧の主成分（rollout 内のドロー挙動を変える機構）。Gigantification は sample に
 分歧なし（0件）。到達性の内訳が機構ごとに偏っているので、panel 実走は「機構まとめて1本」ではなく
 この内訳が実際に勝敗へ伝わるかを見る測定として扱う。
+
+### Fiddle と Chains の照合（panel 実走中に現物で確認）
+
+- `Fiddle.ShouldDraw`：`fromHandDraw` は許可、owner 以外許可、**owner の side 中は拒否**。`ModifyHandDrawLate` は owner の hand draw +2。model の `if not from_hand_draw and RELIC_FIDDLE in player_relics: return` はこれと一致
+- `ChainsOfBindingPower.AfterCardDrawn`：「このターンにこの actor が Bound にした枚数」が Amount 未満のとき Afflict。model は hand 内の bound 枚数で同じ上限を掛けている。Bound 札は play できないのでターン内で hand から消えず、ターン end で flush されて bound が落ちる → ターン単位の count として等価
+- `Debt` は gold のみ（戦闘効果なし）
+
+sample の分歧主成分（Fiddle 76・Chains 34）は機構の正しさではなく「rollout が将来引く札をどう数えるか」の差。
+実走で測れるのは、その差が胜敗へ伝播する seed があるか。panel の control 腕で `N8CQ4ZKP2W` は 5勝1敗
+（Act 1 F14 elite で死亡）＝この seed では機構の有無以前に commit 差が勝敗を決めている例。
