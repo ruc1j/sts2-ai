@@ -2616,3 +2616,16 @@ Fiddle 76・Chains 34・Forgotten Soul 24・OneTwoPunch 2・Panache 1 へ）。a
 model の turn 2 energy は **4**（修正前は5）。game が報告する有効値と一致する形になった。
 実走 panel（control 腕）では `R8V2H6N4ZB` が BLOOD_SOAKED_ROSE を所持して発火しているが、
 修正後の model にとってこの relic は decision に効かない（観測に既にある） → R8 で動くのは他の機構だけ。
+
+### 修正後の到達性：panel 8 seed のうち2件は測定不能になる
+
+Rose の二重計上 branch を除いた sample 再計算：分歧 **108件 / 11 seed**（116 → 108）。機構別は
+Fiddle 76・Chains 34・Forgotten Soul 24・OneTwoPunch 2・Duplication 2・Panache 1。
+
+seed 別（post-fix）：`N8CQ4ZKP2W` 57、`H2LV6ZJ4XW` 24、`AM8C6YXHSG` 15、`D1W9Y3B7FC` 3、
+`P3V8N5K2RX` 2、`Q6N3V8K2MT` 2、ほか5 seed各1。
+
+→ mechanism panel の8 seedのうち **`B3N8V5T1WQ` と `R8V2H6N4ZB` は post-fix で到達性 0**
+（あの2 seed の分歧は除去した bug branch 由来）。この2 seed の ±0 は判定へ使えない。
+使えるのは N8・H2・AM8・D1・P3・Q6 の6 seed（AM8は生成プールの忠実化と混かる）。
+R8 の control run（22勝1敗）は已经完了 so 記録として残す。
