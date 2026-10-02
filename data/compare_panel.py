@@ -76,11 +76,13 @@ def main() -> None:
             ((a, b) for a, b in zip(arm["rows"], control["rows"]) if a[1] != b[1]),
             None,
         )
+        # A run-level A/B only measures a mechanism when the mechanism is present in BOTH arms:
+        # relic acquisition is path-dependent, so one arm can simply never encounter it.
         print(
             f"{seed}: control {control['wins']}W/{control['losses']}L "
             f"arm {arm['wins']}W/{arm['losses']}L "
             f"delta {arm['wins'] - control['wins']:+d} "
-            f"fired={dict(arm['fired']) or 'none'} "
+            f"arm_fired={dict(arm['fired']) or 'none'} control_fired={dict(control['fired']) or 'none'} "
             f"first_divergence={divergence} "
             f"act3 arm={arm['act3']} control={control['act3']}"
         )
