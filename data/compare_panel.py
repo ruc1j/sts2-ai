@@ -54,9 +54,12 @@ def scan(tag: str, seed: str, directory: str) -> dict:
                         record["losses"] += 1
                 if entry.get("phase") == "combat":
                     record["rows"].append((entry.get("seq"), entry.get("card_id"), entry.get("decision_source")))
-                for key in MECHANICS:
-                    if key in line:
-                        record["fired"][key] = record["fired"].get(key, 0) + 1
+                # Presence must mean the mechanism is in the observed combat state; a card_reward
+                # line that merely lists an offered card is not a firing.
+                if entry.get("phase") == "combat":
+                    for key in MECHANICS:
+                        if key in line:
+                            record["fired"][key] = record["fired"].get(key, 0) + 1
     except OSError:
         pass
     return record
