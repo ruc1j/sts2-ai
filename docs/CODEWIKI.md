@@ -4384,3 +4384,13 @@ block-on-play、Fiend Fire count、Hellraiser autoplay）。model は play 1回�
 hand が空なので 0 になる＝单回应用でfaithful である可能性が高いが、card 自身の pile 移動が loop 内か外で
 確認していない）、Hellraiser autoplay、Mayhem。これらは play 本文の loop 化をしないと一般に faithful
 にならない。母数0なので、loop 化は保留（記録だけ）。
+
+### Fiend Fire は gate 不要（第二 resolution は hand が空）
+
+`FiendFire.OnPlay`（decompile）：hand pile を its 自身で read して `cardCount` を取り、その札を exhaust、
+`DamageCmd.Attack(...).WithHitCount(cardCount)`。第二 resolution では hand は空（第一 resolution で全部
+exhaust 済み）→ `cardCount = 0` で hit なし。model の单回应用は第一 resolution 相当なので faithful。
+
+残る un-looped hook：Hellraiser autoplay（play ごとに走る）、Mayhem。母数0なので実装しない（記録だけ）。
+per-play trigger category の実装範囲：Juggernaut（AfterBlockGained）と Panache（AfterCardPlayed）＝
+commit `1dbbd43`、テスト2本、suite 742件成功。
