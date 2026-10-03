@@ -1735,6 +1735,44 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(after.player_block, 10)  # 5 base, applied twice
         self.assertEqual(_power(after.player_powers, "DuplicationPower"), 0)
 
+    def test_play_duplicated_re_resolves_draw_effects(self) -> None:
+        # DuplicationPower increases the play count, and the game runs the card's commands once per
+        # play - so Shrug It Off (block 5 + draw 1) draws twice as well as granting block twice.
+        draw = tuple(Card(STRIKE) for _ in range(4))
+        combat = Combat(
+            80, (Card(SHRUG),), draw, (), (Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ()),), energy=1,
+            player_powers=(("DuplicationPower", 1),),
+        )
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 16)  # Shrug grants 8, applied twice
+        self.assertEqual(len(after.hand), 2)
+
+    def test_play_duplicated_re_resolves_status_effects(self) -> None:
+        # The status application is part of OnPlay, so an increased play count applies it again.
+        combat = Combat(
+            80, (Card(BASH),), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),), energy=2,
+            player_powers=(("DuplicationPower", 1),),
+        )
+        after = step(combat, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.enemies[0].powers, "VulnerablePower"), 4)  # table value 2, applied twice
+
+    def test_chains_affliction_cap_counts_entries_not_cards_in_hand(self) -> None:
+        # ChainsOfBindingPower.AfterCardDrawn counts CardAfflictionEntry happened this turn, so playing
+        # an afflicted card does not free up the per-turn cap.
+        draw = tuple(Card(STRIKE) for _ in range(4))
+        combat = Combat(
+            80, (Card(SHRUG), Card(POMMEL_STRIKE)), draw, (),
+            (Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ()),), energy=3,
+            player_powers=(("ChainsOfBindingPower", 1),),
+        )
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))       # Shrug: draw 1 -> afflicted
+        self.assertEqual(sum(1 for card in after.hand if card.bound), 1)
+        bound_index = next(i for i, card in enumerate(after.hand) if card.bound)
+        after = step(after, f"card:{bound_index}@0", DUMMY_DATA, random.Random(0))  # the first Bound is playable
+        after = step(after, f"card:{after.hand.index(Card(POMMEL_STRIKE))}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.chains_afflicted_this_turn, 1)
+        self.assertEqual(sum(1 for card in after.hand if card.bound), 0)
+
     def test_one_two_punch_card_grants_the_power_and_doubles_attacks_only(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
         combat = Combat(80, (ONE_TWO_PUNCH, STRIKE, DEFEND), (), (), (enemy,), energy=3)

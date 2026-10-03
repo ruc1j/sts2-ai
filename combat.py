@@ -302,6 +302,10 @@ class Combat:
     # this turn, then the remaining Bound cards are gated off (the flag is cleared at turn end, and
     # the afflictions themselves are cleared there too).
     bound_played_this_turn: bool = False
+    # ChainsOfBindingPower.AfterCardDrawn caps at its amount using CardAfflictionEntry counted
+    # happened-this-turn, so the cap does not recover when an afflicted card leaves hand. The model
+    # previously counted bound cards still in hand, which re-opened the cap.
+    chains_afflicted_this_turn: int = 0
     # HellraiserPower safety cap: AutoPlay can recurse through exhaust-triggered draws.
     hellraiser_autoplays_this_turn: int = 0
     # Havoc/Pyre auto-plays one card per play, and the auto-played card's own play re-enters the
@@ -803,19 +807,20 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     if not from_hand_draw and RELIC_FIDDLE in combat.player_relics:
         return combat
     drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, count, rng)
-    # ChainsOfBindingPower.AfterCardDrawn afflicts every card the player draws with Bound, up to
-    # its amount per turn. Bound cards cannot be played, so the counter is exactly the number of
-    # still-bound cards in hand plus the ones being marked here.
+    # ChainsOfBindingPower.AfterCardDrawn afflicts cards the player draws with Bound, up to its amount
+    # per turn. The per-turn count is the number of afflictions that happened this turn, not the number
+    # of bound cards still in hand, so playing an afflicted card does not free up the cap.
     chains = _power(combat.player_powers, "ChainsOfBindingPower")
     if chains:
-        already_bound = sum(1 for value in combat.hand if isinstance(value, Card) and value.bound)
+        already_afflicted = combat.chains_afflicted_this_turn
         marked = []
         for value in drawn:
-            if isinstance(value, Card) and already_bound < chains:
+            if isinstance(value, Card) and already_afflicted < chains:
                 value = replace(value, bound=True)
-                already_bound += 1
+                already_afflicted += 1
             marked.append(value)
         drawn = tuple(marked)
+        combat = replace(combat, chains_afflicted_this_turn=already_afflicted)
     combat = replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard)
     if not _power(combat.player_powers, "HellraiserPower"):
         return combat
@@ -2111,7 +2116,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             upgraded_cards=upgraded_cards,
             paels_tears_pending=False,
             attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
-            bound_played_this_turn=False,
+            bound_played_this_turn=False, chains_afflicted_this_turn=0,
             hellraiser_autoplays_this_turn=0, pyre_autoplays_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
@@ -2325,11 +2330,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             combat, hand=tuple(hand), discard_pile=combat.discard_pile + (played_value,),
             energy=combat.energy - (0 if card_is_free else 1),
         )
-        return _draw_into_combat(combat, 1, data, rng)
+        # The play count increases how many times the card's commands resolve, so its draw runs again.
+        return _draw_into_combat(combat, 1 * (2 if play_duplicated else 1), data, rng)
     if card in CARD_DRAW:
         combat = _draw_into_combat(
             replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile),
-            CARD_DRAW[card] + (1 if card == POMMEL_STRIKE and card_was_upgraded else 0), data, rng,
+            (CARD_DRAW[card] + (1 if card == POMMEL_STRIKE and card_was_upgraded else 0)) * (2 if play_duplicated else 1), data, rng,
         )
         hand = list(combat.hand)
     if card == IMPATIENCE and not any(card_name(value) in ATTACKS for value in hand):
@@ -2366,7 +2372,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         self_damage += max((_power(enemy.powers, "GalvanicPower") for enemy in combat.enemies), default=0)
     if self_damage:
         # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
-        damaged = _apply_player_damage(combat, self_damage, trigger_inferno=True)
+        # An increased play count re-runs OnPlay, so the self-damage happens once per resolution.
+        damaged = _apply_player_damage(combat, self_damage * (2 if play_duplicated else 1), trigger_inferno=True)
         player_hp, combat = damaged.player_hp, damaged
     if card == NOT_YET:
         # No max-HP tracking in this model (Combat has no companion max_hp field), so the heal is
@@ -2928,12 +2935,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
     if card in CARD_VULNERABLE_TARGET:
-        vulnerable = (CARD_VULNERABLE_TARGET[card] + (1 if card in {BASH, SQUASH} and card_was_upgraded else 0)) * (2 if lamp_double else 1)
+        vulnerable = (CARD_VULNERABLE_TARGET[card] + (1 if card in {BASH, SQUASH} and card_was_upgraded else 0)) * (2 if lamp_double else 1) * (2 if play_duplicated else 1)
         enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], "VulnerablePower", vulnerable)
     if card == UPPERCUT:
-        weak = 1 + (1 if card_was_upgraded else 0)
+        # The status application is part of the play, so an increased play count applies it again.
+        plays = 2 if play_duplicated else 1
+        weak = (1 + (1 if card_was_upgraded else 0)) * plays
         enemy = _apply_enemy_debuff(enemies[int(target)], "WeakPower", weak * (2 if lamp_double else 1))
-        vulnerable = 1 * (2 if lamp_double else 1)
+        vulnerable = 1 * (2 if lamp_double else 1) * plays
         enemy = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
         if card_was_upgraded:
             enemy = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
