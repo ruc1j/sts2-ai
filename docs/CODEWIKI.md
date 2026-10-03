@@ -3032,3 +3032,14 @@ panel で机构単独として立つのは第一分歧の位置だけ：
 → AM8 の +0 は「机构の効果が出なかった」ではなく、机构が効く位置が第一分歧より後（state が違う）なので
 机构単独の差として開けない。機構単独を隔離できるのは同一 observation を両treeで replay する到達性
 計算だけ（Fiddle 76件、Chains の忠実なゲート651件で17%）。
+
+### R8 の arm run は机构を1つも state に出していない → R8 の差は机构単独として読めない
+
+clean R8（13勝0敗・走行中、control 22勝1敗）：combat record に機構が0件。control 側は Chains 17 record・
+Rose 154 record。arm 側が机构を seen していないので、分歧は机构の実装差では説明できず、残る通路は
+生成プールの忠実化（`STOKE_GENERATION`）だけ。
+
+panel で「第一分歧の位置に机构が両腕の state に出ている」seed は現時点 **H2 だけ**（seq 441、
+Forgotten Soul）。AM8 の第一分歧 seq 248、R8 の分歧位置は机构なし → 機構単独の差として開けない。
+机构単独の差は同一 observation を両treeで replay する到達性計算でしか隔離できない（Fiddle 76件、
+Chains の忠実なゲート651件で17%、Forgotten Soul 24件、OneTwoPunch 2件、Duplication 2件、Panache 1件）。
