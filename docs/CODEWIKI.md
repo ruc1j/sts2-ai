@@ -3087,3 +3087,23 @@ sweep が print した wins=13 は print 時点で trace が未完だった值�
 
 D1 も同じ形：aligned 306件分歧0、14勝1敗で同値（機構を引かなかった path）。
 現在 panel で机构単独の差として立っているのは H2（Forgotten Soul、第一分歧 seq 441、+2）だけ。
+
+### panel（clean run）の consolidated 判定
+
+| seed | control | arm（clean） | delta | aligned combat decision | 分歧 | 第一分歧の机构（両腕 state） |
+|---|---:|---:|---:|---:|---:|---|
+| `N8CQ4ZKP2W` | 5W1L | 5W1L | 0 | 111 | 0 | — |
+| `H2LV6ZJ4XW` | 20W1L | **22W1L** | **+2** | 390 | **46** | `RELIC.FORGOTTEN_SOUL`（seq 441） |
+| `AM8C6YXHSG` | 17W1L | 17W1L | 0 | 323 | 138 | none（→ 生成プール） |
+| `R8V2H6N4ZB` | 22W1L | 22W1L | 0 | 454 | 0 | Rose（effect 0） |
+| `D1W9Y3B7FC` | 14W1L | 14W1L | 0 | 306 | 0 | — |
+| `P3V8N5K2RX` | 15W1L | 15W1L | 0 | 305 | 0 | Duplication（effect 0） |
+| `B3N8V5T1WQ` | 16W1L | 走行中（8勝0敗、分歧0） | — | 171 | 0 | — |
+| `Q6N3V8K2MT` | 12W1L | 12W1L（first pass、clean code） | 0 | — | 0 | — |
+
+**機構単独の win-rate 効果は、clean run の母集団で H2 の +2（1 seed、46分歧）だけが立った。**
+rule 5（1 seedの当たりで採用しない）と閾値（≥3 decisions かつ ≥3 seeds）の立場では、機構は
+**正しさの修正として採用済み**（decompile 根拠＋Fiddle のドロー拒否は実走1,436件、Chains のゲートは
+実測279 plays/45 turns、play-count powers は decompile 一致）で、win-rate の效果は母集団が薄いまま。
+AME の 138分歧は生成プールの忠実化（同一 observation で control 形／faithful を切り替えて再現）で、
+机构の差ではない。
