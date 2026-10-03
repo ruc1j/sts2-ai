@@ -3713,3 +3713,20 @@ mechanism-only  counts（13件、22件）だけ。
 
 → 機構単独の决定差（同一条件で隔离済み）：Forgotten Soul 13件（H2）、Fiddle 22件（AM8）。run レベルの
 win 效果は H2 の +2（1 seed）のまま。
+
+### H2 の mechanism-only 13件は机构が1つだけなので attribution が歧義がない
+
+13位置を1件ずつ確認：両腕の state に出ている機構は `RELIC.FORGOTTEN_SOUL` **だけ**（>1の位置0件）。
+例（fresh replay、同一条件）：
+
+- seq 444：control replay `CARD.ANGER` / arm replay end_turn
+- seq 445：control `CARD.ANGER` / arm `CARD.STRIKE_IRONCLAD`
+- seq 446：control `CARD.ANGER` / arm end_turn
+
+→ H2 の13件は Forgotten Soul 単独の差（`AfterCardExhausted`：exhaust 1枚につき random 1 hittable 体へ
+1 unpowered）。AM8 の22件は Fiddle 単独（その位置で Fiddle だけの位置が主体。Fiddle＋Chains の14件は
+単独へ割れない）。
+
+**破いた実験（記録として正直に）**：Fiddle の「拒否 part」と「+2 part」を分割する test を走らせたが、
+その位置の机构は Fiddle ではなく Forgotten Soul だった上、+2 は `_draw_into_combat` の path に無い
+（turn start 側）ので patch が効いていない。数字（28/1）は意味を持たない → 破棄。
