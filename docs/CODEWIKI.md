@@ -3838,3 +3838,23 @@ corpus で决定的に効く母数が薄い。
 
 実装は batch3 完走後（rule 9：run が in flight の間に policy code を触らない）。テストは
 `test_duplication_re_resolves_status_and_draw_effects`（draw gate）と status gate の2本を予定。
+
+### play count の再走：effect ごとに実測した（verified table）
+
+同一条件の test 相当で1 play ずつ確認（DuplicationPower 1、dummy enemy）：
+
+| effect | game（decompile：play count +1 で play 全体が再走） | model の現状 | 判定 |
+|---|---|---|---|
+| block grant | 2回 | 2倍（line 1080） | **一致**（Defend 5→10、Shrug 8→16） |
+| damage hit | 2回 | 2倍（line 2824） | **一致**（Twin Strike 4 hit） |
+| draw | 2回 | **1回だけ**（Shrug: hand size 1 のまま） | gap |
+| status 付与 | 2回 | **1回だけ**（Bash の Vulnerable 2 のまま） | gap |
+| power grant | 2回 | **1回だけ**（Demon Form の stack 2 のまま） | gap |
+| self damage | 2回 | 1回だけ（gate 無し） | gap |
+
+`play_duplicated` を読んでいるのは `_grant_block`（1080）と damage（2824）の2箇所だけ。
+→ draw・status・power・self damage の site に gate を足す（checklist は上の節）。実装は batch3 完走後。
+
+Fiddle との相互作用は正しい：Shrug の draw は `_draw_into_combat(..., from_hand_draw=False)` を呼ぶので、
+Fiddle を持つと game は draw を拒否する（model も拒否）。Shrug の母数25件の中で Fiddle を持つ run は
+Q6・D1（control-era）で、Fiddle 所持時に Shrug を打つ位置は拒否側で既に一致している。
