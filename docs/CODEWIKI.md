@@ -4825,3 +4825,26 @@ Weak / Vulnerable / Frail を持っており、**552 run 中 432 run** に現れ
 内訳 FRAIL 8,322・WEAK 4,490・VULNERABLE 2,531。Frail はPreviously 永久に乗る側へ狂っていたので、
 この432 run で block の見積もりが系統的に狂っていたことになる。実走 A/B は `data/debuff_ab.sh`
 （露出上位3 seed：B3N8V5T1WQ 153、SOS6XYXCNO 129、D6A1F8C3E5 127）。
+
+### debuff tick 修正の実走 A/B（2026-10-04、`data/debuff_ab.sh`）
+
+arm = HEAD `7ec2a06`、control = 親 `0aa9a71`（worktree）。露出上位3 seed。
+
+| seed | control | arm | delta | 死亡戦闘 | arm/control の player debuff record 数 |
+|---|---|---|---:|---|---|
+| `B3N8V5T1WQ` | 19勝1敗 | **20勝1敗** | **+1** | QUEEN+TORCH_HEAD_AMALGAM（arm 8T/残り QUEEN 393、ctrl 6T/392） | 164 / 160 |
+| `SOS6XYXCNO` | 13勝1敗 | 13勝1敗 | 0 | THE_INSATIABLE（arm 残り96HP、ctrl 残り22HP） | 16 / 11 |
+| `D6A1F8C3E5` | 17勝1敗 | 17勝1敗 | 0 | arm は QUEEN のみ（TORCH_HEAD を殺しきった）、ctrl は QUEEN+TORCH_HEAD | 145 / 127 |
+| 合計 | 49勝 | **50勝** | **+1** | | |
+
+分歧の数は B3 で 537 对齐中 412、D6 で 359 中 103 と大きい。ただし**第一分歧の record には player の
+debuff が出ていない**（B3 seq 73、SOS 193、D6 342 で player powers は空）＝この修正の差は観測状態そのもの
+ではなく **rollout 内の将来の tick** に現れる。だから「分歧が debuff 付き record に居る数」
+（B3 173件、D6 88件、SOS 0件）を以って帰属の根拠にはできない。分歧の帰属をクローズするには
+同一 record replay（`data/attribution_rampart.py PLAYER:POWER.WEAK_POWER,...`）を act 別の enemy data
+（またはマージした data）で回す必要がある。
+
+同じ seed 系列での忠実度修正の累計は追跡できる：`B3N8V5T1WQ` は
+`d67896f` 16勝 → Rampart 17勝 → Axebot・Hopper・Decimillipede 19勝 → debuff tick **20勝**。
+まだ Act 3 は踏破していない（QUEEN 400HP が残る）。SOS6XYXCNO の THE_INSATIABLE 戦では arm の方が
+**96HP 残し**で負けており（control 22HP 残し）、tick 修正が必ずしも boss 戦を有利にしていない面もある。
