@@ -3521,3 +3521,13 @@ state に出た位置だけで機構の差を数える（`mechonly_attribution.p
 `V7D3M9H2XW` seq 312（hand に Panache、powers 空）は、札名 knowledge の差。batch2 の control run は
 この seed たちで機構を state に出していない（`M5` 16勝1敗・`V7` 9勝0敗・走行中、power/relic 出現0）ので、
 arm run が分歧する位置は knowledge 差の位置になり、机构単独の差ではない。
+
+### batch2 arm 1件目の分歧は knowledge-only（機構が state に出る前）
+
+`mechonly_arm_b2_U2M7K5F9RA`（67 aligned、分歧6件）：その6件は**両腕の state に power/relic が出ていない
+位置**＝ table knowledge の差（arm は OneTwoPunch などの card entry を持つ、control は持たない）。
+control は `POWER.DUPLICATION_POWER` を seq 189 で得るので、arm がその点に達して同じ位置で見た場合の
+分歧だけが機構単独の差として数えられる。`mechonly_attribution.py` の by-mechanism は空、no-mechanism 6件。
+
+→ pin は生成集合の差を消すが、knowledge 差は消さない。機構単独の差は power/relic が両腕の state に
+出た位置だけ、という rule がそのまま効いている。
