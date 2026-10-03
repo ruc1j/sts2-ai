@@ -3595,3 +3595,13 @@ first-diff-mech（第一分歧の位置の機構）を出すようにした（co
 
 run レベルで机构単独の差として分歧を出した seed は H2（Forgotten Soul、46件、+2）と AM8（Fiddle、87件、
 outcome 同値）の2件のまま。閾値（≥3 decisions かつ ≥3 seeds）の seeds 側未達。
+
+### `M7C4Q9V2RH` は機構位置（468）より前に control 側が分歧している（exception seq 138）
+
+control M7 の exception は seq 138、機構（`POWER.CHAINS_OF_BINDING_POWER`）の第一位置は seq 468。
+exception の decision で game 側の default を取ったので、138 以降 path が分かれる → 機構位置での分歧が
+出ても机构単独の差として attribution できない。この seed は run レベルの母数から除外。
+
+run レベルで机构単独として立っている seed：H2（46分歧、+2）と AM8（87分歧、outcome 同値）。
+knowledge-only で除外：`U2M7K5F9RA`。分歧0：`T3XQ7WM2VP`・`R8V2H6N4ZB`・`P3V8N5K2RX`。除外（机构位置
+より前に path 分歧）：`M7C4Q9V2RH`。
