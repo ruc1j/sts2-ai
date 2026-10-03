@@ -3965,3 +3965,19 @@ model（`combat.py` line 808-816）：`already_bound = hand に在る bound 札`
 実走ではこの gap が决定に出る母数が薄い：測った control run 9 seed で bound 札が hand に在る record は0件
 （draw が decision で起きなかった）。Shrug の draw は play-count power の gate と同じ位置（U2 の1件）で、
 Chains の cap と絡む位置は corpus 側の651件（draw が起きた run）に属します。
+
+### gate の母数は「同じ path」でないと pair にならない（N8 の case）
+
+bound 札が hand に出た run は corpus で N8 786・H2 431・D6 56 record（`candidate_*` の control-era run）。
+しかし batch1 の control run（`e808bdf`）で N8 は機構を state に出さなかった（Chains が無い）ので、その
+gate 母数は `e808bdf` の run とは別の path（relic 獲得の有無が違う） belongs。同じ seed でも path が
+違えば pair にならない → run レベルでは測定できない。
+
+同じ seed の別の run で機構が揃う caseは、`9X9`（Duplication 両腕）と `73P`（OneTwoPunch 両腕）の2件で、
+いずれも reach 0。機構が state に出た control run（`e808bdf`）は測った限り H2・AM8・R8・P3・U2・T3・M7・
+V7・D6・B4 の10 seed（B4 は gate 母数0）。機構が decision で trigger した seed は H2（FS）と AM8（Fiddle）
+だけ。
+
+→ 母数を增やすには trigger 位置（draw が decision で起きる、または play  Count powers が active の play）
+を持つ path が必要。batch3 完走後に、忠実度の fix（Chains cap を entry 基準へ、play-count の gate 4箇所）
+を実装して、trigger 位置が生まれた run で分歧が出るかを見る。
