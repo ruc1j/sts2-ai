@@ -108,7 +108,8 @@ def main() -> None:
         confounded = 0
         for seq in diffs:
             both = present(arm[seq]) & present(control[seq])
-            if any(card.get("id") not in table for card in (arm[seq].get("hand") or [])):
+            if any((card.get("id") or "").split(".", 1)[-1].lower() not in {k.lower() for k in table}
+                   for card in (arm[seq].get("hand") or [])):
                 confounded += 1
             if not both:
                 none += 1
