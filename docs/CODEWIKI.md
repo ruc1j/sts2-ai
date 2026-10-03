@@ -3165,3 +3165,17 @@ R8・B3・P3・N8・D1・Q6 は分歧0、AM8 の第一分歧は生成プール�
 **機構単独の win-rate 効果：1 seed（H2）で +2。閾値の seeds 側が未達 → 採用根拠にはならない。**
 機構は正しさの修正として採用済みのまま。例外は R8 の1件（SoarPower の ZeroDivision、`2aef215` で修正）
 で、その run の分歧0・胜敗同値に影響は出なかった。
+
+### mechanisms-only batch の expected reading
+
+`data/mechonly_agent.py`（arm の code、生成集合は control 形）で4 seed を走らせる（job `bash-424`）。
+設計の意図：
+
+- 生成集合の差を消す → path が control と揃う → 分歧は機構の実装差だけ
+- したがって第一分歧の record は、機構が**両腕の state に出ている**位置になる（机构を引くまでの区間は
+  分歧0预期）。H2 は133件 aligned 分歧0、機構未発火 → 预期どおり
+- 机构を引かない seed は分歧0のまま（B3・D1・Q6・N8 は引かなかった）。引く seedは control の run で
+  機構を state に出した4 seed（H2・AM8・R8・P3）＋ Fiddle の seed
+
+照合は `data/compare_panel.py`（tag `mechonly` vs `mechpanel_ctrl`）。判定は per-seed 勝数と、第一分歧が
+機構の位置であること。閾値は ≥3 decisions かつ ≥3 seeds。
