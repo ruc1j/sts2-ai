@@ -49,17 +49,37 @@ def present(record):
 
 
 def main() -> None:
-    seeds = sys.argv[1:] or [
-        "H2LV6ZJ4XW", "AM8C6YXHSG", "R8V2H6N4ZB", "P3V8N5K2RX",
-        "N8CQ4ZKP2W", "D1W9Y3B7FC", "B3N8V5T1WQ", "Q6N3V8K2MT",
-    ]
+    args = list(sys.argv[1:])
+    arm_tag = "mechonly"
+    control_tag = "mechpanel_ctrl"
+    control_dir = CONTROL_DIR
+    seeds = []
+    index = 0
+    while index < len(args):
+        if args[index] == "--arm-tag":
+            arm_tag = args[index + 1]
+            index += 2
+        elif args[index] == "--ctrl-tag":
+            control_tag = args[index + 1]
+            index += 2
+        elif args[index] == "--ctrl-dir":
+            control_dir = args[index + 1]
+            index += 2
+        else:
+            seeds.append(args[index])
+            index += 1
+    if not seeds:
+        seeds = [
+            "H2LV6ZJ4XW", "AM8C6YXHSG", "R8V2H6N4ZB", "P3V8N5K2RX",
+            "N8CQ4ZKP2W", "D1W9Y3B7FC", "B3N8V5T1WQ", "Q6N3V8K2MT",
+        ]
     for seed in seeds:
-        arm_path = f"data/mechonly_{seed}_agent.jsonl"
+        arm_path = f"data/{arm_tag}_{seed}_agent.jsonl"
         if not os.path.exists(arm_path):
-            print(f"{seed}: harness run not started yet")
+            print(f"{seed}: arm run not started yet")
             continue
         arm = combat_records(arm_path)
-        control = combat_records(f"{CONTROL_DIR}/data/mechpanel_ctrl_{seed}_agent.jsonl")
+        control = combat_records(f"{control_dir}/data/{control_tag}_{seed}_agent.jsonl")
         shared = sorted(set(arm) & set(control))
         if not shared:
             print(f"{seed}: no aligned combat records")
