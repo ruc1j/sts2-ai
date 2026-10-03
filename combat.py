@@ -304,6 +304,10 @@ class Combat:
     bound_played_this_turn: bool = False
     # HellraiserPower safety cap: AutoPlay can recurse through exhaust-triggered draws.
     hellraiser_autoplays_this_turn: int = 0
+    # Havoc/Pyre auto-plays one card per play, and the auto-played card's own play re-enters the
+    # autoplay path while the power is active, so the recursion needs a safety cap. Real run evidence:
+    # control (e808bdf) hit RecursionError at seq 138 with PyrePower active, before any cap existed.
+    pyre_autoplays_this_turn: int = 0
     # Enlightenment.OnPlay: caps every hand card's cost at 1 for the rest of this turn (reduceOnly
     # - never raises a cheaper card). Reset alongside the other per-turn counters.
     enlightened_this_turn: bool = False
@@ -757,6 +761,8 @@ def _autoplay_top_of_draw(combat: Combat, data: dict, rng: random.Random) -> Com
     ponytail: this model keeps the draw pile as an unordered bag, so _draw hands back a random
     card rather than the true top one. Track draw order if card-order effects ever need it.
     """
+    if combat.pyre_autoplays_this_turn >= 9:
+        return combat
     drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, 1, rng)
     if not drawn:
         return combat
@@ -764,7 +770,10 @@ def _autoplay_top_of_draw(combat: Combat, data: dict, rng: random.Random) -> Com
     combat = replace(combat, draw_pile=draw, discard_pile=discard, hand=combat.hand + (card,))
     hand_index = len(combat.hand) - 1
     base = f"card:{hand_index}" if isinstance(card, Card) else card_name(card)
-    candidate = replace(combat, free_cards=combat.free_cards + (card,))
+    candidate = replace(
+        combat, free_cards=combat.free_cards + (card,),
+        pyre_autoplays_this_turn=combat.pyre_autoplays_this_turn + 1,
+    )
     options = legal_actions(candidate)
     alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
     action = None
@@ -2103,7 +2112,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             paels_tears_pending=False,
             attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
             bound_played_this_turn=False,
-            hellraiser_autoplays_this_turn=0,
+            hellraiser_autoplays_this_turn=0, pyre_autoplays_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
             play_duplicated=False,

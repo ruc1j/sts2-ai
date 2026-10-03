@@ -2207,6 +2207,22 @@ class CombatTest(unittest.TestCase):
         self.assertTrue(any(isinstance(card, Card) and card.name == STRIKE for card in retained.hand))
         self.assertFalse(any(isinstance(card, Card) and card.unplayable_this_turn for card in retained.hand))
 
+    def test_top_of_draw_autoplay_recursion_is_capped(self) -> None:
+        # Playing Havoc auto-plays the top card of the draw pile; if that card is also Havoc, its play
+        # re-enters the same path. Real run evidence: control (e808bdf) raised RecursionError at seq 138
+        # with PyrePower active and Havoc in the draw pile. The cap stops the recursion.
+        draw = tuple(Card(HAVOC) for _ in range(20))
+        combat = Combat(
+            80, (Card(HAVOC),), draw, (), (Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ()),),
+            energy=3, player_powers=(("PyrePower", 1),),
+        )
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertLessEqual(after.pyre_autoplays_this_turn, 9)
+        self.assertGreater(after.pyre_autoplays_this_turn, 1)
+        # The cap is per turn.
+        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.pyre_autoplays_this_turn, 0)
+
     def test_curses_are_never_playable(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
         self.assertEqual(legal_actions(Combat(80, (DOUBT, REGRET, SHAME), (), (), (enemy,))), (END_TURN,))
