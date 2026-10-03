@@ -2811,6 +2811,29 @@ class CombatTest(unittest.TestCase):
         scaled = step(Combat(80, (), (), (), (segment("WRITHE_MOVE", strength=2),), turn=1), END_TURN, hive, random.Random(0))
         self.assertEqual(80 - scaled.player_hp, 14)
 
+    def test_enemy_applied_debuffs_survive_the_turn_that_applied_them(self) -> None:
+        # WeakPower / VulnerablePower / FrailPower tick at the end of the enemy side's turn, but a stack
+        # applied during that turn is exempt from it.  An Axebot's Hammer Uppercut (Weak 2 + Frail 2) is
+        # observed in real runs as Weak 2 / Frail 2 during player turn 2 and 1 / 1 during player turn 3;
+        # ticking the fresh stack in the same transition made the player read the debuff one turn late
+        # (and left Frail - which nothing used to tick at all - on the player forever).
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        spec = next(monster for monster in glory["monsters"] if monster["id"] == "MONSTER.AXEBOT")
+        axebot = Enemy(model=spec["id"], hp=400, move="HAMMER_UPPERCUT_MOVE", values=tuple(sorted(spec["values"].items())))
+        rng = random.Random(0)
+        combat = Combat(300, (), (), (), (axebot,), turn=1)
+        after_first = step(combat, END_TURN, glory, rng)
+        self.assertEqual(
+            (_power(after_first.player_powers, "WeakPower"), _power(after_first.player_powers, "FrailPower")),
+            (2, 2),
+        )
+        after_second = step(after_first, END_TURN, glory, rng)
+        self.assertEqual(
+            (_power(after_second.player_powers, "WeakPower"), _power(after_second.player_powers, "FrailPower")),
+            (1, 1),
+        )
+
     def test_greedy_action_avoids_self_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

@@ -430,6 +430,18 @@ def _tick_down_power(items: tuple[tuple[str, int], ...], name: str) -> tuple[tup
     return _add_power(items, name, -1) if _power(items, name) > 0 else items
 
 
+# The three debuffs whose AfterSideTurnEnd hook is gated on the enemy side.
+DEBUFF_POWERS = ("VulnerablePower", "WeakPower", "FrailPower")
+
+
+def _tick_debuffs(powers: tuple[tuple[str, int], ...], running: tuple[str, ...]) -> tuple[tuple[str, int], ...]:
+    """Tick only the debuffs that were already running when the enemy side began (see the snapshot in
+    step()'s END_TURN path): a stack the enemy phase itself applied is exempt from this turn's tick."""
+    for name in running:
+        powers = _tick_down_power(powers, name)
+    return powers
+
+
 def _apply_enemy_debuff(enemy: Enemy, power: str, amount: int) -> Enemy:
     """Apply a visible debuff, consuming one Artifact stack when present."""
     if amount <= 0:
@@ -2020,6 +2032,16 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 enemies = list(combat.enemies)
                 enemies[hit] = _damage_enemy(enemies[hit], 6, powered=False)
                 combat = replace(combat, enemies=tuple(enemies))
+        # WeakPower / VulnerablePower / FrailPower.AfterSideTurnEnd all tick down at the end of the
+        # enemy side's turn, for owners on either side (confirmed in the decompile: each gates on
+        # side == CombatSide.Enemy).  A stack applied *during* that enemy turn is exempt from the same
+        # turn's tick - real runs show an Axebot Uppercut leaving the player at Weak 2 / Frail 2 during
+        # player turn 2 and 1 / 1 during turn 3 - so the set of debuffs that were already running when
+        # the enemy side starts is recorded here and ticked after the phase.  Anything the enemy phase
+        # adds survives into the player's next turn, and a debuff the player applied during their own
+        # turn still counts for the enemy's attacks.
+        player_debuffs = tuple(name for name in DEBUFF_POWERS if _power(combat.player_powers, name))
+        enemy_debuffs = [tuple(name for name in DEBUFF_POWERS if _power(enemy.powers, name)) for enemy in combat.enemies]
         for index in range(len(combat.enemies)):
             combat = _enemy_turn(combat, index, data, rng)
         enemies = list(combat.enemies)
@@ -2037,22 +2059,21 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                     enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 0)),
                     move=_resolve_move(enemy, spec, rng, spec["initial_state"]),
                 )
-        # VulnerablePower/WeakPower.AfterSideTurnEnd tick down after the enemy side, for both
-        # player and enemy owners (the decompiled powers gate on side == CombatSide.Enemy).
-        player_powers = _tick_down_power(
-            _tick_down_power(
-                _tick_down_power(
-                    _tick_down_power(combat.player_powers, "VulnerablePower"), "WeakPower"
-                ),
-                "ColossusPower",
-            ),
-            "RetainHandPower",
-        )
+        # The debuffs that were already running tick at the end of the enemy side's turn; the two
+        # player powers with their own hooks tick alongside them.
+        player_powers = _tick_down_power(_tick_down_power(combat.player_powers, "ColossusPower"), "RetainHandPower")
+        player_powers = _tick_debuffs(player_powers, player_debuffs)
         if doubt_weak:
             player_powers = _add_power(player_powers, "WeakPower", doubt_weak)
         if shame_frail:
             player_powers = _add_power(player_powers, "FrailPower", shame_frail)
-        enemies = [replace(enemy, powers=_tick_down_power(_tick_down_power(enemy.powers, "VulnerablePower"), "WeakPower")) for enemy in enemies]
+        enemies = [
+            replace(
+                enemy,
+                powers=_tick_debuffs(enemy.powers, enemy_debuffs[index] if index < len(enemy_debuffs) else ()),
+            )
+            for index, enemy in enumerate(enemies)
+        ]
         combat = replace(combat, enemies=tuple(enemies), player_powers=player_powers)
         # TaintedPower.AfterSideTurnEnd and FlameBarrierPower.AfterSideTurnEnd both remove
         # themselves once the enemy side's turn ends.
