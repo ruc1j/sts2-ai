@@ -4791,3 +4791,37 @@ enemy 側の Vulnerable/Weak は今の位置（敵ターン後）に置く分岐
 対象は広い（THE_INSATIABLE の player Vulnerable は 6633 record、SOUL_NEXUS の DrainLife が
 Vulnerable 2 + Weak 2、Axebot の Uppercut が Weak 2 + Frail 2、Decimillipede、VANTOM、QUEEN …）。
 これは次ラウンドの実装候補として一番母数が大きい。
+
+## player debuff の tick が1手早く、Frail が全く減っていなかった（2026-10-04、commit `7ec2a06`）
+
+`WeakPower` / `VulnerablePower` / `FrailPower` の tick は decompile で3つとも同じ形：
+
+```csharp
+public override async Task AfterSideTurnEnd(...) { if (side == CombatSide.Enemy) await PowerCmd.TickDownDuration(this); }
+```
+
+＝**敵サイドのターン終了時に1減る**（player 所有でも enemy 所有でも）。combat.py は END_TURN 遷移で
+`_enemy_turn` の**後に** player の Vulnerable/Weak を減らしていたため、敵のターンで付いた stack が
+同じ遷移内で消え、player の次のターンに届かなかった。FrailPower は tick する箇所が**存在しなかった**
+（`grep FrailPower combat.py` は使用箇所の2件だけ）。
+
+実走で決まる2つの事実：
+
+1. 敵がそのターンに付した debuff は、そのターンの tick を受けけない（Axebot の Hammer Uppercut
+   Weak 2 / Frail 2 → player turn 2 で **2 / 2**、turn 3 で **1 / 1**）
+2. player 側に既に乗っていた debuff は、敵の攻撃に効いた後に減る（Waterfall Giant の EXPLODE 22
+   ダメージは Vulnerable 1 が生きていてこそ。`test_rollout_preserves_waterfall_steam_damage_from_observed_explode_intent`
+   がこの順番を壊す実装で 58 → 65 HP になって失敗した）
+
+実装：END_TURN で**敵フェーズの前に**「すでに走っていた debuff」の集合を記録し（player と各 enemy）、
+敵フェーズの後にその集合だけを `_tick_down_power` する（`DEBUFF_POWERS` と `_tick_debuffs`）。
+フェーズ中に付いた分は減らないので player の次のターンまで生き、Frail も減り始める。
+model の Axebot 系列は turn 2 = 2/2、turn 3 = 1/1、turn 4 = 2/2（1+2 から1減らして2）で実走と一致。
+回帰テスト `test_enemy_applied_debuffs_survive_the_turn_that_applied_them`（親 commit では失敗）、
+suite **753件成功**。
+
+母数（replay ではなく観測露出で数えた）：combat record 148,905 件のうち **15,343 件**で player が
+Weak / Vulnerable / Frail を持っており、**552 run 中 432 run** に現れる。
+内訳 FRAIL 8,322・WEAK 4,490・VULNERABLE 2,531。Frail はPreviously 永久に乗る側へ狂っていたので、
+この432 run で block の見積もりが系統的に狂っていたことになる。実走 A/B は `data/debuff_ab.sh`
+（露出上位3 seed：B3N8V5T1WQ 153、SOS6XYXCNO 129、D6A1F8C3E5 127）。
