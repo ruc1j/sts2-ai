@@ -3885,3 +3885,18 @@ batch2 の4（U2・T3・M7・V7）＋ batch3 の D6 の9件で、いずれも測
 → run レベルの机构単独の差は「機構が trigger した位置」でしか出ない。batch3 は D6 以外の seed が機構を
 state に出しておらず、D6 も trigger 位置が無いので、分歧が出ない見込み（arm stage は control の path を
 追うので同じ）。母数增やす の目的は、trigger 位置を持つ seed を find することとして继续します。
+
+### gap の trigger 母数（`e808bdf` の control run では1件だけ）
+
+control run で play-count power が active だった decision を札の effect 別に分けた：
+
+- `T3XQ7WM2VP`：Duplication ×1 = **block 札**（model は block を2倍にするので正しい）、Gigantification ×1 =
+  attack（正しい）→ gap の trigger 母数 **0**
+- `U2M7K5F9RA`：OneTwoPunch ×1 = **status 札**（status 付与が2倍にならない → gap）、Duplication ×1 = block
+  （正しい）→ gap の trigger 母数 **1**
+
+corpus 側の27件（Shrug 25・Taunt 1・Colossus 1）は arm-era commit の run の数字。`e808bdf` の run では
+gap が决定に出る母数は1件（U2）でした。
+
+→ gate 追加は**正しさの修正**としては意味がある（decompile 根拠）が、測った outcome を変える母数は
+ほぼ無い。実装は batch3 完走後に site 4箇所＋テスト2本で行う（rule 9）。
