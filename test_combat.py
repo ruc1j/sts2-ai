@@ -1789,6 +1789,18 @@ class CombatTest(unittest.TestCase):
         # The game resets CardsLeft to 5 after the trigger, so the next resolution counts from zero again.
         self.assertEqual(after.panache_cards_this_turn, 1)
 
+    def test_play_duplicated_advances_the_per_play_counters_twice(self) -> None:
+        # Card-play counters (used by Kunai/Shuriken/Unmovable style relics) count each resolution.
+        combat = Combat(
+            80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),), energy=1,
+            player_powers=(("DuplicationPower", 1),),
+        )
+        after = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(
+            (after.cards_played_this_turn, after.skills_played_this_turn, after.block_cards_this_turn),
+            (2, 2, 2),
+        )
+
     def test_chains_affliction_cap_counts_entries_not_cards_in_hand(self) -> None:
         # ChainsOfBindingPower.AfterCardDrawn counts CardAfflictionEntry happened this turn, so playing
         # an afflicted card does not free up the per-turn cap.
