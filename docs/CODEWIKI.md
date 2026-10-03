@@ -4332,3 +4332,19 @@ outcome 同値）の2 seedのまま。
 忠実度の実装によって、同一条件 replay で「gate が决定を変える位置」の母数は draw 25件（Shrug）＋ status
 1件（U2 の Taunt）＝26件。実走 panel の决定列は変更前の code で走っているので、この gate が実走 outcome
 を変えた evidence は無い（rule のまま：offline の变化は採用根拠にしない）。
+
+### gate の effect を同一条件で隔离した：73件で决定变化0
+
+同一 record・同一 seed・同一 simulations で、gate 入りの code と gate を外した code（同じ文件の copy で
+`(2 if play_duplicated else 1)` を `1` に置換）を比べた：
+
+- records compared: **73**
+- gate が choice を変える位置: **0**
+
+＝忠実度の gate は正しさの修正として入れたが、観察された run の决定を変えない（draw/status が ranking
+に効く位置がなかった）。前ラウンドの「replay が recorded choice と39件違う」は module state 由来で、gate
+由来ではない（同一条件比較で0件）。
+
+→ play-count powers の决定效果は、実走（73件）と同一条件 replay（0件）の両方で0。机构単独で决定を
+動かした母数は Fiddle（sample で76件、harness run では分歧87件のうち同一条件で22件）と Forgotten Soul
+（108件 sample、harness run 46分歧のうち13件）だけ。
