@@ -3730,3 +3730,24 @@ win 效果は H2 の +2（1 seed）のまま。
 **破いた実験（記録として正直に）**：Fiddle の「拒否 part」と「+2 part」を分割する test を走らせたが、
 その位置の机构は Fiddle ではなく Forgotten Soul だった上、+2 は `_draw_into_combat` の path に無い
 （turn start 側）ので patch が効いていない。数字（28/1）は意味を持たない → 破棄。
+
+### play-count powers：game 実装は play 全体をもう一度解像する（model は damage と block だけ）
+
+cached decompile（`MegaCrit.Sts2.Core.Models.Powers/DuplicationPower.cs`）：
+
+```csharp
+public override int ModifyCardPlayCount(CardModel card, Creature? target, int playCount) {
+    if (card.Owner.Creature != Owner) return playCount;
+    return playCount + 1;
+}
+public override async Task AfterModifyingCardPlayCount(CardModel card) => await PowerCmd.Decrement(this);
+```
+
+＝power は **play count を +1** する（play 全体がもう一度解像される）で、modification の直後decrement、
+turn 終わりに remove。model は `play_duplicated` flag で damage hit と block grant を2倍にするだけ
+（`combat.py` line 1080 と 2824 の2箇所）なので、draw・status 付与・energy・self-damage・multi-effect card
+の extra resolution が抜けている。**忠実度の gap として記録**（実装していない：play 本文が `_step` 内に
+インラインで、card effects は data-driven ではないため、loop 化は大きい refactor）。
+
+実走でこの gap が决定に出たcaseは Currently 0（P3 の pair で分歧0、batch2 の Duplication位置で分歧0）。
+なので gap は correctness の記録として残し、win-rate の判定には影響しない。
