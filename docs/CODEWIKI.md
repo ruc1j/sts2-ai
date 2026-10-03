@@ -3869,3 +3869,19 @@ Shrug It Off 25（draw）、Taunt 1（status）、Colossus 1（power）。＝ ga
 control（`e808bdf`）が機構を state に出した seed は、既に走った run では batch1 の4（H2・AM8・R8・P3）＋
 batch2 の4（U2・T3・M7・V7）＋ batch3 の D6 の9件で、いずれも測った。新しい母数を增やすには新しい seed
 の control run が機構を state に出す必要がある（path 運）。
+
+### state 出現だけでは機構は効かない（D6 の gate は0母数）
+
+`mechonly_ctrl_b3_D6A1F8C3E5`（control、364 combat records、例外0件）：
+
+- `POWER.CHAINS_OF_BINDING_POWER` が state に出た record：**38件**
+- そのうちの **bound 札が hand にある record は 0件** → game の gate が立つ位置がこの run に無い
+  （`legal_actions` から bound が消える事象が一度も無い）
+
+＝机构的な「state 出現」は trigger 条件を満たさない。Chains の gate は *bound 札が hand に在る* decision
+で効く（第一 play 後）。同じ形は play-count powers にもある：power が active でも、その decision で
+札を打たなければ（end_turn 10件）消費も额外解像も起きない。
+
+→ run レベルの机构単独の差は「機構が trigger した位置」でしか出ない。batch3 は D6 以外の seed が機構を
+state に出しておらず、D6 も trigger 位置が無いので、分歧が出ない見込み（arm stage は control の path を
+追うので同じ）。母数增やす の目的は、trigger 位置を持つ seed を find することとして继续します。
