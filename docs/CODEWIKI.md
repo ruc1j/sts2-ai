@@ -3997,3 +3997,16 @@ model は両方一致（`combat.py` line 803 の拒否、turn start の +2）。
 1. Chains の per-turn cap（hand 基準 → **entry 基準**へ）（commit `74a87c6`）
 2. play count の全体再走（draw・status・power・self damage の gate）（commit `ef5d31e`）
 どちらも batch3 完走後に実装（rule 9）＋テスト2本。
+
+### 訂正：Chains の cap gap は実走では観察されていない（130件は index を札の identity と思った artifact）
+
+- 実走 record で **bound 札が hand に3枚以上在る record は0件**（amount は全 record で3）＝ game の cap と
+  contradictions が観察されていない
+- 「1 turns 内で ever-bound が amount を超えた130件」は、hand の `index` が play/draw でずれるので同一札を
+  別 identity として数えた artifact。trace に stable な card id が無いのでこの検査は使えない
+- 実装差（hand 基準 vs entry 基準）は constructed test で示せた（draw 1 → bound 1、同じ turn で draw 3 →
+  model は cap を超えて mark できる）が、実走での発生は0件
+
+→ cap の fix は正しさの修正として価値がある（game の entry 基準に揃う）が、実走の决定を変えた記録はない。
+play-count powers の gate 追加と同じ位置づけ：実装差はあるが、実走の母数が薄い（27件中実際に决定に
+出たcaseは U2 の1件）。
