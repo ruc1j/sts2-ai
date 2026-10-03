@@ -2962,3 +2962,14 @@ clean AM8 run（14勝0敗・走行中、control 17勝1敗）：seq で揃えた 
 H2 と同じ形で、機構単独の差として残るのは Fiddle 19件。run レベルの outcome（AM8 は機構＋忠実化が
 混かる）は Fiddle 単独の成果へは開けない。母集団で机构単独が読める位置は、両腕の同じ decision の
 state に同じ机构が出た位置だけ、という rule がまた確認された。
+
+### Fiddle の +2 draw：実走で検証できるのは turn 1 の first decision だけ
+
+clean AM8 run の「combat ごとの最初の decision」7件を見ると、turn 1 の1件（combat 1）は hand **7**
+＝ 5 + Fiddle 2 で一致。ほか6件は turn 2・7・8・9・11 の decision（その combat の turn 1 の decision が
+トレースに無い）なので +2 を検証できない。**inconclusive**で、+2 の根拠は hook
+（`Fiddle.ModifyHandDrawLate` が owner の hand draw に +2）のまま。拒否側（effect draw 不许）は
+実走1,436件で hand が伸びないことを確認済み。
+
+→ 実走検証できるのは、观測に現れる量（hand size、energy、powers、relics）と hook の対応が
+1対1で決まる case だけ。rollout 内部の加算は record から直接検証できない。
