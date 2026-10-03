@@ -872,7 +872,8 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
             value = value * (150 + phrog + cruelty) // 100
         # SoarPower halves each powered card hit before HardToKill caps it.  Keep this in the
         # heuristic too, otherwise the pre-rollout lethal gate can select a false kill.
-        if any(power.get("id") == "POWER.SOAR_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
+        # hits can be 0 for cards whose hit count is not modeled, so guard the division.
+        if hits and any(power.get("id") == "POWER.SOAR_POWER" and _number(power.get("amount")) > 0 for power in enemy.get("powers", ())):
             value = (value // hits // 2) * hits
         # HardToKill (e.g. Exoskeleton) caps every hit at the power amount.
         caps = [_number(power.get("amount")) for power in enemy.get("powers", ()) if power.get("id") == "POWER.HARD_TO_KILL_POWER" and _number(power.get("amount")) > 0]

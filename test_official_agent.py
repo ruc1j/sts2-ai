@@ -3975,6 +3975,26 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["target_id"], 2)
 
+    def test_lethal_with_soar_power_does_not_divide_by_a_zero_hit_count(self) -> None:
+        # Whirlwind's hit count is the energy spent, so with 0 energy it is 0; the SoarPower branch
+        # used to divide by hits and raised ZeroDivisionError in the live loop (real run:
+        # mechpanel_arm_clean_R8V2H6N4ZB, agent_exception_fallback at one decision). The point is that
+        # choose() completes instead of raising.
+        observation = {
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 0},
+            "hand": [{"index": 0, "id": "CARD.WHIRLWIND", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.DUMMY", "hp": 6, "block": 0,
+                 "powers": [{"id": "POWER.SOAR_POWER", "amount": 1}], "intents": [{"damage": 1, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.WHIRLWIND", "hand_index": 0, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation)
+        self.assertIn(action["type"], ("card", "end_turn"))
+
     def test_rest_heals_near_boss(self) -> None:
         observation = {
             "run": {"act": 1, "floor": 14},
