@@ -2988,3 +2988,16 @@ clean AM8 run の「combat ごとの最初の decision」7件を見ると、turn
 AM8 は Fiddle が决定を動かす位置が最多の seed。run レベルの outcome（17勝0敗 vs control 17勝1敗）は
 机构と忠実化が混かるので、Fiddle 単独の成果へは開けない。開けるのは、同一 observation を両treeで
 replay して「機構単独」を隔離した件数（Fiddle 76件、Chains の忠実なゲート651件で17%）だけ。
+
+### clean run の現在の判定（測れる2 seedで +2）
+
+| seed | control | arm（clean、例外0件） | delta | pair（両腕の combat state） |
+|---|---:|---:|---:|---|
+| `N8CQ4ZKP2W` | 5W1L | 5W1L | 0 | none（决定列111件完全一致） |
+| `H2LV6ZJ4XW` | 20W1L | 22W1L | **+2** | Forgotten Soul |
+| `AM8C6YXHSG` | 17W1L | 17W1L | 0 | Fiddle・Forgotten Soul・Chains（决定分歧138件でも outcome 同値） |
+
+**MEASURABLE（両腕で同じ機構）= 2 seed：control 37勝 / arm 39勝、+2。**
+AM8 は决定を138件動かして勝敗が変わっていない → decision の分歧は outcome へ伝わらないことがある
+実例（D1 の61件と同じ形）。rule 5（1 seedの当たりで採用しない）の下では +2 はまだ採用根拠にならない。
+残4 seed：R8・D1・P3・B3。
