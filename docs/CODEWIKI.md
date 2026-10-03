@@ -3290,3 +3290,15 @@ control は同じ path から17勝1敗）。
 AM8 で Fiddle は73件决定を動かしたが outcome は同じ → decision の分歧が win-rate へ伝わらないcase。
 机构単独の win-rate 効果は harness でも H2 の +2（1 seed）のまま。閾値 ≥3 seeds は R8・P3（機構が
 両腕の path に出る case）を待つ。
+
+### harness の pin が live で効いている決定的確認（AM8 seq 248）
+
+同一 decision（seq 248）の3条件の選択：
+
+- live harness run（pin した集合）→ `CARD.BURNING_PACT`
+- control（`e808bdf`、機構なし）→ `CARD.BURNING_PACT`
+- faithful 集合で走った arm run → `CARD.SHRUG_IT_OFF`
+
+live の harness が control と同じ选择を返している＝pin が実走で効いている。したがって harness run の
+分歧（AM8 87件、H2 46件）は机构の実装差だけで立つ。R8 ではまだ Stoke を打つ位置に来ていない（checked 0）
+ので、R8 の pin 効果は機構出現後に分岐するかどうかで見る。
