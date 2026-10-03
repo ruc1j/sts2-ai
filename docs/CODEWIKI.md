@@ -4297,3 +4297,17 @@ rule に反する。
 
 → 判定で使えるのは、第一分歧が机构 position である case だけ。現状 H2（seq 441 が FS、両腕一致）と
 AM8（harness、第一分歧が Fiddle 位置）の2件。
+
+### batch3 の outcome（完了分）：全部 control と同値
+
+| seed | arm | control | 分歧 | attribution |
+|---|---:|---:|---:|---|
+| `D6` | 17勝1敗 | 17勝1敗 | 0 | clean pair（Chains 454）、机构位置で分歧0 |
+| `X3` | 13勝1敗 | 13勝1敗 | 0 | 機構を state に出さない |
+| `SOS` | 13勝1敗 | 13勝1敗 | 0 | 機構を state に出さない |
+| `L3` | 13勝1敗 | 13勝1敗 | 0 | 機構を state に出さない |
+| `B4` | 17勝1敗 | 17勝1敗 | 11 | 第一分歧が机构以外（Hellraiser autoplay、seq 430）。机构位置の分歧9件は path 分歧後 |
+| `T5` | 走行中（476 aligned、分歧0） | 21勝1敗 | 0 | clean pair（Chains 598）で分歧0 |
+
+batch3 は win レベルで机构単独の差を出さなかった。机构単独で立っているのは H2（+2）と AM8（分歧87、
+outcome 同値）の2 seedのまま。
