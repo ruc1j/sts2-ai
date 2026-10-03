@@ -2848,3 +2848,15 @@ panel 8 seed（control `e808bdf` vs arm）：
 **88件で第一手分歧15件（約17%）、control 側の mapping fail 0件**。651件へ外挿すると約110件の决定分歧、
 3 seed に分布 → 閾値（≥3 decisions かつ ≥3 seeds）超。re-run（tag `mechpanel_arm_clean`、job `bash-296`）
 が走っている間、gate の分歧件数を full で数える。
+
+### clean re-run の照合方法（N8 で実装）
+
+clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control（`e808bdf`）の同じ seed run と、
+seqで揃った record 120件まで决定列が一致。この区間で gate-active record は **0件**（Chains がまだ
+active ではない）→ 分歧が出ないのは预期どおり。
+
+照合の手顺（panel の arm 腕全体に使う）：
+1. `agent_exception_fallback` が0件であること（汚染の確認）
+2. 第一分歧の record で、机构が state に出ているか（powers/relics/hand）を見る
+3. 机构が出ていない record で分歧するなら、それは机构の差ではない（漏れや生成集合など別通路）
+4. 両腕で同じ机构が揃った seed だけ per-seed 勝数へ使う
