@@ -4076,3 +4076,27 @@ test_chains_afflicts_stop_at_the_per_turn_cap_after_a_bound_card_leaves_hand
 
 apply は batch3 の arm stage 完走後（rule 9）。play-count powers の gate 4箇所（draw・status・power・
 self damage）も同じ run 完走後。
+
+### Chains の gate：`BeforeCardPlayed` は dupe（extra resolution）を数えない
+
+`ChainsOfBindingPower.BeforeCardPlayed`（decompile）：
+
+```csharp
+if (card.IsDupe) return Task.CompletedTask;   // extra resolution は flag を set しない
+...
+if (!(card.Affliction is Bound)) return Task.CompletedTask;
+GetInternalData<Data>().boundCardPlayed = true;
+```
+
+`ShouldPlay(card, autoPlayType)` は `!boundCardPlayed` を返す（autoPlayType を check しない）＝ autoplay
+でも gate される。
+
+model：`bound_played_this_turn` は1枚目の bound play で set、`play_duplicated` は同一 card の extra
+resolution（flag を再 set しない）→ game の `IsDupe` bypass と同じ形。
+
+実走の「45 turns で2枚以上の Bound 札を打った」case は、同一札の duplicate resolution（play count 2）で
+説明がつく。distinct card の2枚目は game でも gate される。
+
+テスト `test_chains_of_binding_afflicts_cards_drawn_during_the_rollout` は cap の recovery を test していない
+（draw 7枚、amount 3 → 3件 bound。hand 基準でも entry 基準でも同じ結果）→ planned fix のテストは新しい1本
+として追加する（既存テストは壊さない）。
