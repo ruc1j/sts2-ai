@@ -3480,3 +3480,17 @@ commit `f16b256`（`_autoplay_top_of_draw` の再帰 cap）は batch2 の contro
 cap は crash を止めるものなので、cap が実際に発火する位置（draw pile に Havoc が9枚以上並ぶ等）で
 ないと决定は変えない。したがって batch の解读は保つが、片腕だけ cap が発火した case は机构単独の差
 として読めない。run ごとの例外数と code version を報告する。
+
+### 訂正：札名出現は table knowledge で、机构ではない
+
+sample で OneTwoPunch 2件・Panache 1件と数えた分歧は、実際の record を見たら **powers が空**（札が hand
+に在るだけ）だった。＝ arm は card table（cost/damage/type）を知っていて control は知らないという
+**table knowledge の差**で、play-count power が active だった差ではない。
+
+`mechonly_attribution.py` は機構を **power/relic の state 出現**だけで数えるようにした（commit
+`ba67d63`）。例外は Wither など turn end に hand にあることで発動する status（hand presence が条件）。
+batch1 の readings は relic 機構（Fiddle・Forgotten Soul）なので数字は変わらない。
+
+→ 机构単独で立つ母数（power/relic出現）：H2 の Forgotten Soul 46件、AM8 の Fiddle 87件（Chains と14件
+重複）、R8・P3 は分歧0。play-count powers（Duplication・OneTwoPunch・Gigantification・Panache）の run
+レベルの差は、power が state に出た位置で出た分歧だけを数える。
