@@ -2917,3 +2917,17 @@ control には無い → ここは机构単独の差として立つ。分歧は 
 16勝0敗；control は 20勝1敗）。
 
 H2 は panel で最初の実質的な pair。1 seed の増減は採用根拠にしない rule のまま（判定は母集団）。
+
+### H2：最初の実測 pair（+2、Forgotten Soul）
+
+`compare_panel`（発火は combat record の状態出現だけ）で H2 を照合：
+
+- control 20勝1敗 / arm（clean）22勝1敗 → **+2**
+- pair：`RELIC.FORGOTTEN_SOUL` が両腕の combat state に出ている（arm 123 record、control 67 record）
+- arm 側だけに `POWER.CHAINS_OF_BINDING_POWER`（25 record）が出ている → H2 の分歧は Chains 由来とは
+  言えない。机构単独で attribution できるのは Forgotten Soul だけ
+- 第一分歧 seq 441（relics・powers・hand が両腕同一）→ 机构の実装差で立つ
+- Act 3踏破は両腕なし
+
+1 seed の +2 は採用根拠にしない rule（測定の作法 5）どおり、記録として残す。母集団（panel）の
+pair が揃う seed が増えてから判定する。現在 pair：H2 の1件。
