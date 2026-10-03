@@ -3453,3 +3453,17 @@ AM8C6YXHSG: aligned 338 diffs 87 by-mechanism {RELIC.FIDDLE: 87, POWER.CHAINS_OF
 R8V2H6N4ZB: aligned 454 diffs 0 exceptions arm 0 control 1
 P3V8N5K2RX: aligned 305 diffs 0 exceptions arm 0 control 0
 ```
+
+### batch2 の照合 usage（arm は main checkout、control は worktree）
+
+`mechonly_attribution.py` は arm 側を `data/<arm_tag>_<seed>_agent.jsonl`（main checkout）、control 側を
+`<ctrl_dir>/data/<ctrl_tag>_<seed>_agent.jsonl`（worktree）で見る。batch2 の正しい usage：
+
+```
+python3 data/mechonly_attribution.py --arm-tag mechonly_arm_b2 --ctrl-tag mechonly_ctrl_b2 \
+  U2M7K5F9RA T3XQ7WM2VP M7C4Q9V2RH C8Q1Z7E3KS M5W9C3T7LQ V7D3M9H2XW
+```
+
+batch2 control 進捗（2026-10-03 13:4x、例外数）：`U2M7K5F9RA` 10勝1敗（0、Dup＋OTP）、
+`T3XQ7WM2VP` 12勝1敗（0、Dup＋Gigantification）、`M7C4Q9V2RH` 16勝0敗・走行中（**1**、Hellraiser
+recursion、機構未出現）。
