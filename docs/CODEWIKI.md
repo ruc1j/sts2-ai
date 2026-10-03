@@ -3001,3 +3001,14 @@ replay して「機構単独」を隔離した件数（Fiddle 76件、Chains の
 AM8 は决定を138件動かして勝敗が変わっていない → decision の分歧は outcome へ伝わらないことがある
 実例（D1 の61件と同じ形）。rule 5（1 seedの当たりで採用しない）の下では +2 はまだ採用根拠にならない。
 残4 seed：R8・D1・P3・B3。
+
+### AM8 seq 248 の分歧は生成集合で再現できる（机构ではない）
+
+AM8 の「両腕の state に机构が出ていない」第一分歧 seq 248 を同一 observation で replay：
+
+- control 形の `STOKE_GENERATION`（忠実でない、112名）→ `CARD.BURNING_PACT` ＝ control の run の選択
+- faithful（character pool ∩ known、80名）→ `CARD.SHRUG_IT_OFF` ＝ arm の run の選択
+
+→ この分歧は生成集合の忠実化で立つ。机构の実装では説明できない。AM8 の49件（機構なし位置）は
+この形。Fiddle 89件・Forgotten Soul 30件・Chains 16件は両腕の state に同じ機構が出ている位置なので
+機構単独の差として残る。
