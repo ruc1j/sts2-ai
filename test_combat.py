@@ -2724,6 +2724,37 @@ class CombatTest(unittest.TestCase):
             strengths.append(_power(after.enemies[0].powers, "StrengthPower"))
         self.assertEqual(strengths, [0, 3, 6])
 
+    def test_thieving_hopper_steals_a_non_basic_card_from_the_player_piles(self) -> None:
+        # ThievingHopper.ThieveryMove removes one card from the player's Draw and Discard piles with
+        # CardPileCmd.RemoveFromCombat before its attack, so the card is unplayable for the rest of the
+        # fight.  Basics are the last priority and cards the fight itself generated (no DeckVersion)
+        # are never candidates, so the Wound here has to survive.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        spec = next(monster for monster in hive["monsters"] if monster["id"] == "MONSTER.THIEVING_HOPPER")
+        hopper = Enemy(model=spec["id"], hp=79, move="THIEVERY_MOVE", values=tuple(sorted(spec["values"].items())))
+        combat = Combat(80, (Card(STRIKE),), (Card(INFLAME), Card(STRIKE), Card(DEFEND), Card(SHRUG)), (Card(WOUND),), (hopper,))
+        after = step(combat, END_TURN, hive, random.Random(0))
+        before = sorted(card_name(value) for value in combat.hand + combat.draw_pile + combat.discard_pile)
+        after_names = sorted(card_name(value) for value in after.hand + after.draw_pile + after.discard_pile + after.exhaust_pile)
+        removed = [name for name in before if after_names.count(name) < before.count(name)]
+        self.assertEqual(len(after_names), len(before) - 1)
+        self.assertEqual(len(removed), 1)
+        self.assertNotIn(removed[0], {STRIKE, DEFEND, WOUND})
+        self.assertIn(WOUND, after_names)
+
+    def test_thieving_hopper_steals_a_basic_when_only_basics_are_stealable(self) -> None:
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        spec = next(monster for monster in hive["monsters"] if monster["id"] == "MONSTER.THIEVING_HOPPER")
+        hopper = Enemy(model=spec["id"], hp=79, move="THIEVERY_MOVE", values=tuple(sorted(spec["values"].items())))
+        combat = Combat(80, (Card(STRIKE),), (Card(STRIKE), Card(DEFEND)), (Card(WOUND),), (hopper,))
+        after = step(combat, END_TURN, hive, random.Random(0))
+        after_names = sorted(card_name(value) for value in after.hand + after.draw_pile + after.discard_pile + after.exhaust_pile)
+        self.assertEqual(len(after_names), 3)
+        self.assertIn(WOUND, after_names)
+        self.assertEqual(sorted(name for name in after_names if name != WOUND), [STRIKE, STRIKE])
+
     def test_greedy_action_avoids_self_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
