@@ -4365,3 +4365,22 @@ block-on-play、Fiend Fire count、Hellraiser autoplay）。model は play 1回�
 実走の母数は play-count power と trigger power が同じ decision で active だった case 0件なので、决定に
 効く位置が観察されていない。完全形（play 本文の loop 化）は trigger を含めるために必要だが、母数0の
 現状では limitation として記録したままにする。
+
+### per-play trigger：実装した範囲と母数
+
+実装（commit `1dbbd43`、テスト2本、suite **742件成功**）：
+
+- Juggernaut：`AfterBlockGained` なので block を gained した resolution ごとに hit。`_grant_block` で
+  `plays` 回 loop（テスト `test_juggernaut_triggers_once_per_play_resolution`）
+- Panache：`AfterCardPlayed` は play ごとに走る。counter を `plays` 回 advance し、trigger 後 reset した
+  値から次の resolution を数える（テスト `test_panache_counter_advances_once_per_play_resolution`：
+  counter 4 の状態で duplicated play → trigger して reset、次の resolution で 1）
+
+実走の母数：play-count power と per-play trigger power が同じ decision で active だった record **0件**
+（re-confirm、commit `3661b48` の数字のまま）→ この gate は記録された决定を何も変えない。正しさの修正
+として入れた。
+
+まだ loop していない hook：Fiend Fire（OnPlay が hand を exhaust して count 分 damage。第二 resolution は
+hand が空なので 0 になる＝单回应用でfaithful である可能性が高いが、card 自身の pile 移動が loop 内か外で
+確認していない）、Hellraiser autoplay、Mayhem。これらは play 本文の loop 化をしないと一般に faithful
+にならない。母数0なので、loop 化は保留（記録だけ）。
