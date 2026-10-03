@@ -3239,3 +3239,11 @@ replay で control 形の集合なら control の選択、faithful なら arm �
 
 Fiddle は control 側で seq 322 の event で獲得。harness run は control と揃った path を歩いているので
 同じ点で獲得する预期。獲得後の第一分歧が機構単独の差になる。
+
+### 预测（1 record replay）：Fiddle を引いた直後の decision は分歧しない
+
+control AM8 の Fiddle grant（seq 322）の直後の combat decision seq 325 を、arm code（pin 済み）と
+control tree で replay：両方 `CARD.PERFECTED_STRIKE`（control の run の実際の選択と同じ）。
+＝機構を引いたことが即ち分歧にはならない。分歧は rollout が机构を理由に別の ranking を出す位置で出る
+（sample で Fiddle の分歧76件 / 108件の中身）。live の harness run（現在 seq 318、分歧0）がその位置に
+入るかを見る。
