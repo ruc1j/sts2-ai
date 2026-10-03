@@ -3436,3 +3436,20 @@ rule 9（再走後は exception 0件を確認）の形で、run ごとに例外�
 
 実走で確認できるのは observable な量（powers・relics・hand）だけ。damage が2回 hit したかは trace に
 出ない（`_step_score` の value には出るが、game 側の実際の hit 数ではない）。
+
+### R8 の control run にも exception が1件あった（SoarPower の ZeroDivision、HEAD で修正済みの同じ bug）
+
+`mechpanel_ctrl_R8V2H6N4ZB_agent.err`：`damage()` の SoarPower branch での ZeroDivisionError（`value // hits`
+が hits 0）。＝ control 側にも同じ bug があり、その decision で game 側の default を取っている。R8 の
+read（control 22勝1敗 / arm 22勝1敗、分歧0）はその1 decision 以外は决定列が一致しているが、rule 9 の
+形で言えば R8 の control run は汚染 → clean にしたい場合は `e808bdf` で re-take。
+
+batch2 の control では `M7C4Q9V2RH` に1件（Hellraiser recursion、control 側に cap が無い）が出ている。
+exceptions を run ごとに報告するように `mechonly_attribution.py` を更新（commit `82cacce`）：
+
+```
+H2LV6ZJ4XW: aligned 390 diffs 46 by-mechanism {RELIC.FORGOTTEN_SOUL: 46} no-mechanism 0 exceptions arm 0 control 0
+AM8C6YXHSG: aligned 338 diffs 87 by-mechanism {RELIC.FIDDLE: 87, POWER.CHAINS_OF_BINDING_POWER: 14} no-mechanism 0 exceptions arm 0 control 0
+R8V2H6N4ZB: aligned 454 diffs 0 exceptions arm 0 control 1
+P3V8N5K2RX: aligned 305 diffs 0 exceptions arm 0 control 0
+```
