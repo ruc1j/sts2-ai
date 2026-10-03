@@ -2950,3 +2950,15 @@ clean AM8 run の第一分歧 seq 248：relics・powers が両腕で完全一致
 
 → AM8 は「机构単独の差」として読めない。panel の母集団で机构単独が読めるのは、両腕の同じ decision の
 state に同じ机构が出ている位置だけ（H2 の Forgotten Soul 46件がその形）。
+
+### AM8 の分歧68件を state で割った（Fiddle 19件・机构なし33件）
+
+clean AM8 run（14勝0敗・走行中、control 17勝1敗）：seq で揃えた combat decision 246件の分歧68件。
+
+- **19件**：`RELIC.FIDDLE` が両腕の state に出ている位置 → Fiddle の実装単独の差として attribution できる
+- **33件**：両腕の state に机构が何も出ていない位置 → 生成プール（`STOKE_GENERATION` の忠実化）の差
+- 残りは机构が片腕だけに出た位置（attribution 不能）
+
+H2 と同じ形で、機構単独の差として残るのは Fiddle 19件。run レベルの outcome（AM8 は機構＋忠実化が
+混かる）は Fiddle 単独の成果へは開けない。母集団で机构単独が読める位置は、両腕の同じ decision の
+state に同じ机构が出た位置だけ、という rule がまた確認された。
