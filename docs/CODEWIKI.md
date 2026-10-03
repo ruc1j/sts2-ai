@@ -4495,3 +4495,28 @@ measure は offline の replay で、run の outcome はまだ見ていない（
   （tier 未登録は `CARD_TIERS.get(card_id, "D")` で最下位になり、deck 15枚以降は Skip 経路に落ちる）。
   Production は 0 energy で +2 energy、Dramatic Entrance は 0 energy で全体11 damage の Innate/Exhaust。
   これは model の忠実度ではなく reward policy の評価表の欠落なので、panel で測る話として保留。
+
+### 報酬 tier が無い札：tier を足しても决定は動かなかった（2026-10-04、`data/reward_tier_probe.py`）
+
+`CARD_NAMES` に在る（=combat.py で打てる）のに `CARD_TIERS` にエントリが無い札が35種類ある。
+tier 未登録は `priority.get(card_id, 0)` と `CARD_TIERS.get(card_id, "D")` で最下位になる。
+决定 trace の集計では Purity 22回・Dramatic Entrance 9回・Production 8回提示されて **1回も取られていない**。
+
+ただし决定 trace の card_reward record は `cards`（札 id の一覧）しか持たず、policy が見た
+`legal_actions` / 札の詳細（cost・type・rarity）を持たない。観測を保存している
+`data/*_observations.jsonl`（139 run）と seq で対応付けて replay した：
+
+- paired reward observations: **1649件**
+- HEAD の replay が記録された選択を再現: **1622/1649**（98.4%）
+- Purity 提示 **9件**（すべて `D6A1F8C3E5` の act1 floor7、deck 20-21枚）
+- tier を **B / A / S** に変えても **决定变化 0件**（9件全部 Skip のまま）
+
+理由は tier ではなく既存の Skip 規則だった。deck 20枚は act1 の `_large_deck_addition_allowed` の
+limit（20）に達しており、`strong_block_shortage`（16枚以上・強ブロック3枚未満）が立つため、
+コア・防御・必要ドロー以外は段位に関係なく Skip になる。`selected_tier` による Skip 規則より先に
+効くので、tier を S に上げても届かない。
+
+＝「tier 表の欠落が札を逃している」という仮説は、観測できた9件では **否定された**。
+強ブロック不足規則に段位の逃げ道を作る変更は 2026-09-08 に16seedで有害測定済み（上の §124）で、
+同じ扉を再度開く理由はこの計測からは出てこない。Dramatic Entrance・Production・Fasten は
+observations を保存している run で一度も提示されていない（决定 trace 側には 9・8・1件ある）。
