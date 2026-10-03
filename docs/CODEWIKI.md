@@ -3107,3 +3107,22 @@ rule 5（1 seedの当たりで採用しない）と閾値（≥3 decisions か�
 実測279 plays/45 turns、play-count powers は decompile 一致）で、win-rate の効果は母集団が薄いまま。
 AM8 の138分歧は生成プールの忠実化（同一 observation で control 形／faithful を切り替えて再現）で、
 機構の差ではない。
+
+### MEASURABLE（両腕で同じ機構が combat state に出た seed）は4 seed、+2
+
+`compare_panel`（発火は combat record の状態出現のみ）での最終形（B3 は走行中）：
+
+| seed | control | arm | delta | pair | first divergence |
+|---|---:|---:|---:|---|---|
+| `N8CQ4ZKP2W` | 5 | 5 | 0 | none | — |
+| `H2LV6ZJ4XW` | 20 | **22** | **+2** | Forgotten Soul | seq 441（両腕 state 一致） |
+| `AM8C6YXHSG` | 17 | 17 | 0 | Fiddle・FS・Chains | seq 248（機構なし＝生成プール） |
+| `R8V2H6N4ZB` | 22 | 22 | 0 | Chains・Rose |分歧0 |
+| `D1W9Y3B7FC` | 14 | 14 | 0 | none |分歧0 |
+| `P3V8N5K2RX` | 15 | 15 | 0 | Duplication | 分歧0 |
+| `B3N8V5T1WQ` | 16 | 12（走行中） | — | arm 側が機構を seen せず | 分歧0 |
+| `Q6N3V8K2MT` | 12 | （first pass 12） | 0 | none | 分歧0 |
+
+**MEASURABLE = 4 seed：control 74 / arm 76、+2。** 閾値（≥3 decisions かつ ≥3 seeds）は decisions 側は
+超える（H2 の46件）が seeds 側が1 → win-rate の採用根拠にはならない。機構は正しさの修正として採用済み
+のまま、成果の母集団は薄い。
