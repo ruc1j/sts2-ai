@@ -3199,3 +3199,13 @@ control H2（`e808bdf`）で `RELIC.FORGOTTEN_SOUL` が初めて出る record �
 生成集合の差を消した下で同じ分歧・同じ outcome が出る → H2 の +2 は機構単独（`ForgottenSoul.AfterCardExhausted`）
 で立つ。ただし seeds 側は1件のままなので閾値（≥3 seeds）には未達。harness の残3 seed（AM8・R8・P3）を
 待つ。
+
+### H2 harness 完走：panel と同じ outcome を機構単独の条件で再現（22勝1敗）
+
+`mechonly_H2LV6ZJ4XW` 完走：**22勝1敗**（control 20勝1敗、+2）、aligned 390件分歧46件、第一分歧 seq 441、
+分歧位置の机构は `RELIC.FORGOTTEN_SOUL` が両腕。生成集合を control 形へピン留めた下で、panel の clean
+arm run（22勝1敗・分歧46件）と**同じ outcome・同じ分歧**が出た → H2 の +2 は機構単独で立つ、と
+run レベルで確認。
+
+harness の残：AM8（1勝0敗・走行中、分歧0、機構未出現）、R8・P3。AM8 は生成集合の差が消えるので、
+機構が両腕の path に出る位置から分歧する预期（panel では第一分歧が生成プールだった）。
