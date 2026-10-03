@@ -4394,3 +4394,26 @@ exhaust 済み）→ `cardCount = 0` で hit なし。model の单回应用は�
 残る un-looped hook：Hellraiser autoplay（play ごとに走る）、Mayhem。母数0なので実装しない（記録だけ）。
 per-play trigger category の実装範囲：Juggernaut（AfterBlockGained）と Panache（AfterCardPlayed）＝
 commit `1dbbd43`、テスト2本、suite 742件成功。
+
+### loop 形の適用範囲（commit `fdfe4f2`、テスト743件）
+
+play 本文を丸ごと loop 化する代わりに、**resolution 単位に直すべき箇所を全部 `plays` で回す**形にした。
+覆盖した category：
+
+- effect：damage hit・block grant（relic の doubling は resolution ごと：`per_grant * plays`）・draw・
+  status 付与・power grant・self damage
+- per-play hook：SKILLS の VitalSpark/Enrage、POWERS の `_after_power_play`（relic）、Panache counter、
+  Juggernaut（AfterBlockGained）
+- per-play counter：`cards_played_this_turn`・`attacks/skills_played_this_turn`・
+  `attacks/skills_played_combat`・`block_cards_this_turn`・`powers_played_this_turn`（テスト
+  `test_play_duplicated_advances_the_per_play_counters_twice`）
+
+Fiend Fire は loop 不要（第二 resolution で hand が空 → hit 0、commit `99823df`）。Hellraiser は
+AfterCardDrawn なので play count と無関係（draw が重复しない限り triggers しない）。
+
+**效果の測定**：同一条件（同一 record・同一 seed・同一 simulations）で loop 形と `plays = 1` の copy を
+比べた → play-count power が active だった decision **73件で决定变化0件**。per-play counter と counting
+relic が同じ decision で active だった record は47件あるが、その位置でも决定は変わらなかった。
+
+＝loop 形は model の忠実度を game の形に揃える修正として入れた。実走の决定・outcome は変わらない
+（panel の决定列は変更前の code で走った run なので、rule どおり offline の变化は採用根拠にしない）。
