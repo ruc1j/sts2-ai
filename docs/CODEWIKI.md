@@ -3644,3 +3644,22 @@ arm が `CARD.STRIKE_IRONCLAD`、control が `CARD.TREMBLE` を選んだ seq 120
 机构単独の分歧を出した seed は H2（46分歧、+2）と AM8（87分歧、outcome 同値）の2件のまま。
 `M7` の −4 は knowledge 差（card table の classification）で path が分かれた結果で、機構の実装差として
 読めない。run レベルの母数では机构単独の win 效果は依然 H2 だけ。
+
+### knowledge-confound の内訳（H2 46分歧のうち39件、AM8 87分歧のうち85件）
+
+`control_card_table()` を control の `CARD_COST` ＋ `CARD_NAMES`（basic/status 名）で built した
+（commit `0edccb5`）。その形で分歧位置を分けた：
+
+| seed | 分歧 | power/relic が両腕に在る | knowledge-confounded | clean（機構位置かつ control も知っている札だけ） |
+|---|---:|---:|---:|---:|
+| `H2LV6ZJ4XW` | 46 | 46 | 39 | **7** |
+| `AM8C6YXHSG`（harness） | 87 | 87 | 85 | **2** |
+| `U2M7K5F9RA` | 62 | 0 | 61 | 0 |
+| `M7C4Q9V2RH` | 116 | 0 | 110 | 0 |
+
+confounded の位置は「arm だけが card table を知っている札」が hand に在る位置なので、分歧が機構から
+来たのか knowledge から来たのか観測だけでは割れない。割るには同一 observation で arm（control 形の
+table）／control を replay する必要がある（sample の形）。
+
+→ 機構単独の win 效果として run レベルで立っているのは H2 の +2 だが、その46分歧のうち clean は7件。
+AM8 の87分歧の clean は2件。母集団は薄いまま、という読みが今の正直な形。
