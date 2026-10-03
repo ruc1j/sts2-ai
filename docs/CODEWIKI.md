@@ -3586,3 +3586,12 @@ first-diff-mech（第一分歧の位置の機構）を出すようにした（co
 機構単独の差として立っているのは H2（46分歧、**+2**）と AM8（87分歧、**outcome 同値**）の2 seed。
 閾値（≥3 decisions かつ ≥3 seeds）の seeds 側は未達 → win-rate の效果は未証明。機構は正しさの修正として
 採用済みのまま。
+
+### T3XQ7WM2VP：clean pair だが机构位置で分歧0、outcome 同値（12勝1敗）
+
+両腕が `POWER.DUPLICATION_POWER` を seq 119、`POWER.GIGANTIFICATION_POWER` を seq 207 で同じ位置に見て
+いて（aligned 201件、分歧0）、arm 完走 12勝1敗 = control と同値。この path では机构が决定を動かさ
+なかった。
+
+run レベルで机构単独の差として分歧を出した seed は H2（Forgotten Soul、46件、+2）と AM8（Fiddle、87件、
+outcome 同値）の2件のまま。閾値（≥3 decisions かつ ≥3 seeds）の seeds 側未達。
