@@ -3663,3 +3663,12 @@ table）／control を replay する必要がある（sample の形）。
 
 → 機構単独の win 效果として run レベルで立っているのは H2 の +2 だが、その46分歧のうち clean は7件。
 AM8 の87分歧の clean は2件。母集団は薄いまま、という読みが今の正直な形。
+
+### harness が机构の無い path で control と完全一致（M5）
+
+`mechonly_arm_b2_M5W9C3T7LQ`：303 aligned、分歧0、両 run 例外0件、outcome **16勝1敗 = control と同値**。
+机构が state に出ない seed では、pin した arm は control と决定列が完全一致する（生成集合の差を消した
+ので、difference が机构以外に無い）。harness の预期どおり。
+
+机构の無い seed（M5・C8・N8・D1・Q6・B3）の分歧0は、機構の実装が無効だからではなく、机构を引かなかった
+から測定にならない（path 運）。分歧0の seed は機構の実装が决定を動かさなかった case と区別できない。
