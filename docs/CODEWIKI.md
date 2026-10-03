@@ -2860,3 +2860,16 @@ active ではない）→ 分歧が出ないのは预期どおり。
 2. 第一分歧の record で、机构が state に出ているか（powers/relics/hand）を見る
 3. 机构が出ていない record で分歧するなら、それは机构の差ではない（漏れや生成集合など別通路）
 4. 両腕で同じ机构が揃った seed だけ per-seed 勝数へ使う
+
+### 訂正：N8 の「発火1件」は combat ではなく card_reward の提示だった
+
+`mechpanel_ctrl_N8CQ4ZKP2W` で机构 id が出た1件は seq 84 の **card_reward 行**（offer list に
+`CARD.ONE_TWO_PUNCH` が載っていた）で、combat decision の state に机构が出ていた件数は0。
+`compare_panel` は発火を combat record の状態出現だけで数えるようにした（commit `9bbd4c5`）。
+
+clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control と决定列 **111/111件一致**、outcome も
+5勝1敗で同値。つまり N8 はこの run で机构を見ず、機構については測定不能。N8 の到達性57件は
+同じ seed の**別の run**（`candidate` ほか）から来ていた。
+
+→ panel の測定力は path 運で決まる。母数として使えるのは、両腕の run が機構を**combat の state に
+出した** seed だけ（現時点で control 側は H2 と AM8 が出した。arm 側が同じものを見るかは run 次第）。
