@@ -4100,3 +4100,19 @@ resolution（flag を再 set しない）→ game の `IsDupe` bypass と同じ�
 テスト `test_chains_of_binding_afflicts_cards_drawn_during_the_rollout` は cap の recovery を test していない
 （draw 7枚、amount 3 → 3件 bound。hand 基準でも entry 基準でも同じ結果）→ planned fix のテストは新しい1本
 として追加する（既存テストは壊さない）。
+
+### power grant も play ごとに走る（Demon Form の decompile）
+
+`DemonForm.cs`：effect は `OnPlay(cardPlay)` 内（`PowerCmd.Apply<DemonFormPower>`）。game は play count だけ
+`OnPlay` を走る（`CardPlay.PlayCount` の documentation どおり）→ play count 2 なら power は2回 apply される。
+model は1回だけ（実測：Duplication active で Demon Form を打つと stack 2 のまま、commit `88970dc`）。
+
+忠実度の最終形（decompile 根拠で確定）：
+
+- 一致：block grant、damage hit（gate 済み）
+- gap（model が1回だけ）：draw、status 付与、power grant、self damage
+- gap（basis が違う）：Chains の per-turn cap（game は entry 基準、model は hand 基準）
+- 一致：Gigantification（first powered Attack command ×3、dupe bypass の flag 形）、Panache（alreadyApplied、
+  5 play trigger、turn end で CardsLeft reset）、Fiddle（+2 と player side 中の draw 拒否）
+
+実装は game が idle になったときに gate 4箇所＋cap の field を追加し、テスト2本で固定する（rule 9）。
