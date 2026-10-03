@@ -3137,3 +3137,31 @@ R8（454件分歧0）と同じ形。
 panel の MEASURABLE は H2・AM8・R8・P3（＋B3 の Rose）で、机构単独として决定を動かしたのは H2 の
 Forgotten Soul 46件だけ。run レベルで机构単独として立つのは第一分歧の位置（state が両腕で一致）の
 限り、という rule が B3 でも確認された。
+
+### H2 の第一分歧は机构単独で立つ（生成プールが决定に関与できない）
+
+seq 441（両腕の state が一致、Forgotten Soul が両腕に出ている）の record を確認：hand は
+Uppercut・Iron Wave・Strike・Bloodleting、**draw/discard/exhaust に Stoke も Infernal Blade も無い**。
+＝生成集合（`STOKE_GENERATION` の忠実化）はその decision の rollout に関与できない。なので分歧は
+`ForgottenSoul.AfterCardExhausted`（exhaust 1枚につき random 1 hittable 体へ1 unpowered）の実装差だけが
+成因。arm が end_turn、control が Uppercut を選んだ。
+
+panel（clean run）の完走読取：control 121勝 vs arm 123勝（+2、H2 単独）。分歧を持つ pair は H2 だけで、
+R8・B3・P3・N8・D1・Q6 は分歧0、AM8 の第一分歧は生成プール。
+
+## panel（clean run）の完走読取
+
+| seed | control（`e808bdf`） | arm（clean） | delta | aligned | 分歧 | 第一分歧 |
+|---|---:|---:|---:|---:|---:|---|
+| `N8CQ4ZKP2W` | 5 | 5 | 0 | 111 | 0 | — |
+| `H2LV6ZJ4XW` | 20 | **22** | **+2** | 390 | 46 | seq 441（Forgotten Soul、単独で立つ） |
+| `AM8C6YXHSG` | 17 | 17 | 0 | 323 | 138 | seq 248（生成プール） |
+| `R8V2H6N4ZB` | 22 | 22 | 0 | 454 | 0 | — |
+| `D1W9Y3B7FC` | 14 | 14 | 0 | 306 | 0 | — |
+| `P3V8N5K2RX` | 15 | 15 | 0 | 305 | 0 | — |
+| `B3N8V5T1WQ` | 16 | 16 | 0 | 446 | 0 | — |
+| `Q6N3V8K2MT` | 12 | 12 | 0 | — | 0 | — |
+
+**機構単独の win-rate 効果：1 seed（H2）で +2。閾値の seeds 側が未達 → 採用根拠にはならない。**
+機構は正しさの修正として採用済みのまま。例外は R8 の1件（SoarPower の ZeroDivision、`2aef215` で修正）
+で、その run の分歧0・胜敗同値に影響は出なかった。
