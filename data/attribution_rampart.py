@@ -37,9 +37,15 @@ for line in open(paths, encoding="utf-8-sig"):
     record = json.loads(line)
     if record.get("phase") != "combat":
         continue
-    if not any(
+    enemies = record.get("enemies") or ()
+    if power_id.startswith("MONSTER."):
+        # A monster id selects the fights that monster is in (for gaps that are a move body rather
+        # than a power, e.g. ThievingHopper.ThieveryMove's CardPileCmd.RemoveFromCombat).
+        if not any(enemy.get("id") == power_id for enemy in enemies):
+            continue
+    elif not any(
         power.get("id") == power_id
-        for enemy in record.get("enemies") or ()
+        for enemy in enemies
         for power in enemy.get("powers") or ()
     ):
         continue
