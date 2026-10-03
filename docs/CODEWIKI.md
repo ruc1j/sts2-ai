@@ -3379,3 +3379,17 @@ seed（現時点 `U2M7K5F9RA`：Duplication＋OneTwoPunch、10勝1敗／`T3XQ7WM
 
 Duplication の run レベル effect は batch1 の P3 で0（1 record 両腕、分歧0）だった。OneTwoPunch の sample
 reach は2件。＝ batch2 で分歧が出るかは薄いが、出れば機構単独の差として立つ。
+
+### batch2 での prediction（sample の分歧が既にある2 seed）
+
+1-in-12 sample（機構単独、生成集合は control 形）で batch2 の seed に分歧が残っている：
+
+- `M5W9C3T7LQ` seq 89：arm `CARD.ONE_TWO_PUNCH` / control `CARD.DEFEND_IRONCLAD`（OneTwoPunch）
+- `V7D3M9H2XW` seq 312：arm `CARD.SHRUG_IT_OFF` / control `CARD.STONE_ARMOR`（Panache）
+
+ただし sample は blanket bound rule の下で数えたもの（後の忠実なゲートで数え直し済み、Chains の14件は
+Fiddle と重複)。実走の batch2 run が同じ位置で分歧するかを見る。分歧すれば3 seed 目になり、閾値
+（≥3 decisions かつ ≥3 seeds）へ接近する。
+
+実走の control 側は現時点で `U2M7K5F9RA`（Duplication＋OneTwoPunch、10勝1敗）と `T3XQ7WM2VP`
+（Duplication、9勝0敗・走行中）が機構を state に出している。
