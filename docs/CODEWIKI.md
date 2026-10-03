@@ -3053,3 +3053,13 @@ model（`e808bdf`、机构を実装する前）は那些を無視するので、
 
 この seed は机构単独の差を持たない。分歧が出るとすれば arm 側が机构を acquisition した後の位置で、
 その場合も第一分歧の位置（state が両腕で一致する位置）だけ attribution に使える。
+
+### R8 で二重計上修正の帰結が実走で出た：Rose を両腕が持っても决定列が完全一致
+
+`mechpanel_arm_clean_R8V2H6N4ZB`（18勝0敗・走行中）は、seq で揃えた combat decision の分歧が
+**0件**（459 record まで）。両腕の record に `RELIC.BLOOD_SOAKED_ROSE` が出ている（control 154・arm
+156 record）ので pair だが、修正後（`a328b5c`）model は Rose に何もしない（game が報告する
+`max_energy` に既に反映済み）→ 机构単独の差は0。arm が control と同じ决定を出している。
+
+これが「機構として model に載せるものがない（observation に既にある）」の实走形。pair でも effect が
+無い case の記録。
