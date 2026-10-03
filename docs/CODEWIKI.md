@@ -4706,3 +4706,49 @@ arm = `cd24b1f`（Rampart あり）、control = `d67896f`（親）。`5f655ff` 1
 1st panel と合わせて **6 seed で −2 / +1 / 0 / 0 / 0 / 0（合計 −1）**。replay で63件動く机构だが、
 実走では6 seed 中4 seed が无変化、1 seed だけ −2、1 seed だけ +1。
 忠実度修正の胜数効果はこのサイズだと panel で検出できない、が今回の実測の結論。
+
+## 敵側 PlatingPower の実装と、その修正が胜数を**下げた**実走 A/B（2026-10-04、commit `ca5bd71`）
+
+`FrogKnight.AfterAddedToRoom` / `SlumberingBeetle.AfterAddedToRoom` は `Plating(PlatingAmount=15)` を
+自分にかける（export されない）。PlatingPower は
+
+- `BeforeSideTurnStart`：RoundNumber == 1 の間、player サイドのターン開始時に Block = Amount（＝格闘者は
+  15 block を持って戦闘を開始する）
+- `BeforeSideTurnEndEarly`：自分のターン終了時に Block = Amount を再付与
+- `AfterSideTurnStart`：2ラウンド目以降、amount を Decrement.BaseValue（solo では 1）だけ減らす
+
+combat.py は **player 側の PlatingPower しか扱っていなかった**（Iron Unpinion 等の付与）ため、
+FrogKnight（191HP、glory）と SlumberingBeetle（86HP、hive）の戦闘で毎ターン 15→14→13…と再生成される
+block が rollout から完全に抜けいていた。実走観測は model の想定と一致する：plated Frog Knight の
+amount と Block は player turn 1..9 で **15, 15, 14, 13, 12, 11, 10, 9, 8**（各 turn の最大 Block）。
+実装後は同一の系列を model も再現する（`test_plated_enemy_re_grants_block_every_turn_and_its_plate_thins`）。
+回帰：親 commit `119cb28` の worktree ではこのテストが失敗（`(0,0) != (15,15)`）。suite **751件成功**。
+
+母数：`MONSTER.FROG_KNIGHT` の record **1489件** replay → **决定变化 368件（25%）・8 seed**
+（H2LV6ZJ4XW 194、X3C9N6P4WQ 60、R4A8D2K7ME 46、T5R8K2N9QP 20 …）。これまでで最大の母数。
+
+### 実走 A/B（arm = HEAD、control = 親 `119cb28`）
+
+| seed | control | arm | delta | 第一分歧 seq | 分歧地点で Plating が両腕の state に在るか |
+|---|---|---|---:|---:|---|
+| `H2LV6ZJ4XW` | 22勝1敗 | 20勝1敗 | **−2** | 265 | はい（arm **Defend** / control **Uppercut**） |
+| `X3C9N6P4WQ` | 13勝1敗 | 13勝1敗 | 0 | なし（**run が完全に一致**） | 46/46 record |
+| `R4A8D2K7ME` | 21勝1敗 | 13勝1敗 | **−8** | 245 | はい（arm **Iron Wave** / control **Uppercut**） |
+| 合計 | 56勝 | 46勝 | **−10** | | |
+
+**忠実度修正が胜数を明確に下げた最初の例。** 死因も変わった：
+
+- arm `H2`：SLIMED_BERSERKER に進入 HP 41/110 で死亡（control は QUEEN まで行って 43/400 残し）
+- arm `R4`：OVICOPTER+TOUGH_EGG に **進入 HP 12/72** で死亡（control は SLIMED_BERSERKER で 5HP 差）
+- arm `R4` の Plating record は 10件（control 139件）＝ **arm は plating 戦闘を大きく避けています**
+
+原因の形が分歧に直接出ている：第一分歧で arm は攻撃（Uppercut）をやめてブロック札
+（Defend / Iron Wave）を打っている。15 block を毎ターン再生成する敵に対してブロックを積むのは
+テンポの純損失で、戦闘が伸びるだけ。＝**model が正確になった結果、agent の「長い戦闘で何を打つか」の
+選び方が悪いことが見えた**。修正を戻す理由にはならない（model は game と一致すべき）が、
+この戦闘種族に対する play の作り直し（plated 敵にはブロックを積まない／Weak・Vulnerable で支える）は
+新しい測定対象として残る。routing 側も同じで、elite の HP コスト定数（`Monster*17 + Elite*32`）は
+plating の分だけ重いはず、という指摘はこの計測から出る（§148 の closed lever を開け直す根拠になる）。
+
+なお control の H2 22勝は `119cb28`（Rampart+Axebot+Hopper）まで入った値で、`cd24b1f` の 20勝から
+**Axebot・Hopper 修正で +2** している。同一 seed の系列として追跡可能。
