@@ -24,13 +24,14 @@ from collections import Counter
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
+SIMULATIONS = int(__import__("os").environ.get("SIMULATIONS", "100"))
 
 CHILD = r'''
 import json, sys
 sys.path.insert(0, sys.argv[1])
 import official_agent
 
-paths, enemy_data, power_id = sys.argv[2], sys.argv[3], sys.argv[4]
+paths, enemy_data, power_id, simulations = sys.argv[2], sys.argv[3], sys.argv[4], int(sys.argv[5])
 data = json.load(open(enemy_data, encoding="utf-8-sig"))
 out = []
 for line in open(paths, encoding="utf-8-sig"):
@@ -60,7 +61,7 @@ for line in open(paths, encoding="utf-8-sig"):
     if not actions:
         continue
     try:
-        choice = official_agent.rollout_choice(record, actions, data, 100)
+        choice = official_agent.rollout_choice(record, actions, data, simulations)
     except Exception as error:  # noqa: BLE001 - report the shape, never guess
         out.append({"seq": record.get("seq"), "error": type(error).__name__})
         continue
@@ -81,7 +82,10 @@ def main() -> int:
     power_id = sys.argv[3] if len(sys.argv) > 3 else "POWER.RAMPART_POWER"
     enemy_data = Path(sys.argv[4]) if len(sys.argv) > 4 else REPO / "data/enemies_glory.json"
     token = (power_id.split(":", 1)[1].split(",")[0] if power_id.startswith("PLAYER:") else power_id).encode()
-    traces = sorted(REPO.glob("data/*_agent.jsonl"))
+    # TRACE_GLOB overrides which traces are replayed (e.g. one panel's control traces) and
+    # SIMULATIONS caps the rollout width so a large population still finishes.
+    trace_glob = __import__("os").environ.get("TRACE_GLOB", "data/*_agent.jsonl")
+    traces = sorted(REPO.glob(trace_glob))
     rows: dict[tuple[str, int], dict[str, dict]] = {}
     for tree in trees:
         # One subprocess per trace so the (trace, seq) key stays unique.
@@ -89,7 +93,7 @@ def main() -> int:
             if token not in trace.read_bytes():
                 continue
             payload = subprocess.run(
-                [sys.executable, "-c", CHILD, str(tree), str(trace), str(enemy_data), power_id],
+                [sys.executable, "-c", CHILD, str(tree), str(trace), str(enemy_data), power_id, str(SIMULATIONS)],
                 check=True,
                 capture_output=True,
                 text=True,
