@@ -3691,3 +3691,25 @@ counter 5枚目 play 触发がその path で决定を変えていない）。
 
 note の fold：Rose（`a328b5c`）と生成プール（`77120b2`）の項目は完了として `[x]` にし、残る confound は
 card table の knowledge 差として書き直した。
+
+### mech vs knowledge の分割（同一条件 replay、game 不在時に実行）
+
+`data/mech_vs_knowledge.py`（commit `ab9634f`）で、harness run の分歧位置を3条件で replay した：
+
+| seed | 分歧 | mechanism-only（variant2 ≠ variant1） | knowledge-only（variant3 ≠ variant1 かつ variant2 = variant1） |
+|---|---:|---:|---:|
+| `H2LV6ZJ4XW` | 46 | **13** | 0 |
+| `AM8C6YXHSG` | 87 | **22** | 0 |
+| `R8V2H6N4ZB` | 0 | 0 | 0 |
+| `P3V8N5K2RX` | 0 | 0 | 0 |
+
+・replay は recorded decision を再現しないことがある（measure：control の rollout decisions 280件中260件）。
+live process は per-run の module state（`upgraded_cards` の memo、Paels Flesh の once-per-run guard 等）を
+持つから。だから分割は**同一条件の replay 同士**の比較で、`control-replay-reproduces-record` として別に
+出している（H2 0/46、AM8 3/87）。
+・ classification が空いている位置（H2 46-13、AM8 87-22）は、fresh replay 下では arm と control が同じ
+选择に落ちる位置＝live の决定は module state か fallback 由来。机构単独の差として clean に言えるのは
+mechanism-only  counts（13件、22件）だけ。
+
+→ 機構単独の决定差（同一条件で隔离済み）：Forgotten Soul 13件（H2）、Fiddle 22件（AM8）。run レベルの
+win 效果は H2 の +2（1 seed）のまま。
