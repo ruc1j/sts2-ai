@@ -3179,3 +3179,11 @@ R8・B3・P3・N8・D1・Q6 は分歧0、AM8 の第一分歧は生成プール�
 
 照合は `data/compare_panel.py`（tag `mechonly` vs `mechpanel_ctrl`）。判定は per-seed 勝数と、第一分歧が
 機構の位置であること。閾値は ≥3 decisions かつ ≥3 seeds。
+
+### H2 の harness run：機構が出る位置が予備できる（control は seq 423 で出現）
+
+control H2（`e808bdf`）で `RELIC.FORGOTTEN_SOUL` が初めて出る record は **seq 423**（combat、
+`CARD.IMPERVIOUS` を play する decision）。生成集合を control 形へピン留めした harness run は、
+機構が state に出るまでの区間が control と一致する预期（現在 aligned 165件分歧0）。
+机构が出た後の第一分歧が機構単独の差になる — これが harness の目的。H2 では panel の第一回 runで
+分歧46件（第一分歧 seq 441）が出ていて、harness run はその再現になるかを見る。
