@@ -4025,3 +4025,18 @@ play-count powers の gate 追加と同じ位置づけ：実装差はあるが�
 Chains が state に出ても、その turn で draw が起きなければ gate は trigger しない（bound 札が hand に
 現れない）。だから batch3 は机构単独の分歧を出さない見込み（arm stage は control の path を追う）。
 arm stage を開始（job `bash-697`、start commit `c3d9fd2`）。忠実度の fix は arm stage 完走後（rule 9）。
+
+### 母数の二 kinds：observed gate（legal_actions から bound が消える）と model の rollout gate
+
+- **observed gate**：game が decision 時に bound 札を hand に持ち、`legal_actions` から除外していた record。
+  corpus で651件 / 3 seed（N8 399・H2 224・D6 28）。batch3 の control run（D6・B4・T5）は observed gate
+  **0件**（bound 札が hand に出なかった）
+- **rollout gate**：model の rollout が future draw を simulate する位置。Chains が state に在れば model は
+  draw した札を bound に mark して rollout 中の play から除く。control tree は gate を持たない（札名を
+  知らないだけで、rollout は打てる扱い）→ 分歧しうる。これは機構の実装差で、knowledge 差ではない
+
+D6 は両腕が同じ seq 454 で Chains を得た（clean pair）。分歧が出たら rollout gate 由来。arm run は現在
+aligned 62件（分歧0）。
+
+→ 前ラウンドの「batch3 は分歧を出さない見込み」は observed gate 关于；rollout gate は Still分歧を生む
+うる。判定は power/relic が両腕の state に出た位置で数える（`mechonly_attribution.py` の今の形）。
