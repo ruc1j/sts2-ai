@@ -4348,3 +4348,20 @@ outcome 同値）の2 seedのまま。
 → play-count powers の决定效果は、実走（73件）と同一条件 replay（0件）の両方で0。机构単独で决定を
 動かした母数は Fiddle（sample で76件、harness run では分歧87件のうち同一条件で22件）と Forgotten Soul
 （108件 sample、harness run 46分歧のうち13件）だけ。
+
+### play count の忠実度：effect category は揃えた（commit `0647658`、テスト740件）
+
+`plays = 2 if play_duplicated else 1` を play path の先で定義し、power grant の22 site を gate した。
+これで game の「play 全体を playCount 回解像する」形の effect category（damage・block・draw・status・
+power grant・self damage）は model 側も play count 分だけ走る。
+
+- 確認：Demon Form + Duplication → DemonFormPower 4（gate 前2）。テスト
+  `test_play_duplicated_re_applies_power_card_effects`
+- 同一条件での isolation（73 record、gate 入り vs 外した copy）：**决定变化的0件**（commit `b709c88` の
+  draw/status/self damage に加え、power gate も0件）
+
+残る差：**per-play trigger**（`AfterCardPlayed` は play ごとに走る。Panache counter、Juggernaut の
+block-on-play、Fiend Fire count、Hellraiser autoplay）。model は play 1回で1回だけ counter を動かす。
+実走の母数は play-count power と trigger power が同じ decision で active だった case 0件なので、决定に
+効く位置が観察されていない。完全形（play 本文の loop 化）は trigger を含めるために必要だが、母数0の
+現状では limitation として記録したままにする。
