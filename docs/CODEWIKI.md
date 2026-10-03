@@ -3219,3 +3219,13 @@ aligned 447件で**分歧0**。H2 は Stoke を打つ位置が無かった（少
 harness の価値は pool が効く seed 側にある。AM8 は panel で第一分歧が生成プール（seq 248）だったので、
 pin した harness run は control と揃った path を歩き、機構が両腕の state に出た位置から分歧する预期。
 現在 AM8 harness：5勝0敗、aligned 62件分歧0、機構未出現。
+
+### harness が live run で効いていることの確認
+
+`ps` の command line：`-AgentScript ./data/mechonly_agent.py`（seed AM8C6YXHSG、`-AgentSimulations 100`、
+`-StopAfterAct 3`）。harness は repo の code を import して `STOKE_GENERATION`（110名）と
+`INFERNAL_BLADE_ATTACKS`（51名）を control 形へ上書きするだけなので、live の决定列が control と
+揃うはずで、実際に AM8 は138件分歧0（机构未出現、pool の分歧点 seq 248 未通過）。
+
+harness の判定条件：`python3 data/compare_panel.py mechonly mechpanel_ctrl . .wt-ctrl-e808bdf <seed>`。
+分歧が机构の位置（両腕の state に同じ机构）で出た case だけが机构単独の差。
