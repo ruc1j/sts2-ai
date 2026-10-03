@@ -4151,3 +4151,29 @@ gate 外なのは 27件（draw/status/power/self damage）。trigger category �
 
 apply 時に决める：loop 形（完全）か per-effect gate（近似、trigger は記録したまま）。母数が薄いので
 近似で十分という読みも正直に書く。
+
+### play loop の実物（`CardModel.cs`）：effect も `AfterCardPlayed` も playCount 回数走る
+
+```csharp
+int playCount = await GeneratePlayCount(combatState, target);
+...
+for (int i = 0; i < playCount; i++)
+{
+    CurrentPlayIndex = i;
+    ...
+    CombatManager.Instance.History.CardPlayFinished(combatState, cardPlay);
+    await Hook.AfterCardPlayed(combatState, choiceContext, cardPlay);
+}
+```
+
+card の result pile への移動と cost（`resources`）は loop の外 ＝ play 単位で1回。model も cost を1回
+落とすので正しい。loop 内にあるのは card の effect と `AfterCardPlayed`（＝ per-play trigger）。
+
+→ model が gate しているのは damage と block の2 category だけ。per-play trigger（Panache counter、
+Juggernaut、Fiend Fire count、Hellraiser autoplay）と draw・status・power・self damage が抜けている。
+完全な忠実度は play 本文を playCount 回 loop する形；per-effect gate は近似。実走の母数27件、决定に
+出たcaseは U2 の1件（status）＋ Panache の1件（knowledge-only）。
+
+plan（apply 時に决める）：`_step` の play body を loop 化する（diff が大きい）か、per-effect gate を4
+category に広げ、trigger category は limitation として記録したまま置く。どちらでもテストは
+「1 play で effect が2回走る」形を書く。
