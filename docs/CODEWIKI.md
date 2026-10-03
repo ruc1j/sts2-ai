@@ -3229,3 +3229,13 @@ pin した harness run は control と揃った path を歩き、機構が両腕
 
 harness の判定条件：`python3 data/compare_panel.py mechonly mechpanel_ctrl . .wt-ctrl-e808bdf <seed>`。
 分歧が机构の位置（両腕の state に同じ机构）で出た case だけが机构単独の差。
+
+### harness の live 確認：AM8 は pool の分歧点（seq 248）を分歧0で通過した
+
+panel の faithful 集合で走った arm run は AM8 の seq 248 で control と分歧していた（成因は生成集合、
+replay で control 形の集合なら control の選択、faithful なら arm の選択を再現）。pin した harness run は
+**seq 248 を分歧0で通過**（10勝0敗、aligned 168件、機構未出現）→ live でも pin が効いており、その分歧が
+生成集合の差だったことが run レベルでも確認できた。
+
+Fiddle は control 側で seq 322 の event で獲得。harness run は control と揃った path を歩いているので
+同じ点で獲得する预期。獲得後の第一分歧が機構単独の差になる。
