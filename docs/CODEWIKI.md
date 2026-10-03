@@ -4133,3 +4133,21 @@ model が enumerate している effect type を全部 gate すれば、multi-ef
 
 Chains 側は field 1本（`chains_afflicted_this_turn`）＋ block の cap を entry 基準へ。テスト2本。
 apply は batch3 の arm stage 完走後（rule 9）。
+
+### refinement：per-play trigger も play count に応じて走る（gate だけだと足りない category）
+
+game は `CardPlay` を play count 回数実行するので、`AfterCardPlayed` 系の trigger（Panache の
+`CardsLeft` counter、Juggernaut の block-on-play、Fiend Fire の count、Hellraiser の autoplay 等）も
+resolution ごとに走る。model は `_step` 1回で1回だけ counter を動かす。
+
+だから per-effect gate（damage・block・draw・status・power・self damage）に加えて、**per-play trigger**
+の category がある。cost と hand の除去は play 単位で1回（game の `CardCmd.Play` は play 1回で、commands
+が playCount 回走る）＝ model は cost を1回落とすので正しい。
+
+→ 完全な忠実度は「play 本文を playCount 回 loop する」形。per-effect gate はその近似で、trigger category
+が抜ける。母数（実走）は play-count power が active だった decision **73件**、そのうち effect category が
+gate 外なのは 27件（draw/status/power/self damage）。trigger category が决定に出た母数は数えていない
+（Panache の trigger 位置は corpus で1件、その1件は knowledge-only 分歧だった）。
+
+apply 時に决める：loop 形（完全）か per-effect gate（近似、trigger は記録したまま）。母数が薄いので
+近似で十分という読みも正直に書く。
