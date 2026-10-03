@@ -3548,3 +3548,12 @@ aligned 338、分歧87、by-mechanism Fiddle 87、no-mechanism 0）
 
 batch2 の `U2M7K5F9RA` は第一分歧が knowledge-only（34件）→ その seed は機構単独の測定に使えない。
 control が機構を state に出した seed のうち、arm 側が第一分歧から機構位置で分歧する case だけが母数。
+
+### `U2M7K5F9RA` の機構 acquisition が腕でずれた（control 189 / arm 195）
+
+arm run は `POWER.DUPLICATION_POWER` を seq 195 で得ている。control は seq 189。差の6 record 分は
+knowledge-driven の分歧で path が分かれた後なので、同じ seq の record は別の game state を指す
+（＝`present()` が両腕で同じ机构を出す位置 even if counted, it is not the same decision）。
+
+→ `U2M7K5F9RA` は run レベルで機構単独の測定に使えない。母数になるのは第一分歧が机构位置である seed
+だけ（H2、AM8 の harness）。
