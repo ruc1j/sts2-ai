@@ -4417,3 +4417,81 @@ relic が同じ decision で active だった record は47件あるが、その�
 
 ＝loop 形は model の忠実度を game の形に揃える修正として入れた。実走の决定・outcome は変わらない
 （panel の决定列は変更前の code で走った run なので、rule どおり offline の变化は採用根拠にしない）。
+
+## RampartPower：ブロック再付与が敵側に見えていなかった（2026-10-04、commit `5f655ff`）
+
+`data/audit_trace_fidelity.py`（新設）で全 trace 543本・combat record 145,325件を走らせ、
+**観測されているのに `POWER_NAMES` に無い power** を数えた。85種類のうち15種類が未登録で、
+母数の大きい順に ESCAPE_ARTIST（2,911件/190run）、SWIPE（2,078件/190run）、
+TERRITORIAL（2,363件）、RAMPART（560件/73run）。
+
+### 実装差（decompile 根拠）
+
+`RampartPower.AfterSideTurnStart`：
+
+- `side == CombatSide.Player` のときだけ走る
+- block を貰うのは **自分ではなく `CombatState.Enemies.Where(c => c.Monster is TurretOperator)`**
+- `LivingShield.cs` が自分に Rampart 25 を付与する（state machine の JSON には出てこない）
+
+model は「観測で読めたターの block を、そのターン限り保持する」だけだった。ターの block は自分の
+ターン開始に消える（`_enemy_turn` の `block=0`）ので、**第2ターン以降の rollout は block 0 の敵として
+火力を計算していた**。replay の第一手だけが正しく、先が全部甘かった。
+
+### 実走 evidence
+
+`POWER.RAMPART_POWER` を持つ record は LivingShield + TurretOperator の対戦だけで560件（73run）。
+その中の TurretOperator の block 値：
+
+| 手番 | block 25 の record |
+|---|---:|
+| 1 | 175 |
+| 2 | 163 |
+| 3 | 50 |
+| 4 | 5 |
+
+LivingShield 本体の block は全 record で 0（自分には配らない）。ゲームの挙動は「毎手番 25 戻る」で、
+model の「1回だけ」 Contradiction が record 側に立っていた。
+
+### 実装とテスト
+
+- `combat.py` の player ターン開始 section（`new_turn` を作る所）で、生きている Rampart 合計を
+  `MONSTER.TURRET_OPERATOR` の block に足す。複数 LivingShield は足し算（game は copy ごとに走る）
+- `official_agent.py` の `POWER_NAMES` に `POWER.RAMPART_POWER` を追加（無いと model が power 自体を見ない）
+- テスト2本：`test_rampart_re_grants_turret_block_at_every_player_turn_start`（第2ターンに 25）、
+  `test_rampart_stops_granting_block_once_the_shield_is_dead`（盾を倒すと 0）
+- 回帰確認：親 commit の worktree で同じテストを走らせ、第2ターンの block が `0`（期待 25）で失敗
+- suite **745件成功**
+
+### 决定に出る母数（同一条件 replay）
+
+同一 record・同一 simulations・同一 seed で HEAD（grant あり）と親 commit（grant なし）を比べた。
+ trees は差分 commit 1つだけなので、分歧は grant の帰属に閉じる。
+
+- records compared: **560**
+- 决定变化: **63**、不变 497、例外 0
+- seed 数: **10**（H2LV6ZJ4XW 25、B3N8V5T1WQ 10、R4A8D2K7ME 8、SOS6XYXCNO 6、R8V2H6N4ZB 4、
+  D6A1F8C3E5 3、9X9WQB4QIH 3、L3PN5HBQ8T 2、M7C4Q9V2RH 1、B4J8Q1R6YK 1）
+
+play-count powers の gate（73件で0）と違い、**忠実度の修正が决定を動かす位置が実在する**。
+分歧の形は「control が block（Shrug It Off / Defend）、arm が attack（Strike / Bash / Anger）」が中心で、
+ターの block が毎ターン戻るとなると block で削り合う価値が下ぐ方向。
+
+**limitation**：game は `CombatManager.Instance.PlayersTakingExtraTurn.Count > 0` のとき grant を
+飛ばす。model に extra turn は無いのでこの分岐は入れていない（extra turn を model 化するときに併せて必要）。
+measure は offline の replay で、run の outcome はまだ見ていない（rule どおり採用根拠にはしない）。
+
+### 同じ監査で残った候補（未実装）
+
+- **ThievingHopper の `SwipePower`**：`ThieveryMove` が Draw+Discard から1枚選んで
+  `CardPileCmd.RemoveFromCombat`（優先は Uncommon → Common/Rare/Event）。JSON の effects には
+  `PowerCmd.Apply(... "swipe" ...)` だけで、カード除去は C# 側の move 本文。model は除去を見ていない。
+  record 側では hand+draw+discard+exhaust の合計が THIEVERY_MOVE 後に1減る変化が **255件**（190run）。
+  盗んだカードは hopper を倒すと extra reward で戻る（`SwipePower.BeforeDeath`）、5ターンで Escape すると
+  戻らない。Escape 自体は `ESCAPE_MOVE` の `CreatureCmd.Escape` として既に model 化済み。
+- **ESCAPE_ARTIST** は decompile 上「visual timer」で効果なし（`AfterSideTurnEnd` で Decrement するだけ）。
+  model 化不要。
+- **報酬 tier が無い札**：`CARD_NAMES` にある（＝combat で打てる）のに `CARD_TIERS` に無い札が35種類あり、
+  実走で Purity 22回・Dramatic Entrance 9回・Production 8回提示されて **1回も取っていない**
+  （tier 未登録は `CARD_TIERS.get(card_id, "D")` で最下位になり、deck 15枚以降は Skip 経路に落ちる）。
+  Production は 0 energy で +2 energy、Dramatic Entrance は 0 energy で全体11 damage の Innate/Exhaust。
+  これは model の忠実度ではなく reward policy の評価表の欠落なので、panel で測る話として保留。
