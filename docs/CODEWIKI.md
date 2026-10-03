@@ -3494,3 +3494,18 @@ batch1 の readings は relic 機構（Fiddle・Forgotten Soul）なので数字
 → 机构単独で立つ母数（power/relic出現）：H2 の Forgotten Soul 46件、AM8 の Fiddle 87件（Chains と14件
 重複）、R8・P3 は分歧0。play-count powers（Duplication・OneTwoPunch・Gigantification・Panache）の run
 レベルの差は、power が state に出た位置で出た分歧だけを数える。
+
+### batch2 の control reading（power/relic の state 出現だけで判定）
+
+| seed | control | exceptions | power/relic が state に出た | pair candidate |
+|---|---:|---:|---|---|
+| `U2M7K5F9RA` | 10勝1敗 | 0 | Duplication・OneTwoPunch | Yes |
+| `T3XQ7WM2VP` | 12勝1敗 | 0 | Duplication・Gigantification | Yes |
+| `M7C4Q9V2RH` | 17勝1敗 | **1** | Chains | Yes（control 汚染） |
+| `C8Q1Z7E3KS` | 13勝1敗 | 0 | none | No |
+| `M5W9C3T7LQ` | 16勝1敗 | 0 | none | No |
+| `V7D3M9H2XW` | 5勝0敗・走行中 | 0 | none | No |
+
+pair candidate は3 seed。pin した arm run は control の path を追うので、機構が state に出た位置から
+分歧する预期。母集団の判定は、第一分歧が power/relic の位置であり、かつ両 run 例外0件の case だけ使う。
+Act 踏破は control 6 seed 全部未踏破（各 run 1敗）なので、成果の判定は per-seed 勝数と分歧数。
