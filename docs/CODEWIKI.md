@@ -2885,3 +2885,22 @@ clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control と决定列 **111/11
 Fiddle（76件）と Chains のゲート（651件で17%）は実測済み。control era で bound-hand decision の
 469件が heuristic_fallback に落ちていた件（model が game に無い札を top に並べた）は、忠実な形の
 arm では game-legal の中から rank する → こちらが機構単独の差として残る。
+
+### sample分歧の seed × 機構 分解と、panel で実際に pair になりうるもの
+
+sample（1-in-12、機構単独）の分歧108件を seed × 機構で割ると：
+
+| seed | 機構 | flip |
+|---|---|---:|
+| `N8CQ4ZKP2W` | Fiddle 56・Chains 20・Duplication 1 | 77 |
+| `H2LV6ZJ4XW` | Forgotten Soul 24・Chains 11 | 35 |
+| `AM8C6YXHSG` | Fiddle 15 | 15 |
+| `D1W9Y3B7FC` | Fiddle 3 | 3 |
+| `Q6N3V8K2MT` | Fiddle 2 | 2 |
+| `P3V8N5K2RX` | Chains 1・Duplication 1 | 2 |
+
+panel の実走で pair になる条件是、**両腕の同じ run が同じ機構を combat の state に出す**こと。
+control 腕（`e808bdf`）で state に出した seedは H2（Forgotten Soul）、AM8（Four）、R8（Chains+Rose）、
+P3（Duplication）で、N8 と D1・Q6・B3 は0（N8 の1件は reward 提示）。
+したがって N8 の77件、D1 の3件、Q6 の2件は panel の run では使えない。pair になりうるのは H2・AM8・
+R8・P3 の4 seed ＋ arm 側が Fiddle 等を引いた case。
