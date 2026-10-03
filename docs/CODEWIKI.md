@@ -3612,3 +3612,21 @@ arm が `CARD.STRIKE_IRONCLAD`、control が `CARD.TREMBLE` を選んだ seq 120
 が出ていない位置（＝card table の classification 差）。しかも control 側に exception（seq 138）が后续に
 ある。pin した arm は生成集合で control と同じなので、この分歧は机构の実装差ではない。
 → `M7C4Q9V2RH` は机构単独の測定に使えない（knowledge と exception の二重の confound）。
+
+### run レベルの結論（2026-10-03 15:0x 時点、batch2 の arm stage 走行中）
+
+機構単独の差として run レベルで立っている seed は2件：
+
+- `H2LV6ZJ4XW`：第一分歧 seq 441 が Forgotten Soul（両腕の state）。分歧46件、**control 20勝1敗 → arm 22勝1敗（+2）**
+- `AM8C6YXHSG`（pin harness）：第一分歧 seq 331 が Fiddle（両腕）。分歧87件（Fiddle 単独73、Fiddle+Chains 14、no-mechanism 0）で **outcome 同値**（17勝1敗）
+
+除外・分歧0：`U2M7K5F9RA`（第一分歧が knowledge-only、62分歧、outcome 同値）、`M7C4Q9V2RH`（knowledge 39
+分歧＋ control exception、機構が arm 側に出ていない）、`T3XQ7WM2VP`（clean pair だが分歧0、同値）、
+`R8V2H6N4ZB`（分歧0、control exception 1件）、`P3V8N5K2RX`（clean pair・分歧0、同値）、
+`C8Q1Z7E3KS`・`M5W9C3T7LQ`・`V7D3M9H2XW`・`N8`・`D1`・`Q6`・`B3`（arm 側が機構を state に出さない）。
+
+**結論：機構8件は正しさの修正として採用済み。win-rate の效果は、母集団（clean pair で第一分歧が機構
+位置の seed）で H2 の +2 だけが立った。閾値（≥3 decisions かつ ≥3 seeds）には未達なので、效果ありと
+は言わない。** decision レベルの母数（同一 observation を両treeで replay、生成集合を control 形へ固定）
+は Fiddle 76・Chains の忠実なゲート651件で17%・Forgotten Soul 24・play-count powers は knowledge 差と
+混かる（札名出現は機構ではない）。
