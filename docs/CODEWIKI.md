@@ -3312,3 +3312,12 @@ live の harness が control と同じ选择を返している＝pin が実走�
 Chains のゲート（忠実な形）は R8 の control run で17 record 効いていた位置があるが、harness run は
 まだその点（seq 567）に達していない。ゲート単独の分歧は651件の母数で17%（sample）→ R8 の path で
 出るかは達してから見る。
+
+### R8：Chains が両腕の state に出た17件で决定分歧0（post-fix 到達性0の実走形）
+
+`mechonly_R8V2H6N4ZB` 完走：22勝1敗 = control と同値。Chains（忠実なゲート）が両腕の combat state に
+17 record 出ていて、决定分歧は0。＝ R8 の path ではゲートが决定を動かさなかった。sample で R8 の分歧が
+Rose の bug branch 由来（除去後0）だったことと実走で一致。
+
+harness reading（完走分）：H2 46分歧（Forgotten Soul）で +2、AM8 87分歧（Fiddle 73・Chains 14）で outcome
+同値、R8 分歧0・同値。P3 は未走。机构単独の win 効果は1 seed（H2）のまま → 閾値 ≥3 seeds 未達。
