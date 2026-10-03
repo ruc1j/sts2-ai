@@ -3509,3 +3509,15 @@ batch1 の readings は relic 機構（Fiddle・Forgotten Soul）なので数字
 pair candidate は3 seed。pin した arm run は control の path を追うので、機構が state に出た位置から
 分歧する预期。母集団の判定は、第一分歧が power/relic の位置であり、かつ両 run 例外0件の case だけ使う。
 Act 踏破は control 6 seed 全部未踏破（各 run 1敗）なので、成果の判定は per-seed 勝数と分歧数。
+
+### harness が消すのは生成集合の差だけ（card table の knowledge 差は残る）
+
+`mechonly_agent.py` は `STOKE_GENERATION` と `INFERNAL_BLADE_ATTACKS` を control 形へ上書きするだけ。
+arm 側の `CARD_COST`/`CARD_DAMAGE`/`SKILLS`/`POWERS` の entry（Panache・OneTwoPunch・Wither など）は
+control に無いので、**table knowledge の差は harness でも残る**。だから attribution は power/relic が
+state に出た位置だけで機構の差を数える（`mechonly_attribution.py` の今の形）。
+
+実測でその形が出た例：sample の `M5W9C3T7LQ` seq 89（hand に OneTwoPunch、powers 空）と
+`V7D3M9H2XW` seq 312（hand に Panache、powers 空）は、札名 knowledge の差。batch2 の control run は
+この seed たちで機構を state に出していない（`M5` 16勝1敗・`V7` 9勝0敗・走行中、power/relic 出現0）ので、
+arm run が分歧する位置は knowledge 差の位置になり、机构単独の差ではない。
