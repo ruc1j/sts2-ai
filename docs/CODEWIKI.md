@@ -3302,3 +3302,13 @@ AM8 で Fiddle は73件决定を動かしたが outcome は同じ → decision �
 live の harness が control と同じ选择を返している＝pin が実走で効いている。したがって harness run の
 分歧（AM8 87件、H2 46件）は机构の実装差だけで立つ。R8 ではまだ Stoke を打つ位置に来ていない（checked 0）
 ので、R8 の pin 効果は機構出現後に分岐するかどうかで見る。
+
+### Rose の effect 0：harness run でも同じ（R8、arm 130 record・分歧0）
+
+`mechonly_R8V2H6N4ZB`：harness run が Rose を保持する combat record **130件**で、control との决定分歧
+**0件**。二重計上を除去した model（`a328b5c`）は Rose に何も処理を持たないので、分歧が出ないのは构造上
+当然で、実走3件（panel clean R8 454件、panel clean B3 446件、harness R8 130件）で一致した。
+
+Chains のゲート（忠実な形）は R8 の control run で17 record 効いていた位置があるが、harness run は
+まだその点（seq 567）に達していない。ゲート単独の分歧は651件の母数で17%（sample）→ R8 の path で
+出るかは達してから見る。
