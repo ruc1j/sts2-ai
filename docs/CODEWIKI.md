@@ -4177,3 +4177,18 @@ Juggernaut、Fiend Fire count、Hellraiser autoplay）と draw・status・power�
 plan（apply 時に决める）：`_step` の play body を loop 化する（diff が大きい）か、per-effect gate を4
 category に広げ、trigger category は limitation として記録したまま置く。どちらでもテストは
 「1 play で effect が2回走る」形を書く。
+
+### per-play trigger の母数：実走0件（play-count power と同じ decision で trigger power が active な case が無い）
+
+play-count power（DuplicationPower・OneTwoPunchPower）が active だった decision **73件**（15 seed）と、
+per-play trigger power（PanachePower・JuggernautPower・FiendFirePower・HellraiserPower）が同じ decision で
+active だった case を cross した：**0件**。
+
+→ trigger category の gap は観察された run で0母数。だから近似（per-effect gate 4 category を追加）で
+决定の变化は出ない。play count の effect category（draw・status・power・self damage）の母数27件の中で
+决定に出たcaseは U2 の1件（status）だけ。
+
+plan の形は変わらない：per-effect gate 4 category を追加＋Chains cap を entry 基準へ、テスト3本。loop 形
+（完全な playCount loop）は、trigger category も含むので、将来 trigger が同じ decision で active になる
+run が現れたときに必要。母数0の現状では、loop 形を「正しさの完全形」として記録し、apply は per-effect
+gate + cap にする（小さい diff、既存736テストを壊さない）。
