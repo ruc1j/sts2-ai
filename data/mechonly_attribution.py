@@ -34,12 +34,15 @@ HAND_PRESENCE_MECHANICS = {"CARD.WITHER"}
 
 def control_card_table():
     """The card names control (`e808bdf`) can score at all: names outside this table are knowledge
-    differences, so a divergence at a record containing them is not the mechanism's effect."""
+    differences, so a divergence at a record containing them is not the mechanism's effect. Basic and
+    status cards live in `CARD_NAMES`, not `CARD_COST`, so both are needed."""
     sys.path.insert(0, CONTROL_DIR)
     for module in ("official_agent", "combat"):
         sys.modules.pop(module, None)
     combat = __import__("combat")
-    return set(combat.CARD_COST)
+    agent = __import__("official_agent")
+    names = set(combat.CARD_COST) | set(getattr(agent, "CARD_NAMES", {}).values())
+    return {name.lower() for name in names}
 
 
 def combat_records(path):
