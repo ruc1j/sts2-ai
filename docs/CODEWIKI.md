@@ -3789,3 +3789,19 @@ Vulnerable 2 のまま、commit `57011bc` の読みと一致）。
 実装は game 走行中で行わない（rule 9：run が in flight の間に policy code を触らない）。batch3 完走後、
 draw（と status 付与・power stack）の extra resolution を `play_duplicated` で gate して、テスト
 `test_duplication_re_resolves_status_and_draw_effects` で固定する。
+
+### 「hittable」の忠実度：game は alive ∧ ShouldAllowHitting、model は alive だけ
+
+`Creature.IsHittable`（decompile）＝ `IsDead` で false、`Hook.ShouldAllowHitting` が false なら false。
+それを override する power は `IllusionPower`・`ReattachPower`・`DieForYouPower`・`AdaptablePower`・
+`MockUnhittablePower`。model の hittable 集合（Forgotten Soul・Panache・LostWisp）は `enemy.alive` だけ。
+
+実走 corpus（12,841件の機構 record のうち enemy powers を見た）でこれらの power は **0件** →
+観察された case では model と game が一致する。だから現状は fix 不要（未観測の enemy power を
+勝手に model に入れない rule のまま）。入れたくなるのは「hittable に filtered されていないから」だが、
+根拠が0件なので記録だけ。
+
+### batch3 進捗
+
+`mechonly_ctrl_b3_D6A1F8C3E5` 完走：**17勝1敗、例外0件、`POWER.CHAINS_OF_BINDING_POWER` を state に出した**
+→ batch3 で第一の pair candidate（control clean）。`X3C9N6P4WQ` 5勝0敗・走行中（機構未出現）。
