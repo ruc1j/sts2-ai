@@ -28,6 +28,9 @@ MECHANICS = [
     "RELIC.FORGOTTEN_SOUL",
 ]
 
+# Mechanisms whose trigger condition is the card being in hand at the end of the turn.
+HAND_PRESENCE_MECHANICS = {"CARD.WITHER"}
+
 
 def combat_records(path):
     out = {}
@@ -42,9 +45,13 @@ def combat_records(path):
 
 
 def present(record):
+    # Only the power or relic in the observed state is the mechanism. A card name in hand is table
+    # knowledge, not the mechanism: the arm knows the card's cost/damage/type while control did not, and
+    # that difference can flip a ranking without the power ever being active. Exceptions are the
+    # hand-at-turn-end statuses (Wither), whose condition is the card being in hand.
     player = record.get("player") or {}
     ids = set(player.get("relics") or []) | {power["id"] for power in (player.get("powers") or [])}
-    ids |= {card.get("id") for card in (record.get("hand") or [])}
+    ids |= {card.get("id") for card in (record.get("hand") or []) if card.get("id") in HAND_PRESENCE_MECHANICS}
     return {key for key in MECHANICS if key in ids}
 
 
