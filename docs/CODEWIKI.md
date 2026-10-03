@@ -3277,3 +3277,16 @@ control は同じ path から17勝1敗）。
 だけの分歧になった。Fiddle の単独 attribution が73件で、H2 の Forgotten Soul 46件に続く2件目。
 
 （14件は Fiddle と Chains の両方がある位置なので、機構単独へは同一 observation の replay でしか割れない。）
+
+### harness readings（AM8 完走）
+
+| seed | control | harness | delta | 分歧（両腕の state） |
+|---|---:|---:|---:|---|
+| `H2LV6ZJ4XW` | 20W1L | **22W1L** | **+2** | 46件、すべて Forgotten Soul |
+| `AM8C6YXHSG` | 17W1L | 17W1L | 0 | 80件（Fiddle 73、Fiddle+Chains 7）、勝敗は変わらない |
+| `R8V2H6N4ZB` | 22W1L | 1勝0敗・走行中 | — | control 側は Chains を17 record で所持 |
+| `P3V8N5K2RX` | 15W1L | 未走 | — | control 側は Duplication を1 record |
+
+AM8 で Fiddle は73件决定を動かしたが outcome は同じ → decision の分歧が win-rate へ伝わらないcase。
+机构単独の win-rate 効果は harness でも H2 の +2（1 seed）のまま。閾値 ≥3 seeds は R8・P3（機構が
+両腕の path に出る case）を待つ。
