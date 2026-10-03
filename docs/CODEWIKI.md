@@ -3751,3 +3751,23 @@ turn 終わりに remove。model は `play_duplicated` flag で damage hit と b
 
 実走でこの gap が决定に出たcaseは Currently 0（P3 の pair で分歧0、batch2 の Duplication位置で分歧0）。
 なので gap は correctness の記録として残し、win-rate の判定には影響しない。
+
+### play count の semantics（`CardPlay.cs` の documentation）
+
+> The total number of times this card is going to be played. Usually 1, but when a card has an effect
+> like Replay, it will be higher (Replay 1 will have playCount=2, …). You can compare this with playCount
+> to see if you're on the final play of the card.
+
+＝ play count は **card が play される回数**で、`AfterCardPlayed` 等の hook は play ごとに走る。だから
+Duplication/OneTwoPunch の extra resolution は card の effect 全体（draw・status 付与・power stack・
+per-play trigger）をもう一度走らせる。model は damage hit と block grant だけを2倍にする近似。
+
+Gigantification（`BeforeAttack` で first powered Attack **command** を mark、`ModifyDamageMultiplicative`
+は mark された command の damage だけ×3、その command 完了で decrement）＝ model の
+`card in ATTACKS and attacks_played_this_turn == 0` と等価（multi-hit card は同一 command 内なので全体×3）。
+Panache（`alreadyApplied`：適用 play を数えない、5 play ごとに Amount を全 hittable へ Unpowered、
+counter reset、turn end で CardsLeft=5 へ戻す）＝ model と一致。
+
+→ 揃っていないのは play-count powers の「effect 全体の再走」だけ。card effects が `_step` 内 inline
+（data-driven でない）なので loop 化は大きい refactor。実走でこの gap が决定に出た case は0件
+（P3 の pair・batch2 の Duplication位置で分歧0）→ 记录してそのまま。
