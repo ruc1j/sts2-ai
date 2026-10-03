@@ -4752,3 +4752,42 @@ plating の分だけ重いはず、という指摘はこの計測から出る（
 
 なお control の H2 22勝は `119cb28`（Rampart+Axebot+Hopper）まで入った値で、`cd24b1f` の 20勝から
 **Axebot・Hopper 修正で +2** している。同一 seed の系列として追跡可能。
+
+## Decimillipede の move 本体（export に effects が無い）と、そこから出た次の gap（2026-10-04）
+
+「intents だけあって effects が空の MoveState」を export 全体から数えた：DECIMILLIPEDE_SEGMENT
+front/middle/back（各3手）、BYGONE_EFFIGY(2)、KNOWLEDGE_DEMON(1)、ROCKET(1)、SLUMBERING_BEETLE(1)、
+LAGAVULIN_MATRIARCH(1) の8体。攻撃力は intent から synthetic DamageCmd で補われているが、
+C# 本体にしかない効果は落ちていた。`DecimillipedeSegment`：
+
+- `BulkMove`：攻撃（BulkDamage 6）に加えて自分に `StrengthPower(BulkStrength = 2)`
+- `ConstrictMove`：攻撃（ConstrictDamage 8）に加えて player に `WeakPower(1)`
+- `WritheMove`：5 x2 攻撃（state 順は WRITHE → CONSTRICT → BULK の循環）
+
+実走では segment の Strength が turn 1 で 0、turn 2 以降で 2、turn 5 以降で 4（player の Weak も
+turn 2 から 285 record 出现）→ 効果自体は観測と一致。commit 後 model も同じ系列になる
+（`test_decimillipede_bulk_gains_strength_and_constrict_applies_weak`、親 commit `119cb28` では失敗）。
+suite **752件成功**。
+
+### 同じ調査で特定した次の gap：player の debuff tick が1手早い／Frail が全く減らない
+
+`step()` の END_TURN 遷移（combat.py 2040-2055 付近）は `_enemy_turn` の**後に**
+player の VulnerablePower / WeakPower を `_tick_down_power` している。だから敵のターンで付いた
+debuff が同じ遷移内で1減って、player の次のターンに届かない。FrailPower は tick 箇所が**存在しない**
+（使用箇所の grep で 2 件だけ：計算と Shame による付与）。実走の Axebot 戦闘（単独・clean）での
+player 側 Weak / Frail：
+
+| player turn | Axebot の手 | Weak | Frail | record 数 |
+|---:|---|---:|---:|---:|
+| 1 | HAMMER_UPPERCUT（まだ手前） | 0 | 0 | 76 |
+| 2 | BOOT_UP / ONE_TWO | **2** | **2** | 13 / 68 |
+| 3 | HAMMER_UPPERCUT / BOOT_UP | **1** | **1** | 61 / 19 |
+| 4 | ONE_TWO | 3・2 | 2 | 20 / 27 |
+
+game は「敵サイドのターン終了時に 1 減る」で、**そのターンに付いた分は減らない**（turn 2 で 2、
+turn 3 で 1、2回目の Uppercut で 1+2=3）。model は turn 2 で Weak 1（先に減らす）／Frail は 2 のまま
+減らない。実装の形は player 側の Weak/Vulnerable/Frail の tick を敵ターンより前に移し、
+enemy 側の Vulnerable/Weak は今の位置（敵ターン後）に置く分岐、になる。
+対象は広い（THE_INSATIABLE の player Vulnerable は 6633 record、SOUL_NEXUS の DrainLife が
+Vulnerable 2 + Weak 2、Axebot の Uppercut が Weak 2 + Frail 2、Decimillipede、VANTOM、QUEEN …）。
+これは次ラウンドの実装候補として一番母数が大きい。
