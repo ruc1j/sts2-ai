@@ -3422,3 +3422,17 @@ rule 9（再走後は exception 0件を確認）の形で、run ごとに例外�
 | `U2M7K5F9RA` | 10勝1敗 | 0 |
 | `T3XQ7WM2VP` | 12勝1敗 | 0 |
 | `M7C4Q9V2RH` | 6勝0敗・走行中 | **1** |
+
+### consumption の実走検証（同一 turn の連続 decision で確認）
+
+実走 trace の「decision → 同一 turn の次の decision」で、power の消費を確認した：
+
+- `POWER.DUPLICATION_POWER`：present → consumed **61件**（decrement/unchanged 0）＝ play 1回で消費、
+  model の形と一致
+- `POWER.GIGANTIFICATION_POWER`：consumed 13件、unchanged 7件。unchanged の内訳は played card の type
+  が Status 4・Skill 2・Power 1 ＝ **Attack を打った時だけ消費**という model の条件（`card in ATTACKS`）と
+  一致
+- `POWER.ONE_TWO_PUNCH_POWER`：消費を観測できる transition がこの corpus に0件（母数が薄い）
+
+実走で確認できるのは observable な量（powers・relics・hand）だけ。damage が2回 hit したかは trace に
+出ない（`_step_score` の value には出るが、game 側の実際の hit 数ではない）。
