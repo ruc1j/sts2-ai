@@ -3557,3 +3557,14 @@ knowledge-driven の分歧で path が分かれた後なので、同じ seq の 
 
 → `U2M7K5F9RA` は run レベルで機構単独の測定に使えない。母数になるのは第一分歧が机构位置である seed
 だけ（H2、AM8 の harness）。
+
+### `T3XQ7WM2VP` は clean pair（両腕が同じ seq 119 で Duplication を得ている）
+
+control と arm（pin harness）の両腕が `POWER.DUPLICATION_POWER` を **seq 119** で得て、それまでの
+aligned 76件は分歧0。power は card table の knowledge 差に関係しない（table にあるのは card 名だけ）
+ので、119 以降の分歧は機構単独の差として立つ。H2（seq 441）と AM8（harness、seq 331）に続く3件目の
+clean pair。
+
+母数：`U2M7K5F9RA` は knowledge 差で先に分歧して acquisition までずれた（189/195）ので除外。
+`C8Q1Z7E3KS`・`M5W9C3T7LQ`・`V7D3M9H2XW` は arm が機構を state に出すかどうかで決まる（control 側は
+V7 で Panache を11 record 出している）。
