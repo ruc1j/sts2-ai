@@ -3805,3 +3805,18 @@ draw（と status 付与・power stack）の extra resolution を `play_duplicat
 
 `mechonly_ctrl_b3_D6A1F8C3E5` 完走：**17勝1敗、例外0件、`POWER.CHAINS_OF_BINDING_POWER` を state に出した**
 → batch3 で第一の pair candidate（control clean）。`X3C9N6P4WQ` 5勝0敗・走行中（機構未出現）。
+
+### batch3：corpus の母数 ≠ この run の母数（X3・SOS は機構を state に出さなかった）
+
+`mechonly_ctrl_b3` 完走分（control `e808bdf`、例外0件）：
+
+| seed | control | この run での機構 |
+|---|---:|---|
+| `D6A1F8C3E5` | 17勝1敗 | **Chains**（母数208 は corpus の別 run。この run は17 record） |
+| `X3C9N6P4WQ` | 13勝1敗 | none |
+| `SOS6XYXCNO` | 13勝1敗 | none |
+| `L3PN5HBQ8T` | 3勝0敗・走行中 | none |
+
+seed 選び（corpus の state 出現）は当たりませんでしたが、pair になるのは「この run が機構を state に出す」
+case だけ。今の pair candidate は `D6A1F8C3E5` の1件（control clean）。arm（pin harness）が同じ path を
+追えば Chains を同じ位置で見る预期。
