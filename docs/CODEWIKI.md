@@ -3682,3 +3682,12 @@ arm が同じ path を追えば同じ位置で Panache を見る预期 → 達�
 
 `mechonly_attribution.py` の `first-mech` が V7 で None を返すのは、arm 側がまだその record に達していない
 から（aligned 集合の側でしか見ていない）。
+
+### V7：arm が Panache の位置（seq 221）に達して、その位置の分歧は0（現時点）
+
+`mechonly_arm_b2_V7D3M9H2XW`：aligned 170件、分歧0、両 run 例外0件。arm が `POWER.PANACHE_POWER` を
+seq 221 で見た（control も 221）→ clean mechanism position。分歧は出ていない（Panache の
+counter 5枚目 play 触发がその path で决定を変えていない）。
+
+note の fold：Rose（`a328b5c`）と生成プール（`77120b2`）の項目は完了として `[x]` にし、残る confound は
+card table の knowledge 差として書き直した。
