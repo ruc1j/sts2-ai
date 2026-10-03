@@ -4520,3 +4520,50 @@ limit（20）に達しており、`strong_block_shortage`（16枚以上・強ブ
 強ブロック不足規則に段位の逃げ道を作る変更は 2026-09-08 に16seedで有害測定済み（上の §124）で、
 同じ扉を再度開く理由はこの計測からは出てこない。Dramatic Entrance・Production・Fasten は
 observations を保存している run で一度も提示されていない（决定 trace 側には 9・8・1件ある）。
+
+### Rampart の実装を commit 1 つだけ違えた arm/control 実走 A/B（2026-10-04、`data/rampart_ab.sh`）
+
+control は親 commit `d67896f` の worktree（`.wt-ctrl-d67896f`）、arm は main checkout。差分は
+`5f655ff` の1コミット（combat.py の grant と `POWER_NAMES` の1行）だけで、生成集合
+（`STOKE_GENERATION`・`INFERNAL_BLADE_ATTACKS`）は両ツリー同一。だから生成プールをピン留めした
+harness は不要で、`official_agent.py` をそのまま使う panel で分歧は grant の帰属に閉じる。
+seed は同一条件 replay で分歧が多かった3件。
+
+| seed | control | arm | delta | aligned | 分歧 | Rampart 位置の分歧 | 第一分歧 seq | 第一分歧で Rampart が両腕の state に在るか |
+|---|---|---|---:|---:|---:|---:|---:|---|
+| `H2LV6ZJ4XW` | 22勝1敗 | 20勝1敗 | **−2** | 390 | 59 | 6 | 426 | はい（arm BATTLE_TRANCE / control end_turn） |
+| `B3N8V5T1WQ` | 16勝1敗 | 17勝1敗 | **+1** | 488 | 87 | 8 | 477 | はい（arm RUPTURE / control end_turn） |
+| `D6A1F8C3E5` | 17勝1敗 | 17勝1敗 | **0** | 364 | 2 | 2 | 329 | はい（arm Defend / control Strike） |
+| 合計 | 55勝 | 54勝 | **−1** | | | | | 3 seed すべて第一分歧が Rampart 位置 |
+
+**分歧は机构単独で立っている**（3 seed すべて第一分歧の record で `POWER.RAMPART_POWER` が両腕の state に
+出ており、その地点より前の决定列は一致）。つまりこれは「path が勝手にズレた」ではなく grant の差。
+
+H2 の −2 の中身：arm は **SLIMED_BERSERKER 戦で6ターン目に HP17 で死亡**（敵残り106HP）。control は
+同じ seed で QUEEN まで進み 400HP/20block のところで落ちている。arm の死亡はターのいる戦闘ではなく、
+分歧後の path で別戦闘（CUBEX_CONSTRUCT を経由しない進み方）で耐久が足りなくなった形。
+＝grant 自体が敵との打ち合いを悪くした証拠ではなく、**勝数への効果は符号が割れて母集団が薄い**
+（−2 / +1 / 0）。閾値（≥3 seeds）に対して正の差は出ていない。
+
+なので **Rampart の grant は正しさの修正として入れたまま、win-rate の改善根拠は無し** と記録する。
+「忠実度を上げても勝てるとは限らない」の同一形（Wound 対応表・Stratagem と同じ位置）。
+次はこの panel のまま他 seed を足して符号を見るか、grant の効果自体（盾を先に倒す価値）が决定に出る
+位置を replay で特定する。
+
+### 同じ監査で分かった ThievingHopper のコスト（未実装、母数確定）
+
+`ThieveryMove` が Draw+Discard から1枚を `CardPileCmd.RemoveFromCombat` で戦闘から抜く（優先順
+Uncommon → Common/Rare/Event → Basic/Quest → Ancient/Imbued、同一 rarity 内は random）。model は
+これを全く見ていない。実走 record での検出：
+
+- 奪取イベント **264件**（190 run、hand+draw+discard+exhaust の合計が1減る位置として検出）
+- 奪われた札の内訳（268件）：Inflame 62・Battle Trance 33・Expect a Fight 32・Second Wind 14・
+  Stratagem 11・Bludgeon 11 … **Strike は10件だけ**（Basic が第3優先なので最後まで抜かれない）
+- うち **戦闘後に deck へ戻らないのは31件だけ**（233件は hopper を倒して extra reward で回収）
+  → run あたりの恒久損失は 543 run 中31件 ≈ 0.06枚/run
+
+戦闘中は毎回1枚抜かれるので rollout の「手札が揃う」前提が甘くなるが、恒久効果は小さい。
+忠実度として入れるなら raritiy 表が要る（decompile から model 対象131札のうち **129札の rarity が
+取得可能**：Uncommon 52・Rare 28・Common 20・Status 9・Event 8・Ancient 5・Curse 5・Basic 1・Token 1）。
+Status/Token は `DeckVersion == null` なので候補から除外、Curse は deck 由来だと候補になる
+（優先グループのどれにも入らないと full list が fallback）。
