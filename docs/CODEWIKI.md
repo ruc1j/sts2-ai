@@ -4669,3 +4669,40 @@ EYE_WITH_TEETH+FOGMOG 20、DECIMILLIPEDE 17、OVICOPTER+TOUGH_EGG 16、PARAFRIGH
   Monster(5,2)→(6,1)、各行の children が1つ）。act 内の RestSite は (6,5)(8,1)(8,5)(10,4)(11,3)(15,0)(15,3) で、
   廊下の列（col 1-2）には無い。＝「 elite 前に rest を取れていれば残り5HPの死を避けられた」は
   **経路上に rest が無いので実現不能**。rest 経路の重量付け自体は closed lever（§148 §150 §249 §2348）。
+
+## ThievingHopper のカード奪取（2026-10-04、commit `119cb28`）
+
+`ThieveryMove` の本体は export されず、state machine には `"swipe"` の PowerCmd.Apply マーカーと
+17ダメージの攻撃だけが出る。C# 本体は攻撃の前に player の **Draw+Discard から1枚を
+`CardPileCmd.RemoveFromCombat` で戦闘から抜く**（候補は `DeckVersion != null` の札だけ、優先順
+Uncommon → Common/Rare/Event → Basic/Quest → Ancient/Imbued、同一 rarity 内は random、
+どのグループにも入らない場合は full list が fallback）。model はこれを全く見ていなかった。
+
+実装：`_enemy_turn` の THIEVERY_MOVE で draw+discard から1枚抜く。抜く順は **Strike/Defend を最後**
+にする近似（model には札ごとの rarity が無い）。実走 268件の奪取の内訳が根拠：
+Inflame 62・Expect a Fight 33・Battle Trance 33・Second Wind 14・Stratagem 11・Bludgeon 11・
+Rupture 10・Stone Armor 10 … **Strike は10件だけ**（Basic は第3優先）、Status/Token 札は1件も無い
+→ 定数 `NON_DECK_CARDS`（Slimed・Toxic・Burn・Dazed・Infection・Wither・Decay・Wound・
+Frantic Escape・Giant Rock）を候補から除外して一致させる。
+
+回帰：`cd24b1f`（親）では2本とも失敗（抜かれない）。suite **749件成功**。
+
+母数（`data/attribution_rampart.py` に monster id 指定を追加）：`MONSTER.THIEVING_HOPPER` の
+record **2964件** replay → **决定变化 189件・34 seed**（AM8C6YXHSG 34、M5PC8TQ3BN 26、
+H2LV6ZJ4XW 25、P3V8N5K2RX 13 …）。恒久的なデッキ喪失は 543 run 中31件だけなので、
+効果は「その戦闘の rollout が1枚少ない前提で計算される」範囲に留まる。
+
+## Rampart の 2nd panel（新3 seed、`data/rampart_ab2.sh`）
+
+arm = `cd24b1f`（Rampart あり）、control = `d67896f`（親）。`5f655ff` 1コミットだけの差分のまま
+新しい seed を足した。
+
+| seed | control | arm | delta | 判定 |
+|---|---|---|---:|---|
+| `SOS6XYXCNO` | 13勝1敗 | 13勝1敗 | 0 | 2 run とも LivingShield 戦に入らず＝**測定不能** |
+| `9X9WQB4QIH` | 17勝1敗 | 17勝1敗 | 0 | Rampart record 6件/6件、**分歧そのものが無し** |
+| `R4A8D2K7ME` | 21勝1敗 | 21勝1敗 | 0 | 第一分歧 seq 411（arm Defend / control Maul）、Rampart 位置 |
+
+1st panel と合わせて **6 seed で −2 / +1 / 0 / 0 / 0 / 0（合計 −1）**。replay で63件動く机构だが、
+実走では6 seed 中4 seed が无変化、1 seed だけ −2、1 seed だけ +1。
+忠実度修正の胜数効果はこのサイズだと panel で検出できない、が今回の実測の結論。
