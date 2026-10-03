@@ -16,4 +16,6 @@ if git status --short -- official_agent.py combat.py | grep -q .; then
 fi
 seeds=(U2M7K5F9RA T3XQ7WM2VP M7C4Q9V2RH C8Q1Z7E3KS M5W9C3T7LQ V7D3M9H2XW)
 REPO=$repo /Users/mao/.sts2/scripts/sweep2.sh mechonly_ctrl_b2 "${seeds[@]}"
-REPO=$repo /Users/mao/.sts2/scripts/sweep2.sh mechonly_arm_b2 "${seeds[@]}"
+# The arm stage must use the pinned harness, otherwise the generation-set difference confounds the
+# attribution again. sweep2.sh takes the agent script through AGENT.
+AGENT=./data/mechonly_agent.py REPO=$repo /Users/mao/.sts2/scripts/sweep2.sh mechonly_arm_b2 "${seeds[@]}"
