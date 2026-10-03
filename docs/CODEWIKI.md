@@ -4311,3 +4311,24 @@ AM8（harness、第一分歧が Fiddle 位置）の2件。
 
 batch3 は win レベルで机构単独の差を出さなかった。机构単独で立っているのは H2（+2）と AM8（分歧87、
 outcome 同値）の2 seedのまま。
+
+### 実装した（commit `2e195d5`、テスト739件成功）
+
+- draw gate：`SHRUG`（line 2334）と `CARD_DRAW`（line 2338）で play count 分だけ draw 数を挂ける
+- status gate：`CARD_VULNERABLE_TARGET`（line 2937）と Uppercut の Weak/Vulnerable（line 2941-2943）で play
+  count 分だけ apply する
+- self damage gate：line 2375 で play count 分だけ回す
+- Chains の cap：`chains_afflicted_this_turn` を追加（field line 307、turn start で reset、draw block で
+  entry 数として数える）。hand 基準をやめた
+
+テスト3本（draw・status・cap recovery）。Shrug の block は model の base 8（upgraded 11）なので gate 後は
+16。Bash の Vulnerable は table 値2 → gate 後4。
+
+**未 gating（正直に記録）**：power grant の branch（Demon Form・Fasten・Stampede・Aggression…）は多数の
+個別 branch で、gate を入れていない。実走の母数1件（Colossus）なので、正しさの完全形（play 本文の loop
+化）はまだ残っている。per-play trigger（Panache counter、Juggernaut、Fiend Fire、Hellraiser autoplay）も
+同様に未 gating（実走の母数0件）。
+
+忠実度の実装によって、同一条件 replay で「gate が决定を変える位置」の母数は draw 25件（Shrug）＋ status
+1件（U2 の Taunt）＝26件。実走 panel の决定列は変更前の code で走っているので、この gate が実走 outcome
+を変えた evidence は無い（rule のまま：offline の变化は採用根拠にしない）。
