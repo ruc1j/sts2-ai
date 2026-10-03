@@ -4261,3 +4261,19 @@ display name へ map してから table を見る（commit `8799324`）。
 
 同一条件 replay での分割（`data/mech_vs_knowledge.py`、commit `ab9634f`）の数字は別の根拠なのでそのまま：
 H2 mechanism-only 13件、AM8 mechanism-only 22件、knowledge-only 0件。
+
+### knowledge 差の正体：hand だけじゃなく deck/draw pile 経由でも决定を変える
+
+arm と control の card table 差は次の6 entryだけ（`e808bdf` vs HEAD）：
+
+- `CARD_COST`：One-Two Punch、Panache
+- `SKILLS`：One-Two Punch、`POWERS`：Panache、`UNTARGETED`：両方
+- `HAND_INJECTED_STATUS`：Wither
+
+`mechonly_attribution.py` の confound 数えは hand に在る札だけを見ていた。だから `U2M7K5F9RA` の62分歧
+（hand に OneTwoPunch が無い位置）は confound 0 と出たが、rollout が draw pile からその札を引く位置では
+control は score できず arm はできる → 同じ knowledge 差で决定が変わる。
+
+→ confound の正しい母数は「hand OR rollout で draw される札」に arm だけの entry が現れる位置。hand だけ
+の数えは undercount。正しく分ける方法は `data/mech_vs_knowledge.py`（tables を control 形へ pin した
+replay と、arm 形の replay を比べる）で、U2 はその re-run が未実施（game 走行中、CPU rule）。
