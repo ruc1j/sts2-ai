@@ -1078,14 +1078,15 @@ def _grant_block(
     if powered:
         base += _power(combat.player_powers, "DexterityPower") - _tender_penalty(combat)
     block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
-    if vambrace_double:
-        block *= 2
-    if unmovable_double:
-        block *= 2
     plays = 2 if combat.play_duplicated else 1
-    if plays > 1:
-        # The play resolves once per play count, so the block grant is applied that many times.
-        block *= plays
+    # Each resolution is its own grant, so the relic doublings apply to every resolution, not to the
+    # combined total.
+    per_grant = block
+    if vambrace_double:
+        per_grant *= 2
+    if unmovable_double:
+        per_grant *= 2
+    block = per_grant * plays
     enemies = list(combat.enemies)
     juggernaut = _power(combat.player_powers, "JuggernautPower")
     alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
@@ -2179,22 +2180,24 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             played_value = hand[card_index]
             card = card_name(played_value)
     if card in SKILLS:
-        vital_spark = sum(_power(enemy.powers, "VitalSparkPower") for enemy in combat.enemies if enemy.alive)
-        if vital_spark:
-            # VitalSparkPower (Infested Prism's PULSATE_MOVE) taints every Skill card in the
-            # deck; playing one grants TaintedPower equal to the current stack, which adds flat
-            # damage to powered attacks against the player until the enemy's turn ends.
-            combat = replace(combat, player_powers=_add_power(combat.player_powers, "TaintedPower", vital_spark))
-        # EnragePower.AfterCardPlayed: every Skill grants its stack as Strength to the owner.
-        # Apply this before the card branch returns so block/draw-only Skills are covered too.
-        combat = replace(
-            combat,
-            enemies=tuple(
-                replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", _power(enemy.powers, "EnragePower")))
-                if enemy.alive and _power(enemy.powers, "EnragePower") else enemy
-                for enemy in combat.enemies
-            ),
-        )
+        # AfterCardPlayed fires once per resolution, so an increased play count runs these hooks again.
+        for _ in range(plays):
+            vital_spark = sum(_power(enemy.powers, "VitalSparkPower") for enemy in combat.enemies if enemy.alive)
+            if vital_spark:
+                # VitalSparkPower (Infested Prism's PULSATE_MOVE) taints every Skill card in the
+                # deck; playing one grants TaintedPower equal to the current stack, which adds flat
+                # damage to powered attacks against the player until the enemy's turn ends.
+                combat = replace(combat, player_powers=_add_power(combat.player_powers, "TaintedPower", vital_spark))
+            # EnragePower.AfterCardPlayed: every Skill grants its stack as Strength to the owner.
+            # Apply this before the card branch returns so block/draw-only Skills are covered too.
+            combat = replace(
+                combat,
+                enemies=tuple(
+                    replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", _power(enemy.powers, "EnragePower")))
+                    if enemy.alive and _power(enemy.powers, "EnragePower") else enemy
+                    for enemy in combat.enemies
+                ),
+            )
     if card_index is None:
         hand.remove(played_value)
     else:
@@ -2211,18 +2214,20 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     unmovable_amount = _power(combat.player_powers, "UnmovablePower")
     unmovable_double = block_card_has_gain and combat.block_cards_this_turn < unmovable_amount
     if block_card_has_gain:
-        combat = replace(combat, block_cards_this_turn=combat.block_cards_this_turn + 1)
+        # Each resolution counts as a card played, so the per-play counters advance once per resolution.
+        combat = replace(combat, block_cards_this_turn=combat.block_cards_this_turn + plays)
     # Card-play-counting relics (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener/
     # Nunchaku/Tuning Fork): all fire off a plain "every Nth attack/skill played" counter, either
     # reset each turn (the four "every 3rd attack" relics, Letter Opener's "every 3rd skill") or
     # cumulative for the whole fight (Nunchaku, Tuning Fork - both "every 10th").
     relics = combat.player_relics
-    attacks_this_turn = combat.attacks_played_this_turn + (1 if card in ATTACKS else 0)
-    skills_this_turn = combat.skills_played_this_turn + (1 if card in SKILLS else 0)
-    attacks_combat = combat.attacks_played_combat + (1 if card in ATTACKS else 0)
-    skills_combat = combat.skills_played_combat + (1 if card in SKILLS else 0)
-    cards_this_turn = combat.cards_played_this_turn + 1
-    powers_this_turn = combat.powers_played_this_turn + (1 if card in POWERS else 0)
+    # The per-play counters advance once per resolution, so a duplicated play counts `plays` times.
+    attacks_this_turn = combat.attacks_played_this_turn + (plays if card in ATTACKS else 0)
+    skills_this_turn = combat.skills_played_this_turn + (plays if card in SKILLS else 0)
+    attacks_combat = combat.attacks_played_combat + (plays if card in ATTACKS else 0)
+    skills_combat = combat.skills_played_combat + (plays if card in SKILLS else 0)
+    cards_this_turn = combat.cards_played_this_turn + plays
+    powers_this_turn = combat.powers_played_this_turn + (plays if card in POWERS else 0)
     # Relic counters (Pen Nib's attacks-played, Nunchaku's) are not in the observation - the bridge
     # writes relic ids only - so attacks_played_combat is 0 when a decision state is rebuilt.
     # `0 % 10 == 0` read that as "already activated", doubling every first attack of every combat.
@@ -2504,7 +2509,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             upgraded_cards=_remember_legacy_upgrades(combat, targets),
         )
     if card in POWERS:
-        combat = _after_power_play(combat, rng, data)
+        for _ in range(plays):
+            combat = _after_power_play(combat, rng, data)
     juggling_amount = _power(combat.player_powers, "JugglingPower")
     if juggling_amount and card in ATTACKS and attacks_this_turn == 3:
         # JugglingPower.AfterCardPlayed: the 3rd Attack played during the player's side puts one
