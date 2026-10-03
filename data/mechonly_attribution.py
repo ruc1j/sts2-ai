@@ -104,10 +104,20 @@ def main() -> None:
         ctrl_exc = sum(
             1 for entry in control.values() if entry.get("decision_source") == "agent_exception_fallback"
         )
+        first_mech = None
+        for seq in sorted(set(arm) & set(control)):
+            both = present(arm[seq]) & present(control[seq])
+            if both:
+                first_mech = (seq, sorted(both))
+                break
+        first_diff_mech = None
+        if diffs:
+            first_diff_mech = present(arm[diffs[0]]) & present(control[diffs[0]])
         print(
             f"{seed}: aligned {len(shared)} diffs {len(diffs)} "
             f"by-mechanism {dict(by_mechanism.most_common())} no-mechanism {none} "
-            f"exceptions arm {arm_exc} control {ctrl_exc}"
+            f"exceptions arm {arm_exc} control {ctrl_exc} "
+            f"first-mech {first_mech} first-diff-mech {sorted(first_diff_mech) if first_diff_mech else 'none'}"
         )
 
 
