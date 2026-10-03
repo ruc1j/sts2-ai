@@ -4048,3 +4048,31 @@ arm 完走 17勝1敗 = control と同値。Chains が両腕の state に出た�
 
 batch3 の今の形：`D6` ±0、`X3` 115件分歧0・走行中、残 `SOS`・`L3`・`B4`・`T5`。
 机构単独の win 效果は H2（+2）のまま、AM8（22件 mechanism-only）は outcome 同値。
+
+###  planned fix（apply 前の精确な形）：`_draw_into_combat` の chains block
+
+現状（`combat.py` line 803-818）：
+
+```python
+chains = _power(combat.player_powers, "ChainsOfBindingPower")
+if chains:
+    already_bound = sum(1 for value in combat.hand if isinstance(value, Card) and value.bound)
+    for value in drawn:
+        if isinstance(value, Card) and already_bound < chains:
+            value = replace(value, bound=True); already_bound += 1
+```
+
+`already_bound` は **hand に在る bound 札**なので、bound 札を play/exhaust して hand から消ると cap が
+回復する。game は `CardAfflictedEntry` の `HappenedThisTurn` 数で cap を見る（entry は札が消えても残る）。
+
+→ 追加する field：`chains_afflicted_this_turn: int = 0`（turn start で reset、`_step` の play で消費され
+ない）。block を `chains_afflicted_this_turn < chains` に変更、mark 時に increment。テスト：
+
+```
+test_chains_afflicts_stop_at_the_per_turn_cap_after_a_bound_card_leaves_hand
+```
+（draw 1 → bound 1、同じ turn で bound 札を play、draw 3 → game は cap 3 で止まる：model は entry 基準なら
+3枚目以降を mark しない。hand 基準だと mark してしまう）
+
+apply は batch3 の arm stage 完走後（rule 9）。play-count powers の gate 4箇所（draw・status・power・
+self damage）も同じ run 完走後。
