@@ -3981,3 +3981,19 @@ V7・D6・B4 の10 seed（B4 は gate 母数0）。機構が decision で trigge
 → 母数を增やすには trigger 位置（draw が decision で起きる、または play  Count powers が active の play）
 を持つ path が必要。batch3 完走後に、忠実度の fix（Chains cap を entry 基準へ、play-count の gate 4箇所）
 を実装して、trigger 位置が生まれた run で分歧が出るかを見る。
+
+### Fiddle の decompile（cached tree で原文再確認）
+
+`MegaCrit.Sts2.Core.Models.Relics/Fiddle.cs`：
+
+- `ModifyHandDrawLate`：owner の hand draw に `Cards`（2）を加える
+- `ShouldDraw`：`fromHandDraw` は true、owner 以外 true、owner でも current side が自分の side でない限り
+  false（＝player side 中の draw を拒否）。`AfterPreventingDraw` は flash だけ（効果なし）
+
+model は両方一致（`combat.py` line 803 の拒否、turn start の +2）。実走1,436件で hand が一度も growth
+しなかったこと（player side 中の draw 0件）も同じ根拠。
+
+→ play-count powers の忠実度 half は確認完了。model を揃える未実装 part は2件：
+1. Chains の per-turn cap（hand 基準 → **entry 基準**へ）（commit `74a87c6`）
+2. play count の全体再走（draw・status・power・self damage の gate）（commit `ef5d31e`）
+どちらも batch3 完走後に実装（rule 9）＋テスト2本。
