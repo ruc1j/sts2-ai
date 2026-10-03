@@ -3820,3 +3820,21 @@ draw（と status 付与・power stack）の extra resolution を `play_duplicat
 seed 選び（corpus の state 出現）は当たりませんでしたが、pair になるのは「この run が機構を state に出す」
 case だけ。今の pair candidate は `D6A1F8C3E5` の1件（control clean）。arm（pin harness）が同じ path を
 追えば Chains を同じ位置で見る预期。
+
+### play count の全体再走：gate が足りない site（実装前の checklist）
+
+`play_duplicated` を読んでいるのは今2箇所だけ：`_grant_block`（line 1080）と damage path（line 2824）。
+game は play count +1 で**play 本文全体**を再走するので、以下が抜けている：
+
+- draw：line 2321（`SHRUG` の draw 1）と line 2329（`CARD_DRAW`）→ `(count * 2 if play_duplicated else count)`
+- status 付与：line 2930 付近（`CARD_VULNERABLE_TARGET`、Uppercute の Weak 等）→ 実測で Vulnerable が2倍
+  にならないことを確認済み（Bash + Duplication → 2 のまま）
+- power grant：`_after_power_play`（line 553）→ stack が1回分足りない
+- self damage：`_apply_player_damage`（line 463）
+
+母数（実走 corpus、play-count power が active だった decision 73件）：block cards 54（そのうち Shrug 25＝
+draw gate が必要）、attack 9（正しい）、none 10。status 付与札 chosen は 0（Bash は3件）→ status gate は
+corpus で决定的に効く母数が薄い。
+
+実装は batch3 完走後（rule 9：run が in flight の間に policy code を触らない）。テストは
+`test_duplication_re_resolves_status_and_draw_effects`（draw gate）と status gate の2本を予定。
