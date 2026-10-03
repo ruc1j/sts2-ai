@@ -4650,3 +4650,22 @@ Maelstrom 6x4=24 / DrainLife 18+Vulnerable+Weak、234HP）。**満タンのHP101
 13HP 残しで死ぬ**形なので、これは model の欠落ではなく deck の火力不足。
 全 trace 545 本の死亡戦闘の内訳：THE_INSATIABLE 203、QUEEN(+TORCH_HEAD) 101、VANTOM 53、
 EYE_WITH_TEETH+FOGMOG 20、DECIMILLIPEDE 17、OVICOPTER+TOUGH_EGG 16、PARAFRIGHT+THE_OBSCURA 14。
+
+### 同じ監査で「gap ではなかった」事を確認した項目（2026-10-04、再調査の手間を省くための記録）
+
+- `POWER.ESCAPE_ARTIST_POWER`（ThievingHopper、2,911 record）：decompile 上は逃走タイマーの表示だけ
+  （`AfterSideTurnEnd` で Decrement）。逃走自体は `ESCAPE_MOVE` の `CreatureCmd.Escape` として
+  5ターン目に model 側でも発動する（state machine が THIEVERY→FLUTTER→HAT_TRICK→NAB→ESCAPE 固定）。**モデル化不要。**
+- `POWER.REATTACH_POWER`（Decimillipede、1,206 record）：`DoReattach` の `CreatureCmd.Heal(Amount=25)` は
+  combat.py の `REATTACH_MOVE` 分岐で既に +25 として入っている。実走の復活 HP も 22-25 で一致。
+- `POWER.HATCH_POWER`（ToughEgg、2,422 record）：`AfterSideTurnEnd` で Decrement するだけで、
+  HP 変化（HatchlingMinHp..MaxHp）は `Hatch()` 側。combat.py の `HATCH_MOVE` 分岐が既に処理済み。
+- `POWER.POSSESS_STRENGTH_POWER` / `POSSESS_SPEED_POWER`（TheLost / TheForgotten）：player への
+  -2 debuff と自分の +2 両方が export 済み。未モデル化なのは「 holder が死んだ時に player へ Strength が
+  戻る」だけ（player に有利な方向、死亡戦闘の上位14にこの2体は無い）。
+- `MONSTER.SOUL_NEXUS`（234HP、今回の A/B で2 run が死亡）：block を持たず攻撃3種のみの観測と一致し、
+  漏れ無い（SoulBurn 29 / Maelstrom 6x4 / DrainLife 18 + Vulnerable + Weak）。
+- `R4A8D2K7ME` の Act 3 は **分岐の無い廊下**だった（Ancient(0,3)→Monster(1,1)→(2,2)→(3,2)→Unknown(4,2)→
+  Monster(5,2)→(6,1)、各行の children が1つ）。act 内の RestSite は (6,5)(8,1)(8,5)(10,4)(11,3)(15,0)(15,3) で、
+  廊下の列（col 1-2）には無い。＝「 elite 前に rest を取れていれば残り5HPの死を避けられた」は
+  **経路上に rest が無いので実現不能**。rest 経路の重量付け自体は closed lever（§148 §150 §249 §2348）。
