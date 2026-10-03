@@ -3858,3 +3858,14 @@ corpus で决定的に効く母数が薄い。
 Fiddle との相互作用は正しい：Shrug の draw は `_draw_into_combat(..., from_hand_draw=False)` を呼ぶので、
 Fiddle を持つと game は draw を拒否する（model も拒否）。Shrug の母数25件の中で Fiddle を持つ run は
 Q6・D1（control-era）で、Fiddle 所持時に Shrug を打つ位置は拒否側で既に一致している。
+
+### gate 追加の母数（决定に影響しうる record）
+
+play-count power が active だった decision 73件の内訳で、model が既に gate している effect だけを持つ札
+（attack 9、Defend 25）は gate 追加で変わらない。**gate が足りない effect を持つ札は 27件**：
+Shrug It Off 25（draw）、Taunt 1（status）、Colossus 1（power）。＝ gate 追加が决定を変えうる母数は
+27件 / 15 seed の中で最大27件。
+
+control（`e808bdf`）が機構を state に出した seed は、既に走った run では batch1 の4（H2・AM8・R8・P3）＋
+batch2 の4（U2・T3・M7・V7）＋ batch3 の D6 の9件で、いずれも測った。新しい母数を增やすには新しい seed
+の control run が機構を state に出す必要がある（path 運）。
