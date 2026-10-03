@@ -12,7 +12,7 @@ must differ by that commit only, otherwise a difference cannot be attributed to 
 It measures the population a fix is live on.  It is not evidence about run outcomes - that needs a
 real run (`data/rampart_ab.sh` shows the panel form).
 
-Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X] [enemy_data.json]
+Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X | MONSTER.X | PLAYER:POWER.X,POWER.Y] [enemy_data.json]
 """
 
 from __future__ import annotations
@@ -38,7 +38,14 @@ for line in open(paths, encoding="utf-8-sig"):
     if record.get("phase") != "combat":
         continue
     enemies = record.get("enemies") or ()
-    if power_id.startswith("MONSTER."):
+    if power_id.startswith("PLAYER:"):
+        wanted = power_id.split(":", 1)[1].split(",")
+        if not any(
+            power.get("id") in wanted
+            for power in (record.get("player") or {}).get("powers") or ()
+        ):
+            continue
+    elif power_id.startswith("MONSTER."):
         # A monster id selects the fights that monster is in (for gaps that are a move body rather
         # than a power, e.g. ThievingHopper.ThieveryMove's CardPileCmd.RemoveFromCombat).
         if not any(enemy.get("id") == power_id for enemy in enemies):
@@ -73,7 +80,7 @@ def main() -> int:
     ]
     power_id = sys.argv[3] if len(sys.argv) > 3 else "POWER.RAMPART_POWER"
     enemy_data = Path(sys.argv[4]) if len(sys.argv) > 4 else REPO / "data/enemies_glory.json"
-    token = power_id.encode()
+    token = (power_id.split(":", 1)[1].split(",")[0] if power_id.startswith("PLAYER:") else power_id).encode()
     traces = sorted(REPO.glob("data/*_agent.jsonl"))
     rows: dict[tuple[str, int], dict[str, dict]] = {}
     for tree in trees:
