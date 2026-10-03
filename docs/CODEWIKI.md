@@ -4277,3 +4277,23 @@ control は score できず arm はできる → 同じ knowledge 差で决定�
 → confound の正しい母数は「hand OR rollout で draw される札」に arm だけの entry が現れる位置。hand だけ
 の数えは undercount。正しく分ける方法は `data/mech_vs_knowledge.py`（tables を control 形へ pin した
 replay と、arm 形の replay を比べる）で、U2 はその re-run が未実施（game 走行中、CPU rule）。
+
+### attribution の caveat：arm–control 差は「8机构」以外も含む（`e808bdf` 以降の全変更）
+
+`git diff e808bdf..HEAD -- combat.py official_agent.py` = 213 insertions。追加された token を数えたら：
+
+- PANACHE 9、ONE_TWO_PUNCH 6、GIGANTIFICATION 4、FIDDLE 4、WITHER 2 → 8机构の側
+- HELLRAISER 2 → HellraiserPower autoplay（`e808bdf` には無い、机构8件とは別）
+- それ以外：SoarPower の ZeroDivision guard、Whirlwind の hit count、`bound`/`unplayable_this_turn` の
+  分離、autoplay recursion の cap、turn-end curse の pin など
+
+だから pin（生成集合）をしても、arm は control より「8机构＋その他の修正」分だけ違う。分歧位置が机构の
+position でない case は「その他の修正」由来であり、机构単独の差として数えられない。
+
+`B4J8Q1R6YK` の第一分歧（seq 430、state は両腕で一致、hand に机构札なし、Chains は 433 から）は
+draw pile に `CARD.HELLRAISER` が在る位置 → Hellraiser autoplay の差で説明がつく。機構単独の attribution
+には使えない。B4 の by-mechanism 9件は机构 position だが、その前に path が分歧しているので第一分歧の
+rule に反する。
+
+→ 判定で使えるのは、第一分歧が机构 position である case だけ。現状 H2（seq 441 が FS、両腕一致）と
+AM8（harness、第一分歧が Fiddle 位置）の2件。
