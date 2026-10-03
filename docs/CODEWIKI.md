@@ -4241,3 +4241,23 @@ display name へ map してから、control の table に在るかを見る。
 `e808bdf` の control はこれらの status 札名を持たない（head では `HAND_INJECTED_STATUS` に WITHER 等が
 あり、status 札の扱いは後から入れた）。confound の母数は123件だが、batch3 では分歧0 → confound が决定
 を変えなかった case。
+
+### 訂正：H2・AM8 の分歧は knowledge-confound ではなかった（前数えは bug）
+
+`mechonly_attribution.py` の confound 数えは、trace の id（`CARD.DEFEND_IRONCLAD`）を control の
+display-name table（"Defend"）と直接 compare していた。正しくは control 自身の `CARD_NAMES` で id →
+display name へ map してから table を見る（commit `8799324`）。
+
+その形で数え直した：
+
+| seed | 分歧 | by-mechanism | knowledge-confounded |
+|---|---:|---|---:|
+| `H2LV6ZJ4XW` | 46 | Forgotten Soul 46 | **0** |
+| `AM8C6YXHSG`（harness） | 87 | Fiddle 87・Chains 14 | **0** |
+
+→ commit `ebfb9dd` の「H2 の46分歧のうち39件は knowledge-confounded、AM8 の87分歧のうち85件」は誤り。
+分歧位置の札は control も table に持っていた。knowledge-confound が実在した母数は batch3 の arm run の
+123件（status 札 WOUND・CLUMSY・BYRDONIS_EGG・PROLONG・THINKING_AHEAD）で、そこでは分歧0。
+
+同一条件 replay での分割（`data/mech_vs_knowledge.py`、commit `ab9634f`）の数字は別の根拠なのでそのまま：
+H2 mechanism-only 13件、AM8 mechanism-only 22件、knowledge-only 0件。
