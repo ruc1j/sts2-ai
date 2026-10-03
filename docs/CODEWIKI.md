@@ -2931,3 +2931,12 @@ H2 は panel で最初の実質的な pair。1 seed の増減は採用根拠に�
 
 1 seed の +2 は採用根拠にしない rule（測定の作法 5）どおり、記録として残す。母集団（panel）の
 pair が揃う seed が増えてから判定する。現在 pair：H2 の1件。
+
+### H2 の分歧46件は全部、両腕の state に Forgotten Soul が在る位置
+
+combat decision の分歧46件を、その decision の state（relics・powers・hand）で機構の出現を確認して
+割った：**46件すべて両腕に `RELIC.FORGOTTEN_SOUL` が在る**。arm 側にだけ Chains が在る位置での分歧は
+**0件** → H2 の path で Chains のゲートは决定を動かしていない。
+
+したがって H2 の +2（control 20勝1敗 → arm 22勝1敗）は Forgotten Soul の実装単独の差として attribution
+できる。母集団は1 seedなので採用根拠にはしない（rule 5）が、機構単独の差として立つ第一 pair。
