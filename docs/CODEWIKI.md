@@ -3605,3 +3605,10 @@ exception の decision で game 側の default を取ったので、138 以降 p
 run レベルで机构単独として立っている seed：H2（46分歧、+2）と AM8（87分歧、outcome 同値）。
 knowledge-only で除外：`U2M7K5F9RA`。分歧0：`T3XQ7WM2VP`・`R8V2H6N4ZB`・`P3V8N5K2RX`。除外（机构位置
 より前に path 分歧）：`M7C4Q9V2RH`。
+
+### `M7C4Q9V2RH` の分歧は knowledge-driven（seq 120、機構は state に出ていない）
+
+arm が `CARD.STRIKE_IRONCLAD`、control が `CARD.TREMBLE` を選んだ seq 120 は、両腕の state に power/relic
+が出ていない位置（＝card table の classification 差）。しかも control 側に exception（seq 138）が后续に
+ある。pin した arm は生成集合で control と同じなので、この分歧は机构の実装差ではない。
+→ `M7C4Q9V2RH` は机构単独の測定に使えない（knowledge と exception の二重の confound）。
