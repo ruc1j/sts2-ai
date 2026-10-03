@@ -3321,3 +3321,15 @@ Rose の bug branch 由来（除去後0）だったことと実走で一致。
 
 harness reading（完走分）：H2 46分歧（Forgotten Soul）で +2、AM8 87分歧（Fiddle 73・Chains 14）で outcome
 同値、R8 分歧0・同値。P3 は未走。机构単独の win 効果は1 seed（H2）のまま → 閾値 ≥3 seeds 未達。
+
+### gate の実走検証（record を1件ずつ model へ流して確認）
+
+`candidate_bound_D6A1F8C3E5_agent.jsonl` seq 395（実走で gate が効いていた位置の record）を model に流した：
+
+- play 前：bound 札3枚が hand に在り、`legal_actions` は bound を含む（gate 前＝忠実）
+- bound 札を1枚 play した直後：`bound_played_this_turn` が True になり、残る bound 2枚は
+  `legal_actions` から消える（play 可能な札は非-bound だけ）
+
+＝ `ChainsOfBindingPower.ShouldPlay` の形（first bound play allowed、以降 gate）と model が一致。
+harness batch は完走：P3 15勝1敗 = control（Duplication を両腕の state に出すも分歧0）。機構単独で win
+効果が出たのは H2（+2）だけ。
