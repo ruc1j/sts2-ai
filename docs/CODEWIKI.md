@@ -3187,3 +3187,15 @@ control H2（`e808bdf`）で `RELIC.FORGOTTEN_SOUL` が初めて出る record �
 機構が state に出るまでの区間が control と一致する预期（現在 aligned 165件分歧0）。
 机构が出た後の第一分歧が機構単独の差になる — これが harness の目的。H2 では panel の第一回 runで
 分歧46件（第一分歧 seq 441）が出ていて、harness run はその再現になるかを見る。
+
+### H2 の harness run が机构単独の差を再現した（22勝地点、分歧46件、第一分歧 seq 441）
+
+生成集合を control 形へピン留めした `mechonly` run（job `bash-424`）で H2：
+
+- aligned 390件で分歧 **46件**、第一分歧 **seq 441**（arm harness: end_turn / control: Uppercut）
+- その位置の state に `RELIC.FORGOTTEN_SOUL` が**両腕**で在る（Stoke も Infernal Blade も piles に無い）
+- wins 22・losses 0（走行中）＝ panel の clean arm run（22勝1敗）と同じ地点
+
+生成集合の差を消した下で同じ分歧・同じ outcome が出る → H2 の +2 は機構単独（`ForgottenSoul.AfterCardExhausted`）
+で立つ。ただし seeds 側は1件のままなので閾値（≥3 seeds）には未達。harness の残3 seed（AM8・R8・P3）を
+待つ。
