@@ -2873,3 +2873,15 @@ clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control と决定列 **111/11
 
 → panel の測定力は path 運で決まる。母数として使えるのは、両腕の run が機構を**combat の state に
 出した** seed だけ（現時点で control 側は H2 と AM8 が出した。arm 側が同じものを見るかは run 次第）。
+
+### H2 の clean run は pair にならない（relic を引かなかった）
+
+`mechpanel_arm_clean_H2LV6ZJ4XW`：combat record 179件、relics は Burning Blood・Stone Humidifier で
+`RELIC.FORGOTTEN_SOUL` は 0件。control（`e808bdf`）の同じ seed run は67件で所持 → **path が分かれて
+机构を引かなかった**。H2 の到達性24件は control 側が机构を持つ run（`candidate` ほか）から来ていた。
+
+决定列は seq で揃った213件の分歧0。機構の実装（exhaust 1枚につき random 1体へ1 unpowered）は
+1点 damage で、この path では决定を1つも動かしていない。機構の effect が决定へ伝播する母数として、
+Fiddle（76件）と Chains のゲート（651件で17%）は実測済み。control era で bound-hand decision の
+469件が heuristic_fallback に落ちていた件（model が game に無い札を top に並べた）は、忠実な形の
+arm では game-legal の中から rank する → こちらが機構単独の差として残る。
