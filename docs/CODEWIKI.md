@@ -3771,3 +3771,21 @@ counter reset、turn end で CardsLeft=5 へ戻す）＝ model と一致。
 → 揃っていないのは play-count powers の「effect 全体の再走」だけ。card effects が `_step` 内 inline
 （data-driven でない）なので loop 化は大きい refactor。実走でこの gap が决定に出た case は0件
 （P3 の pair・batch2 の Duplication位置で分歧0）→ 记录してそのまま。
+
+### play-count powers の gap が决定に出る母数を数えた（73件 / 15 seed）
+
+実走 corpus で、decision の時点で `DuplicationPower`・`OneTwoPunchPower` が active だった recordは
+**73件 / 15 seed**。打った札の内訳：
+
+- block cards **54件**（Defend 25・Shrug It Off 25 ほか）
+- attack **9件**
+- end_turn / none **10件**
+
+model は block grant を2倍にする（line 1080）ので Defend は正しい。**Shrug It Off（block 5 + draw 1）は
+draw が2倍にならない** → gap が决定に出る位置は Shrug の25件（＋status 付与札 Taunt 1件、power 札 Colossus
+1件）。`CARD_VULNERABLE_TARGET` の status 付与も2倍にならないことを test で確認（Bash + Duplication →
+Vulnerable 2 のまま、commit `57011bc` の読みと一致）。
+
+実装は game 走行中で行わない（rule 9：run が in flight の間に policy code を触らない）。batch3 完走後、
+draw（と status 付与・power stack）の extra resolution を `play_duplicated` で gate して、テスト
+`test_duplication_re_resolves_status_and_draw_effects` で固定する。
