@@ -32,6 +32,16 @@ MECHANICS = [
 HAND_PRESENCE_MECHANICS = {"CARD.WITHER"}
 
 
+def control_card_table():
+    """The card names control (`e808bdf`) can score at all: names outside this table are knowledge
+    differences, so a divergence at a record containing them is not the mechanism's effect."""
+    sys.path.insert(0, CONTROL_DIR)
+    for module in ("official_agent", "combat"):
+        sys.modules.pop(module, None)
+    combat = __import__("combat")
+    return set(combat.CARD_COST)
+
+
 def combat_records(path):
     out = {}
     for line in open(path, encoding="utf-8-sig"):
@@ -80,6 +90,7 @@ def main() -> None:
             "H2LV6ZJ4XW", "AM8C6YXHSG", "R8V2H6N4ZB", "P3V8N5K2RX",
             "N8CQ4ZKP2W", "D1W9Y3B7FC", "B3N8V5T1WQ", "Q6N3V8K2MT",
         ]
+    table = control_card_table()
     for seed in seeds:
         arm_path = f"data/{arm_tag}_{seed}_agent.jsonl"
         if not os.path.exists(arm_path):
@@ -94,8 +105,11 @@ def main() -> None:
         diffs = [seq for seq in shared if arm[seq].get("card_id") != control[seq].get("card_id")]
         by_mechanism = collections.Counter()
         none = 0
+        confounded = 0
         for seq in diffs:
             both = present(arm[seq]) & present(control[seq])
+            if any(card.get("id") not in table for card in (arm[seq].get("hand") or [])):
+                confounded += 1
             if not both:
                 none += 1
             for key in both:
@@ -116,6 +130,7 @@ def main() -> None:
         print(
             f"{seed}: aligned {len(shared)} diffs {len(diffs)} "
             f"by-mechanism {dict(by_mechanism.most_common())} no-mechanism {none} "
+            f"knowledge-confounded {confounded} "
             f"exceptions arm {arm_exc} control {ctrl_exc} "
             f"first-mech {first_mech} first-diff-mech {sorted(first_diff_mech) if first_diff_mech else 'none'}"
         )
