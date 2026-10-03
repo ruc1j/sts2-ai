@@ -4611,3 +4611,42 @@ model は export の `initial_state` と 1体の HP だけを持っていた。�
 Rampart（560件で63件）より大きく、分歧の形も「attack を attack で受ける ↔ block や potion に切り替える」
 など戦闘全体の組み替え方向。実走 A/B は `data/axebot_ab.sh`（control = `cd24b1f` worktree、
 arm = HEAD、seed 3件）。
+
+### Axebot の respawn を commit 1 つだけ違えた arm/control 実走 A/B（2026-10-04、`data/axebot_ab.sh`）
+
+control = 親 commit `cd24b1f` の worktree（`.wt-ctrl-cd24b1f`、Rampart まで入り、Axebot 無し）、
+arm = HEAD `03b2055`。seed は replay で分歧が多かった3件。
+
+| seed | control | arm | delta | 第一分歧 seq |
+|---|---|---|---|---:|
+| `B3N8V5T1WQ` | 17勝1敗 | 17勝1敗 | **0** | 548（arm Crimson Mantle / control Strike） |
+| `D6A1F8C3E5` | 17勝1敗 | 17勝1敗 | **0** | 344（arm end_turn / control Shrug It Off） |
+| `R4A8D2K7ME` | 21勝1敗 | 21勝1敗 | **0** | 455（arm Maul / control Perfected Strike） |
+| 合計 | 55勝 | 55勝 | **0** | |
+
+同一条件 replay で决定を135件動かした机构なのに、3 seed の胜数は完全に同値。ただし中身は動いている：
+
+- `B3` の死亡戦闘 SOUL_NEXUS（234HP）：control は 13ターンで **26HP 残し**、arm は **13HP 残し**
+- `R4` の死亡戦闘 SLIMED_BERSERKER（261HP）：control は 57HP 残し・進入HP 19/72、arm は **5HP 残し**・進入HP 27/72
+- 死亡した戦闘の種類は3 seed とも arm/control で同じ
+
+＝respawn を見たことで「あと何ターンで倒せるか」の計算は実走に寄ったが、**胜ち負けの境界は超えない**。
+Rampart の A/B（−2/+1/0）と合わせて、この session で入れた2つの忠実度修正は
+**正しさの修正として入れたまま、win-rate の改善根拠は無し**。
+
+### 同じ A/B で確認できた壁の実測（6 run の死亡戦闘）
+
+| run | 死亡戦闘 | 進入HP | 与えた合計damage | 残り敵HP |
+|---|---|---|---:|---:|
+| arm `B3` | SOUL_NEXUS (234HP) | 101/101 | 221（17.0/turn） | 13 |
+| ctrl `B3` | SOUL_NEXUS (234HP) | 106/106 | 208（16.0/turn） | 26 |
+| arm `D6` | QUEEN+TORCH_HEAD_AMALGAM | 66/77 | 195 | QUEEN 370/400 |
+| ctrl `D6` | QUEEN | 85/85 | 287（28.7/turn） | QUEEN 297/400 |
+| arm `R4` | SLIMED_BERSERKER (261HP) | 27/72 | 253（42.2/turn） | 5 |
+| ctrl `R4` | SLIMED_BERSERKER (261HP) | 19/72 | 201（33.5/turn） | 57 |
+
+`SOUL_NEXUS` は model 側で完全に見えている（block 0・攻撃3種のみに観測一致：SoulBurn 29 /
+Maelstrom 6x4=24 / DrainLife 18+Vulnerable+Weak、234HP）。**満タンのHP101で入って13ターン戦って
+13HP 残しで死ぬ**形なので、これは model の欠落ではなく deck の火力不足。
+全 trace 545 本の死亡戦闘の内訳：THE_INSATIABLE 203、QUEEN(+TORCH_HEAD) 101、VANTOM 53、
+EYE_WITH_TEETH+FOGMOG 20、DECIMILLIPEDE 17、OVICOPTER+TOUGH_EGG 16、PARAFRIGHT+THE_OBSCURA 14。
