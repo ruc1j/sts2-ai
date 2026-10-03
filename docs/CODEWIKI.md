@@ -3075,3 +3075,15 @@ model（`e808bdf`、机构を実装する前）は那些を無視するので、
 R8 はこの decision（seq 546）で game 側の default を取ったが、决定列は control と **454件分歧0**、
 outcome も 22勝1敗で同値 → 実走影响は出なかった。guard を入れてテスト
 `test_lethal_with_soar_power_does_not_divide_by_a_zero_hit_count`（suite **735件成功**）で固定。
+
+### P3：pair だが决定列の分歧0（Duplication の effect が出なかった path）
+
+`mechpanel_arm_clean_P3V8N5K2RX`：393 aligned recordsで**全 decision field の分歧0**。両腕の combat
+state に `POWER.DUPLICATION_POWER` が出ている（control 16・arm record）ので pair。分歧が0なので
+機構単独の差は0。
+
+sweep が print した wins=13 は print 時点で trace が未完だった值で、final の parse は 15勝1敗（control
+と同じ）。**判定は final の trace（`phase == 'combat_end'` の `won`）で行う**、sweep の grep 行ではない。
+
+D1 も同じ形：aligned 306件分歧0、14勝1敗で同値（機構を引かなかった path）。
+現在 panel で机构単独の差として立っているのは H2（Forgotten Soul、第一分歧 seq 441、+2）だけ。
