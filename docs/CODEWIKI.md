@@ -4116,3 +4116,20 @@ model は1回だけ（実測：Duplication active で Demon Form を打つと st
   5 play trigger、turn end で CardsLeft reset）、Fiddle（+2 と player side 中の draw 拒否）
 
 実装は game が idle になったときに gate 4箇所＋cap の field を追加し、テスト2本で固定する（rule 9）。
+
+### gate 追加は小さい change でよい（effect site が同一 scope に在る）
+
+`play_duplicated` は `_step` 内で play の解像开始前に set される（line 2142-2161）。effect site は同じ
+scope：
+
+- status 付与：line 2930（`CARD_VULNERABLE_TARGET`、Uppercut の Weak）
+- draw：line 2321（`SHRUG`）、line 2329（`CARD_DRAW`）
+- power grant：line 2365・2383（`card in POWERS`、Demon Form）
+- self damage：`_apply_player_damage`（line 463）
+
+＝「play 全体をもう一度 loop する」大きな refactor ではなく、各 effect type で `* (2 if play_duplicated
+else 1)` を加える形で game と等価になる（game の play count は play ごとに `OnPlay`/commands を走る。
+model が enumerate している effect type を全部 gate すれば、multi-effect card も正しく2回分）。
+
+Chains 側は field 1本（`chains_afflicted_this_turn`）＋ block の cap を entry 基準へ。テスト2本。
+apply は batch3 の arm stage 完走後（rule 9）。
