@@ -3568,3 +3568,21 @@ clean pair。
 母数：`U2M7K5F9RA` は knowledge 差で先に分歧して acquisition までずれた（189/195）ので除外。
 `C8Q1Z7E3KS`・`M5W9C3T7LQ`・`V7D3M9H2XW` は arm が機構を state に出すかどうかで決まる（control 側は
 V7 で Panache を11 record 出している）。
+
+### run レベルの判定（第一分歧が機構位置である seed）
+
+`data/mechonly_attribution.py` に first-mech（両腕の state に機構が出た第一位置）と
+first-diff-mech（第一分歧の位置の機構）を出すようにした（commit `b922915`）。現在の形：
+
+| seed | aligned | diffs | first-mech | first-diff-mech | exceptions |
+|---|---:|---:|---|---|---|
+| `H2LV6ZJ4XW` | 390 | **46** | (423, FS) | **FS** | 0/0 |
+| `AM8C6YXHSG`（harness） | 338 | **87** | (325, Fiddle) | **Fiddle** | 0/0 |
+| `R8V2H6N4ZB`（harness） | 454 | 0 | (396, Rose) | none | arm 0 / control 1 |
+| `P3V8N5K2RX`（harness） | 305 | 0 | (166, Duplication) | none | 0/0 |
+| `U2M7K5F9RA`（batch2） | 129 | 62 | none（knowledge-only） | none | 0/0 |
+| `T3XQ7WM2VP`（batch2） | 157 | 0 | (119, Duplication) | none | 0/0 |
+
+機構単独の差として立っているのは H2（46分歧、**+2**）と AM8（87分歧、**outcome 同値**）の2 seed。
+閾値（≥3 decisions かつ ≥3 seeds）の seeds 側は未達 → win-rate の效果は未証明。機構は正しさの修正として
+採用済みのまま。
