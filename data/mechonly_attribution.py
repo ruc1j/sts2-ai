@@ -42,7 +42,14 @@ def control_card_table():
     combat = __import__("combat")
     agent = __import__("official_agent")
     names = set(combat.CARD_COST) | set(getattr(agent, "CARD_NAMES", {}).values())
-    return {name.lower() for name in names}
+    return {name.lower() for name in names}, getattr(agent, "CARD_NAMES", {})
+
+
+def known_to_control(card_id, table, agent_names):
+    # The trace stores `CARD.<NAME>` ids; control's tables key on display names. Map through
+    # control's own CARD_NAMES before asking whether a card can be scored.
+    display = agent_names.get(card_id)
+    return display is not None and display.lower() in table
 
 
 def combat_records(path):
@@ -93,7 +100,7 @@ def main() -> None:
             "H2LV6ZJ4XW", "AM8C6YXHSG", "R8V2H6N4ZB", "P3V8N5K2RX",
             "N8CQ4ZKP2W", "D1W9Y3B7FC", "B3N8V5T1WQ", "Q6N3V8K2MT",
         ]
-    table = control_card_table()
+    table, control_names = control_card_table()
     for seed in seeds:
         arm_path = f"data/{arm_tag}_{seed}_agent.jsonl"
         if not os.path.exists(arm_path):
@@ -111,7 +118,7 @@ def main() -> None:
         confounded = 0
         for seq in diffs:
             both = present(arm[seq]) & present(control[seq])
-            if any((card.get("id") or "").split(".", 1)[-1].lower() not in {k.lower() for k in table}
+            if any(not known_to_control(card.get("id"), table, control_names)
                    for card in (arm[seq].get("hand") or [])):
                 confounded += 1
             if not both:
