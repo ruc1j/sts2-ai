@@ -93,9 +93,14 @@ def main() -> None:
                 none += 1
             for key in both:
                 by_mechanism[key] += 1
+        arm_exc = sum(1 for entry in arm.values() if entry.get("decision_source") == "agent_exception_fallback")
+        ctrl_exc = sum(
+            1 for entry in control.values() if entry.get("decision_source") == "agent_exception_fallback"
+        )
         print(
             f"{seed}: aligned {len(shared)} diffs {len(diffs)} "
-            f"by-mechanism {dict(by_mechanism.most_common())} no-mechanism {none}"
+            f"by-mechanism {dict(by_mechanism.most_common())} no-mechanism {none} "
+            f"exceptions arm {arm_exc} control {ctrl_exc}"
         )
 
 
