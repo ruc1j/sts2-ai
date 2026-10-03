@@ -2904,3 +2904,16 @@ control 腕（`e808bdf`）で state に出した seedは H2（Forgotten Soul）�
 P3（Duplication）で、N8 と D1・Q6・B3 は0（N8 の1件は reward 提示）。
 したがって N8 の77件、D1 の3件、Q6 の2件は panel の run では使えない。pair になりうるのは H2・AM8・
 R8・P3 の4 seed ＋ arm 側が Fiddle 等を引いた case。
+
+### 訂正：H2 は pair（両腕の run が Forgotten Soul を state に出している）
+
+前ラウンドで「H2 は机构を引かなかった」と書いたが誤り。clean run
+（`mechpanel_arm_clean_H2LV6ZJ4XW`）は combat record **123件**で `RELIC.FORGOTTEN_SOUL` を所持、
+control（`e808bdf`）は67件。前ラウンドの scan は file 選択を誤って0と出した。
+
+第一分歧 seq 441：relics・powers（Dexterity・Strength）・hand が両腕で同一。arm が end_turn、
+control が UPPERCUT。arm 側には機構の実装（exhaust 1枚につき random 1 hittable 体へ1 unpowered）があり
+control には無い → ここは机构単独の差として立つ。分歧は seq 441 から51件（H2 clean run 走行中、
+16勝0敗；control は 20勝1敗）。
+
+H2 は panel で最初の実質的な pair。1 seed の増減は採用根拠にしない rule のまま（判定は母集団）。
