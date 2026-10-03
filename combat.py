@@ -931,6 +931,12 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
             # AdaptablePower/EnragePower are granted by AfterAddedToRoom, not the exported
             # state machine. AdaptablePower keeps the two-phase revival alive after death.
             enemy = replace(enemy, powers=(("AdaptablePower", 1), ("EnragePower", int(values["EnrageAmount"]))))
+        elif enemy.model == "MONSTER.AXEBOT":
+            # Axebot.AfterAddedToRoom applies StockPower(StockAmount) when StockAmount > 0 (the
+            # property is `_stockOverrideAmount ?? 2`, so an encounter spawn always carries 2).
+            # Without it _mark_enemy_death would end the fight at the first kill instead of
+            # spawning the second and third copies.
+            enemy = replace(enemy, powers=enemy.powers + (("StockPower", int(values.get("StockAmount", 0))),))
         enemies.append(enemy)
     hand, draw, _ = _draw(STARTING_DECK, (), 5, rng)
     powers = (("SurroundedRight", 1),) if any(enemy.model == "MONSTER.ROCKET" for enemy in enemies) else ()
@@ -1116,6 +1122,23 @@ def _mark_enemy_death(enemy: Enemy) -> Enemy:
         # SteamEruptionPower.AfterDeath prevents removal and forces the giant into its
         # infinite-HP ABOUT_TO_BLOW state instead of ending combat.
         return replace(enemy, hp=999999999, move="ABOUT_TO_BLOW_MOVE")
+    stock = _power(enemy.powers, "StockPower")
+    if stock > 0 and enemy.hp <= 0:
+        # StockPower.AfterDeath (Axebot.cs is the only applier: AfterAddedToRoom applies
+        # StockPower(StockAmount), StockAmount = _stockOverrideAmount ?? 2): the dead creature is
+        # re-added on the same side and slot with `StockAmount = Amount - 1`, and
+        # ShouldStopCombatFromEnding keeps the fight open until the last copy dies.  Because the
+        # respawn sets the override, GenerateMoveStateMachine starts the new copy at BOOT_UP_MOVE
+        # instead of HAMMER_UPPERCUT_MOVE, and the copy starts with an empty power list (a fresh
+        # Creature, not a revived one).  MinInitialHp 70 / MaxInitialHp 78 are drawn from at random
+        # in the game; no rng reaches this function, so the model uses the top of that range.
+        # Real runs: one Axebot encounter ran 12 turns and the agent died with the third copy at
+        # 26/76 HP left, while the model called the fight terminal at the first kill.
+        powers = (("StockPower", stock - 1),) if stock > 1 else ()
+        return replace(
+            enemy, hp=int(_dict(enemy.values).get("MaxInitialHp", 1)), move="BOOT_UP_MOVE",
+            block=0, powers=powers, respawns=enemy.respawns + 1,
+        )
     return _mark_test_subject_death(enemy)
 
 
@@ -1382,6 +1405,14 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             return combat
     spec, move_id, move = _specs(data)[enemy.model], enemy.move, _state(_specs(data)[enemy.model], enemy.move)
     values, player_hp, player_block = _dict(enemy.values), combat.player_hp, combat.player_block
+    # Axebot.StockAmount is a per-instance field (`_stockOverrideAmount ?? 2`), and StockPower.AfterDeath
+    # sets it to Amount-1 before re-adding the creature.  BOOT_UP_MOVE's Strength amount is
+    # `BootUpStrGain * (2 - StockAmount)`, and the export carries the static StockAmount 2, so without
+    # this every copy would read 0 Strength instead of 0 / 3 / 6 for the first / second / third.  The
+    # live power amount is the instance's StockAmount (AfterAddedToRoom applies StockPower(StockAmount)
+    # only when it is > 0), so a copy carrying no StockPower is the last one, with StockAmount 0.
+    if "StockAmount" in values:
+        values = {**values, "StockAmount": _power(enemy.powers, "StockPower")}
     # PaperCutsPower.AfterDamageGiven drains the player's max HP by its amount on every powered
     # attack of the owner's that gets through with UnblockedDamage > 0. Blocking the hit prevents it
     # outright, which is the whole reason the model has to know: otherwise it reads these enemies as

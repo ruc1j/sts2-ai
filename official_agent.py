@@ -256,6 +256,8 @@ POWER_NAMES = {
     # LivingShield carries RampartPower; combat.py re-grants its amount to every TurretOperator at
     # each player-turn start, so the id has to reach the model or the grant is invisible.
     "POWER.RAMPART_POWER": "RampartPower",
+    # Axebot carries StockPower; _mark_enemy_death respawns the next copy while it is above 0.
+    "POWER.STOCK_POWER": "StockPower",
     # The observation reports these under their own ids; without the mapping combat.py never
     # sees them (the same gap that made FrailPower dead for every rollout - see CODEWIKI).
     "POWER.GALVANIC_POWER": "GalvanicPower",

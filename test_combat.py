@@ -2683,6 +2683,47 @@ class CombatTest(unittest.TestCase):
         after = step(played, END_TURN, glory, random.Random(0))
         self.assertEqual(after.enemies[1].block, 0)
 
+    def test_axebot_respawns_from_stock_power_until_the_stock_runs_out(self) -> None:
+        # StockPower.AfterDeath re-adds a fresh Axebot with StockAmount-1 (Axebot.cs), and the new copy
+        # starts at BOOT_UP_MOVE because the respawn sets the stock override.  The third copy carries no
+        # StockPower, so it is the one that can actually die.
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        spec = next(monster for monster in glory["monsters"] if monster["id"] == "MONSTER.AXEBOT")
+        values = tuple(sorted(spec["values"].items()))
+
+        def axebot(hp: int, powers: tuple[tuple[str, int], ...], respawns: int) -> Enemy:
+            return Enemy(model="MONSTER.AXEBOT", hp=hp, move=spec["initial_state"], values=values, powers=powers, respawns=respawns)
+
+        first = step(Combat(80, (STRIKE,), (), (), (axebot(1, (("StockPower", 2),), 0),)), f"{STRIKE}@0", glory, random.Random(0))
+        self.assertEqual(
+            (first.enemies[0].alive, first.enemies[0].move, first.enemies[0].powers, first.enemies[0].respawns),
+            (True, "BOOT_UP_MOVE", (("StockPower", 1),), 1),
+        )
+        second = step(Combat(80, (STRIKE,), (), (), (axebot(1, (("StockPower", 1),), 1),)), f"{STRIKE}@0", glory, random.Random(0))
+        self.assertEqual(
+            (second.enemies[0].alive, second.enemies[0].move, second.enemies[0].powers, second.enemies[0].respawns),
+            (True, "BOOT_UP_MOVE", (), 2),
+        )
+        third = step(Combat(80, (STRIKE,), (), (), (axebot(1, (), 2),)), f"{STRIKE}@0", glory, random.Random(0))
+        self.assertFalse(third.enemies[0].alive)
+
+    def test_axebot_boot_up_strength_grows_with_each_stock_copy(self) -> None:
+        # BOOT_UP_MOVE's Strength amount is `BootUpStrGain * (2 - StockAmount)` and Axebot.StockAmount is
+        # the per-instance value (2 for the spawned copy, then Amount-1 on each respawn), so the copies
+        # boot up with 0 / 3 / 6 Strength.  The exported StockAmount is the static 2 for all three.
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        spec = next(monster for monster in glory["monsters"] if monster["id"] == "MONSTER.AXEBOT")
+        values = tuple(sorted(spec["values"].items()))
+        strengths = []
+        for stock in (2, 1, 0):
+            powers = (("StockPower", stock),) if stock else ()
+            enemy = Enemy(model="MONSTER.AXEBOT", hp=70, move="BOOT_UP_MOVE", values=values, powers=powers)
+            after = step(Combat(80, (), (), (), (enemy,), turn=1), END_TURN, glory, random.Random(0))
+            strengths.append(_power(after.enemies[0].powers, "StrengthPower"))
+        self.assertEqual(strengths, [0, 3, 6])
+
     def test_greedy_action_avoids_self_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
