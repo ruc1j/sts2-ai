@@ -3366,3 +3366,16 @@ batch2 の設計：control は `e808bdf`、arm は pin した harness。pin し�
 `POWER.ONE_TWO_PUNCH_POWER` が出ている。control（`e808bdf`）が機構を state に出すなら、pin した arm
 run は同じ path を追うので pair が成立する（機構が効く位置から分歧する）。判定は `compare_panel` と
 `mechonly_attribution`（tag `mechonly_arm_b2` vs `mechonly_ctrl_b2`）。
+
+### batch2 の attribution は构造上clean（pin した arm は机构以外で分歧できない）
+
+batch2 は control（`e808bdf`、机构未実装）と arm（HEAD＋生成集合 pin）を同じ seed・同じ条件で比べる。
+arm 側に机构の実装以外に code の差が無い（生成集合は pin で無効化）ので、决定列が分歧する位置は
+機構が arm の state に出ている位置に限られる。control の run が機構を state に出した seed では、path が
+分歧するまで両腕が同じものを見る ＝ pair が成立する。
+
+従って batch2 の分歧は、機構の実装差として attribution できる。母数：control が機構を state に出した
+seed（現時点 `U2M7K5F9RA`：Duplication＋OneTwoPunch、10勝1敗／`T3XQ7WM2VP`：Duplication、7勝0敗・走行中）。
+
+Duplication の run レベル effect は batch1 の P3 で0（1 record 両腕、分歧0）だった。OneTwoPunch の sample
+reach は2件。＝ batch2 で分歧が出るかは薄いが、出れば機構単独の差として立つ。
