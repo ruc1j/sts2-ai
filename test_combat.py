@@ -1765,6 +1765,30 @@ class CombatTest(unittest.TestCase):
         after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "DemonFormPower"), 4)  # 2 applied twice
 
+    def test_juggernaut_triggers_once_per_play_resolution(self) -> None:
+        # JuggernautPower is AfterBlockGained, so each resolution that gains block fires its own hit.
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(
+            80, (DEFEND,), (), (), (enemy,), energy=1,
+            player_powers=(("JuggernautPower", 3), ("DuplicationPower", 1),),
+        )
+        after = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 10)  # 5 base, applied twice
+        self.assertEqual(after.enemies[0].hp, 40 - 3 * 2)
+
+    def test_panache_counter_advances_once_per_play_resolution(self) -> None:
+        # PanachePower.AfterCardPlayed counts each play, so a duplicated play advances the counter twice.
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(
+            80, (DEFEND,), (), (), (enemy,), energy=1,
+            player_powers=(("PanachePower", 10), ("DuplicationPower", 1),),
+            panache_cards_this_turn=4,
+        )
+        after = step(combat, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 40 - 10)  # counter reached 5 on the second resolution
+        # The game resets CardsLeft to 5 after the trigger, so the next resolution counts from zero again.
+        self.assertEqual(after.panache_cards_this_turn, 1)
+
     def test_chains_affliction_cap_counts_entries_not_cards_in_hand(self) -> None:
         # ChainsOfBindingPower.AfterCardDrawn counts CardAfflictionEntry happened this turn, so playing
         # an afflicted card does not free up the per-turn cap.

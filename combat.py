@@ -1082,15 +1082,18 @@ def _grant_block(
         block *= 2
     if unmovable_double:
         block *= 2
-    if combat.play_duplicated:
-        # The play resolves a second time, so the block grant is applied twice.
-        block *= 2
+    plays = 2 if combat.play_duplicated else 1
+    if plays > 1:
+        # The play resolves once per play count, so the block grant is applied that many times.
+        block *= plays
     enemies = list(combat.enemies)
     juggernaut = _power(combat.player_powers, "JuggernautPower")
     alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
+    # JuggernautPower is AfterBlockGained, so each resolution that gains block triggers its own hit.
     if block > 0 and juggernaut and alive:
-        target = rng.choice(alive)
-        enemies[target] = _damage_enemy(enemies[target], juggernaut, powered=False)
+        for _ in range(plays):
+            target = rng.choice(alive)
+            enemies[target] = _damage_enemy(enemies[target], juggernaut, powered=False)
     return replace(combat, player_block=combat.player_block + block, enemies=tuple(enemies))
 
 
@@ -2512,16 +2515,19 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if panache and card != PANACHE:
         # PanachePower.AfterCardPlayed: 5 cards played after the Panache play deal its amount as
         # unpowered damage to every hittable enemy, then the 5-card counter resets. The play that
-        # applied the power is not counted (its `alreadyApplied` flag).
-        cards = combat.panache_cards_this_turn + 1
-        if cards >= PANACHE_TRIGGER_CARDS:
-            cards = 0
-            enemies = [
-                _damage_enemy(enemy, panache, powered=False) if enemy.alive else enemy
-                for enemy in combat.enemies
-            ]
-            combat = replace(combat, enemies=tuple(enemies), panache_cards_this_turn=cards)
-        else:
+        # applied the power is not counted (its `alreadyApplied` flag). AfterCardPlayed fires once per
+        # resolution, so an increased play count advances the counter that many times.
+        cards = combat.panache_cards_this_turn
+        for _ in range(plays):
+            cards += 1
+            if cards >= PANACHE_TRIGGER_CARDS:
+                cards = 0
+                enemies = [
+                    _damage_enemy(enemy, panache, powered=False) if enemy.alive else enemy
+                    for enemy in combat.enemies
+                ]
+                combat = replace(combat, enemies=tuple(enemies), panache_cards_this_turn=cards)
+        if cards != combat.panache_cards_this_turn:
             combat = replace(combat, panache_cards_this_turn=cards)
     fiend_fire_count = 0
     if card == FIEND_FIRE:
