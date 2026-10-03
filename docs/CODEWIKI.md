@@ -4567,3 +4567,47 @@ Uncommon → Common/Rare/Event → Basic/Quest → Ancient/Imbued、同一 rarit
 取得可能**：Uncommon 52・Rare 28・Common 20・Status 9・Event 8・Ancient 5・Curse 5・Basic 1・Token 1）。
 Status/Token は `DeckVersion == null` なので候補から除外、Curse は deck 由来だと候補になる
 （優先グループのどれにも入らないと full list が fallback）。
+
+## Axebot の StockPower：1戦闘が Axebot 3体である事が model に見えなかった（2026-10-04、commit `03b2055`）
+
+`Rampart` と同じ監査（`data/audit_trace_fidelity.py`）で、観測されるのに `POWER_NAMES` に無い power
+として `POWER.STOCK_POWER`（MONSTER.AXEBOT、348 record / 14 run）が出た。decompile：
+
+- `Axebot.AfterAddedToRoom`：`StockAmount > 0` なら自分に `StockPower(StockAmount)` を付与
+  （`StockAmount => _stockOverrideAmount ?? 2`、export の values は `StockAmount: 2`）
+- `StockPower.AfterDeath`：`Amount > 0` なら `axebot.StockAmount = Amount - 1` で **同じ side / 同じ slot に
+  新しい Axebot を追加**し、`ShouldStopCombatFromEnding` で戦闘を終えない
+- `GenerateMoveStateMachine`：`_stockOverrideAmount` が入った個体は **BOOT_UP_MOVE から**始まる
+  （通常 spawn は HAMMER_UPPERCUT_MOVE から）
+- `BOOT_UP_MOVE` の Strength は `BootUpStrGain * (2 - StockAmount)` → **個体ごとに 0 / 3 / 6**
+
+model は export の `initial_state` と 1体の HP だけを持っていた。だから **1体を殺した瞬間に
+`combat.terminal` になり**、戦闘全体を 76 HP 1体として評価していた。実走（`rampart_ctrl_b1_B3N8V5T1WQ`）
+では 74 → 71 → 76 HP の3体が順に出た（combat_id 1 → 2 → 3、3体目だけ STOCK_POWER 無し）で、
+その戦闘で 12 ターン使って 26/76 HP 残しで死亡している。
+
+### 実装
+
+- `initial_combat`：AXEBOT に `("StockPower", StockAmount)` を付与（他の「not exported」power と同じ形）
+- `_mark_enemy_death`：`StockPower > 0` かつ hp <= 0 のとき BOOT_UP_MOVE で復活、HP は
+  MaxInitialHp（game は MinInitialHp..MaxInitialHp から抽選だがこの関数に rng が届かない）、
+  powers は空から `StockPower(amount-1)` のみ、`respawns` を1増やす
+- `_enemy_turn`：`StockAmount` を **所持している StockPower の量**で上書き。
+  1体目=2・2体目=1・3体目は power 無し=0 になるので、export の静的 2 を読むより個体の値になる
+- `official_agent.POWER_NAMES` に `POWER.STOCK_POWER` を追加
+- テスト2本：`test_axebot_respawns_from_stock_power_until_the_stock_runs_out`、
+  `test_axebot_boot_up_strength_grows_with_each_stock_copy`（Strength 0/3/6）
+- 回帰確認：親 commit `cd24b1f` の worktree では2本とも失敗（respawn せず、Strength `[0,0,0]`）
+- suite **747件成功**
+
+### 决定に出る母数（同一条件 replay、`data/attribution_rampart.py` を power 指定可能にした）
+
+`POWER.STOCK_POWER` が state に出ている record を HEAD と親 commit で replay：
+
+- records compared: **414**
+- 决定变化: **135**（不变 279、例外 0）＝ **提示された decision の33%**
+- seed 数: **4**（B3N8V5T1WQ 67、D6A1F8C3E5 33、R4A8D2K7ME 26、Q6N3V8K2MT 9）
+
+Rampart（560件で63件）より大きく、分歧の形も「attack を attack で受ける ↔ block や potion に切り替える」
+など戦闘全体の組み替え方向。実走 A/B は `data/axebot_ab.sh`（control = `cd24b1f` worktree、
+arm = HEAD、seed 3件）。

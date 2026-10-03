@@ -1,15 +1,18 @@
-"""Count how many recorded decisions the Rampart grant actually changes.
+"""Count how many recorded decisions a power fidelity fix actually changes.
 
-RampartPower (LivingShield grants 25 block to every living TurretOperator at the start of each
-player turn) was invisible to combat.py: the live observation carries the block only for the turn
-it was read on, so every rollout after the first move priced the turret as unblocked.
+The gap this measures: a power that the live observation reports but combat.py never reads, so the
+rollout prices the rest of the fight without the mechanic (RampartPower re-grants 25 block to every
+living TurretOperator at each player-turn start; StockPower respawns an Axebot with StockAmount-1).
 
-This replays every recorded decision that had RampartPower active through two code trees - the
-commit that added the grant and its parent - with the same record, the same enemy data, the same
-simulations and the same seed, and reports how many choices differ.  It measures the population a
-fix is live on; it is not evidence about run outcomes (that needs a real run).
+This replays every recorded decision whose state carried that power through two code trees - the
+commit that added the behaviour and its parent - with the same record, the same enemy data, the same
+simulations and the same seed, and reports how many choices differ, grouped by seed.  The two trees
+must differ by that commit only, otherwise a difference cannot be attributed to the fix.
 
-Usage: python3 data/attribution_rampart.py <arm_dir> <control_dir>
+It measures the population a fix is live on.  It is not evidence about run outcomes - that needs a
+real run (`data/rampart_ab.sh` shows the panel form).
+
+Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X] [enemy_data.json]
 """
 
 from __future__ import annotations
@@ -27,7 +30,7 @@ import json, sys
 sys.path.insert(0, sys.argv[1])
 import official_agent
 
-paths, enemy_data = sys.argv[2], sys.argv[3]
+paths, enemy_data, power_id = sys.argv[2], sys.argv[3], sys.argv[4]
 data = json.load(open(enemy_data, encoding="utf-8-sig"))
 out = []
 for line in open(paths, encoding="utf-8-sig"):
@@ -35,7 +38,7 @@ for line in open(paths, encoding="utf-8-sig"):
     if record.get("phase") != "combat":
         continue
     if not any(
-        power.get("id") == "POWER.RAMPART_POWER"
+        power.get("id") == power_id
         for enemy in record.get("enemies") or ()
         for power in enemy.get("powers") or ()
     ):
@@ -58,16 +61,22 @@ json.dump(out, sys.stdout)
 
 
 def main() -> int:
-    trees = [Path(argument).resolve() for argument in sys.argv[1:]] or [REPO, Path("/tmp/sts2-ctrl-rampart")]
+    trees = [
+        Path(argument).resolve()
+        for argument in (sys.argv[1:3] or [REPO, REPO / ".wt-ctrl-d67896f"])
+    ]
+    power_id = sys.argv[3] if len(sys.argv) > 3 else "POWER.RAMPART_POWER"
+    enemy_data = Path(sys.argv[4]) if len(sys.argv) > 4 else REPO / "data/enemies_glory.json"
+    token = power_id.encode()
     traces = sorted(REPO.glob("data/*_agent.jsonl"))
     rows: dict[tuple[str, int], dict[str, dict]] = {}
     for tree in trees:
         # One subprocess per trace so the (trace, seq) key stays unique.
         for trace in traces:
-            if b"LIVING_SHIELD" not in trace.read_bytes():
+            if token not in trace.read_bytes():
                 continue
             payload = subprocess.run(
-                [sys.executable, "-c", CHILD, str(tree), str(trace), str(REPO / "data/enemies_glory.json")],
+                [sys.executable, "-c", CHILD, str(tree), str(trace), str(enemy_data), power_id],
                 check=True,
                 capture_output=True,
                 text=True,
@@ -91,7 +100,7 @@ def main() -> int:
             detail.append((trace, seq, str(values[0]), str(values[-1])))
         else:
             diffs["same"] += 1
-    print(f"records compared: {len(rows)}  trees: {len(trees)}")
+    print(f"power: {power_id}  records compared: {len(rows)}  trees: {len(trees)}")
     print(f"decision changed: {diffs['changed']}  unchanged: {diffs['same']}  errors: {dict(errors)}")
     print(f"seeds with a changed decision: {len(per_seed)}")
     for seed, count in per_seed.most_common():
