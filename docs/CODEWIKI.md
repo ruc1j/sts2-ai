@@ -3126,3 +3126,14 @@ AM8 の138分歧は生成プールの忠実化（同一 observation で control 
 **MEASURABLE = 4 seed：control 74 / arm 76、+2。** 閾値（≥3 decisions かつ ≥3 seeds）は decisions 側は
 超える（H2 の46件）が seeds 側が1 → win-rate の採用根拠にはならない。機構は正しさの修正として採用済み
 のまま、成果の母集団は薄い。
+
+### B3 でも Rose の effect 0が実走で出た（404件分歧0）
+
+`mechpanel_arm_clean_B3N8V5T1WQ`（15勝0敗・走行中）：両腕の combat state に `RELIC.BLOOD_SOAKED_ROSE`
+が出ている（control 125・arm record）ので B3 は pair になり、aligned combat decision **404件で分歧0**。
+二重計上を除去した（`a328b5c`）後の model は Rose に何もしないので、分歧が出ないのは预期どおり。
+R8（454件分歧0）と同じ形。
+
+panel の MEASURABLE は H2・AM8・R8・P3（＋B3 の Rose）で、机构単独として决定を動かしたのは H2 の
+Forgotten Soul 46件だけ。run レベルで机构単独として立つのは第一分歧の位置（state が両腕で一致）の
+限り、という rule が B3 でも確認された。
