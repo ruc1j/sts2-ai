@@ -3063,3 +3063,15 @@ model（`e808bdf`、机构を実装する前）は那些を無視するので、
 
 これが「機構として model に載せるものがない（observation に既にある）」の实走形。pair でも effect が
 無い case の記録。
+
+### R8 の error log から実 bug を1件修正（commit `HEAD`：SoarPower + hit count 0）
+
+`mechpanel_arm_clean_R8V2H6N4ZB_agent.err`：`ZeroDivisionError` in `damage()` →
+`value = (value // hits // 2) * hits` が hits == 0 で割る。hits は `_card_hit_count` で、Whirlwind は
+「使った energy」が hit count所以 energy 0 だと 0 になる（`CARD_HIT_COUNTS` に 0 の entry は無いので、
+0になりうるのは Whirlwind の path だけ）。`HardToKill` 側は `if caps and hits` で guard 済みで、Soar 側
+だけ guard が无かった。
+
+R8 はこの decision（seq 546）で game 側の default を取ったが、决定列は control と **454件分歧0**、
+outcome も 22勝1敗で同値 → 実走影响は出なかった。guard を入れてテスト
+`test_lethal_with_soar_power_does_not_divide_by_a_zero_hit_count`（suite **735件成功**）で固定。
