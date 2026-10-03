@@ -3333,3 +3333,29 @@ harness reading（完走分）：H2 46分歧（Forgotten Soul）で +2、AM8 87�
 ＝ `ChainsOfBindingPower.ShouldPlay` の形（first bound play allowed、以降 gate）と model が一致。
 harness batch は完走：P3 15勝1敗 = control（Duplication を両腕の state に出すも分歧0）。機構単独で win
 効果が出たのは H2（+2）だけ。
+
+### 第二 batch の seed は「control（`e808bdf`）の run が機構を state に出す」条件で選ぶ
+
+機構を state に出た seed（corpus、commit をまたぐ集計）を**player state 出現**で並べ直した：
+
+| seed | 機構（state 出現 record） |
+|---|---|
+| `H2LV6ZJ4XW` | FS 4346・Chains 984 |
+| `AM8C6YXHSG` | Fiddle 1763・Chains 181・FS 177 |
+| `R8V2H6N4ZB` | Rose 677・Chains 112 |
+| `P3V8N5K2RX` | Chains 231・Duplication 16 |
+| `H4L6P2N8XS` | Rose 119・Chains 17 |
+| `M7C4Q9V2RH` | Chains 72・OneTwoPunch 2 |
+| `V7D3M9H2XW` | Panache 12 |
+| `T3XQ7WM2VP` | Gigantification 6・Duplication 2 |
+| `M5W9C3T7LQ` | OneTwoPunch 6 |
+| `U2M7K5F9RA` | OneTwoPunch 1・Duplication 1 |
+| `C8Q1Z7E3KS` | OneTwoPunch 1 |
+
+Fiddle は corpus で N8 4761・AM8 1763・Q6 136・D1 106 の4 seed にしか出ない。そのうち `e808bdf` の
+control run が Fiddle を state に出した seed は AM8 だけ（N8・D1・Q6 のolder run は `e808bdf` より後の
+commit で、event の選択が違った）。だから Fiddle の run レベル pair は AM8 が母数。
+
+batch2 の設計：control は `e808bdf`、arm は pin した harness。pin した arm は control の path を機構が
+効く位置まで追うので、control の run が機構を state に出せば pair が成立する（機構が効く位置から分歧）。
+現在 U2M7K5F9RA の control を走行中。
