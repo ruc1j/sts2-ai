@@ -3943,3 +3943,25 @@ power が active 中に draw が起きなかった（decision で札を打たな
 だから gate は run レベルで trigger していない → 分歧が出ない。651件の母数は draw が起きた run の数字。
 
 B4（batch3）：Chains present 29 record、bound in hand 0、gate active 0。
+
+### verified gap：Chains の per-turn cap は「hand に在る bound 札」で数えている（game は afflicted entries）
+
+game（`ChainsOfBindingPower.AfterCardDrawn`）：その turn に afflict した **entry 数**（`CardAfflictedEntry`、
+`HappenedThisTurn`）が Amount 未満のときだけ afflict する。札が hand から消えても entry 数カウントは残る。
+
+model（`combat.py` line 808-816）：`already_bound = hand に在る bound 札` ＋今回 mark する分，で cap を
+見る。だから bound 札を play して hand から消すと、同じ turn 内で cap を超えて afflict できる。
+
+同一条件で確認（ChainsOfBindingPower amount 2、draw pile に Strike）：
+
+- Flash of Steel（draw 1）→ bound 1件（entry 1）
+- その turn で Offering（draw 3）→ model は **2件 additional** mark（total 3 > cap 2）
+  game は cap 2 で止まる（2件目の draw 以降は afflict しない）
+
+→ fix：turn 単位の `chains_afflicted_this_turn` counter を持つ（entry 数で cap を見る）。実装は batch3 完走後
+（rule 9：run が in flight の間に policy code を触らない）。テストは
+`test_chains_afflicts_stop_at_the_per_turn_cap_after_a_bound_card_leaves_hand` を予定。
+
+実走ではこの gap が决定に出る母数が薄い：測った control run 9 seed で bound 札が hand に在る record は0件
+（draw が decision で起きなかった）。Shrug の draw は play-count power の gate と同じ位置（U2 の1件）で、
+Chains の cap と絡む位置は corpus 側の651件（draw が起きた run）に属します。
