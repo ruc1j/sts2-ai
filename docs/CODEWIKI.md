@@ -4010,3 +4010,18 @@ model は両方一致（`combat.py` line 803 の拒否、turn start の +2）。
 → cap の fix は正しさの修正として価値がある（game の entry 基準に揃う）が、実走の决定を変えた記録はない。
 play-count powers の gate 追加と同じ位置づけ：実装差はあるが、実走の母数が薄い（27件中実際に决定に
 出たcaseは U2 の1件）。
+
+### batch3 の pair candidate 3件、すべて gate 母数0
+
+| seed | control | Chains records | bound in hand | gate active |
+|---|---:|---:|---:|---:|
+| `D6A1F8C3E5` | 17勝1敗 | 38 | 0 | 0 |
+| `B4J8Q1R6YK` | 17勝1敗 | 29 | 0 | 0 |
+| `T5R8K2N9QP` | **21勝1敗**（完走） | 34 | 0 | 0 |
+| `X3C9N6P4WQ` | 13勝1敗 | 0 | 0 | 0 |
+| `SOS6XYXCNO` | 13勝1敗 | 0 | 0 | 0 |
+| `L3PN5HBQ8T` | 13勝1敗 | 0 | 0 | 0 |
+
+Chains が state に出ても、その turn で draw が起きなければ gate は trigger しない（bound 札が hand に
+現れない）。だから batch3 は机构単独の分歧を出さない見込み（arm stage は control の path を追う）。
+arm stage を開始（job `bash-697`、start commit `c3d9fd2`）。忠実度の fix は arm stage 完走後（rule 9）。
