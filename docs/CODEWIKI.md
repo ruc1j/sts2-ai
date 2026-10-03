@@ -4220,3 +4220,24 @@ def test_chains_afflicts_stop_at_the_per_turn_cap_after_a_bound_card_leaves_hand
 `test_duplication_power_doubles_the_next_block_card_grant`（block）は gate 追加後も pass する。
 `test_chains_of_binding_afflicts_cards_drawn_during_the_rollout`（draw 7、amount 3）は hand 基準でも
 entry 基準で同じ結果なので壊れない。
+
+### knowledge-confound の母数（正しく数え直した：123件、札名は status 札）
+
+前ラウンドの「67/352件」は错的。control の `CARD_COST` は display name（"Defend"）で key しており、trace
+の id（`CARD.DEFEND_IRONCLAD`）と直接 compare していた。正しくは `official_agent.CARD_NAMES` で id →
+display name へ map してから、control の table に在るかを見る。
+
+その形で batch3 の arm run を数え直した（control が score できない札が hand に在る record）：
+
+| seed | records |札名 |
+|---|---:|---|
+| `D6A1F8C3E5` | 83 | BYRDONIS_EGG・CLUMSY・THINKING_AHEAD・WOUND |
+| `B4J8Q1R6YK` | 17 | BYRDONIS_EGG・PROLONG・WOUND |
+| `L3PN5HBQ8T` | 15 | WOUND |
+| `X3C9N6P4WQ` | 4 | WOUND |
+| `SOS6XYXCNO` | 4 | WOUND |
+| 合計 | **123** | status 札だけ |
+
+`e808bdf` の control はこれらの status 札名を持たない（head では `HAND_INJECTED_STATUS` に WITHER 等が
+あり、status 札の扱いは後から入れた）。confound の母数は123件だが、batch3 では分歧0 → confound が决定
+を変えなかった case。
