@@ -4040,3 +4040,11 @@ aligned 62件（分歧0）。
 
 → 前ラウンドの「batch3 は分歧を出さない見込み」は observed gate 关于；rollout gate は Still分歧を生む
 うる。判定は power/relic が両腕の state に出た位置で数える（`mechonly_attribution.py` の今の形）。
+
+### `D6A1F8C3E5`：clean pair だが gate が决定を動かさなかった（364件分歧0、outcome 同値）
+
+arm 完走 17勝1敗 = control と同値。Chains が両腕の state に出た位置（38 record、両腕同じ seq 454 から）で
+分歧0。rollout gate（model が simulate する draw で bound mark する位置）でも决定が変わらなかった。
+
+batch3 の今の形：`D6` ±0、`X3` 115件分歧0・走行中、残 `SOS`・`L3`・`B4`・`T5`。
+机构単独の win 效果は H2（+2）のまま、AM8（22件 mechanism-only）は outcome 同値。
