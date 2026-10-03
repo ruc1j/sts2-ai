@@ -3263,3 +3263,17 @@ control は同じ path から17勝1敗）。
 
 これで panel の机构単独 pair は2 seed（H2・AM8）。閾値（≥3 seeds）には harness の R8・P3（＋Fiddle を
 引く seed）を待つ。
+
+### AM8 harness：分歧80件の内訳（pin した下で「機構が両腕の state に出た位置」以外に分歧が無い）
+
+`mechonly_AM8C6YXHSG`（17勝0敗・走行中、例外0件、aligned 330件）：
+
+- `RELIC.FIDDLE` 単独が両腕の state に出ている位置：**73件**
+- Fiddle ＋ Chains が両腕に出ている位置：14件（単独へは split できない）
+- 両腕の state に機構が何も出ていない位置：**0件**
+
+生成集合を control 形へ pin した下で、分歧は全部機構の位置で出ている。＝ AM8 の panel 第一回 run の
+分歧（138件）のうちの49件は生成集合の差だったが、pin した harness run ではその差が消えて、機構の位置
+だけの分歧になった。Fiddle の単独 attribution が73件で、H2 の Forgotten Soul 46件に続く2件目。
+
+（14件は Fiddle と Chains の両方がある位置なので、機構単独へは同一 observation の replay でしか割れない。）
