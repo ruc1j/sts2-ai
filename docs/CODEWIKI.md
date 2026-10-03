@@ -3531,3 +3531,20 @@ control は `POWER.DUPLICATION_POWER` を seq 189 で得るので、arm がそ�
 
 → pin は生成集合の差を消すが、knowledge 差は消さない。機構単独の差は power/relic が両腕の state に
 出た位置だけ、という rule がそのまま効いている。
+
+### run レベルの判定基準（batch2 で確定）：第一分歧が機構単独である seed だけ使える
+
+batch2 の arm run（`U2M7K5F9RA`、100 aligned、分歧34件）は機構が state に出る**前**の位置で分歧した
+（no-mechanism 34件）。分歧した時点で path が分かれるので、その後の位置は機構単独の差として使えない
+（機構の acquisition 位置自体が食い違い始める）。
+
+→ run レベルで機構単独の差として立るのは、**第一分歧が power/relic の位置である case** だけ。
+その形で立っているのは H2（seq 441、両腕の state に Forgotten Soul、分歧46件、+2）。
+AM8 は第一分歧が生成プール（pin した harness run ではその分歧が消える → 分歧0、机构位置から分歧する
+预期だったが、AM8 の harness run は第一分歧が Fiddle 位置＝機構単独で立った。harness の AM8 read：
+aligned 338、分歧87、by-mechanism Fiddle 87、no-mechanism 0）
+- 注：harness の AM8 は no-mechanism 分歧0 → 第一分歧が機構の位置。だから AM8 は機構単独で立つ
+  （Fiddle 87件）、ただし outcome は同値（17勝1敗）。
+
+batch2 の `U2M7K5F9RA` は第一分歧が knowledge-only（34件）→ その seed は機構単独の測定に使えない。
+control が機構を state に出した seed のうち、arm 側が第一分歧から機構位置で分歧する case だけが母数。
