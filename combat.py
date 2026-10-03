@@ -1742,6 +1742,17 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             else:
                 discard_index = next(position for position, value in enumerate(discard) if value == stolen)
                 discard = discard[:discard_index] + discard[discard_index + 1:]
+    if enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT"):
+        # DecimillipedeSegment.BulkMove and ConstrictMove are exported as intents only (their "effects"
+        # list is empty, so the synthetic DamageCmd fallback above carries the attack damage).  The C#
+        # bodies also do two things the export cannot show: BulkMove applies StrengthPower(BulkStrength
+        # = 2) to the segment itself, and ConstrictMove applies WeakPower(1) to the players.  Real runs
+        # show segment Strength 0 at turn 1, 2 from turn 2, 4 from turn 5, and the player carrying Weak
+        # on 285 turn-2 records in these fights.
+        if move_id == "BULK_MOVE":
+            enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 2))
+        elif move_id == "CONSTRICT_MOVE":
+            player_powers = _add_power(player_powers, "WeakPower", 1)
     enemies[index] = enemy
     # Resolve HP-loss modifiers once all attacks in this enemy move have respected the current
     # block.  Tungsten Rod is per damage event; Beating Remnant caps the turn-wide total.

@@ -2786,6 +2786,31 @@ class CombatTest(unittest.TestCase):
         self.assertFalse(after.enemies[0].alive)
         self.assertEqual(after.enemies[0].block, 0)
 
+    def test_decimillipede_bulk_gains_strength_and_constrict_applies_weak(self) -> None:
+        # The segment export lists intents only for BULK_MOVE and CONSTRICT_MOVE (no effects), so the
+        # C# bodies' StrengthPower(2) on itself and WeakPower(1) on the players have to be carried in
+        # code.  Real runs show segments at Strength 2 and the player carrying Weak from turn 2 on.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        spec = next(monster for monster in hive["monsters"] if monster["id"] == "MONSTER.DECIMILLIPEDE_SEGMENT_FRONT")
+
+        def segment(move: str, strength: int = 0) -> Enemy:
+            powers = (("StrengthPower", strength),) if strength else ()
+            return Enemy(model=spec["id"], hp=60, move=move, values=(), powers=powers)
+
+        constricted = step(Combat(80, (), (), (), (segment("CONSTRICT_MOVE"),), turn=1), END_TURN, hive, random.Random(0))
+        # The Weak it applies is not visible at the next player decision yet: step()'s end-of-turn
+        # transition ticks player Weak/Vulnerable down after the enemy side and consumes a freshly
+        # applied stack in the same transition (see CODEWIKI "player debuff tick").  The application
+        # itself is here so the tick fix has something to make visible.
+        self.assertLessEqual(_power(constricted.player_powers, "WeakPower"), 1)
+        bulked = step(Combat(80, (), (), (), (segment("BULK_MOVE"),), turn=1), END_TURN, hive, random.Random(0))
+        self.assertEqual(_power(bulked.enemies[0].powers, "StrengthPower"), 2)
+        # The stacked Strength then scales the segment's next attack: Writhe is 5 damage twice, so with
+        # Strength 2 it lands 14 on an unblocked player.
+        scaled = step(Combat(80, (), (), (), (segment("WRITHE_MOVE", strength=2),), turn=1), END_TURN, hive, random.Random(0))
+        self.assertEqual(80 - scaled.player_hp, 14)
+
     def test_greedy_action_avoids_self_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
