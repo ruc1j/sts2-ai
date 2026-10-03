@@ -3247,3 +3247,19 @@ control tree で replay：両方 `CARD.PERFECTED_STRIKE`（control の run の�
 ＝機構を引いたことが即ち分歧にはならない。分歧は rollout が机构を理由に別の ranking を出す位置で出る
 （sample で Fiddle の分歧76件 / 108件の中身）。live の harness run（現在 seq 318、分歧0）がその位置に
 入るかを見る。
+
+### AM8 harness：Fiddle 単独の第一分歧が出た（seq 331、state は両腕で完全一致）
+
+`mechonly_AM8C6YXHSG`（14勝0敗・走行中、例外0件）：aligned 262件で分歧 **21件**、その分歧位置の機構は
+すべて `RELIC.FIDDLE` が**両腕の state** に出ている。第一分歧 seq 331：
+
+- state は両腕で完全一致（違うのは choice 字段だけ）
+- harness（arm code、生成集合は control 形）→ `CARD.STRIKE_IRONCLAD`、control → `CARD.ANGER`
+- Fiddle は seq 322 の event で両腕が同じ点で獲得している
+
+＝生成集合の差を消した条件で、分歧は Fiddle の実装（hand draw +2 と effect draw の拒否）だけで立つ。
+H2（Forgotten Soul）に続く2件目の机构単独 pair。outcome はまだ決まっていない（harness 14勝0敗、
+control は同じ path から17勝1敗）。
+
+これで panel の机构単独 pair は2 seed（H2・AM8）。閾値（≥3 seeds）には harness の R8・P3（＋Fiddle を
+引く seed）を待つ。
