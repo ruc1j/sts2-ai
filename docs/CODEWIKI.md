@@ -3630,3 +3630,17 @@ arm が `CARD.STRIKE_IRONCLAD`、control が `CARD.TREMBLE` を選んだ seq 120
 は言わない。** decision レベルの母数（同一 observation を両treeで replay、生成集合を control 形へ固定）
 は Fiddle 76・Chains の忠実なゲート651件で17%・Forgotten Soul 24・play-count powers は knowledge 差と
 混かる（札名出現は機構ではない）。
+
+### batch2 の outcome（完了分）
+
+| seed | arm | control | delta | attribution |
+|---|---:|---:|---:|---|
+| `U2M7K5F9RA` | 10勝1敗 | 10勝1敗 | 0 | knowledge-only（機構は arm 側で195、control 189） |
+| `T3XQ7WM2VP` | 12勝1敗 | 12勝1敗 | 0 | clean pair（Duplication 119、Gigantification 207）だが分歧0 |
+| `M7C4Q9V2RH` | 13勝1敗 | 17勝1敗 | −4 | 第一分歧が knowledge-driven（116分歧）＋ control exception 1件 → 機構単独ではない |
+| `C8Q1Z7E3KS` | 13勝1敗 | 13勝1敗 | 0 | 機構を state に出さない |
+| `M5W9C3T7LQ` | 1勝0敗・走行中 | 16勝1敗 | — | — |
+
+机构単独の分歧を出した seed は H2（46分歧、+2）と AM8（87分歧、outcome 同値）の2件のまま。
+`M7` の −4 は knowledge 差（card table の classification）で path が分かれた結果で、機構の実装差として
+読めない。run レベルの母数では机构単独の win 效果は依然 H2 だけ。
