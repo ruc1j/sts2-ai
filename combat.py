@@ -943,6 +943,16 @@ def initial_combat(data: dict, encounter_id: str, rng: random.Random, player_hp:
             # Without it _mark_enemy_death would end the fight at the first kill instead of
             # spawning the second and third copies.
             enemy = replace(enemy, powers=enemy.powers + (("StockPower", int(values.get("StockAmount", 0))),))
+        if "PlatingAmount" in values:
+            # PlatingPower: FrogKnight.cs and SlumberingBeetle.cs apply Plating(PlatingAmount = 15) in
+            # AfterAddedToRoom, which the exported state machine does not carry.  BeforeSideTurnStart
+            # gives an enemy holder Block = Amount while RoundNumber == 1, i.e. the plated enemy starts
+            # the fight with that much Block - the model only ever handled the player-side copy of this
+            # power (Iron Unpinion, Relic grants), so every plated fight was priced as if the block
+            # appeared once and never came back.  The per-turn re-grant and the decay are in step()'s
+            # player-turn-start section.
+            plate = int(values["PlatingAmount"])
+            enemy = replace(enemy, powers=enemy.powers + (("PlatingPower", plate),), block=plate)
         enemies.append(enemy)
     hand, draw, _ = _draw(STARTING_DECK, (), 5, rng)
     powers = (("SurroundedRight", 1),) if any(enemy.model == "MONSTER.ROCKET" for enemy in enemies) else ()
@@ -2186,6 +2196,23 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 else enemy
                 for enemy in enemies
             ]
+        # PlatingPower, enemy side.  BeforeSideTurnEndEarly re-grants Block = Amount (Unpowered) at the
+        # end of the holder's own turn, and AfterSideTurnStart drops the amount by Decrement.BaseValue
+        # (1 in solo) once the round is past the first.  _enemy_turn clears the holder's Block at its own
+        # turn start, so the re-grant lands here, at the start of the player's turn.  Real runs show a
+        # plated Frog Knight with amount and Block 15, 15, 14, 13, 12, 11, 10, 9, 8 on player turns
+        # 1-9, so the decay is counted from turn 3 (turn 1's block came from initial_combat).
+        decay = 1 if new_turn >= 3 else 0
+        enemies = [
+            replace(
+                enemy,
+                powers=_add_power(enemy.powers, "PlatingPower", -decay),
+                block=enemy.block + max(_power(enemy.powers, "PlatingPower") - decay, 0),
+            )
+            if enemy.alive and _power(enemy.powers, "PlatingPower")
+            else enemy
+            for enemy in enemies
+        ]
         combat = replace(
             combat, hand=tuple(hand), discard_pile=tuple(discard), player_block=retained_block + extra_block,
             toric_pending=toric_pending,

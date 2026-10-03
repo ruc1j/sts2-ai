@@ -2755,6 +2755,37 @@ class CombatTest(unittest.TestCase):
         self.assertIn(WOUND, after_names)
         self.assertEqual(sorted(name for name in after_names if name != WOUND), [STRIKE, STRIKE])
 
+    def test_plated_enemy_re_grants_block_every_turn_and_its_plate_thins(self) -> None:
+        # FrogKnight.AfterAddedToRoom applies PlatingPower(15) (not exported), PlatingPower.BeforeSideTurnStart
+        # gives that as Block on round 1, BeforeSideTurnEndEarly re-grants Block = Amount after each of its
+        # turns, and AfterSideTurnStart drops the amount by 1 from the second round.  The observed run
+        # values for turns 1-9 are 15, 15, 14, 13, 12, 11, 10, 9, 8 for both the amount and the Block.
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        rng = random.Random(0)
+        combat = initial_combat(glory, "ENCOUNTER.FROG_KNIGHT_NORMAL", rng, player_hp=400)
+        self.assertEqual((combat.enemies[0].block, _power(combat.enemies[0].powers, "PlatingPower")), (15, 15))
+        seen = []
+        for _ in range(3):
+            combat = step(combat, END_TURN, glory, rng)
+            seen.append((combat.enemies[0].block, _power(combat.enemies[0].powers, "PlatingPower")))
+        self.assertEqual(seen, [(15, 15), (14, 14), (13, 13)])
+
+    def test_plating_stops_granting_block_once_the_plated_enemy_is_dead(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        spec = next(monster for monster in glory["monsters"] if monster["id"] == "MONSTER.FROG_KNIGHT")
+        plate = int(spec["values"]["PlatingAmount"])
+        frog = Enemy(model=spec["id"], hp=1, move=spec["initial_state"], values=tuple(sorted(spec["values"].items())), block=plate, powers=(("PlatingPower", plate),))
+        # A second, unplated enemy keeps the fight going so the turn transition - where the re-grant
+        # happens - is reached.
+        mate = next(monster for monster in glory["monsters"] if monster["id"] == "MONSTER.TURRET_OPERATOR")
+        partner = Enemy(model=mate["id"], hp=50, move=mate["initial_state"], values=tuple(sorted(mate["values"].items())))
+        after = step(Combat(80, (BLUDGEON,), (), (), (frog, partner)), f"{BLUDGEON}@0", glory, random.Random(0))
+        after = step(after, END_TURN, glory, random.Random(0))
+        self.assertFalse(after.enemies[0].alive)
+        self.assertEqual(after.enemies[0].block, 0)
+
     def test_greedy_action_avoids_self_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)
