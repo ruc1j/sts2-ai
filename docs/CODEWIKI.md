@@ -3359,3 +3359,10 @@ commit で、event の選択が違った）。だから Fiddle の run レベル
 batch2 の設計：control は `e808bdf`、arm は pin した harness。pin した arm は control の path を機構が
 効く位置まで追うので、control の run が機構を state に出せば pair が成立する（機構が効く位置から分歧）。
 現在 U2M7K5F9RA の control を走行中。
+
+### batch2 の第一 control run が機構を state に出した（`U2M7K5F9RA`、OneTwoPunchPower）
+
+`mechonly_ctrl_b2_U2M7K5F9RA`：7勝0敗・走行中、例外0件、combat の state に
+`POWER.ONE_TWO_PUNCH_POWER` が出ている。control（`e808bdf`）が機構を state に出すなら、pin した arm
+run は同じ path を追うので pair が成立する（機構が効く位置から分歧する）。判定は `compare_panel` と
+`mechonly_attribution`（tag `mechonly_arm_b2` vs `mechonly_ctrl_b2`）。
