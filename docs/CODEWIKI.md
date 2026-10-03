@@ -2940,3 +2940,13 @@ combat decision の分歧46件を、その decision の state（relics・powers�
 
 したがって H2 の +2（control 20勝1敗 → arm 22勝1敗）は Forgotten Soul の実装単独の差として attribution
 できる。母集団は1 seedなので採用根拠にはしない（rule 5）が、機構単独の差として立つ第一 pair。
+
+### AM8 の分歧は机构ではない（generation pool の差）
+
+clean AM8 run の第一分歧 seq 248：relics・powers が両腕で完全一致、机构は state に出ていない
+（arm 12勝0敗・走行中、FIDDLE は arm 側にのみ出現）。seq 250 で `CARD.STOKE` を打つ位置なので、
+分歧の成因は `STOKE_GENERATION` の形（control は忠実でない集合、arm は character pool ∩ known）＝
+前もって確認済みの生成プールの差。FIDDLE が両腕に出た位置での分歧は現在0件。
+
+→ AM8 は「机构単独の差」として読めない。panel の母集団で机构単独が読めるのは、両腕の同じ decision の
+state に同じ机构が出ている位置だけ（H2 の Forgotten Soul 46件がその形）。
