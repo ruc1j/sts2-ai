@@ -3043,3 +3043,13 @@ panel で「第一分歧の位置に机构が両腕の state に出ている」s
 Forgotten Soul）。AM8 の第一分歧 seq 248、R8 の分歧位置は机构なし → 機構単独の差として開けない。
 机构単独の差は同一 observation を両treeで replay する到達性計算でしか隔離できない（Fiddle 76件、
 Chains の忠実なゲート651件で17%、Forgotten Soul 24件、OneTwoPunch 2件、Duplication 2件、Panache 1件）。
+
+### R8：arm は机构を引かなかったから、决定列が control と301件一致
+
+`mechpanel_arm_clean_R8V2H6N4ZB`（15勝0敗・走行中）は、seq で揃えた combat decision 301件の分歧が
+**0件**。arm 側は机构を state に出していない（control 側は Chains 17・Rose 154 record）が、control の
+model（`e808bdf`、机构を実装する前）は那些を無視するので、両腕が「机构を持たない run」として同じ
+决定を出す。機構を引かなかった path では机构の効果は出ない — 引くかどうかは reward の path 運。
+
+この seed は机构単独の差を持たない。分歧が出るとすれば arm 側が机构を acquisition した後の位置で、
+その場合も第一分歧の位置（state が両腕で一致する位置）だけ attribution に使える。
