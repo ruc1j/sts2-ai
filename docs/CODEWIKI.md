@@ -2973,3 +2973,18 @@ clean AM8 run の「combat ごとの最初の decision」7件を見ると、turn
 
 → 実走検証できるのは、观測に現れる量（hand size、energy、powers、relics）と hook の対応が
 1対1で決まる case だけ。rollout 内部の加算は record から直接検証できない。
+
+### AM8（17勝0敗・走行中、control 17勝1敗）の分歧138件
+
+両腕の同じ decision の state に同じ机构が出た位置で割ると：
+
+- `RELIC.FIDDLE` 両腕：**89件**
+- `RELIC.FORGOTTEN_SOUL` 両腕：30件
+- `POWER.CHAINS_OF_BINDING_POWER` 両腕：16件
+- 両腕に机构が何も出ていない位置：**49件**（→ 生成プールの忠実化の差。机构の差ではない）
+
+（1 decision に複数の机构が両腕で揃っている場合があるので件数は機構別、合計は138超になりうる）
+
+AM8 は Fiddle が决定を動かす位置が最多の seed。run レベルの outcome（17勝0敗 vs control 17勝1敗）は
+机构と忠実化が混かるので、Fiddle 単独の成果へは開けない。開けるのは、同一 observation を両treeで
+replay して「機構単独」を隔離した件数（Fiddle 76件、Chains の忠実なゲート651件で17%）だけ。
