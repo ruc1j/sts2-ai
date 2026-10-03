@@ -2164,6 +2164,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # The flag describes this play only, so it is reset for every action, not just the duplicated
     # one - a leftover True from an earlier play would double the next card's block for free.
     combat = replace(combat, play_duplicated=play_duplicated)
+    # An increased play count re-runs the card's OnPlay, so its power applies again.
+    plays = 2 if play_duplicated else 1
     if gigantified:
         combat = replace(combat, player_powers=_add_power(combat.player_powers, "GigantificationPower", -1))
     hand = list(combat.hand)
@@ -2382,60 +2384,60 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         player_hp += 10
     player_powers = combat.player_powers
     if card == RUPTURE:
-        player_powers = _add_power(player_powers, "RupturePower", 1)
+        player_powers = _add_power(player_powers, "RupturePower", (1) * plays)
     if card == STAMPEDE:
         # Stampede.OnPlay applies StampedePower with its Power var (1); the upgrade only makes the
         # card cheaper, it does not raise the counter.
-        player_powers = _add_power(player_powers, "StampedePower", 1)
+        player_powers = _add_power(player_powers, "StampedePower", (1) * plays)
     if card == DEMON_FORM:
         # DemonForm.OnPlay applies DemonFormPower with its StrengthPower var (2, upgraded 3).
-        player_powers = _add_power(player_powers, "DemonFormPower", 3 if card_was_upgraded else 2)
+        player_powers = _add_power(player_powers, "DemonFormPower", (3 if card_was_upgraded else 2) * plays)
     if card == FASTEN:
         # Fasten.OnPlay applies FastenPower with its ExtraBlock var (4, upgraded 6).
-        player_powers = _add_power(player_powers, "FastenPower", 6 if card_was_upgraded else 4)
+        player_powers = _add_power(player_powers, "FastenPower", (6 if card_was_upgraded else 4) * plays)
     if card == AGGRESSION:
-        player_powers = _add_power(player_powers, "AggressionPower", 1)
+        player_powers = _add_power(player_powers, "AggressionPower", (1) * plays)
     if card == DARK_EMBRACE:
-        player_powers = _add_power(player_powers, "DarkEmbracePower", 1)
+        player_powers = _add_power(player_powers, "DarkEmbracePower", (1) * plays)
     if card == CRIMSON_MANTLE:
-        player_powers = _add_power(player_powers, "CrimsonMantlePower", 10 if card_was_upgraded else 8)
-        player_powers = _add_power(player_powers, "CrimsonMantleSelfDamage", 1)
+        player_powers = _add_power(player_powers, "CrimsonMantlePower", (10 if card_was_upgraded else 8) * plays)
+        player_powers = _add_power(player_powers, "CrimsonMantleSelfDamage", (1) * plays)
     if card == HELLRAISER:
-        player_powers = _add_power(player_powers, "HellraiserPower", 1)
+        player_powers = _add_power(player_powers, "HellraiserPower", (1) * plays)
     if card == INFERNO:
-        player_powers = _add_power(player_powers, "InfernoPower", 9 if card_was_upgraded else 6)
+        player_powers = _add_power(player_powers, "InfernoPower", (9 if card_was_upgraded else 6) * plays)
         # InfernoPower keeps this private counter separately from its retaliation amount.
-        player_powers = _add_power(player_powers, "InfernoSelfDamage", 1)
+        player_powers = _add_power(player_powers, "InfernoSelfDamage", (1) * plays)
     if card == CRUELTY:
-        player_powers = _add_power(player_powers, "CrueltyPower", 50 if card_was_upgraded else 25)
+        player_powers = _add_power(player_powers, "CrueltyPower", (50 if card_was_upgraded else 25) * plays)
     if card == JUGGERNAUT:
-        player_powers = _add_power(player_powers, "JuggernautPower", 8 if card_was_upgraded else 6)
+        player_powers = _add_power(player_powers, "JuggernautPower", (8 if card_was_upgraded else 6) * plays)
     if card == JUGGLING:
         # Juggling.OnPlay applies JugglingPower(1). Its upgrade only adds the Innate keyword, so
         # the counter amount never changes.
-        player_powers = _add_power(player_powers, "JugglingPower", 1)
+        player_powers = _add_power(player_powers, "JugglingPower", (1) * plays)
     if card == PANACHE:
         # Panache.OnPlay applies PanachePower with its PanacheDamage var (10, upgraded 14).
-        player_powers = _add_power(player_powers, "PanachePower", 14 if card_was_upgraded else 10)
+        player_powers = _add_power(player_powers, "PanachePower", (14 if card_was_upgraded else 10) * plays)
     if card == ONE_TWO_PUNCH:
         # OneTwoPunch.OnPlay applies OneTwoPunchPower with its Attacks var (1, upgraded 2).
-        player_powers = _add_power(player_powers, "OneTwoPunchPower", 2 if card_was_upgraded else 1)
+        player_powers = _add_power(player_powers, "OneTwoPunchPower", (2 if card_was_upgraded else 1) * plays)
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
     rupture = _power(player_powers, "RupturePower")
     if rupture and self_damage:
-        player_powers = _add_power(player_powers, "StrengthPower", rupture)
+        player_powers = _add_power(player_powers, "StrengthPower", (rupture) * plays)
     if card == INFLAME:
-        player_powers = _add_power(player_powers, "StrengthPower", 2)
+        player_powers = _add_power(player_powers, "StrengthPower", (2) * plays)
     if card == FLAME_BARRIER:
-        player_powers = _add_power(player_powers, "FlameBarrierPower", 4)
+        player_powers = _add_power(player_powers, "FlameBarrierPower", (4) * plays)
     if card == BARRICADE:
-        player_powers = _add_power(player_powers, "BarricadePower", 1)
+        player_powers = _add_power(player_powers, "BarricadePower", (1) * plays)
     if card == UNMOVABLE:
-        player_powers = _add_power(player_powers, "UnmovablePower", 1)
+        player_powers = _add_power(player_powers, "UnmovablePower", (1) * plays)
     if card == EXPECT_A_FIGHT:
-        player_powers = _add_power(player_powers, "NoEnergyGainPower", 1)
+        player_powers = _add_power(player_powers, "NoEnergyGainPower", (1) * plays)
     if card == PRIMAL_FORCE:
         if isinstance(played_value, Card):
             hand = [Card(GIANT_ROCK, card_was_upgraded) if card_name(value) in ATTACKS else value for value in hand]

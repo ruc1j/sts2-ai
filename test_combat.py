@@ -1756,6 +1756,15 @@ class CombatTest(unittest.TestCase):
         after = step(combat, "card:0@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.enemies[0].powers, "VulnerablePower"), 4)  # table value 2, applied twice
 
+    def test_play_duplicated_re_applies_power_card_effects(self) -> None:
+        # OnPlay runs once per play, so a Power card with an increased play count applies its power twice.
+        combat = Combat(
+            80, (Card(DEMON_FORM),), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),), energy=3,
+            player_powers=(("DuplicationPower", 1),),
+        )
+        after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "DemonFormPower"), 4)  # 2 applied twice
+
     def test_chains_affliction_cap_counts_entries_not_cards_in_hand(self) -> None:
         # ChainsOfBindingPower.AfterCardDrawn counts CardAfflictionEntry happened this turn, so playing
         # an afflicted card does not free up the per-turn cap.
