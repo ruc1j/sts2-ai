@@ -3924,3 +3924,22 @@ observation の replay での数）。
 
 同じ形の note：play-count powers の gap も、`e808bdf` の run では trigger 1件（U2 の status 札）だけ。
 機構単独で分歧を出したのは H2（FS、trigger 位置あり）と AM8（Fiddle、draw の trigger 位置あり）だけ。
+
+### ChainsOfBindingPower の decompile（gate は draw 経由で afflicts）
+
+`ChainsOfBindingPower.cs`（power、Debuff/Counter）：
+
+- `AfterCardDrawn`：owner の player が自分の side で札を引いた時、`Bound` affliction が possible なら、
+  **その turn に afflict した count が Amount 未満の場合だけ** afflict する（`CardAfflictedEntry` を数える）
+- `BeforeCardPlayed`：bound 札を play した時に `boundCardPlayed = true`
+- `ShouldPlay`：bound 札は `boundCardPlayed` が立ってから gate される（最初の1枚は打てる）
+- `BeforeSideTurnEnd`：`boundCardPlayed` を reset し、bound affliction を**全部 clear**
+
+model の形（`bound_played_this_turn` ＋ turn end flush ＋ rollout 中の draw で afflicts）はこれと一致。
+`fromHandDraw` はこの実装では条件に使われていない（turn start の draw も afflict 対象）。
+
+測った control run（`e808bdf`）で bound 札が hand にある record が 0件（9 seed）＝これらの run では
+power が active 中に draw が起きなかった（decision で札を打たない、または draw を伴わない play）。
+だから gate は run レベルで trigger していない → 分歧が出ない。651件の母数は draw が起きた run の数字。
+
+B4（batch3）：Chains present 29 record、bound in hand 0、gate active 0。
