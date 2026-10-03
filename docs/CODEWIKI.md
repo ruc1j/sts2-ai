@@ -4192,3 +4192,31 @@ plan の形は変わらない：per-effect gate 4 category を追加＋Chains ca
 （完全な playCount loop）は、trigger category も含むので、将来 trigger が同じ decision で active になる
 run が現れたときに必要。母数0の現状では、loop 形を「正しさの完全形」として記録し、apply は per-effect
 gate + cap にする（小さい diff、既存736テストを壊さない）。
+
+### apply 時に書くテスト（预先の形）
+
+```python
+def test_play_duplicated_re_resolves_draw_effects(self) -> None:
+    # Shrug It Off: block 5 + draw 1. With DuplicationPower the game re-runs the whole play,
+    # so both the block grant and the draw happen twice.
+    draw = tuple(Card(STRIKE) for _ in range(4))
+    combat = Combat(80, (Card(SHRUG),), draw, (), (Enemy("MONSTER.DUMMY", 200, "IDLE_MOVE", ()),),
+                    energy=1, player_powers=(("DuplicationPower", 1),))
+    after = step(combat, "card:0", DUMMY_DATA, random.Random(0))
+    self.assertEqual(after.player_block, 10)     # already gated: passes
+    self.assertEqual(len(after.hand), 2)         # fails today (draw runs once); passes after the gate
+
+def test_play_duplicated_re_resolves_status_and_power_effects(self) -> None:
+    # Bash applies Vulnerable; Demon Form applies a power stack. The game re-runs OnPlay per play count.
+    ...
+
+def test_chains_afflicts_stop_at_the_per_turn_cap_after_a_bound_card_leaves_hand(self) -> None:
+    # The game counts CardAfflictedEntry happened this turn, so a bound card leaving hand does not
+    # free up the cap. Today the model counts bound cards still in hand.
+    ...
+```
+
+既存の `test_duplication_power_resolves_the_next_play_twice`（damage）と
+`test_duplication_power_doubles_the_next_block_card_grant`（block）は gate 追加後も pass する。
+`test_chains_of_binding_afflicts_cards_drawn_during_the_rollout`（draw 7、amount 3）は hand 基準でも
+entry 基準で同じ結果なので壊れない。
