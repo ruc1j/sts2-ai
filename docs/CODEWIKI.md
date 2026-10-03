@@ -3012,3 +3012,23 @@ AM8 の「両腕の state に机构が出ていない」第一分歧 seq 248 を
 → この分歧は生成集合の忠実化で立つ。机构の実装では説明できない。AM8 の49件（機構なし位置）は
 この形。Fiddle 89件・Forgotten Soul 30件・Chains 16件は両腕の state に同じ機構が出ている位置なので
 機構単独の差として残る。
+
+### 訂正：run レベルで机构単独の差として立うるのは第一分歧の位置だけ
+
+AM8 で Fiddle が両腕の state に出ている分歧位置（89件）を1件（seq 328）replay して確認した：
+同一 observation（arm 側の record）を両treeに流すと、arm tree は `CARD.HEADBUTT`（run の arm の選択と
+一致）、control tree は `CARD.ANGER` を選び、**control の run が実際に選んだ `CARD.INFLAME` とは違う**。
+control 側の record は state が違う（seq 248 で pool の差から path が分岐した以降）ので、この89件は
+「机构単独の差」ではない。分歧位置の机构 presence は、同じ decision の state が両腕で一致している
+case 限りで意味を持つ。
+
+panel で机构単独として立つのは第一分歧の位置だけ：
+
+- `H2` seq 441：relics・powers・hand が両腕同一、`RELIC.FORGOTTEN_SOUL` が両腕の state に在る →
+  **Forgotten Soul の実装単独**（+2 の成因）。arm が end_turn、control が Uppercut
+- `AM8` seq 248：relics・powers・hand が両腕同一、机构は state に出ていない → **生成プールの忠実化**
+  （control 形の集合で control の選択、faithful で arm の選択を再現）
+
+→ AM8 の +0 は「机构の効果が出なかった」ではなく、机构が効く位置が第一分歧より後（state が違う）なので
+机构単独の差として開けない。機構単独を隔離できるのは同一 observation を両treeで replay する到達性
+計算だけ（Fiddle 76件、Chains の忠実なゲート651件で17%）。
