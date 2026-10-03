@@ -3406,3 +3406,19 @@ play-count とは別の通路。こちらも damage通路限定。
 
 → batch2 で機構単独の分歧が出た case は「model の実装が効いた位置」であり、忠実度の限界は記録したまま
 読む（over-claim しない）。
+
+### batch2 の control run に1件 exception（control 側の Hellraiser recursion）
+
+`mechonly_ctrl_b2_M7C4Q9V2RH_agent.err`：`_autoplay_top_of_draw` → `_step` → `_autoplay_top_of_draw` の
+再帰で RecursionError。control（`e808bdf`）には HellraiserPower の auto-play に cap が無い；HEAD には
+`hellraiser_autoplays_this_turn >= 9` の safety cap がある（後から入れた修正）。
+
+→ batch2 の arm–control 差は「機構の実装」＋「この cap」の2要素になる。`M7C4Q9V2RH` の control run は
+例外1件なので、この seed の第一分歧がその decision 位置にある case は机构単独の差として読めない。
+rule 9（再走後は exception 0件を確認）の形で、run ごとに例外数を報告する：
+
+| seed | control run | exceptions |
+|---|---|---:|
+| `U2M7K5F9RA` | 10勝1敗 | 0 |
+| `T3XQ7WM2VP` | 12勝1敗 | 0 |
+| `M7C4Q9V2RH` | 6勝0敗・走行中 | **1** |
