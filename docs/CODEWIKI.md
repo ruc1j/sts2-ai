@@ -3209,3 +3209,13 @@ run レベルで確認。
 
 harness の残：AM8（1勝0敗・走行中、分歧0、機構未出現）、R8・P3。AM8 は生成集合の差が消えるので、
 機構が両腕の path に出る位置から分歧する预期（panel では第一分歧が生成プールだった）。
+
+### harness の動作確認：H2 では pool の差が一度も効かなかった
+
+`mechonly_H2LV6ZJ4XW` と `mechpanel_arm_clean_H2LV6ZJ4XW`（faithful 集合で走った arm）を照合：
+aligned 447件で**分歧0**。H2 は Stoke を打つ位置が無かった（少なくとも分歧に効く位置）ので、pin しても
+しなくても同じ决定列になる。＝ H2 の分歧46件は最初から機構単独で立っていた（上の state 確認と一致）。
+
+harness の価値は pool が効く seed 側にある。AM8 は panel で第一分歧が生成プール（seq 248）だったので、
+pin した harness run は control と揃った path を歩き、機構が両腕の state に出た位置から分歧する预期。
+現在 AM8 harness：5勝0敗、aligned 62件分歧0、機構未出現。
