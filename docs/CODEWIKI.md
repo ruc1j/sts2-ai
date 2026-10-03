@@ -3672,3 +3672,13 @@ AM8 の87分歧の clean は2件。母集団は薄いまま、という読みが
 
 机构の無い seed（M5・C8・N8・D1・Q6・B3）の分歧0は、機構の実装が無効だからではなく、机构を引かなかった
 から測定にならない（path 運）。分歧0の seed は機構の実装が决定を動かさなかった case と区別できない。
+
+### `V7D3M9H2XW` は pair candidate（batch2 の control run は PanachePower を seq 221-224 に出している）
+
+前ラウンドで「V7 は機構を state に出していない」と書いたが、その数字は corpus の**別の run**（11 record）
+だった。batch2 の control run（`mechonly_ctrl_b2_V7D3M9H2XW`）は combat record の state に
+`POWER.PANACHE_POWER` を **seq 221〜224** に出している。arm は現在62 aligned（分歧0）でそこに達していない。
+arm が同じ path を追えば同じ位置で Panache を見る预期 → 達した位置からの分歧が機構単独の差になる。
+
+`mechonly_attribution.py` の `first-mech` が V7 で None を返すのは、arm 側がまだその record に達していない
+から（aligned 集合の側でしか見ていない）。
