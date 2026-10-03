@@ -3393,3 +3393,16 @@ Fiddle と重複)。実走の batch2 run が同じ位置で分歧するかを見
 
 実走の control 側は現時点で `U2M7K5F9RA`（Duplication＋OneTwoPunch、10勝1敗）と `T3XQ7WM2VP`
 （Duplication、9勝0敗・走行中）が機構を state に出している。
+
+### play-count powers の忠実度は限定（block grant と damage hit の2通路だけ）
+
+`play_duplicated` の使用箇所：`_grant_block`（line 1071）と damage path（line 2815）。＝dup された play の
+「block grant を2回」「damage hit を2回」は model に入っているが、draw・status 付与・energy・self-damage
+・multi-effect card の extra resolution は入っていない。したが batch2 の Duplication/OneTwoPunch の
+実走效果は**model が捉えている分だけ**の差で、game の完全な效果は understimate する。
+
+Gigantification（line 2137-2154）は play 中の mark された Attack command の damage を3倍（1回）なので、
+play-count とは別の通路。こちらも damage通路限定。
+
+→ batch2 で機構単独の分歧が出た case は「model の実装が効いた位置」であり、忠実度の限界は記録したまま
+読む（over-claim しない）。
