@@ -3467,3 +3467,16 @@ python3 data/mechonly_attribution.py --arm-tag mechonly_arm_b2 --ctrl-tag mechon
 batch2 control 進捗（2026-10-03 13:4x、例外数）：`U2M7K5F9RA` 10勝1敗（0、Dup＋OTP）、
 `T3XQ7WM2VP` 12勝1敗（0、Dup＋Gigantification）、`M7C4Q9V2RH` 16勝0敗・走行中（**1**、Hellraiser
 recursion、機構未出現）。
+
+### cap の追加は batch の走行中に land した（rule 9 の形での内訳）
+
+commit `f16b256`（`_autoplay_top_of_draw` の再帰 cap）は batch2 の control stage 走行中に committed
+した。agent は run の start 時に file を読むので、run ごとに code が違う：
+
+- `C8Q1Z7E3KS`（commit 時点で走行中）＝ pre-cap の code
+- `M5W9C3T7LQ`・`V7D3M9H2XW`（commit 後に start）＝ cap 入りの code
+- arm stage（commit 後）＝ cap 入り
+
+cap は crash を止めるものなので、cap が実際に発火する位置（draw pile に Havoc が9枚以上並ぶ等）で
+ないと决定は変えない。したがって batch の解读は保つが、片腕だけ cap が発火した case は机构単独の差
+として読めない。run ごとの例外数と code version を報告する。
