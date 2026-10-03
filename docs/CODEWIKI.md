@@ -3900,3 +3900,27 @@ gap が决定に出る母数は1件（U2）でした。
 
 → gate 追加は**正しさの修正**としては意味がある（decompile 根拠）が、測った outcome を変える母数は
 ほぼ無い。実装は batch3 完走後に site 4箇所＋テスト2本で行う（rule 9）。
+
+### gate の trigger 母数：測った control run では9 seed 全部0
+
+`e808bdf` の control run で、Chains が state に出た record と bound 札が hand にある record：
+
+| seed | Chains present | bound in hand（gate 母数） |
+|---|---:|---:|
+| `H2LV6ZJ4XW` | 0 | 0 |
+| `AM8C6YXHSG` | 18 | 0 |
+| `R8V2H6N4ZB` | 17 | 0 |
+| `P3V8N5K2RX` | 0 | 0 |
+| `U2M7K5F9RA` | 0 | 0 |
+| `T3XQ7WM2VP` | 0 | 0 |
+| `M7C4Q9V2RH` | 21 | 0 |
+| `V7D3M9H2XW` | 0 | 0 |
+| `D6A1F8C3E5` | 38 | 0 |
+
+power が state にあることと、札が bound であることは別（Chains は引いた札を afflict する）。だから
+651件の gate 母数は**札が bound だった run**（corpus 側）の数字で、この panel/batch の control run では
+gate が一度も立っていない。→ Chains の gate は run レベルでは測定不能（offline の17%分歧率は同一
+observation の replay での数）。
+
+同じ形の note：play-count powers の gap も、`e808bdf` の run では trigger 1件（U2 の status 札）だけ。
+機構単独で分歧を出したのは H2（FS、trigger 位置あり）と AM8（Fiddle、draw の trigger 位置あり）だけ。
