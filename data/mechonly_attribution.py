@@ -45,11 +45,21 @@ def control_card_table():
     return {name.lower() for name in names}, getattr(agent, "CARD_NAMES", {})
 
 
-def known_to_control(card_id, table, agent_names):
-    # The trace stores `CARD.<NAME>` ids; control's tables key on display names. Map through
-    # control's own CARD_NAMES before asking whether a card can be scored.
-    display = agent_names.get(card_id)
-    return display is not None and display.lower() in table
+def knowledge_difference():
+    """Card names the arm can score but control (`e808bdf`) cannot. A divergence at a record whose hand
+    contains one of these is a knowledge difference, not the mechanism's effect. Cards missing from BOTH
+    trees (status cards handled by other tables) are not a difference."""
+    sys.path.insert(0, CONTROL_DIR)
+    for module in ("official_agent", "combat"):
+        sys.modules.pop(module, None)
+    control = __import__("combat")
+    sys.path.insert(0, ".")
+    for module in ("official_agent", "combat"):
+        sys.modules.pop(module, None)
+    arm = __import__("combat")
+    control_names = {k.lower() for k in control.CARD_COST}
+    arm_names = {k.lower() for k in arm.CARD_COST}
+    return arm_names - control_names
 
 
 def combat_records(path):
@@ -100,7 +110,7 @@ def main() -> None:
             "H2LV6ZJ4XW", "AM8C6YXHSG", "R8V2H6N4ZB", "P3V8N5K2RX",
             "N8CQ4ZKP2W", "D1W9Y3B7FC", "B3N8V5T1WQ", "Q6N3V8K2MT",
         ]
-    table, control_names = control_card_table()
+    table = knowledge_difference()
     for seed in seeds:
         arm_path = f"data/{arm_tag}_{seed}_agent.jsonl"
         if not os.path.exists(arm_path):
@@ -118,7 +128,7 @@ def main() -> None:
         confounded = 0
         for seq in diffs:
             both = present(arm[seq]) & present(control[seq])
-            if any(not known_to_control(card.get("id"), table, control_names)
+            if any((card.get("id") or "").split(".", 1)[-1].lower() in table
                    for card in (arm[seq].get("hand") or [])):
                 confounded += 1
             if not both:
