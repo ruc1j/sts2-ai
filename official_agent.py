@@ -253,6 +253,9 @@ POWER_NAMES = {
     "POWER.CHAINS_OF_BINDING_POWER": "ChainsOfBindingPower",
     "POWER.MAYHEM_POWER": "MayhemPower",
     "POWER.FLEX_POTION_POWER": "FlexPotionPower",
+    # LivingShield carries RampartPower; combat.py re-grants its amount to every TurretOperator at
+    # each player-turn start, so the id has to reach the model or the grant is invisible.
+    "POWER.RAMPART_POWER": "RampartPower",
     # The observation reports these under their own ids; without the mapping combat.py never
     # sees them (the same gap that made FrailPower dead for every rollout - see CODEWIKI).
     "POWER.GALVANIC_POWER": "GalvanicPower",

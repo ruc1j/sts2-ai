@@ -2649,6 +2649,40 @@ class CombatTest(unittest.TestCase):
         # Finishing the 2-HP minion prevents 22 damage; Strike does so without self-damage.
         self.assertEqual(_greedy_action(combat, hive), f"{STRIKE}@0")
 
+    def test_rampart_re_grants_turret_block_at_every_player_turn_start(self) -> None:
+        # RampartPower.AfterSideTurnStart grants its amount to every living TurretOperator at the
+        # start of the player's turn, not to the Rampart owner, and the turret's own block is
+        # cleared when its enemy turn begins - so the turret starts each turn with 25 block again
+        # for as long as the LivingShield lives.
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        specs = {monster["id"]: monster for monster in glory["monsters"]}
+
+        def make(model: str, hp: int, move: str, powers: tuple[tuple[str, int], ...] = (), block: int = 0) -> Enemy:
+            spec = specs[model]
+            return Enemy(model=model, hp=hp, move=move, values=tuple(sorted(spec["values"].items())), block=block, powers=powers)
+
+        shield = make("MONSTER.LIVING_SHIELD", 55, "SHIELD_SLAM_MOVE", powers=(("RampartPower", 25),))
+        turret = make("MONSTER.TURRET_OPERATOR", 41, "UNLOAD_MOVE", block=25)
+        after = step(Combat(80, (DEFEND,), (), (), (shield, turret)), END_TURN, glory, random.Random(0))
+        self.assertEqual((after.turn, after.enemies[0].block, after.enemies[1].block), (2, 0, 25))
+
+    def test_rampart_stops_granting_block_once_the_shield_is_dead(self) -> None:
+        with open("data/enemies_glory.json", encoding="utf-8-sig") as file:
+            glory = json.load(file)
+        specs = {monster["id"]: monster for monster in glory["monsters"]}
+
+        def make(model: str, hp: int, move: str, powers: tuple[tuple[str, int], ...] = (), block: int = 0) -> Enemy:
+            spec = specs[model]
+            return Enemy(model=model, hp=hp, move=move, values=tuple(sorted(spec["values"].items())), block=block, powers=powers)
+
+        shield = make("MONSTER.LIVING_SHIELD", 5, "SHIELD_SLAM_MOVE", powers=(("RampartPower", 25),))
+        turret = make("MONSTER.TURRET_OPERATOR", 41, "UNLOAD_MOVE", block=25)
+        played = step(Combat(80, (STRIKE,), (), (), (shield, turret)), f"{STRIKE}@0", {}, random.Random(0))
+        self.assertFalse(played.enemies[0].alive)
+        after = step(played, END_TURN, glory, random.Random(0))
+        self.assertEqual(after.enemies[1].block, 0)
+
     def test_greedy_action_avoids_self_kill(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

@@ -2113,6 +2113,23 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             # power never fires that turn.
             extra_block += sum(stored for stored, _ in toric_pending)
             toric_pending = tuple((stored, uses - 1) for stored, uses in toric_pending if uses > 1)
+        # RampartPower.AfterSideTurnStart (LivingShield.cs applies Rampart 25 to itself; the grant
+        # is not in the exported state machine JSON): at the start of every player turn each copy
+        # grants its amount as Unpowered block to every living TurretOperator on the enemy side,
+        # not to the Rampart owner.  That is why the block appears on an enemy carrying no power of
+        # its own, and why the model saw 25 block vanish and never come back - the live observation
+        # only carries the block for the turn it was read on.  Real runs: 560 decisions in 73 runs
+        # held TurretOperator block 25 (turn 1 x175, turn 2 x163, turn 3 x50, turn 4 x5) while
+        # LivingShield held RampartPower 25.  Killing the shield stops the regeneration, which the
+        # rollout can only price once the grant is here.
+        rampart = sum(_power(enemy.powers, "RampartPower") for enemy in enemies if enemy.alive)
+        if rampart:
+            enemies = [
+                replace(enemy, block=enemy.block + rampart)
+                if enemy.alive and enemy.model == "MONSTER.TURRET_OPERATOR"
+                else enemy
+                for enemy in enemies
+            ]
         combat = replace(
             combat, hand=tuple(hand), discard_pile=tuple(discard), player_block=retained_block + extra_block,
             toric_pending=toric_pending,
