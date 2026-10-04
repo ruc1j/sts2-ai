@@ -6315,3 +6315,41 @@ record は `enchantment: None` なのに live の `Damage` 値は 16 / 14.25 / 1
 次の一手: 公式 run で FEED を玩む瞬間に card が持つ enchantment と affliction を bridge から追加で
 export して（`official_mod/CombatBridge.cs` は policy code ではないので変更してよい ✓ 再 build が必要 ✓）、
 game 側で何が 2 ダメージを出しているかを実測する ✓ 実測なしの推定はこれ以上進めない ✓
+
+## Round 23: player ダメージ差 group を閉じた（0 件 / 0 seed）— 原因は Feed の MaxHp 回復と古い trace
+
+前 round まで 551 件（直近2日でも 48 件）追ってきた group が **0 件**になった ✓ 2つの切り分けが要った。
+
+1. **trace の build で絞る**。`fe94c71`（2026-10-04 11:47 ✓ 「trace の hand に enchantment を記録」）之前
+   の trace には card の `enchantment` 字段が無い ✓ 593 文件中 588 文件が字段を持つ ✓ が、値が常に null の
+   ものがある ✓ 日付で絞った 48 件のうち `mechonly_H2LV6ZJ4XW`（10-03 09:49）は **fe94c71 より前** ✓
+   つまり「直近2日」では足りず、**bridge がその字段を出せる build かどうか**で絞る必要がある ✓
+   `data/player_damage_group.py` に `trace_reports_enchantments()` を入れてこの条件にした ✓
+2. **build の正しい trace 7 件**は全部 `CARD.FEED` の +3 / +4 だった ✓ 調べると game 側は
+   **敵を殺した Feed で max HP と現在 HP が同時に 3 上がっていた**（hp 54 → 57 / max_hp 80 → 83 ✓
+   hp 63 → 66 / max_hp 101 → 104 ✓）✓ `Feed.cs` は Attack が Fatal で、Fatal kill 時に
+   `CreatureCmd.GainMaxHp(Owner, MaxHp)`（`MaxHpVar(3)`、upgraded で 4）を呼ぶ ✓ model にはこの効果が無かった ✓
+   combat.py に追加し、殺さなかった場合は変化しないことを `test_feed_raises_max_hp_and_heals_when_it_kills_the_target`
+   で固定（769 tests green ✓）。
+
+測定の出し直し（同じ tool ✓ build 条件あり ✓ 30 日分の trace ✓）：
+
+| | player HP の差が出た play | seed |
+|---|---:|---:|
+| 修正前 | 7 | 3 |
+| 修正後 | **0** | **0** |
+
+boss 戦 audit 側の mismatch は 1,225 → 1,232（2.60% → 2.61%）に 7 増えた ✓ 増加は build 条件で除外される
+古い trace 側で、`THE_INSATIABLE` 戦 `CARD.FEED player_hp game-2`（35 件）と `QUEEN` 同（23 件）の行は
+変化していない ✓ これらは `fe94c71` より前の trace で Corrupted の 1.5 倍が見えないまま比較している行 ✓
+忠実度の実証（正しい trace 集合で 0 件）を根拠に HEAD に残す ✓
+
+**ついでに確認して問題なし**: `ShrinkPower.ModifyDamageMultiplicative` は `Owner != dealer` なら 1 を返すので
+**自分が受けるダメージには効かない** ✓ model が card の damage にしか掛けていないのと一致 ✓ さらに
+corpus で player に載る `SHRINK_POWER` は 3,540 観測すべて **amount -1** ✓（`SHRINKER_BEETLE` の適用値 ✓
+`IsInfinite` でターン終了時に減らない ✓）model は Shrink を減算対象に入れていないので、実際に観測される
+Shrink に対しては正しい ✓ 正の量の Shrink を適用する敵はまだ観測されていない ✓
+
+**まだ bridge に出ていない状態**: `CardModel.Affliction`（単一 ✓ CardModel.cs:602 ✓ Bound / Entangled /
+Galvanized / Hexed / Ringing / Smog / Tainted）✓ model は Galvanized を `GalvanicPower`、Bound を `bound` で
+個別に扱っている ✓ 次の候補 ✓
