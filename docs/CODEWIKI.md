@@ -7522,3 +7522,34 @@ rc=127 は実害ではなく ✓ ただし `exit=` を見る規則（teaching 10
 
 control 側は新しい sweep3.sh（`fail` の锚を直した版 ✓）を読み直すので ✓ 今回の panel では
 `fail=` が正しい形で出るはず ✓（control 走行中は script を触らない ✓）✓
+
+## Round 59: 新しい arm trace の census は 613 中 609 一致 ✓ 4 件の gap を faithful dump で見た ✓
+
+`TRACE_GLOB="counts_arm_*_agent.jsonl"` で測った ✓（3 trace ✓ `plays` がありカウンタは正確 ✓）✓
+**613 actions replayed ✓ 609 matching ✓ 不一致 4 件** ✓
+（母数が古い corpus と違うので ✓ 99.2% との直接比較はしない ✓）✓
+
+group と dump の要約 ✓(`/tmp/newgap.py` ✓) ✓
+
+1. `THE_INSATIABLE CARD.SHRUG_IT_OFF game-18`（seq 282 ✓ turn 5 ✓ game 0 / model 18 ✓）
+   exported plays: cards 4 ✓ attacks 4 ✓ **skills 0** ✓ player に `HELLRAISER_POWER 1` ✓ Strength 3 ✓
+   敵 HP 134 → 134 ✓ **game は 0** ✓ model 18 は Strike(9+3)×Vulnerable 1.5 ✓
+   → **model の rollout が Shrug の draw で Strike を引いて Hellraiser が自動で玩んだ** ✓
+   game では別の札を引いた ✓ **前 round までに分類した rollout の draw 順違いと同じ** ✓ 忠実度では直せない ✓
+2. `THE_INSATIABLE CARD.SHRUG_IT_OFF game-5`（seq 285 ✓ game 13 / model 18 ✓）同じfight ✓ 同じ机制 ✓
+3. `DEVOTED_SCULPTOR CARD.BASH game+15`（seq 298 ✓ turn 1 ✓ **game 25 / model 10** ✓）
+   exported plays すべて 0（そのターンの最初の札 ✓）✓ player hp 85 ✓ Dexterity 1 ✓ Strength なし ✓
+   敵 DEVOTED_SCULPTOR 162 HP ✓ powers 無し ✓ 次 record で 137 HP ✓
+   `data/enemies_glory.json` の state は `FORBIDDEN_INCANTATION_MOVE` ✓ `SAVAGE_MOVE` ✓
+   → **game 側が 15 多い** ✓ relic 一覧を取っていない ✓ 次に relic と intents を見る ✓
+4. `LIVING_SHIELD CARD.UPPERCUT game+19`（seq 314 ✓ turn 1 ✓ **game 32 / model 13** ✓）
+   敵: `LIVING_SHIELD 55 HP + RAMPART_POWER 25` ✓ `TURRET_OPERATOR 41 HP + block 25` ✓
+   player: hp 82 ✓ Dexterity 1 ✓ Strength なし ✓ exported plays すべて 0 ✓
+   → **Rampart の block 付与自体は model も持っている** ✓（dump の TURRET_OPERATOR 25 block と一致 ✓）✓
+   `RampartPower.AfterSideTurnStart` は `side != CombatSide.Player || PlayersTakingExtraTurn.Count > 0` で
+   return し ✓ `TurretOperator` に Amount だけ block を载せる ✓ park 済みだった条件 ✓
+   gap は block ではなく **game 側で 19 余分な HP 減少** ✓（他の damage source ✓ 敵自身の mechanism ✓）✓
+
+2 件は分類済みの noise ✓ 2 件（game+15 ✓ game+19 ✓）は**新しい手がかり** ✓ 次の測定:
+relic 一覧 ✓ 敵の intents の vars ✓ その record 前後の pile 変化 ✓ を同じ dump に出す ✓
+control sweep は 07:43 開始 ✓ seed 1 走行中 ✓（`counts_ctrl` ✓ `dfced8b` ✓）✓
