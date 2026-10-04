@@ -5967,3 +5967,52 @@ panel の有効条件（MEASURABLE）にした。
 なお `ShouldClearBlock` を override する `BlurPower` は `CARD.BLUR`（1 コスト Skill、block 5 + Blur 1）経由の
 player 側 power で、corpus 全体で `CARD.BLUR` の play も reward 出現も 0 件だった（Ironclad の札ではない）。
 model は power 名で generically 処理しているので、もし他クラスを遊ぶ運用になれば自動的に効く。
+
+## Round 18: QUEEN 戦の「毎ターン boss が 1 減る」は Toasty Mittens + Forgotten Soul だった
+
+8 round かけた `QUEEN enemy_hp end_turn` の -1（178 件）が解決した。原因は **`RELIC.TOASTY_MITTENS` が
+ターン開始に draw pile の一番上を Exhaust する**ことで、同じ run が持っていた
+**`RELIC.FORGOTTEN_SOUL`（`AfterCardExhausted` で Exhaust 1 件につき ランダムな hit 可能な敵へ 1 の
+未強化ダメージ）** がそこから発火していた。model は Toasty Mittens の Exhaust を再現していたが、
+`_after_exhaust`（Charon's Ashes・Forgotten Soul・Dark Embrace・Feel No Pain・Joss Paper・Burning Sticks を
+まとめて処理する共通フック）をその経路だけ呼んでいなかった。** Exhaust Sites を grep すると
+`_after_exhaust` を呼ばない箇所は Toasty Mittens の 1 箇所だけ**だった。
+
+証拠：`act3_verify_head_H2LV6ZJ4XW` seq 555/561/577 で、play 済みの札が無いターンに exhaust pile が 1 増え
+（BURNING_PACT など draw pile からの Exhaust）、QUEEN と TORCH_HEAD_AMALGAM の HP が毎ターン 1 減っていた。
+`data/queen_exhaust` 系の集計では 188 件の QUEEN end_turn replay の 177 件がちょうど -1 だった。
+
+実装 1（commit `a294ab3`）：Toasty Mittens の Exhaust を `_after_exhaust` に渡す。
+テスト `test_toasty_mittens_exhaust_runs_the_exhaust_relics`（Toasty Mittens + Forgotten Soul で
+END_TURN 後に敵 HP が 1 減り、exhaust pile が 1 枚増え、Strength +1 になること）。
+
+### ただし最初の形では FROG_KNIGHT で逆に崩れた（順序の問題）
+
+実装 1 だけだと boss 戦 audit の不一致が 3.52% → 3.69% に**増え**、`FROG_KNIGHT enemy_hp end_turn` の
+**+1 が 189 件**現れた。単一敵のケースで model だけ 1 多く削っていた。観測を見ると game 側は
+**HP ではなく block を 1 減らしていた**（frog knight hp 165 のまま block 15 → 14、model は hp 164 block 15）。
+game の `PlatingPower` は敵側のターン结束（`BeforeSideTurnEndEarly`）で Block を再付与するので、
+その block がターン開始の Exhaust 反射を吸収する。model は Plating 再付与を player ターン開始処理の
+後ろの方に置いていたため、反射が block を越えて HP に落ちていた。
+
+実装 2（commit `94e951f`）：敵側の Plating 再付与を player ターン開始の Exhaust フックより前に移した
+（`_enemy_turn` の block クリアと Rampart 付与との関係は不変）。孤立したコメントは削除。
+
+### 検証（`RELIC.TOASTY_MITTENS` を持つ player の end_turn replay 4,794 件）
+
+| | 修正前（`.wt-ctrl-mittens` = `5e5cb84`） | 実装1のみ | 実装1+2（HEAD） |
+|---|---:|---:|---:|
+| 敵 HP 一致 | 4,064 / 4,794 = 84.8% | 4,392 / 4,794 = 91.6% | **4,581 / 4,794 = 95.6%** |
+| QUEEN 戦の部分 | 不一致 182 | 不一致 66 | 不一致 66 |
+| FROG_KNIGHT + Toasty Mittens の不一致 | 0 | **189（model だけ +1）** | **0** |
+
+boss 戦 audit 全体（46,737 决定）は 3.52% → **3.29%** に改善し、上位 group から `QUEEN end_turn -1` と
+`FROG_KNIGHT` が消えた。残る上位は `QUEEN CARD.STRIKE_IRONCLAD -1 (69)`、`QUEEN CARD.ANGER -1 (65)`、
+`QUEEN CARD.ASHEN_STRIKE +1 (41)`、`THE_INSATIABLE player_hp CARD.FEED -2 (35)`、
+`VANTOM CARD.DEFEND_IRONCLAD -1 (35)`、`FROG_KNIGHT end_turn +3 (31)`。
+`QUEEN end_turn "game0" 41 件` は合計ダメージが一致し per-enemy でずれる形で、
+Forgotten Soul が撃つランダム対象の違い（rollout の RNG）として説明がつく。
+
+panel は見送った。`RELIC.TOASTY_MITTENS` と `RELIC.FORGOTTEN_SOUL` を同時に持つ観測は corpus 内で
+seed H2LV6ZJ4XW の 76 件だけで、機構を狙った panel に必要な 3 seed が揃わないため。忠実度の実証
+（4,794 件の replay 一致率と、崩れた group の消滅）で HEAD に残す。
