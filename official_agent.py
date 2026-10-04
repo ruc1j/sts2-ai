@@ -11,7 +11,7 @@ from itertools import combinations
 
 from combat import (
     ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
-    POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
+    POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
     POTION_STRENGTH, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
 )
 
@@ -391,6 +391,12 @@ ROLLOUT_POTION_IDS = {
     # because the simulator had no model for those potions at all.
     POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER,
     POTION_WEAK_POTION, POTION_VULNERABLE_POTION,
+    # The four whose simulator effect now exists AND that choose_potion already classifies in its normal
+    # branches (debuff / healing / economy).  Shackling stays out on purpose: its -7 Strength only lasts
+    # one enemy turn and the recorded fix reserves it for boss-length fights, so letting the rollout
+    # spend it re-opens that decision.  LuckyTonic (one BufferPower charge) stays out until its value in
+    # the rollout is measured against the incoming-damage branches that currently use it.
+    POTION_POTION_OF_BINDING, POTION_CURE_ALL, POTION_CLARITY, POTION_RADIANT_TINCTURE,
 }
 
 
