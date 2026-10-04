@@ -5763,3 +5763,19 @@ QUEEN 戦で STRIKE の与ダメージが 1 だけ game のほうが大きい gr
 （stacks 依存の式は明らかに悪い）。残る 370 件は私の base 抽出が悪いため方で、Twin Strike の multi-hit
 （`Damage` が hit あたりではない）や、`Damage` が runtime に書き換わった float（7.5、10.5 など）を
 そのまま使ったケースを含む。丸めは触らない。
+
+### Crimson Mantle 修正の panel：+5 胜（この session で最大のプラス）
+
+`data/mantle_ab.sh`（arm = HEAD、control = `.wt-ctrl-mantle` = `b46e5d9`、差は commit `ad3fa1a` だけ、
+dll の md5 一致を確認）。seed は Crimson Mantle を実際に打って維持した観測が最も多い fresh seed3本。
+
+| seed | control | arm | 差分 | mantle 観測（arm / control） | trace 分岐 |
+|---|---:|---:|---:|---|---|
+| Z6MK8PGN4S | 14勝 | 14勝 | +0 | 311 / 334 | あり（404 / 427 record） |
+| K71SQ5B0Q2 | 9勝 | 14勝 | **+5** | 413 / 231 | あり（508 / 298 record） |
+| EH8UMY96NC | 12勝 | 15勝 | **+3** | 250 / 397 record | あり |
+| 合計 | **35勝** | **43勝** | **+5** | | 3本すべて分岐 |
+
+3本とも trace が分岐し、両 arm が mantle を維持している（= 修正が実際に効いている）。offline で
+563 决定・12 seed 動いた修正が、実走でも胜数を動かした。**この session で最も明確なプラス測定**
+（従前のプラスは upgrade 修正の +6/3 seed）。Act 3 踏破は今回も 3本とも未達。
