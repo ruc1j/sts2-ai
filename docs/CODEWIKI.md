@@ -5146,3 +5146,29 @@ game を止めて `build_official_mod.ps1` で dll を作り直し、短い run 
 出ることを確認する。それまで combat.py / official_agent.py は触らない（panel が走っているためでもあり、
 観測チャネルの話なので model 側をいじっても取り違える）。なお `+3` 系の group（Strike 3,509 record）は
 `RELIC.STRIKE_DUMMY`（Strike に +3、model 済み）で説明がつくので、付与の証拠として使えない。
+
+### upgrade 値修正の A/B panel：新 3 seed で +1/+2/+3（合计 +6）（2026-10-04）
+
+`data/upgrade_ab.sh`。arm = HEAD（`a94a4dc` の upgrade 値修正込み）、control = 修正直前の `bef34e7` の
+worktree `.wt-ctrl-bef34e7`（2つの tree はその1コミット分だけ違う）。seed は replay で决定变化の多かった
+M5W9C3T7LQ・D1W9Y3B7FC・C9RH5TXB3L（いずれも過去の panel で使っていない）。
+
+| seed | control | arm | delta | 最初の分岐 |
+|---|---:|---:|---:|---|
+| `M5W9C3T7LQ` | 12勝1敗 | **13勝1敗** | +1 | seq 109 control=Evil Eye / arm=end_turn |
+| `D1W9Y3B7FC` | 17勝1敗 | **19勝1敗** | +2 | seq 106 control=Thunderclap / arm=Iron Wave |
+| `C9RH5TXB3L` | 12勝1敗 | **15勝1敗** | +3 | seq 198 control=Defend / arm=Strike |
+| 合計 | 41勝 | **47勝** | **+6** | |
+
+**3 seed すべてで arm が勝ち、胜数が上がった**（この repo で忠実度修正が run レベルで全 seed 正に振れた
+のは初めて）。最初の分岐は3件とも rollout の札選びで、D1W9Y3B7FC の arm が Iron Wave を選ぶ件は
+upgrade 済み Iron Wave が 5→7 になったことと直接つながっている。**Act 3 を踏破した run は両腕とも 0 件のまま**。
+
+### 測定事故：control の1本が game の halt で 1勝扱いになった
+
+`upgrade_ctrl_b1 M5W9C3T7LQ` は Act 1 F3 の SLIMES_WEAK で combat 解決中に halt し、bridge の
+observation/action ファイルが 10:40 から更新されないまま 30 分 timeout で kill された（agent は生存、
+`agent.err` は空、最後の action は `target_id=2` でその敵の `combat_id` は 2＝行動自体は妥当）。
+RESULT 行には `wins=1 exit=1` と出てしまい、そのまま読むと delta +12 の誤計測になる。同じ seed の
+control を `upgrade_ctrl_b2` で走り直すと 12勝1敗で完走したので **halt は再現しない一時的なもの**として
+扱う。教訓：RESULT 行は `exit=1` と agent record 数（完走なら普通数千行）を確認してから使う。
