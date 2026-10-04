@@ -6244,3 +6244,42 @@ census で確認）。`THE_INSATIABLE` 戦で `CARD.FEED` を玩んだ瞬間 pla
 未解決のまま：FEED は Attack command 1回で MaxHp +3 を得るだけ（自ダメージ無し）、THE_INSATIABLE の C#
 に play 起因の damage hook は無く、候補にした relic（PENDULUM・PLANISPHERE・STONE_HUMIDIFIER・
 TEA_OF_DISCOURTESY・ODDLY_SMOOTH_STONE・GREMLIN_HORN）にも play 時の damage hook は無い。
+
+## 未解決 gap の記録: Attack を玩んだ瞬間 player がちょうど 2 減る group（同ターン transition だけ、551 件）
+
+boss 戦 audit の `CARD.FEED player_hp game-2`（35 件）を辿った过程中に、もっと広い group だと分かった。
+全 corpus の play 决定を model と比べ、**player HP だけ model より game が少ない** transition を数えた
+（`prev.turn == nxt.turn` を必須にした同ターン比較のみ、enemy turn の混入を除外した）。
+
+- 該当 551 件のうち約 394 件が **ちょうど -2**：`CARD.FEED` 245、`CARD.STRIKE_IRONCLAD` 76、
+  `CARD.POMMEL_STRIKE` 28、`CARD.PERFECTED_STRIKE` 27、`CARD.IRON_WAVE` 8、`CARD.ANGER` 6、`CARD.BYRD_SWOOP` 4
+  （Attack ばかりで Skill が無い）。同じ play で敵側も game の方が model より多く削られている
+  （例 MYTE 戦: game 13 / model 9）。
+- 敵別: `THE_INSATIABLE` 56、`LOUSE_PROGENITOR` 41、`FUZZY_WURM_CRAWLER＋SHRINKER_BEETLE` 34（これは +3 で逆向き、別問題）、
+  `MYTE×2` 33、`QUEEN＋TORCH_HEAD_AMALGAM` 31、`LIVING_SHIELD＋TURRET_OPERATOR` 30、`SLIMED_BERSERKER` 29、`ENTOMANCER` 29。
+  複数の seed にまたがる（サンプルを_dump_した 2 本 M5PC8TQ3BN と H2LV6ZJ4XW は確認済み）。
+- **探りのミスを1つ直した**: 最初に「1 seed だけの現象」と書いたのは probe の seed 抽出が
+  `name.rsplit('_',1)[-1]` で `agent.jsonl` を返していたため（正しい抽出では 69 seed の group に化けた）。
+  件数・seed 数を report に使う前に抽出式を確認する。
+
+**既に棄却したもの（同じ group を追う人を止めるために書く）**: `CARD.FEED` に自ダメージは無い（`Feed.cs` は
+Attack command 1回 + Fatal .kill で MaxHp +3 のみ）。`THE_INSATIABLE.LiquifyMove` は `SandpitPower 4` と
+`CARD.FRANTIC_ESCAPE` 6枚を pile に足すだけで damage は無い。`MONSTER.MYTE` の C# hook は hand に `Toxic` を
+2枚足して自分の Strength を上げるだけ。`ImbalancedPower` は `AfterDamageGiven` で Stun、`PersonalHivePower` は
+status card を draw pile に足すだけ。該当 run の relic（BURNING_BLOOD・BYRDPIP・HORN_CLEAT・LANTERN・
+PAELS_WING・SMALL_CAPSULE・CENTENNIAL_PUZZLE・PENDULUM・PLANISPHERE・STONE_HUMIDIFIER・TEA_OF_DISCOURTESY・
+TOASTY_MITTENS・VAMBRACE・GORGET・MEAT_CLEAVER・FORGOTTEN_SOUL・GREMLIN_HORN・ODDLY_SMOOTH_STONE）に
+play 時の damage hook は無い。status card も Toxic（ターン終わりに hand にあれば 5 ダメージ＝model 済み）、
+Slimed（1枚引く）、Wound / Dazed（hook 無し）、Normality（autoplay 上限＝model 済み）、Unmovable
+（`UnmovablePower`＝model 済み）で該当しない。
+
+**audit の妥当性について確認できたこと**: corpus 内の play 决定 transition（113,750 件）を数えたところ、
+**カード play から次の记录へターンが進むことが 1 件も無い**（`prev.turn != nxt.turn` が 0 件）。だから
+1 action ずつの比較に enemy turn が混入することはない。同時に、observation の card `vars` の `Damage` は
+**実行時に補正済みの値**だと konkret に確認した（Strike で `Damage=4.2` が 5,869 件 = 6 × 0.7（Shrink）、
+`upgrade=False` なのに `Damage=9` が 69 seed で 10,778 件）。この値を「その card が出すダメージ」として
+そのまま使う設計が機能しない理由でもある（以前 observed-`Damage` 規則を棄却した根拠と一致）。
+
+次の一手: 1 seed の FEED -2 を trace の前後ごと辿る。同じ段階で player に新しい power が載っているか、
+monster JSON の `effects` に React reactive 効果が export されているかをみる（export されていない monster
+側 hook なら、bridge 側で取るか model に effect として書く判断になる）。
