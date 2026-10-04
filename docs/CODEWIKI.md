@@ -6848,3 +6848,30 @@ deck に入れるだけ ✓（`AfterObtained` ✓）✓ combat 側の gap の説
 `RELIC.PLANISPHERE` は Unknown room 進入で heal 5 ✓ combat 外 ✓ model 未処理 ✓（map 側の話 ✓）✓
 
 exhaust panel は arm 2 seed まで完了 ✓ control は未完了 ✓ 待機は background job `bash-703` ✓
+
+## Round 38: Power 札はどの pile にも入らないので play カウンタから完全に落ちていた（scratch で修正 ✓ 未適用）
+
+`MONSTER.BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game+1`（3 件 ✓）を game 側の damage から逆算した ✓
+seed AM8C6YXHSG の turn 1 は `CARD.INFLAME` → `CARD.STRIKE_IRONCLAD`（upgrade 1 ✓ base 11 ✓）→
+`CARD.STRIKE_IRONCLAD`（base 8 ✓）で ✓ game の damage は 12 と 9 ✓ つまり Slow の係数は 1.1 と 1.2 ✓
+**SlowAmount は 1 と 2** ✓ 一方 agent の cards_played は 0 と 1 ✓ **1 枚ずつ足りない** ✓
+turn 3 の seq 106 は game の SlowAmount 1 ✓ .agent は 2 ✓（こちらは多い ✓ 別メカニズム ✓ 未特定 ✓）
+
+足りない側の原因が特定できた ✓ **`CARD.INFLAME` は `base(1, CardType.Power)`** ✓ で ✓
+`CardModel.GetResultPileTypeForCardPlay` は `IsDupe || Type == CardType.Power` の時 **`PileType.None`** を
+返す ✓ つまり play した札が **hand から消えてどの pile にも現れない** ✓（trace でも hand 5→4 ✓
+discard 0→0 ✓ exhaust 0→0 ✓）✓ だから pile 差分では復元できない ✓ And `_advance_play_counters` の明示的な
+計上は `name in ATTACKS or name in SKILLS` の時だけ ✓ `Inflame` は ATTACKS でも SKILLS でも無い ✓
+→ **Power 札は 1 枚もカウンタに入らない** ✓ `SlowPower.AfterCardPlayed` は card の種類を問わず
+`SlowAmount++` ✓ なので Slow の ramp が Power 1 枚ごとに 1 足りなくなる ✓
+
+直し（`.wt-proto4` ✓ patch は `/tmp/power_credit.patch` ✓）: `_advance_play_counters` で **選んだ card は
+Attack/Skill かどうかに関係なく `_TURN_OWN_PLAYS` に入れる** ✓ attacks/skills は集合から導出するので
+LetterOpener・Kusarigama・Shuriken などは影響せず ✓ `cards`（Slow の ramp が読む値 ✓）だけ増える ✓
+regression test を追加 ✓ `test_power_card_plays_reach_the_play_counters`（Inflame → cards 1 ✓ attacks 0 ✓
+skills 0 ✓ → Strike → cards 2 ✓）✓ scratch の suite は **777 件 green** ✓
+
+**HEAD には未適用** ✓ exhaust panel の arm 3 seed 目が走行中だから ✓（main checkout を実行中の agent が読む ✓）✓
+panel 完了後 ✓（1）Ashen Strike・Second Wind の修正（`/tmp/ashen_secondwind.patch` ✓ `.wt-proto3` ✓）✓
+（2）Power 計上（`/tmp/power_credit.patch` ✓ `.wt-proto4` ✓）の順で適用し ✓ 毎回 suite と
+`data/boss_gap_list.py` と attribution を測る ✓
