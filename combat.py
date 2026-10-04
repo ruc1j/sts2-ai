@@ -1474,7 +1474,14 @@ def _decimillipede_teammates_dead(enemies: tuple[Enemy, ...], index: int) -> boo
 
 
 def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> Combat:
-    enemy = replace(combat.enemies[index], block=0)
+    # Hook.ShouldClearBlock consults every ShouldClearBlock override on the creature, and
+    # BurrowedPower / BlurPower answer false for their owner: a burrowed Tunneler keeps whatever block
+    # the player left it with, so the generic "block is gone at your turn" clear must not run on it.
+    # Observed on act3_pop2_R8V2H6N4ZB seq 207: the Tunneler went 20 block -> 2 block across a turn
+    # while burrowed (1,338 observations hold BURROWED_POWER).  Its AfterRemoved side already zeroes
+    # the block when the burrow breaks (see _damage_enemy).
+    burrowed = _power(combat.enemies[index].powers, "BurrowedPower") or _power(combat.enemies[index].powers, "BlurPower")
+    enemy = combat.enemies[index] if burrowed else replace(combat.enemies[index], block=0)
     # CreatureCmd.Stun (from ImbalancedPower.AfterDamageGiven, see the attack branch below) skips the
     # owner's next turn without advancing its state machine, so the skip is carried as a synthetic
     # power and consumed here.

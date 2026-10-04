@@ -853,6 +853,17 @@ class CombatTest(unittest.TestCase):
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
         self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
 
+    def test_burrowed_enemy_keeps_its_block_across_turns(self) -> None:
+        # Hook.ShouldClearBlock asks every ShouldClearBlock override, and BurrowedPower (like BlurPower)
+        # returns false for its owner: the burrowed Tunneler's remaining block is not wiped at its turn
+        # boundary.  act3_pop2_R8V2H6N4ZB seq 207 shows 20 block -> 2 block across one burrowed turn.
+        burrowed = Enemy("MONSTER.DUMMY", 54, "IDLE_MOVE", (), block=20, powers=(("BurrowedPower", 1),))
+        after = step(Combat(60, (), (), (), (burrowed,)), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].block, 20)
+        plain = Enemy("MONSTER.DUMMY", 54, "IDLE_MOVE", (), block=20)
+        after = step(Combat(60, (), (), (), (plain,)), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].block, 0)
+
     def test_flame_barrier_reflects_once_per_hit_of_a_multi_hit_attack(self) -> None:
         # FlameBarrierPower.AfterDamageReceived fires on every damage instance, not once per attack:
         # `await CreatureCmd.Damage(dealer, Amount, Unpowered)` inside the hook.  The recorded
