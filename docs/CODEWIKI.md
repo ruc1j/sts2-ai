@@ -4980,3 +4980,43 @@ damage の丸め・説明できない被害）は**この round で枯れた**�
 探索面が尽きた側の話なので、次は (1) 忠実度修正を積んだ系列（`d67896f`→HEAD）を新しい複数 seed で
 まとめて panel にして Act 3 到達度を測る、(2) QUEEN 戦で agent がどのターンにどれだけ火力を捨てているかを
 observation から分解する、に進む。
+
+### 忠実度 chain の累计 panel（2026-10-04、`data/fidelity_chain_ab.sh`）
+
+個々に測定済みの忠実度修正（Rampart・Axebot Stock 再生成・ThievingHopper 奪取・敵側 PlatingPower・
+Decimillipede の move 本体・player debuff tick）を**まとめて** Act 3 到達に効くかを測った。
+arm = HEAD、control = chain の起点 `d67896f` の worktree。seed はどの panel にも出ていない新しい3件
+（T5R8K2N9QP・GYIJSAA6W7・Q6N3V8K2MT）。
+
+| seed | control | arm | delta |
+|---|---:|---:|---:|
+| `T5R8K2N9QP` | 21勝1敗 | 20勝1敗 | −1 |
+| `GYIJSAA6W7` | 14勝1敗 | **17勝1敗** | +3 |
+| `Q6N3V8K2MT` | 12勝1敗 | 8勝1敗 | −4 |
+| 合計 | 47勝 | 45勝 | **−2** |
+
+**Act 3 を踏破した run は両腕とも 0 件**。arm 側は debuff・Plating・Swipe の出現 record 数が control より
+少ない（T5 で Vulnerable 230/311、Plating 66/98、Swipe 6/19）＝**arm は高い戦闘を避けるループに
+なっている**が、胜数は増えていない。忠実度をまとめて上げても 3 seed では胜数が動かない（符号も割れる）
+という、この repo で 4 回目になる同じ結果がまた出た。
+
+### QUEEN 戦の火力浪费は無かった（2026-10-04）
+
+「end_turn 時に使える攻撃札が hand に残っている」case を数えると QUEEN 戦で 39+31+17+11 件出たが、
+実例（`act3_verify_head_D6A1F8C3E5` seq 435-439）を見ると **CHAINS_OF_BINDING_POWER 3** で hand の
+3 枚が Bound（=`CardCmd.AfflictAndPreview<Bound>`）になり、game 自身の `legal_actions` から card 行動が
+消えていた。model は ChainsOfBinding/Bound を実装済み（combat.py 307・828 付近・1974 付近、
+POWER_NAMES 251 付近）で、浪费ではない。
+
+QUEEN 戦の構造はこうだ：`YOU_ARE_MINE` が Frail 99・Weak 99・Vulnerable 99 を player にかけて恒久化し
+（実走では turn 4 で FRAIL 98 / WEAK 98 / VULNERABLE 98）、player の攻撃は 0.75 倍・block は 0.75 倍・
+受けるダメージは 1.5 倍のまま QUEEN 400 + TORCH_HEAD 199 を削らされる。中央値 8 ターン・毎ターン 33.8
+ダメージでは構造的に足りず、最良の試みでも 14-23 HP 残る。
+
+### ついでに前 round の誤測定の理由が分かった：observation の card `vars` は倍適用後の値
+
+同じ record で `CARD.STRIKE_IRONCLAD` の `vars` Damage は **12.375 → 13.125**（player の Weak 98・
+Strength 1 の変化に応じて分数で動く）。つまり mod が出す card var は**修正適用後**の値で、
+前 round の「player 側の Weak の丸め」測定は base + Strength を作る前提が壊れていた
+（floor 一致 98/440 と悪く見えた理由）。**relic の影響を受けない敵側の測定
+（37,934/1,591/1,149 sample で floor 99% 一致）だけが有効**という扱いで確定する。
