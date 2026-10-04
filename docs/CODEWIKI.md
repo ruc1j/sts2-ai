@@ -5779,3 +5779,35 @@ dll の md5 一致を確認）。seed は Crimson Mantle を実際に打って�
 3本とも trace が分岐し、両 arm が mantle を維持している（= 修正が実際に効いている）。offline で
 563 决定・12 seed 動いた修正が、実走でも胜数を動かした。**この session で最も明確なプラス測定**
 （従前のプラスは upgrade 修正の +6/3 seed）。Act 3 踏破は今回も 3本とも未達。
+
+### 未解決として残す：QUEEN 戦 end_turn で boss が毎回 1 減る（174 件）
+
+boss 戦 audit の残り最上位 `QUEEN enemy_hp end_turn`（190 件中 **174 件がちょうど -1**）を追った。
+特徴ははっきりしている。そのターンはカードも potion も出しておらず、QUEEN・amalgam とも block は 0
+（model も game も 0）、game 側だけ boss の HP が 1 少ない。しかも**同一戦闘の複数ターンで繰り返し**出る
+（H2LV6ZJ4XW の seq 555/561/577/579/583 で turn1・2・5・6・7 すべて -1）ので、戦闘開始前の1ダメージの
+持ち越しではない。
+
+デコンパイルで確認して**棄却した仮説**（次回同じ手を再走させないために書く）：
+
+- `CentennialPuzzle` は「1戦闘に1度、ダメージを受けた時に3枚引く」relic で、model の実装
+  （`_draw(draw, discard, 3, rng)`・1回だけ）と一致していた。ダメージではない。
+- `Bound` は `ChainsOfBindingPower.BeforeSideTurnEnd` が `ClearAffliction` するだけで** Exhaust しない**。
+  model が hand から discard へ移す挙動は正しい。だから「Bound が turn end に Exhaust して
+  `ForgottenSoul`（Exhaust ごとにランダムな敵へ 1 の未強化ダメージ）が撃つ」という筋も無い。
+- `RupturePower` は「自分が play したカードから自分がダメージを受けたら Strength を得る」で、
+  turn end に敵へダメージを与える効果ではない。
+- `PlatingPower`（block 関連のみ）・`RELIC.GORGET`（戦闘開始で Plating 4 を付与）・
+  `RELIC.MEAT_CLEAVER`（_rest の Cook 选项を増やすだけで戦闘効果なし）・
+  `RELIC.SPIKED_GAUNTLETS`（+1 最大エネルギー、代わりに Power コスト増加）はいずれも敵へダメージを与えない。
+- QUEEN・TORCH_HEAD_AMALGAM の export された state machine に self-damage は無い
+  （`DamageCmd.Attack` は ExecutionDamage / OffWithYourHeadDamage / SoulBeamDamage / Tackle* の 4 種だけ）。
+- 「攻撃を play しなかったターン结束に Strength ぶん全体へダメージ」系の relic
+  （`RELIC.BERSERKER_GAUNTLET`）はこの 190 件の**すべてで未装備**だった。
+
+観測の最初のレコードで QUEEN の HP は 400（79件）・399（12件）・397（17件）・396（4件）、
+amalgam は 199（69件）・198（22件）・196（17件）・195（4件）とばらつく。戦闘開始前に 1 入る説も考えたが、
+rollout は観測の現在 HP から状態を組み直すため開始前の差は予測に使われず、説明にならない。
+
+次の攻め先として有望なのは、同じ群に出る **`delta=+6`（model が多く削る）で THORNS_POWER 3 を持つ 3 件**
+だ。model は Thorns を hit ごとに適用し、game が turn 単位か hit 単位で違う可能性が残っている。
