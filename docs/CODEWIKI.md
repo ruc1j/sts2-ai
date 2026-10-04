@@ -5563,3 +5563,62 @@ shop で買わない）。つまり** purchase も rollout も Gigantification �
   ClarityPower 3）、`RADIANT_TINCTURE` 36（+1 エネルギー・RadiancePower 3）、`SNECKO_OIL` 34（7 枚引く）
   ＝ **1,224 件**。このうち combat 中に使われた 912 件は `decision_source=direct_potion`、つまり
   heuristic の尻尾で使われており、rollout は価格を付けていない。
+
+## Round 14: 6種の potion を simulator に実装し、gate 拡張の panel を測る（2026-10-04）
+
+### 実装（commit cc04e3d、761 tests green）
+
+前回 census で数えた未実装 potion のうち、`OnUse` が単一コマンドで書ける6種を入れた。各行が game 側の
+実コマンドで、**記録された使用 352 件（比較できた窓）はすべて `target_id: None`** なので6種とも無対象として
+legal_actions に出した。
+
+| potion | 使用回数 | game の効果 | model での実装 |
+|---|---:|---|---|
+| `POTION_OF_BINDING` | 124（窓で92） | `Apply<WeakPower>(1)` + `Apply<VulnerablePower>(1)` を HittableEnemies 全体 | 全敵に Weak 1・Vulnerable 1 |
+| `LUCKY_TONIC` | 96（72） | `Apply<BufferPower>(1)` | BufferPower 1 |
+| `CURE_ALL` | 67（65） | `PlayerCmd.GainEnergy(1)` + `CardPileCmd.Draw(2)` | +1 エネルギー・2 枚ドロー |
+| `SHACKLING_POTION` | 69（61） | `Apply<ShacklingPotionPower>(7)` を全敵（TemporaryStrengthPower の派生で `IsPositive => false`） | 全敵に ShacklingPotionPower 7 + StrengthPower -7 |
+| `CLARITY` | 57（36） | 1 枚ドロー + `Apply<ClarityPower>(3)` | 1 枚ドロー + ClarityPower 3 |
+| `RADIANT_TINCTURE` | 36（26） | `GainEnergy(1)` + `Apply<RadiancePower>(3)` | +1 エネルギー + RadiancePower 3 |
+
+Shackling は trace で挙動を確定させた。使用直後の敵 61 件すべてが `SHACKLING_POTION_POWER 7` と
+`STRENGTH_POWER -7` を並べて持ちはじめ、export された意図ダメージは 3 → 0 に落ちる（`raw_damage` は 3 のまま。
+`damage` の方が修正後の実効値で 0 にクリップされる）。`TemporaryStrengthPower.AfterSideTurnEnd` はその
+生き物のターン结束时に Strength を戻すので、`_enemy_turn` に復元処理を入れ、**1 ターンだけ鈍る**ことを
+テストで固定した（攻撃 10 の dummy に対して player HP が 50 → 47、つまり 10-7 が着弾）。
+
+### gate 拡張（commit e0c416d）と panel
+
+simulator が knows なっても、`ROLLOUT_POTION_IDS` に無い potion は rollout の候補に入らない。実際に
+この6種の使用 352 件を両ツリーで replay すると**再現できた件数は 0 件**で、理由は gate 側にあった。
+そこで **choose_potion が普段の分岐で分類している4種**（Binding＝debuffs、CureAll＝healing、
+Clarity・RadiantTincture＝economy）だけを gate に足した。offline の决定母数は
+**5,331 本 replay して 64 决定が変化・10 seed**。
+
+Shackling と LuckyTonic は意図的に入れていない。Shackling は -7 が1ターン分しか持たないため、
+「boss 戦まで温存する」という記録済みの修正（sim13 が通常戦闘で浪費した）を rollout が壊す可能性がある。
+LuckyTonic は BufferPower 1 チャージの価値を、現在それを使っている受けるダメージ系の分岐と比較してから
+入れる。
+
+panel batch 1（`data/gate_ab.sh`、arm = HEAD、control = `.wt-ctrl-pot2` = `3690e55`＝simulator 実装まで、
+gate 拡張だけの差分、dll の md5 一致を確認）：
+
+| seed | control | arm |
+|---|---:|---:|
+| 73P61QQZNU | 13勝 | 13勝 |
+| EAIF2UUVCK | 14勝 | 14勝 |
+| K7M2QX9BTR | 13勝 | **12勝** |
+| 合計 | **40勝** | **39勝（-1）** |
+
+3 seed で -1 は単発の差であり判定が弱いので、同じ seed 群の続きとして次の3 seed
+（P3V8N5K2RX 13 件・F9P4X7N2LC 8 件・R9TB3LKD6M 8 件）で **batch 2 を測定中**（`data/gate_ab2.sh`）。
+ここで決着がつくまで gate 拡張は HEAD に入れておき、結果を見て採用か取り下げを決める。
+
+### attribution に出た KeyError は古い corpus の形の問題
+
+potion 保持 records の attribution で `errors: {'KeyError': 312}` が出た。直接 `rollout_choice` を
+17,783 本 replay して調べると、キーは `'slot'` で、`official_agent.py` 2815 行の `observed["slot"]`
+（括弧アクセス）が原因。`"slot"` を持つ trace は 572 本中 567 本で、欠けている5本は
+`candidate_rewardfix*`（`T3XQ7WM2VP` の一連）だけ。**live の bridge は slot を出力している**ので
+実走には影響しない。offline replay の母数を扱う時の注意として記録し、`.get("slot")` へ直すかは今後の
+robustness 項目として置く。
