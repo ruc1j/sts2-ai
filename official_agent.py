@@ -476,8 +476,15 @@ def _advance_play_counters(observation: dict) -> None:
         _TURN_SEEN_HAND[name] = max(_TURN_SEEN_HAND[name], amount)
     if action is not None and action.get("type") == "card":
         name = CARD_NAMES.get(action.get("card_id"), action.get("card_id"))
-        if name in ATTACKS or name in SKILLS:
-            _TURN_OWN_PLAYS[name] += 1
+        # Credit every card we chose, including the ones that are neither Attack nor Skill.  A Power card
+        # (CARD.INFLAME is base(1, CardType.Power)) leaves the hand and lands in no pile at all -
+        # CardModel.GetResultPileTypeForCardPlay returns PileType.None for Power cards - so the pile
+        # difference cannot recover it, and this credit is the only way it reaches the counters.  SlowPower
+        # raises SlowAmount in AfterCardPlayed for every card played, so leaving Powers out made the
+        # SlowPower ramp short by one per Power: measured on seed AM8C6YXHSG turn 1, the game had
+        # SlowAmount 1 at the first Strike (CARD.INFLAME was the card before it) and 2 at the second,
+        # while our counters read 0 and 1.
+        _TURN_OWN_PLAYS[name] += 1
         _LAST_PLAY_MOVES_OTHER_CARDS = name in MOVES_OTHER_CARDS_OUT_OF_HAND
     unexplained = (piles - _TURN_PILE_START) - _TURN_OWN_PLAYS - _TURN_EFFECT_DEPARTURES
     # A departure we did not choose is normally a play we could not see: the game autoplays cards from

@@ -1,4 +1,4 @@
-﻿import json
+import json
 import os
 import random
 import tempfile
@@ -11,6 +11,36 @@ from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND,
 
 
 class OfficialAgentTest(unittest.TestCase):
+    def test_power_card_plays_reach_the_play_counters(self) -> None:
+        # CARD.INFLAME is base(1, CardType.Power): CardModel.GetResultPileTypeForCardPlay returns
+        # PileType.None for Power cards, so it leaves the hand and lands in no pile at all.  Only the
+        # credited action can put it in the counters, and SlowPower raises SlowAmount in AfterCardPlayed
+        # for every card played, so Powers missing from the counters shorten the SlowPower ramp by one
+        # each (seed AM8C6YXHSG turn 1: the game had SlowAmount 1 at the first Strike because Inflame
+        # came before it, and 2 at the second, while our counters read 0 and 1).
+        official_agent._reset_play_counters()
+        first = {
+            "phase": "combat", "turn": 1, "seq": 1,
+            "enemies": [{"combat_id": 1, "id": "MONSTER.BYGONE_EFFIGY", "hp": 100, "block": 0, "powers": []}],
+            "hand": [{"id": "CARD.INFLAME"}, {"id": "CARD.STRIKE_IRONCLAD"}],
+            "draw_pile": [{"id": "CARD.STRIKE_IRONCLAD"}],
+            "discard_pile": [], "exhaust_pile": [],
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "relics": [], "powers": []},
+        }
+        official_agent._PENDING_ACTION = None
+        official_agent._advance_play_counters(first)
+        official_agent._PENDING_ACTION = {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 0}
+        official_agent._advance_play_counters(dict(first, seq=2, hand=[{"id": "CARD.STRIKE_IRONCLAD"}]))
+        self.assertEqual(
+            (official_agent._TURN_PLAYS["cards"], official_agent._TURN_PLAYS["attacks"], official_agent._TURN_PLAYS["skills"]),
+            (1, 0, 0),
+        )
+        official_agent._PENDING_ACTION = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0}
+        official_agent._advance_play_counters(dict(first, seq=3, hand=[], discard_pile=[{"id": "CARD.STRIKE_IRONCLAD"}]))
+        self.assertEqual(official_agent._TURN_PLAYS["cards"], 2)
+        official_agent._reset_play_counters()
+
+
     def test_maps_ceremonial_beast_plow_power_for_rollouts(self) -> None:
         self.assertEqual(POWER_NAMES["POWER.PLOW_POWER"], "PlowPower")
 
