@@ -6428,3 +6428,41 @@ SlowAmount = 1 の 1.1 倍 ✓ `SlowPower.AfterCardPlayed` は +1 するだけ�
 `AfterSideTurnStart` で確認済み ✓ なので「その card 自身の damage が AfterCardPlayed より後に解決される」
 疑いが残るが ✓ 一様に +1 すると4件が逆向きに壊れる ✓ 原因は per-case の counter 再現性にある可能性が
 高い（観測される pile に載らない play がある ✓）→ HEAD は `-1` を維持し ✓ これは open のまま ✓
+
+## Round 26: Fairy in a Bottle（死防止）など potion 4種を model に入れたが、記録上は决定を変えなかった
+
+`data/boss_gap_list.py` の内訳を出した ✓ 445 件の不一致は **317 group** に散らばっていて、**243 group は
+1 件だけ** ✓ 2 件以上の group が占めるのは 45.4% ✓ つまり上位 group を潰した残りは replay のRnd/引き順の
+ばらつきで、1 件 group を追い回す価値は無い ✓
+
+potion を確認した: **combat.py は 41 種類の potion id のうち 27 種類しか知らず** ✓ corpus に出てくる 14 種が
+rollout で再現できなかった ✓ decompile で数値を確認できる順に 4 種 implementations を追加した（commit
+`17e5367` ✓ 774 tests green ✓）:
+
+- **`POTION.FAIRY_IN_A_BOTTLE`**（保持観測 2,665 件 / 9 seed ✓）: `PotionUsage.Automatic` ✓ action として
+  出てこない ✓ `CreatureCmd.Kill` が HP を 0 にしたあと `Hook.ShouldDie` がこの potion に死を阻止させ ✓
+  `AfterPreventingDeath` が `Math.Max(MaxHp * 0.3m, 1m)` を回復する ✓ つまり **一度だけ死ぬのを防ぐ** ✓
+  model にも agent の shop 評価（`SHOP_POTION_SCORES` で 9 ✓ Lizard Tail ともう一つの保険 ✓）にも入っていなかった ✓
+- `POTION.FOUL_POTION`: combat 中は `TargetType.AllEnemies` ✓ `DamageVar(12, Unpowered)` を combat 中の
+  全 creature（pet 除く、**owner 含む** ✓）に配る ✓ 出撃時は `GoldVar(100)` ✓
+- `POTION.SNECKO_OIL`: `CardPileCmd.Draw(CardsVar 7)` ✓ ただし引いた札の energy コストを 0-3 にランダム化
+   する側は model 化していない ✓ agent 側の「緊急時に捨てるな」判断はそのまま ✓
+- `POTION.STABLE_SERUM`: `Apply<RetainHandPower>(RepeatVar 2)` ✓ 手札が次のターンまで残る ✓
+
+**code を書いていて分かった構造**: 敵の攻撃による player HP は `_enemy_turn` が **ローカル変数で追跡して
+`replace` で書き戻す** ✓ `_apply_player_damage` を通らない ✓ なので「死を防ぐ」系の効果は両方に配る必要が
+ある（Lizard Tail は既に両方に入っていた ✓ Fairy は helper `_survive_with_fairy_in_a_bottle` にまとめて
+両経路から呼んだ ✓）。1 か所だけに入れてもテストが敵の攻撃経路で失敗して捕まった ✓
+
+決定母数（control は 1 commit 前の tree `.wt-ctrl-fairy` = `6611237` ✓ 同じ mod binary ✓）:
+
+| selector | 比較した観測 | 决定の変化 | 変化の seed |
+|---|---:|---:|---:|
+| `POTION:POTION.FAIRY_IN_A_BOTTLE` | 2,665 | **0** | 0 |
+| `POTION:POTION.FOUL_POTION,SNECKO_OIL,STABLE_SERUM` | 457 | **0** | 0 |
+| shop 観測の `choose_shop` を HEAD と control で比較 | 4,626 | **0** | 0 |
+
+記録された run で **Fairy が消費された観測は 0 件** ✓（持っていた 9 seed のいずれでも致死の一撃を食らって
+いない ✓）ので、この変更は今の corpus の决定を 1 つも変えない ✓ **决定変化 0 件の変更には panel を
+行わない** ✓ の判断で panel は省略 ✓ 忠実度の実装として HEAD に残す ✓ 価値は未来的で、Fairy を得る run
+では rollout が「そのターンで死ぬ」を正しく織り込み、shop で優先される ✓
