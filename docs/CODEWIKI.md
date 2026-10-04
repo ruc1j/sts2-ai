@@ -5888,3 +5888,26 @@ panel スクリプトの「game が走っていたら refuse」ガードが、**
 command line に game の path 文字列が含まれている**だけでヒットして誤 refuse した
 （`ps` には game が出ていない）。ガード自体は正しいので、起動コマンド側に path 文字列を
 置かない（別コマンドで path を確認してから launch する）で回避する。
+
+### Flame Barrier 修正の panel：**-9 胜**（44→35、実効ある 2 seed では 34→25）
+
+`data/flamebarrier_ab.sh`（arm = HEAD、control = `.wt-ctrl-fb` = `7f276af`、policy code の差は commit
+`f1a9a10` だけ）。
+
+| seed | control | arm | 差分 | FlameBarrier 観測（arm / control） | trace 分岐 |
+|---|---:|---:|---:|---|---|
+| C7N4V9P2RX | 14勝 | 10勝 | **-4** | 231 / 362 | あり（289 / 437 record） |
+| V7K2T9M5RH | 20勝 | 15勝 | **-5** | 283 / 373 | あり（362 / 475 record） |
+| S4QFLNDMB3 | 10勝 | 10勝 | +0 | **0 / 0** | **なし（trace 一致）** |
+
+S4QFLNDMB3 は run が一度も FlameBarrier を使っておらず trace も完全一致なので、この +0 は測定ではない。
+**実効ある 2 seed では 34 勝 → 25 勝（-9）** で、この session で最も大きい panel 上の悪化だった。
+
+修正は HEAD に残す。理由は忠実度の証拠が直接だからだ：game の `FlameBarrierPower.AfterDamageReceived` は
+ダメージインスタンスごとに走り、record 済みの replay 404 件で敵 HP 一致が 60.6% → 91.8%（multi-hit group
+は不一致→一致に反転、single-hit group は不変）に改善した。胜数が下がったのは model の側ではなく
+**policy の側**の説明が残る：反射ダメージを正しく数えた model は multi-hit 持ちの敵に対して
+「こちらが削れる量より向こうが削れる量」を大きく見積もり、search がより攻撃的な順を選ぶ。
+実走の悪化はその過信の帰結として整合的なので、次以降に調べる対象は
+`search_value` が反射ダメージをどこまで信用するか（例えば反射を hit 数で割り増ししたまま放置しない）
+という policy の論点として持ち越す。忠実度修正そのものは revert しない、という session の規則に従う。
