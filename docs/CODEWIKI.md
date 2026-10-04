@@ -7174,3 +7174,25 @@ sweep3.sh bcp1 AM8C6YXHSG` を実行 ✓ 出力 `/tmp/bcp1.log` ✓ 完了印 `/
 
 HEAD には未適用 ✓（`.wt-bridge-counts` は HEAD + bridge/agent 変更 ✓ dll は scratch にビルド済み 235,008 bytes ✓
 sweep は REPO の dll を使う ✓）。適用する前に run で field の実在を確認する ✓
+
+## Round 48: 広い selector の attribution は遅すぎて中止 ✓ 代わりに export された玩札数と推定を比べる probe を用意
+
+`PLAYER:POWER.STRENGTH_POWER` の attribution は 06:49 開始で **25 分たっても出力が空** ✓
+`data/attribution_rampart.py:115-119` は trace ごとに subprocess を 1 個起動する作りで ✓
+build-valid trace 約 600 件 × 2 tree ✓ 1 件 1-3 秒なので **合計 20-60 分**かかる ✓
+これは Ashen/Second Wind（すでに commit 済み ✓ trace の pile 実測で方向が確定している忠実度修正 ✓）の
+决定母数を得るための補助測定で ✓ 価値は低い ✓ 一方 bridge の玩札数の検証 run は価値が高い ✓
+そこで **最初の attribution を kill した** ✓ 決定母数は取れていない ✓（`data/ashen_attr.log` は空のまま ✓）✓
+チェーンの次（`POWER.SLOW_POWER` ✓ 集団が小さい ✓ arm = main ✓ 07:14 開始 ✓）は動く ✓
+**これは main の code を読むので終わるまで main の policy を触らない** ✓
+
+広い selector は高い ✓ 教訓: attribution の selector は測る集団に合わせる ✓
+（`POWER.SLOW_POWER` ✓ `RELIC.X` ✓ `CARD:<ids>` ✓ のように ✓ STRENGTH のようなほぼ全 decision を
+選ぶ selector は使わない ✓）✓
+
+新しい probe `/tmp/plays_diff.py` ✓（構文チェック済み ✓）: build-valid trace を全 record 進め ✓
+前の record の action を credit する順序を再現し ✓（前 round の教訓 ✓）✓ 推定した
+cards / attacks / skills と ✓ record の `plays` 字段を突き合わせて ✓ 一致率と delta の分布を出す ✓
+`PROBE_TREE=<bridge 変更のある repo>` で tree を選べ ✓ 検証 run（`/tmp/bcp1.log` ✓
+trace は `data/bcp1_AM8C6YXHSG_agent.jsonl` ✓）が終わったらこれを走らせる ✓
+**推定がどれだけ頻繁に間違っていたかを直接測る道具** ✓
