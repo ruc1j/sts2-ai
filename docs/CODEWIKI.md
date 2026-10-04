@@ -5207,3 +5207,68 @@ Feed の -5〜-8 群のような「model が弱い」嘘の不一致を生んで
 を game の mods にコピーする。だから bridge のソースを変えて再ビルドしたら、panel の control 用 worktree
 側の dll も同じものに差し替えないと「python だけ違う」比較が「dll も違う」比較になる。
 2026-10-04 に main で再ビルドした dll（231,424 バイト）を `.wt-ctrl-*` 全 7 本へコピーした。）
+
+## Round 8: STUNNED（runtime の stun 状態）が model に無く、気絶中の敵に攻撃させていた（2026-10-04）
+
+### gap の見つけ方
+
+`data/model_match_audit.py`（記録された1手を model で再生して game の次の observation と照合）に
+**card play 後の player HP 照合**を加えた（自己ダメージの欠落を探すため）。結果は
+`card_player_hp` が **828/828 一致**で、札を出す瞬間の自己ダメージ系の欠落は無いと分かった。
+一方 end_turn 照合側に TUNNELER の不一致（model 80 / game 88）が残っていた。
+
+trace を追うと、bridge が敵の現在手として **`move = "STUNNED"`** を報告する case が corpus に
+**1,590 件**（Bowlbug Rock 1,046・Tunneler 431・Thieving Hopper 85・Slumbering Beetle 28、intents は全て `Stun`）
+ある。`STUNNED` は `MonsterModel.stunnedMoveId` で、`Creature.StunInternal` が実行中に作る
+`MoveState("STUNNED", <stun ロジック>, StunIntent)`（FollowUpStateId は既定で stateLog.Last().Id）＝
+**export には絶対に現れない runtime 状態**だった。
+
+combat.py の `official_agent.rollout_choice` は「export に無い move id」を初期状態から引き直す
+（IllusionPower の REVIVE_MOVE 向けに入っていた安全装置）ため、気絶中の敵を初期状態に戻して
+**そのターンに BITE/HEADBUTT を実行させていた**。実測：`STUNNED` の Tunneler に対して model は
+13 ダメージの BITE を織り込み、game は 0 ダメージだった。
+
+### 実装
+
+- `combat.py` に `STUNNED_MOVE` と `_stunned_state(spec)`：その敵の export 内の **StunIntent を持つ状態**
+  （Tunneler/Bowlbug Rock は `DIZZY_MOVE`）を返し、無ければ `intents=[StunIntent]`・`next=initial_state`
+  ・`effects=[]` の合成状態を作る。DIZZY_MOVE は効果ゼロで `next` が実際の再開先
+  （Tunneler → BITE_MOVE、Bowlbug Rock → HEADBUTT_MOVE）で、観測された STUNNED からの再開
+  （Tunneler 382 件・Bowlbug Rock 928 件）と一致する
+- `_move_state` を `_enemy_turn` の厳密 lookup で使い、`_resolve_move` も STUNNED を受け付ける
+- 移動履歴には STUNNED を残さない（game の次の record の history は `BITE,BURROW,BELOW,BELOW,BITE` で
+  気挟まる隙がない）
+- `official_agent.rollout_choice` の「Unknown move → 初期状態」の安全装置は STUNNED を除外
+
+### 検証（同一 record、combat.py だけ違う2ツリー）
+
+`STUNNED` の敵がいる戦闘の end_turn を 437 本 replay した player HP 一致率：
+
+| ツリー | 一致 | 主な残差 |
+|---|---:|---|
+| 修正前（`.wt-ctrl-ba30482`） | **67 / 437 = 15.3%** | Bowlbug Rock -15（HEADBUTT）58 件、Tunneler -13/-9/-8（BITE）109 件 |
+| 修正後（HEAD） | **414 / 437 = 94.7%** | ±1 の丸め 15 件 |
+
+`model_match_audit.py` 全体でも一致 2,095/2,123 = 98.7% → **2,100/2,123 = 98.9%**、
+end_turn の不一致は 7 件 → **2 件**（TUNNELER グループは消えた）。决定母数は
+attribution replay で **Bowlbug Rock の戦闘 5,518 本中 241 决定・45 seed**、
+**Tunneler の戦闘 4,312 本中 52 决定・21 seed**（KeyError 84 / 126 件は両ツリーで replay できなかった
+record の数で、この修正とは無関係の tooling 側の限界）。
+
+テストは `test_enemy_reported_as_stunned_does_nothing_and_resumes_its_opening_move`（test_combat）と
+`test_keeps_the_runtime_stunned_move_instead_of_re_resolving_it`（test_official_agent）を追加して 756 件 green。
+**胜数への影響は未測定**：arm = HEAD、control = `.wt-ctrl-ba30482` の panel を次 round の先頭で走らせる
+（Bowlbug Rock・Tunneler・Thieving Hopper・Slumbering Beetle は Act 2/3 の hive 側なので、Act 3 到達に効く可能性が高い）。
+
+### 同時にとれた別の結論
+
+- 札を出した瞬間の player 側自己ダメージは **828/828 一致**：Offering・Crimson Mantle・Corrupted 付与の
+  self 2 ダメージなどは model 側で正しく織り込まれている（この audit 軸は今回新設）
+- monster の lifecycle hook を全数 census した（`AfterAddedToRoom` 62・`AfterDeath` 10 など）。
+  combat.py に名前が出てこない hook は 4 つだけで、中身は全部 gameplay で無かった：
+  Crusher/Rocket（Kaiser Crab の腕）の `BeforeDeath`/`AfterCurrentHpChanged` は SE とアニメーション、
+  SoulFysh の `AfterCardChangedPilesLate` は音楽パラメータ、Aeonglass の
+  `AfterCardGeneratedForCombat`（Wither を FakeUpgrade する）は corpus に Aeonglass が 1 件も無いため対象外
+- 残る card 側の小不一致（Bash 8・Strike 4・Perfected Strike 3・Pommel 2）は、**enchantment を記録していない
+  古い trace 由来の見かけ**の可能性が高い（Tezcatara's Ember +3 が hand から読めない）。新しい trace
+  （`enchant_check_b1`）では同じ audit が 96.6% で、残りは ±1 の丸めだけだった
