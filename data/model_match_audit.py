@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Replay each recorded combat action through the model and compare with what the game did next.
 
 For every pair of consecutive combat observations (L, F) in a recorded run, this rebuilds the model's
@@ -57,7 +57,17 @@ def combat_records(path):
 
 
 def model_state(record, data):
-    """Build the Combat the live rollout would build for this observation."""
+    """Build the Combat the live rollout would build for this observation.
+
+    This has to go through choose(), not rollout_choice() directly.  choose() is what advances the play
+    counters the agent infers from the piles and its own previous action, and every counter-driven rule in
+    the model (LetterOpener's 3rd Skill, Kusarigama's 3rd Attack, Shuriken's Strength, Tuning Fork, Pen
+    Nib, Nunchaku, SlowPower's ramp) reads them.  Replaying straight into rollout_choice left those
+    counters at 0 for every record, which manufactured whole groups of "gap" in the census below - the
+    BYGONE_EFFIGY CARD.STRIKE_IRONCLAD +1 group is exactly a Slow ramp the audit never had.  When a policy
+    branch returns before the rollout runs (a lethal attack short circuit, a potion), the counters have
+    still advanced, so fall back to rollout_choice to get the state.
+    """
     captured = {}
 
     def capture(state, enemy_data, simulations, seed):
@@ -65,7 +75,9 @@ def model_state(record, data):
         return [(combat.END_TURN, 0.0)]
 
     with patch("official_agent.search", side_effect=capture):
-        official_agent.rollout_choice(record, record.get("legal_actions") or [], data, 1)
+        official_agent.choose(record, data, 1)
+        if "state" not in captured:
+            official_agent.rollout_choice(record, record.get("legal_actions") or [], data, 1)
     return captured.get("state")
 
 

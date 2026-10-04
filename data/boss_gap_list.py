@@ -61,12 +61,19 @@ def main(limit: int) -> int:
             replays += 1
             boss = sorted(enemy["id"].replace("MONSTER.", "") for enemy in prev["enemies"])[0]
             card = prev.get("card_id") or "END_TURN"
+            # Pair enemies by combat_id, not position.  A killed monster leaves the combat entirely, so
+            # the following record simply has fewer enemies; pairing by index reported its damage as 0
+            # and invented whole groups of "the model dealt 5 / 14 / 22 too much".  Missing in the next
+            # record means dead, and the delta is the HP it had.
+            next_hp = {
+                enemy.get("combat_id"): max(0, enemy["hp"])
+                for enemy in nxt["enemies"]
+                if enemy.get("combat_id") is not None
+            }
             game_enemy = sum(
-                max(0, enemy["hp"]) - max(0, nxt["enemies"][index]["hp"])
-                for index, enemy in enumerate(prev["enemies"])
-                if index < len(nxt["enemies"])
-                and nxt["enemies"][index].get("combat_id") == enemy.get("combat_id")
-                and nxt["enemies"][index]["id"] == enemy["id"]
+                max(0, enemy["hp"]) - next_hp.get(enemy.get("combat_id"), 0)
+                for enemy in prev["enemies"]
+                if enemy.get("combat_id") is not None
             )
             model_enemy = sum(
                 max(0, enemy["hp"]) - max(0, after.enemies[index].hp)
