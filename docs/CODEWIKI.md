@@ -5272,3 +5272,66 @@ record の数で、この修正とは無関係の tooling 側の限界）。
 - 残る card 側の小不一致（Bash 8・Strike 4・Perfected Strike 3・Pommel 2）は、**enchantment を記録していない
   古い trace 由来の見かけ**の可能性が高い（Tezcatara's Ember +3 が hand から読めない）。新しい trace
   （`enchant_check_b1`）では同じ audit が 96.6% で、残りは ±1 の丸めだけだった
+
+## Round 9: STUNNED 修正の panel・power census・致命 match up は地図で避けられない（2026-10-04）
+
+### STUNNED 修正の胜数 panel：3 seed で 40勝 → 37勝（-3・0・0）
+
+`data/stun_ab.sh`。arm = HEAD（`fc54807`）、control = 1コミット前の `.wt-ctrl-ba30482`（dll は同一物を
+md5 で照合してから起動するガードを追加した）。seed は stun の决定変化が多かった L3PN5HBQ8T・
+F6L1X4P8MS・P7M4C2W9KS（いずれも初使用）。
+
+| seed | control | arm | delta | 最初の分岐 |
+|---|---:|---:|---:|---|
+| `L3PN5HBQ8T` | 16勝1敗 | 13勝1敗 | **-3** | seq 200 arm=Strike / control=Evil Eye |
+| `F6L1X4P8MS` | 13勝1敗 | 13勝1敗 | 0 | 分岐なし（完全に同一の run） |
+| `P7M4C2W9KS` | 11勝1敗 | 11勝1敗 | 0 | 分岐なし（完全に同一の run） |
+
+**-3 の中身**は control が勝った Devoted Sculptor・Turret Operator に arm がたどり着けず、
+THE_INSATIABLE に arm は敗れ control は勝ったことで、arm が3戦少なく終わったことだった
+（control 17戦 / arm 14戦）。つまり「3戦を悪くプレイした」のではなく「1戦早く死んだ」。
+
+**この panel は修正をほぼ試していない**ことが重要。走らせた6本の実走 trace に入った `STUNNED` の
+観測は arm 4・2・0 件、control 4・2・0 件だけで、corpus 全体でも seed あたり **1戦闘（9〜19 record）**
+程度。1 run への影響が小さいので panel の seed 間噪声（どの戦闘に当たるか）が勝って、胜数は測れない。
+したがって採用の根拠は実走ではなく **同一 record replay の一致率 15.3% → 94.7%**（前 round）とし、
+Plating のときと同じ判断（model が game と違うなら胜数ではなく忠実度で残す）で残す。
+
+### power の census：観測される power の名前で combat.py に出てこないものは 13 個（9,728 record）
+
+モンスターの hook census と同じ要領で、trace に現れる power id を全て拾って model 側の名前と照合した。
+結果は全部すでに説明がついた：
+
+- `ESCAPE_ARTIST_POWER`（3,074）・`HATCH_POWER`（2,567）・`SWIPE_POWER`（2,193）は
+  **move 側で実装済み**（`MONSTER.THIEVING_HOPPER` + `THIEVERY_MOVE`、`MONSTER.TOUGH_EGG` + `HATCH_MOVE`）
+- `POSSESS_SPEED_POWER`（619）・`POSSESS_STRENGTH_POWER`（328）・`SHACKLING_POTION_POWER`（195）・
+  `DARK_SHACKLES_POWER`（2）は CODEWIKI ですでに確認済みの扱い（TemporaryStrength 系など）
+- **`STRATAGEM_POWER`（724）は未実装だが不採用済みのクローズ済みレバー**：`StratagemPower.AfterShuffle` は
+  捨て札が山札に戻るたびに山札から Amount 枚を選んで手札へ移る。実装して実測した結果
+  P3V8N5K2RX で 18勝1敗横ばい・Act 3ボス戦の被弾 151 → 363 で悪化（§2037、stash@{4}）
+- `IMPROVEMENT_POWER`（26）は戦闘終了後にデッキの札をランダムに upgrade する effect で、upgrade 済みの札は
+  次の observation の `upgrade` に現れるので **combat.py での再現は不要**（reward 側の評価だけの問題）
+
+### 残った card 側の不一致 1,689 件の内訳
+
+Bash・Strike・Pommel Strike・Anger などの攻撃札の HP 照合で残っていた不一致を分類した：
+
+- **589 件は復活する敵の測定 artifact**：REATTACH_POWER（Decimillipede の +25 回復）や
+  ILLUSION_POWER / MINION_POWER（Parafright の分身が IllusionPower.AfterDeath で復活）を抱えた的に
+  当てた手で、次の観測の HPが上げるため model が多く削ったように見える。Bash の +2（141件）・+4（69件）はここ
+- 残り 1,100 件は Strike の -1〜-9 が中心で、**Tezcatara/Symbiote で付与された札が古い trace では
+  hand から読めない**ことと整合する（Ember +3・Corrupted ×1.5）。付与を記録する build で走らせた
+  `enchant_check_b1` の trace だけでは同じ audit が 96.6% で、残りは ±1 の丸めだけだった
+
+### 致命 match up は地図で避けられていた（route policy は主要レバーではない）
+
+52,913 戦闘から致命 match up（THE_INSATIABLE・QUEEN・VANTOM など）に入る直前の地図决定を、
+`data/<stem>_map.json` の parent/child で逆引きした。**その時点で合法な移動が1つだけ（強制的）**だった件数：
+
+- Boss 709 強制 / 26 選択可
+- Monster 313 強制 / 144 選択可
+- Elite 42 強制 / 43 選択可
+
+選択できた場合の代替は RestSite が最多（Monster+RestSite 56、Elite+RestSite 18）で、ここは改善余地だが、
+致命戦闘の **約83%は地図が強制する入口**だった。QUEEN 戦の火力不足と合わせて、route より先に deck の
+火力が壁という前 round までの結論と同じ方向を支持する。
