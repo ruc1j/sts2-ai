@@ -4,8 +4,9 @@
 # four.  Shackling and LuckyTonic are deliberately left out - Shackling's -7 Strength lasts one enemy
 # turn only and a recorded fix reserves it for boss-length fights.
 #
-# arm = main HEAD.  control = .wt-ctrl-pot2 at cc04e3d, i.e. the simulator modelling without the gate
-# entry, so the two trees differ by the gate expansion only.  Same mod binary, checked by md5.
+# arm = main HEAD.  control = .wt-ctrl-pot2 at 3690e55, i.e. before both the simulator modelling (cc04e3d)
+# and the gate entry (e0c416d), so the arms differ by those two commits together.  Same mod binary,
+# checked by md5.
 #
 # Seeds are three fresh seeds whose recorded runs used these four potions the most and reached an Act 3
 # boss, so the option was actually in front of the agent.
