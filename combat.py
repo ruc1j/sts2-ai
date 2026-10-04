@@ -223,7 +223,11 @@ SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, 
 # Havoc (5), Brand (4).  Keeping those in here inflated the inferred play counters through the extra
 # hand departure and made LetterOpener fire one Skill early.  Slimed is listed even though its own
 # branch handles it, so the keyword stays visible next to the others.
-EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS, DRAMATIC_ENTRANCE, IMPERVIOUS, MOLTEN_FIST, SLIMED, TOXIC}
+# Ashen Strike (4 recorded plays: exhaust +0, discard +1) and Second Wind (43 recorded plays: every one
+# has discard +1, the exhaust side is its own effect exhausting other cards) go to the DISCARD in the
+# game, so they must not be in here - the extra exhaust inflated Ashen Strike's own damage, which scales
+# with len(exhaust_before), and fired ForgottenSoul on plays where the game fired nothing.
+EXHAUSTS = {METAMORPHOSIS, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS, DRAMATIC_ENTRANCE, IMPERVIOUS, MOLTEN_FIST, SLIMED, TOXIC}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 # CanonicalTags per decompiled card (v0.107.1): Pommel Strike is tagged Strike too, so Perfected
 # Strike counts it.  Panel replay over the Perfected Strike decisions resolved 27 of 31 mismatches

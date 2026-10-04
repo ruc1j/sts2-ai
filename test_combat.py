@@ -2675,7 +2675,9 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 30, "MOVE", ())
         combat = Combat(80, (ASHEN_STRIKE,), (), (), (enemy,), exhaust_pile=(STRIKE, STRIKE, BASH))
         after = step(combat, f"{ASHEN_STRIKE}@0", {}, random.Random(0))
-        self.assertEqual((after.enemies[0].hp, after.exhaust_pile), (15, (STRIKE, STRIKE, BASH, ASHEN_STRIKE)))
+        # The 4 recorded Ashen Strike plays all show exhaust +0 and discard +1: the card itself goes to
+        # the discard, so only the three cards already exhausted scale its damage (6 + 3 x 3 = 15).
+        self.assertEqual((after.enemies[0].hp, after.exhaust_pile, after.discard_pile), (15, (STRIKE, STRIKE, BASH), (ASHEN_STRIKE,)))
 
     def test_hemokinesis_self_damages(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
@@ -2704,7 +2706,9 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (SECOND_WIND, DEFEND, SHRUG, STRIKE), (), (), (enemy,))
         after = step(combat, SECOND_WIND, {}, random.Random(0))
         # DEFEND and SHRUG (non-Attack) exhaust for 5 block each; STRIKE (Attack) stays in hand.
-        self.assertEqual((after.player_block, after.hand, set(after.exhaust_pile)), (10, (STRIKE,), {SECOND_WIND, DEFEND, SHRUG}))
+        # Second Wind exhausts non-Attacks from hand (its own effect) but lands in the discard itself -
+        # every one of the 43 recorded plays has discard +1.
+        self.assertEqual((after.player_block, after.hand, set(after.exhaust_pile), SECOND_WIND in after.discard_pile), (10, (STRIKE,), {DEFEND, SHRUG}, True))
 
     def test_inflame_adds_strength_to_attacks(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
