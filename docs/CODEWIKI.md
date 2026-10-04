@@ -5811,3 +5811,50 @@ rollout は観測の現在 HP から状態を組み直すため開始前の差�
 
 次の攻め先として有望なのは、同じ群に出る **`delta=+6`（model が多く削る）で THORNS_POWER 3 を持つ 3 件**
 だ。model は Thorns を hit ごとに適用し、game が turn 単位か hit 単位で違う可能性が残っている。
+
+## Round 16: Flame Barrier の反射は hit 単位だった（multi-hit replay 245/404 → 371/404）
+
+### きっかけと、先に潰した仮説
+
+QUEEN 戦の end_turn -1 を追う過程で、`THORNS_POWER` を持つ case が model のほうが多く削る群に現れた。
+まず Thorns 自体を clean な条件で測った。**単一敵・同一 combat_id・END_TURN の replay で player が
+Thorns を持つケース 300 件超（THE_INSATIABLE 155・VANTOM 132・THIEVING_HOPPER 58 など）は、
+与ダメージが全件一致**した。player 側 Thorns の反射実装（hit ごと、ブロックされても反射）は正しい。
+
+残った不一致 3 件（HUNTER_KILLER・THE_INSATIABLE）が導線になった。HUNTER_KILLER 戦
+（`act3_pop2_T4K8M2W7QY` seq 260、turn 3）が正確な算数を示していた：
+
+- 敵 HUNTER_KILLER 62 HP・`PUNCTURE_MOVE`（7 ダメージ x3 hit）、player は block 22・HP 7
+- 3 hit の合計 21 は block 22 に吸収され player の被弾 0（trace でも HP 7 のまま）
+- 次の観測で HUNTER_KILLER は **41 HP**、つまり 21 削られていた
+- player の power は `FLAME_BARRIER_POWER 4` と `THORNS_POWER 3` → **4×3 + 3×3 = 21** ✓
+  model は 4×1 + 3×3 = 13 だった
+
+### game 側の実装
+
+`FlameBarrierPower.AfterDamageReceived(choiceContext, target, _, props, dealer, _)` は
+`target == Owner && dealer != null && props.IsPoweredAttack()` のとき
+`CreatureCmd.Damage(dealer, Amount, Unpowered)` を返す。**この hook はダメージインスタンスごとに走る**
+ので、3 hit の攻撃には 3 回反射する。model は「攻撃ごとに1回」と注記つきの近似だった（`combat.py` の
+`# once per attack (approximated ... not per individual repeat hit)`）。反射はブロックされた被弾でも起きる
+（seq 260 の 21 ダメージは全部ブロック）ので、無条件で正しい。
+
+### 実装（commit f1a9a10、763 tests green）
+
+反射を `for _ in range(repeats)` の中へ移し、Thorns（`BeforeDamageReceived`）の後に置く順序は保った。
+テスト `test_flame_barrier_reflects_once_per_hit_of_a_multi_hit_attack` は 5x2 攻撃に対して
+FlameBarrier 4 + Thorns 3 の反射が `(4+3)×2` になることと、player が hit ごとに 5 被弾することを検証する。
+
+### 検証（FlameBarrierPower を持つ単一敵 end_turn replay 404 件）
+
+| | 修正前（`.wt-ctrl-fb` = `7f276af`） | 修正後（HEAD） |
+|---|---:|---:|
+| 敵 HP 一致 | **245 / 404 = 60.6%** | **371 / 404 = 91.8%** |
+| player HP 一致 | 404 / 404 | 404 / 404 |
+
+hit 数ごとの group がきれいに反転した（`repeats=1` は不変、`repeats>1` が不一致→一致）：
+ENTOMANCER 7 hit 25 件、VANTOM 2 hit 30 件、THE_INSATIABLE 2 hit 30 件、VINE_SHAMBLER 2 hit 10 件、
+PHROG_PARASITE 4 hit 5 件、SLIMED_BERSERKER 4 hit 2 件、OWL_MAGISTRATE 6 hit 1 件、EXOSKELETON 3 hit 1 件、
+AXEBOT 2 hit 3 件、HUNTER_KILLER 3 hit が 12 不一致 → 10 一致（2 件残る）。
+残りの不一致は hit 数 1 の別原因（TUNNELER 17 件、FROG_KNIGHT 4 件、VANTOM 1 hit 2 件）で、
+そこは次以降の対象になる。
