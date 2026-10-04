@@ -35,9 +35,20 @@ def main(limit: int) -> int:
     for path in sorted(Path("data").glob("*_agent.jsonl")):
         if not trace_reports_enchantments(path):
             continue
-        for prev, nxt in zip(combat_records(path), combat_records(path)[1:]):
-            if not same_fight(prev, nxt) or prev.get("turn") != nxt.get("turn"):
-                continue
+        # Advance EVERY combat record, not only the ones we compare.  Skipping a record means skipping the
+        # play the agent made at it, and the last decision of a turn is exactly the one whose next record
+        # starts a new turn - so skipping turn-crossing pairs left the counters one play short every
+        # turn, which is what the LetterOpener and SlowPower groups were measuring instead of the model.
+        official_agent._reset_play_counters()
+        previous_action = None
+        records = combat_records(path)
+        for index, prev in enumerate(records):
+            nxt = records[index + 1] if index + 1 < len(records) else None
+            comparable = (
+                nxt is not None
+                and same_fight(prev, nxt)
+                and prev.get("turn") == nxt.get("turn")
+            )
             official_agent._PENDING_ACTION = previous_action
             previous_action = None
             if prev.get("card_id"):
@@ -48,6 +59,9 @@ def main(limit: int) -> int:
                 }
             elif prev.get("action_type") == "end_turn":
                 previous_action = {"type": "end_turn"}
+            if not comparable:
+                official_agent._advance_play_counters(prev)
+                continue
             state = model_state(prev, data)
             if state is None:
                 continue

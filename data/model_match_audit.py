@@ -159,11 +159,32 @@ def main() -> int:
     shown = 0
     for path in sorted(REPO.glob("data/*_agent.jsonl")):
         records = combat_records(path)
-        for previous, following in zip(records, records[1:]):
+        # Hand back the recorded action and advance EVERY record, including the ones we do not compare.
+        # model_state() runs choose(), which is what advances the inferred play counters, so a record we
+        # skip also loses its play from the counters - and the skipped one is usually the last decision of
+        # a turn, which leaves every turn's counters one play short.
+        official_agent._reset_play_counters()
+        previous_action: dict | None = None
+        for index, previous in enumerate(records):
             if len(list(tally.elements())) >= limit:
                 break
+            following = records[index + 1] if index + 1 < len(records) else None
+            official_agent._PENDING_ACTION = previous_action
+            previous_action = None
+            if previous.get("card_id"):
+                previous_action = {
+                    "type": "card",
+                    "card_id": previous["card_id"],
+                    "hand_index": previous.get("hand_index", 0),
+                }
+            elif previous.get("action_type") == "end_turn":
+                previous_action = {"type": "end_turn"}
+            if following is None:
+                official_agent._advance_play_counters(previous)
+                continue
             if not same_fight(previous, following):
                 tally["fight_boundary"] += 1
+                official_agent._advance_play_counters(previous)
                 continue
             action = None
             state = model_state(previous, data)
