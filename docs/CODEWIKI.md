@@ -5878,9 +5878,10 @@ Flame Barrier 修正後の replay で残った単一 hit の不一致のうち�
 | 各例 | 4 → 0（STUNNED へ） | 0 | 4 |
 
 model は `BurrowedPower.AfterBlockBroken` を「block が 0 になった瞬間に STUNNED へ移行」としてだけ
-扱っており（`combat.py` の `_damage_enemy` 内）、地上に潜っている間の**HP 無効**は扱っていない。
-game 側は block だけ減らし、HP には触らない可能性が高い。次 round は `BurrowedPower` の
-`ModifyDamageAdditive` / `IsHittable` 系フックをデコンパイル読んで確定させる。
+扱っており（`combat.py` の `_damage_enemy` 内）、潜行中の block の扱いに別の違いがあった（次段落で確定）。
+※ここに書いた「潜行中は HP を削らない」という見立ては **誤り**だった。大きな差（game 0 / model 51）は
+model がターン開始のドローで `HellraiserPower` の Strike 自動プレイを発火させた結果で、
+どの札が引かれるかは rollout の RNG 次第なので、忠実度の差ではなく再現のばらつきだった。
 
 ### 測定メモ：`pgrep -f "SlayTheSpire2"` は自分の起動コマンドに反応する
 
