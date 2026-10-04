@@ -6065,3 +6065,41 @@ player_hp -2 35 件`、`VANTOM 戦 CARD.DEFEND_IRONCLAD -1 35 件`、`FROG_KNIGH
 胜数への影響を見る panel は次 round に回す（この round は panel を起動する残り時間がなく、起動すると
 panel 完了まで policy code を編集できなくなるため）。panel の seed は player Weak を多く保持した
 run を持つ seed から選ぶ。
+
+## Round 20 (計画中): combo relic の「ターン内に何枚玩んだか」が observation に出ない
+
+boss 戦 audit の `QUEEN 戦 CARD.DEFEND_IRONCLAD で game 側が 5 多い 23 件` の原因が分かった。
+`RELIC.LETTER_OPENER` は **Skill を 3 枚玩るごとに 5 の未強化ダメージ**を与える（`CanonicalVars` が
+`CardsVar(3)` と `DamageVar(5m, ValueProp.Unpowered)`、`SkillsPlayedThisTurn % 3`）。model はこのルールを
+持っている（`combat.py` の `if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0`）のに、
+**observation に「このターンすでに何枚玩んだか」が出ていない**ため、decision ごとに Combat を
+observation から作り直す agent はターン内の進行度を毎回 0 から始め直す。
+
+observation 側に無いことは bridge のコードで確認した（`CombatBridge.cs` / `Entry.cs` はいずれも
+`relics = player.Relics.Select(r => r.Id.ToString())` だけで、relic の `DisplayAmount` も play 数も出さない）。
+
+因果は replay の差分で閉じた。`RELIC.LETTER_OPENER` を持つ run の玩札决定を、trace から「同じターン内の
+それまでの玩札数」付きで replay した:
+
+| 决定の種別 | そのターン内の prior plays | game - model の与ダメージ | game 側で発火する条件 | 件数 |
+|---|---:|---:|---|---:|
+| Skill | 2 | **+5** | 発火する | **278** |
+| Skill | 2 | +10 | 発火する | 61 |
+| Skill | 2 | +15 | 発火する | 60 |
+| Skill / Attack | 0,1,3,4 | 0 | 発火しない | 7,100 超 |
+
+**発火する条件のときだけ game が多い**形で、其它は完全に一致している。母数はさらに広い:
+ダメージを出す combo relic（LETTER_OPENER・KUSARIGAMA）を持つ玩札决定のうち **9,435 件が「ターン内に
+既に玩んだ後」の状態**にあり、そのうち **1,895 件は counter がすでに 3 の倍数**（次の玩札で game が
+発火させる状態）で、model にはそこが見えない。
+
+実装方針（次 round、`official_agent.py` の policy 変更）。agent は 1 プロセスで observation を poll し
+続けています（`official_agent.py` の main ループが `last_seq` で顺次决定を作る）ので、**モジュールレベルで
+ターン内の play 数を記憶して、observation から作る Combat に注入できる**。リセット条件は turn が変わった
+とき、または敵の `combat_id` 集合が前回と交差しなくなったとき（召喚で id は増えるが、新しい戦闘では
+全て新しい id になる）。注入先は `attacks_played_this_turn`・`skills_played_this_turn`・
+`cards_played_this_turn`（これは `SlowPower` の ramp にも効く）と `attacks_this_combat`・
+`skills_this_combat`（`RELIC.NUNCHAKU`・`RELIC.TUNING_FORK` の 10 枚カウント）。
+
+注意: 同じ形の `RELIC.KUSARIGAMA`（3 枚目の Attack で 6 ダメージ）は replay で +6 の差分が見えていない。
+game 側のトリガーが model の想定と違う可能性があるので、LETTER_OPENER を直した後に separately 確認する。
