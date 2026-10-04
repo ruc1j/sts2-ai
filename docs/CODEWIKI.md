@@ -6123,3 +6123,46 @@ arm と control の决定が最初から最後まで同一だった。分岐し�
 出ていない。忠実度の実証（攻撃一致 97.48% → 97.81%、Weak+Vulnerable group の不一致 170 → 26、决定 267 件・
 27 seed）を根拠に HEAD には残す。panel については「主戦場に到達する seed では測れていない」ことが分かったので、
 次回はこの修正 dedicated ではなく他の修正と束ねて測る。
+
+## Round 20: ターン内の玩札数を pile から復元した（boss 戦外も含む攻撃一致 97.36% → 97.54%）
+
+`RELIC.LETTER_OPENER` は Skill を3枚玩るごとに 5 の未強化ダメージを与える（`AfterCardPlayed` で
+`SkillsPlayedThisTurn++`、3 の倍数で `CreatureCmd.Damage(HittableEnemies, 5m Unpowered)`）。model には同じ
+ルールがあったが、**observation にターン内の玩札数が出ていない**ので（bridge は relic の id 一覧だけを
+書く）、decision ごとに Combat を作り直す agent は毎回 0 から数え直し、3 枚目以降のルールを一切価格に
+入れられなかった。
+
+復元は pile から行っている（commit `4c89254`）：玩んだカードは必ず discard か exhaust に移るので、
+**このターンが始まった時点の discard+exhaust に含まれていたカード集合との差分**がそのターンが玩んだ
+カードであり、agent が自分で選んだ play だけでなく game 自身が玩んだカード（Hellraiser・Pyre・Mayhem・
+Centennial Puzzle の autoplay）も含まれる。agent が選んだ play を数える方式では autoplay が抜け、3 枚目
+ルールが1枚ずれた（先に試したその方式は boss 戦 audit の combo 不一致 2,680 → 2,683 で全く改善しなかった）。
+
+同時に `RELIC.KUNAI`・`RELIC.SHURIKEN` の適用タイミングを直した（commit `e7d8836`）：game は
+`AfterCardPlayed` で power を載せるので、**3 枚目の Attack 自身は自分の bonus を使えない**のに、model は
+`combo_powers` に足した状態でそのまま Attack の damage を計算しており、3 枚目に +1 していた。bonus は
+`Combat.pending_combo_powers` に保留し、`step()` が play の解決後に power として反映する（3 枚目の
+Attack の与ダメは 6、続く 4 枚目は 7 になることを `test_shuriken_strength_counts_from_the_attack_after_the_third`
+で固定）。
+
+検証（trace の play 决定を順番に `official_agent.choose()` 経由で replay し、記録された play 後の敵 HP と
+model のそれ比べる。101,464 play、control は `.wt-ctrl-plays` = `2426496`）：
+
+| | control | arm |
+|---|---:|---:|
+| 与ダメージ一致 | 98,793 / 101,473 = **97.36%** | 98,969 / 101,464 = **97.54%** |
+| combo relic がある决定の不一致 | 2,680 | **2,495** |
+| LETTER_OPENER だけで game が多い +5 | 222 | **55** |
+| 同 +10 / +15 | 35 / 46 | **3 / 4** |
+| LETTER_OPENER＋ORNAMENTAL_FAN＋PEN_NIB +5 | 69 | **4** |
+| model が多い −5（新たな残差） | 0 | 36 |
+
+LetterOpener 系の「game だけ多い」は 393 件 → 93 件になった。新たな残差は model が 5 多く削る 36 件で、
+pile 差分が play 以外の移動（カードを捨てる効果・手札から除去する効果）を数えることで 3 枚目の位置が
+ずれることが原因と考えている（未確認）。
+
+**確認して棄却した点**: `SlowPower` の ramp は「ターン内の玩札数」ではなく戦闘中の全 play を数えている
+可能性を疑ったが、`AfterSideTurnStart` で `SlowAmount = 0` にリセットされ `participants.Contains(Owner)`
+で自分の side だけなので、**model の per-turn 基準で正しい**ことが分かった。combo relic を持たない group
+の不一致が 594 → 608 に 14 増えたのは、その group の `cards_played_this_turn`（`SlowPower` の ramp、
+Brilliant Scarf、Sloth、Normality の上限が読む）に対する pile 推定のずれであり、ルール不足ではない。
