@@ -213,7 +213,12 @@ SKILLS = {
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY, APOTHEOSIS, ONE_TWO_PUNCH,
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
-EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS}
+# CardModel.GetResultPileTypeForCardPlay sends a played card to the exhaust pile right away when it
+# carries CardKeyword.Exhaust, so every card with that keyword self-exhausts on play - not at turn end.
+# The keyword list in the game is 119 cards (data/exhaust_card_classes.json); these are the ones the
+# model can actually play.  Getting them right is not cosmetic: exhausting a card is what fires
+# ForgottenSoul and Charon's Ashes, and Slimed / Impervious were the top remaining damage gaps.
+EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS, BRAND, BURNING_PACT, CINDER, DARK_EMBRACE, DRAMATIC_ENTRANCE, EVIL_EYE, FEEL_NO_PAIN, HAVOC, HOWL_FROM_BEYOND, IMPERVIOUS, MOLTEN_FIST, SLIMED, THRASH, TOXIC, TRUE_GRIT}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 # CanonicalTags per decompiled card (v0.107.1): Pommel Strike is tagged Strike too, so Perfected
 # Strike counts it.  Panel replay over the Perfected Strike decisions resolved 27 of 31 mismatches

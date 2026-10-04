@@ -1787,11 +1787,11 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (TRUE_GRIT, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), TRUE_GRIT, {}, random.Random(0))
         self.assertEqual(after.player_block, 7)
         self.assertEqual(after.hand, ())
-        self.assertEqual(after.exhaust_pile, (STRIKE,))
+        self.assertEqual(after.exhaust_pile, (TRUE_GRIT, STRIKE))  # True Grit carries CardKeyword.Exhaust
 
     def test_burning_pact_exhausts_and_draws(self) -> None:
         after = step(Combat(80, (BURNING_PACT, STRIKE), (DEFEND, DEFEND), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BURNING_PACT, {}, random.Random(0))
-        self.assertEqual(after.exhaust_pile, (STRIKE,))
+        self.assertEqual(after.exhaust_pile, (BURNING_PACT, STRIKE))  # Burning Pact carries CardKeyword.Exhaust
         self.assertEqual(len(after.hand), 2)
 
     def test_fiend_fire_exhausts_the_hand_and_hits_once_per_card(self) -> None:
@@ -1816,7 +1816,7 @@ class CombatTest(unittest.TestCase):
 
     def test_brand_exhausts_a_card_and_gains_strength(self) -> None:
         after = step(Combat(80, (BRAND, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BRAND, {}, random.Random(0))
-        self.assertEqual((after.player_hp, after.exhaust_pile, _power(after.player_powers, "StrengthPower")), (79, (STRIKE,), 1))
+        self.assertEqual((after.player_hp, after.exhaust_pile, _power(after.player_powers, "StrengthPower")), (79, (BRAND, STRIKE), 1))  # Brand carries CardKeyword.Exhaust, so the played card is exhausted too
 
     def test_believe_in_you_grants_energy(self) -> None:
         after = step(Combat(80, (BELIEVE_IN_YOU,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), BELIEVE_IN_YOU, {}, random.Random(0))
@@ -2267,7 +2267,7 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, hand, (STRIKE,) * 8, (), (enemy,), energy=1)
         after = step(combat, BURNING_PACT, DUMMY_DATA, random.Random(0))
         # The Wound goes, never one of the Bludgeons.
-        self.assertEqual(after.exhaust_pile, (WOUND,))
+        self.assertEqual(after.exhaust_pile, (BURNING_PACT, WOUND))  # and the played card joins the exhaust pile
         self.assertEqual(sum(card_name(c) == BLUDGEON for c in after.hand), 2)
 
     def test_true_grit_only_chooses_when_upgraded(self) -> None:
@@ -2275,10 +2275,12 @@ class CombatTest(unittest.TestCase):
         hand = (TRUE_GRIT, WOUND, BLUDGEON)
         base = Combat(80, hand, (STRIKE,) * 8, (), (enemy,), energy=1)
         upgraded = step(replace(base, upgraded_cards=(TRUE_GRIT,)), TRUE_GRIT, DUMMY_DATA, random.Random(0))
-        self.assertEqual(upgraded.exhaust_pile, (WOUND,))
+        self.assertEqual(upgraded.exhaust_pile, (TRUE_GRIT, WOUND))  # and the played card joins the exhaust pile
         # Unupgraded True Grit really is random, so it can take the Bludgeon.
         picks = {
-            card_name(step(base, TRUE_GRIT, DUMMY_DATA, random.Random(seed)).exhaust_pile[0])
+            # The played card is exhausted too (CardKeyword.Exhaust), so the random victim is whichever
+            # entry is not True Grit itself.
+            card_name(next(card for card in step(base, TRUE_GRIT, DUMMY_DATA, random.Random(seed)).exhaust_pile if card != TRUE_GRIT))
             for seed in range(12)
         }
         self.assertIn(BLUDGEON, picks)
@@ -2493,7 +2495,7 @@ class CombatTest(unittest.TestCase):
         upgraded = step(Combat(80, (CINDER, STRIKE, DEFEND), (), (), (enemy,), upgraded_cards=(CINDER,)), f"{CINDER}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 22)
         self.assertEqual(upgraded.enemies[0].hp, 16)
-        self.assertEqual(len(after.exhaust_pile), 1)
+        self.assertEqual(len(after.exhaust_pile), 2)  # Cinder plus the card it sacrificed
         self.assertEqual(sorted(after.hand), sorted({STRIKE, DEFEND} - set(after.exhaust_pile)))
 
     def test_toasty_mittens_gains_strength_and_exhausts_a_card_every_turn(self) -> None:
@@ -2620,14 +2622,14 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
         after = step(Combat(80, (THRASH, STRIKE, DEFEND), (), (), (enemy,)), f"{THRASH}@0", {}, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 92)  # 4 damage, 2 hits
-        self.assertEqual(after.exhaust_pile, (STRIKE,))  # only the attack can be taken
+        self.assertEqual(after.exhaust_pile, (THRASH, STRIKE))  # only the attack can be taken, and Thrash exhausts itself
         self.assertEqual(after.hand, (DEFEND,))
         self.assertEqual(after.thrash_bonus, 6)
 
     def test_thrash_without_an_attack_in_hand_only_hits(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
         after = step(Combat(80, (THRASH, DEFEND), (), (), (enemy,)), f"{THRASH}@0", {}, random.Random(0))
-        self.assertEqual((after.enemies[0].hp, after.exhaust_pile, after.thrash_bonus), (92, (), 0))
+        self.assertEqual((after.enemies[0].hp, after.exhaust_pile, after.thrash_bonus), (92, (THRASH,), 0))
 
     def test_perfected_strike_scales_with_strike_tagged_cards(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
