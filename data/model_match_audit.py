@@ -154,21 +154,24 @@ def main() -> int:
                 if expected is None or got is None:
                     tally["uncomparable"] += 1
                     continue
-                key = "card_enemy_hp"
+                checks = [("card_enemy_hp", expected, got)]
+                # A card play also checks the player's own HP: self damage from cards (Offering,
+                # Crimson Mantle), from a Corrupted enchantment (2 per play), and relic retaliation
+                # all land here rather than at the end of the turn.
+                checks.append(("card_player_hp", following["player"]["hp"], after.player_hp))
             else:
-                expected = following["player"]["hp"]
-                got = after.player_hp
-                key = "endturn_player_hp"
-            tally[key + ("_match" if expected == got else "_mismatch")] += 1
-            if expected != got:
-                if card_play:
-                    group = official_agent.CARD_NAMES.get(previous["card_id"], previous["card_id"])
-                else:
-                    group = "+".join(sorted(e["id"].replace("MONSTER.", "") for e in previous["enemies"] if e["id"] not in SKIPPED_MONSTERS and e["hp"] > 0))
-                mismatch[(key, group)] += 1
-                if shown < 6:
-                    shown += 1
-                    print(f"MISMATCH {key} {path.name} seq {previous.get('seq')} action {action} model={got} game={expected} ({group})")
+                checks = [("endturn_player_hp", following["player"]["hp"], after.player_hp)]
+            for key, expected, got in checks:
+                tally[key + ("_match" if expected == got else "_mismatch")] += 1
+                if expected != got:
+                    if card_play:
+                        group = official_agent.CARD_NAMES.get(previous["card_id"], previous["card_id"])
+                    else:
+                        group = "+".join(sorted(e["id"].replace("MONSTER.", "") for e in previous["enemies"] if e["id"] not in SKIPPED_MONSTERS and e["hp"] > 0))
+                    mismatch[(key, group)] += 1
+                    if shown < 6:
+                        shown += 1
+                        print(f"MISMATCH {key} {path.name} seq {previous.get('seq')} action {action} model={got} game={expected} ({group})")
     matched = sum(value for key, value in tally.items() if key.endswith("_match"))
     failed = sum(value for key, value in tally.items() if key.endswith("_mismatch"))
     print("tally:", dict(tally.most_common()))
