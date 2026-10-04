@@ -780,6 +780,20 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 47)
 
+    def test_gigantification_potion_uses_the_id_the_game_reports(self) -> None:
+        # The game's model class is GigantificationPotion, so the observation says
+        # POTION.GIGANTIFICATION_POTION.  The constant used to be POTION.GIGANTIFICATION, which matched
+        # nothing: 1,838 observations of a carried Gigantification potion were invisible to the rollout,
+        # and its 22 recorded plays all carry target_id None (TargetType.AnyPlayer), so it belongs in the
+        # untargeted list rather than the enemy-targeted one.
+        enemy = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ())
+        combat = Combat(60, (), (), (), (enemy,), player_potions=(POTION_GIGANTIFICATION,))
+        actions = legal_actions(combat)
+        self.assertIn("potion:POTION.GIGANTIFICATION_POTION", actions)
+        self.assertNotIn("potion:POTION.GIGANTIFICATION_POTION@0", actions)
+        after = step(combat, "potion:POTION.GIGANTIFICATION_POTION", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "GigantificationPower"), 1)
+
     def test_the_colorless_potions_the_shops_sell_are_simulatable(self) -> None:
         # 1,738 of the 3,274 potion plays recorded in real runs used a potion the simulator had no model
         # for, so the rollout could not price the option the agent was actually holding.  Each effect here
@@ -1950,10 +1964,12 @@ class CombatTest(unittest.TestCase):
         enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
         combat = Combat(80, (), (), (), (enemy,), player_potions=(POTION_DUPLICATOR, POTION_GIGANTIFICATION))
         self.assertIn(f"potion:{POTION_DUPLICATOR}", legal_actions(combat))
-        self.assertIn(f"potion:{POTION_GIGANTIFICATION}@0", legal_actions(combat))
+        # GigantificationPotion is TargetType.AnyPlayer and every one of the 18 recorded plays in real runs
+        # carries target_id None, so it is listed untargeted rather than per-enemy.
+        self.assertIn(f"potion:{POTION_GIGANTIFICATION}", legal_actions(combat))
         after = step(combat, f"potion:{POTION_DUPLICATOR}", DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "DuplicationPower"), 1)
-        after = step(after, f"potion:{POTION_GIGANTIFICATION}@0", DUMMY_DATA, random.Random(0))
+        after = step(after, f"potion:{POTION_GIGANTIFICATION}", DUMMY_DATA, random.Random(0))
         self.assertEqual(_power(after.player_powers, "GigantificationPower"), 1)
 
     def test_battle_trance_blocks_further_draws_until_the_next_turn(self) -> None:

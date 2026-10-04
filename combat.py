@@ -43,7 +43,12 @@ HAVOC, STOKE, METAMORPHOSIS = "Havoc", "Stoke", "Metamorphosis"
 VICIOUS = "Vicious"
 PANACHE, ONE_TWO_PUNCH = "Panache", "One-Two Punch"
 PANACHE_TRIGGER_CARDS = 5  # PanachePower's CardsLeft base value
-POTION_DUPLICATOR, POTION_GIGANTIFICATION = "POTION.DUPLICATOR", "POTION.GIGANTIFICATION"
+# The game names this potion model GigantificationPotion, so its id carries the suffix: every one of the
+# 1,838 observations of a carried Gigantification potion reads POTION.GIGANTIFICATION_POTION, and a
+# constant without the suffix can never match an action the game offers.
+POTION_DUPLICATOR, POTION_GIGANTIFICATION = "POTION.DUPLICATOR", "POTION.GIGANTIFICATION_POTION"
+# GigantificationPotion is TargetType.AnyPlayer and all 18 recorded plays carry target_id None, so the
+# simulator lists it as an untargeted potion and applies GigantificationPower to the player.
 # Play-count powers. DuplicationPower (Duplicator) adds one extra resolution to the play it
 # modifies; OneTwoPunchPower (One-Two Punch) does the same for Attacks only. Both are consumed by
 # that play and removed at the end of the player's turn, so the model treats the extra resolution
@@ -1300,9 +1305,9 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         else:
             actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     for potion in dict.fromkeys(combat.player_potions):
-        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER}:
+        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER}:
             actions.append(f"potion:{potion}")
-        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_GIGANTIFICATION, POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
+        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
             actions.extend(
                 f"potion:{potion}@{index}"
                 for index, enemy in enumerate(combat.enemies)
