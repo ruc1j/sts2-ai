@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, CONFLAGRATION, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, _tender_penalty, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, CONFLAGRATION, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_MR_STRUGGLES, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_TOASTY_MITTENS, RELIC_SHURIKEN, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -2315,17 +2315,20 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual((_power(after.player_powers, "TangledPower"), _effective_cost(after, STRIKE)), (0, 1))
 
-    def test_tender_weakens_later_cards_then_hands_the_stats_back(self) -> None:
+    def test_tender_does_not_take_damage_off_attacks(self) -> None:
+        # TenderPower has no damage hook: it applies DexterityPower(-1) stacks and hands Strength and
+        # Dexterity back at AfterSideTurnEnd equal to the cards played this turn.  Dexterity is a Block
+        # power in this game (DexterityPower.ModifyBlockAdditive is its only hook), so no Attack loses
+        # value as the turn goes on.  L3PN5HBQ8T seq 283 is the measurement: Tender active, three cards
+        # already played, a Strike (6) against an enemy while the player had Strength -2 dealt 4 in the
+        # game, where the model -1 per earlier card dealt 1.
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
-        combat = Combat(80, (STRIKE, STRIKE), (STRIKE,) * 8, (), (enemy,), energy=3, player_powers=(("TenderPower", 1),))
-        # The first card of the turn resolves at full value; each later one loses 1.
+        combat = Combat(80, (STRIKE, STRIKE), (STRIKE,) * 8, (), (enemy,), energy=3,
+                        player_powers=(("TenderPower", 1),))
         after = step(combat, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 94)
         after = step(after, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
-        self.assertEqual(after.enemies[0].hp, 89)
-        # The counter resets with the turn, so the next turn starts at full value again.
-        after = step(after, END_TURN, DUMMY_DATA, random.Random(0))
-        self.assertEqual(_tender_penalty(after), 0)
+        self.assertEqual(after.enemies[0].hp, 88)
 
     def test_enemy_regen_heals_and_decrements_up_to_its_initial_hp(self) -> None:
         values = (("MaxInitialHp", 50), ("MinInitialHp", 50))

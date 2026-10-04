@@ -1188,16 +1188,6 @@ def _choose_exhaustible_from_hand(combat: Combat, count: int) -> tuple[CardValue
     return tuple(candidates[:count])
 
 
-def _tender_penalty(combat: Combat) -> int:
-    """TenderPower drops Strength and Dexterity by 1 for every card already played this turn and
-    hands the whole lot back at the side turn end. Reading it off cards_played_this_turn keeps the
-    card currently resolving at full value (AfterCardPlayed fires once it has resolved) and needs
-    no restore, since the counter resets with the turn."""
-    if not _power(combat.player_powers, "TenderPower"):
-        return 0
-    return max(0, combat.cards_played_this_turn - 1)
-
-
 def _grant_block(
     combat: Combat,
     base: int,
@@ -1209,7 +1199,10 @@ def _grant_block(
     powered: bool = True,
 ) -> Combat:
     if powered:
-        base += _power(combat.player_powers, "DexterityPower") - _tender_penalty(combat)
+        # DexterityPower.ModifyBlockAdditive is its only hook (StS2 Dexterity is a Block power, not a
+        # damage one), and the -1 stacks TenderPower applies show up in the observation as Dexterity
+        # already, so nothing is subtracted here on top of them.
+        base += _power(combat.player_powers, "DexterityPower")
     block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
     plays = 2 if combat.play_duplicated else 1
     # Each resolution is its own grant, so the relic doublings apply to every resolution, not to the
@@ -3104,7 +3097,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # at least its Cards value. Below that it is a 0-cost card that does nothing at all.
         return combat
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
-        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower") - _tender_penalty(combat)
+        damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
         combat, vigor = _spend_vigor(combat)
         damage += vigor
         if card_was_upgraded:
@@ -3274,7 +3267,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += 3
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and card in ATTACKS:
         damage = damage * 3 // 2
-    damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower") - _tender_penalty(combat)
+    damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     combat, vigor = _spend_vigor(combat)
     damage += vigor
     # StrikeDummy.ModifyDamageAdditive: +3 on any powered attack tagged Strike.
