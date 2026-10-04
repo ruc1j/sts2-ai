@@ -643,6 +643,50 @@ def _specs(data: dict) -> dict[str, dict]:
     return _SPECS_CACHE
 
 
+STUNNED_MOVE = "STUNNED"
+
+
+def _stunned_state(spec: dict) -> dict:
+    """Return the state an enemy is in while the bridge reports its move as STUNNED.
+
+    MonsterModel.stunnedMoveId ("STUNNED") is created at runtime by Creature.StunInternal
+    (MoveState("STUNNED", <the monster's stun logic>, StunIntent), whose FollowUpStateId defaults to
+    the last state in the state log), so the exporter never writes it into the state machine even
+    though the bridge reports it as the enemy's current move: 1,590 recorded observations (Bowlbug
+    Rock 1,046, Tunneler 431, Thieving Hopper 85, Slumbering Beetle 28).  Each of those monsters has
+    its own stun state exported under its real name - Tunneler and Bowlbug Rock both have DIZZY_MOVE
+    with a StunIntent and no effects - and that state carries the follow-up the game really resumes
+    to: Tunneler DIZZY_MOVE -> BITE_MOVE covers the 382 observed STUNNED -> BITE_MOVE transitions,
+    Bowlbug Rock DIZZY_MOVE -> HEADBUTT_MOVE covers 928.  A stunned monster does nothing on its turn
+    (a Tunneler at STUNNED left the player at 88 HP across the enemy phase), and its move id is not
+    added to the history, which is what the following observation shows.
+    """
+    stun_state = next(
+        (
+            state
+            for state in spec["states"]
+            if any(intent.get("type") == "StunIntent" for intent in state.get("intents", ()))
+        ),
+        None,
+    )
+    if stun_state is not None:
+        return stun_state
+    return {
+        "id": STUNNED_MOVE,
+        "type": "MoveState",
+        "perform": "StunMove",
+        "intents": [{"type": "StunIntent"}],
+        "next": spec["initial_state"],
+        "effects": [],
+    }
+
+
+def _move_state(spec: dict, enemy: Enemy) -> dict:
+    if enemy.move == STUNNED_MOVE:
+        return _stunned_state(spec)
+    return _state(spec, enemy.move)
+
+
 def _state(spec: dict, state_id: str) -> dict:
     return next(state for state in spec["states"] if state["id"] == state_id)
 
@@ -716,6 +760,10 @@ def _resolve_move(
     enemies: tuple[Enemy, ...] = (),
 ) -> str:
     state_id = state_id or enemy.move
+    if state_id == STUNNED_MOVE:
+        # The stun id itself is not exported; resolve from the monster's own stun state (or its
+        # opening move when the export has none, which is what the observed resumes do).
+        state_id = _stunned_state(spec)["id"]
     while _state(spec, state_id)["type"] != "MoveState":
         branch = _state(spec, state_id)
         if branch["type"] == "ConditionalBranchState":
@@ -1442,7 +1490,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         # keep progressing through their state machine (DEAD_MOVE -> REATTACH_MOVE) to revive.
         if not (enemy.model.startswith("MONSTER.DECIMILLIPEDE_SEGMENT") and enemy.move in ("DEAD_MOVE", "REATTACH_MOVE")):
             return combat
-    spec, move_id, move = _specs(data)[enemy.model], enemy.move, _state(_specs(data)[enemy.model], enemy.move)
+    spec, move_id, move = _specs(data)[enemy.model], enemy.move, _move_state(_specs(data)[enemy.model], enemy)
     values, player_hp, player_block = _dict(enemy.values), combat.player_hp, combat.player_block
     # Axebot.StockAmount is a per-instance field (`_stockOverrideAmount ?? 2`), and StockPower.AfterDeath
     # sets it to Amount-1 before re-adding the creature.  BOOT_UP_MOVE's Strength amount is
@@ -1693,7 +1741,9 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     if enemy.model == "MONSTER.TOUGH_EGG" and move_id == "HATCH_MOVE":
         values = _dict(enemy.values)
         enemy = replace(enemy, hp=rng.randint(values["HatchlingMinHp"], values["HatchlingMaxHp"]))
-    enemy = replace(enemy, history=enemy.history + (enemy.move,))
+    # The stun id is a runtime synthetic state rather than a move the monster chose.  Logging it in
+    # the history would make a later stun resume into "STUNNED" instead of the last real move.
+    enemy = replace(enemy, history=enemy.history + (() if enemy.move == STUNNED_MOVE else (enemy.move,)))
     enemy = replace(enemy, move=forced_move or _resolve_move(enemy, spec, rng, move.get("next"), tuple(enemies)))
     if enemy.model == "MONSTER.THE_INSATIABLE" and move_id == "LIQUIFY_GROUND_MOVE":
         enemy = replace(enemy, powers=_add_power(enemy.powers, "SandpitPower", 4))

@@ -66,6 +66,40 @@ class OfficialAgentTest(unittest.TestCase):
             },
         )
 
+    def test_keeps_the_runtime_stunned_move_instead_of_re_resolving_it(self) -> None:
+        # An unknown move id used to be re-resolved through the monster's opening state so that
+        # _enemy_turn could look it up.  For the runtime stun id that made the rollout perform the
+        # resumed move immediately: the model scored a stunned Tunneler as a 13 damage BITE on the turn
+        # the game dealt 0, and the agent planned block for an attack that was never coming.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        observation = {
+            "seq": 1,
+            "turn": 4,
+            "player": {"hp": 88, "max_hp": 88, "block": 5, "energy": 0, "powers": [], "relics": ["RELIC.BURNING_BLOOD"]},
+            "hand": [{"index": 0, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "upgrade": 0, "type": "Skill",
+                      "rarity": "Basic", "pool": "CARD_POOL.IRONCLAD_CARD_POOL", "vars": [{"id": "Block", "value": 5}],
+                      "rider": None, "target": "Self"}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{
+                "combat_id": 7, "id": "MONSTER.TUNNELER", "hp": 34, "max_hp": 87, "block": 0,
+                "powers": [{"id": "POWER.VULNERABLE_POWER", "amount": 4}],
+                "intents": [{"type": "Stun", "damage": 0, "raw_damage": 0, "repeats": 1}],
+                "move": "STUNNED", "history": ["BITE_MOVE", "BURROW_MOVE", "BELOW_MOVE", "BELOW_MOVE"], "slot": None,
+            }],
+            "legal_actions": [{"type": "card", "hand_index": 0, "card_id": "CARD.DEFEND_IRONCLAD", "target_id": None},
+                              {"type": "end_turn", "hand_index": None, "card_id": None, "target_id": None}],
+        }
+        captured = {}
+
+        def capture(state, _data, _simulations, _seed):
+            captured["move"] = state.enemies[0].move
+            return [("End turn", 0.0)]
+
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(captured["move"], "STUNNED")
+
     def test_maps_inferno_and_cruelty_into_rollout_cards_and_powers(self) -> None:
         data = {"monsters": [{
             "id": "MONSTER.DUMMY", "values": {},

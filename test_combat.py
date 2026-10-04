@@ -3267,6 +3267,20 @@ class CombatTest(unittest.TestCase):
             ("DIZZY_MOVE", 0, 0),
         )
 
+    def test_enemy_reported_as_stunned_does_nothing_and_resumes_its_opening_move(self) -> None:
+        # The bridge reports MonsterModel.stunnedMoveId ("STUNNED") as the enemy's current move; no
+        # export contains that id (1,590 recorded observations).  A stunned monster performs nothing
+        # on its turn - a recorded Tunneler at STUNNED left the player at 88 HP across the enemy
+        # phase - and resumes its opening move, with the stun id left out of the move history.
+        with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
+            hive = json.load(file)
+        history = ("BITE_MOVE", "BURROW_MOVE", "BELOW_MOVE", "BELOW_MOVE")
+        enemy = Enemy("MONSTER.TUNNELER", 34, "STUNNED", (), history=history)
+        combat = Combat(88, (DEFEND,), (), (), (enemy,), player_block=5, energy=1)
+        after = step(combat, END_TURN, hive, random.Random(0))
+        self.assertEqual((after.player_hp, after.enemies[0].move), (88, "BITE_MOVE"))
+        self.assertEqual(after.enemies[0].history, history)
+
     def test_tunneler_dizzy_move_returns_to_bite(self) -> None:
         with open("data/enemies_hive.json", encoding="utf-8-sig") as file:
             hive = json.load(file)

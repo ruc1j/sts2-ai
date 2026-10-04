@@ -12,7 +12,7 @@ from itertools import combinations
 from combat import (
     ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FYSH, POTION_HEART, POTION_SHAPED_ROCK, POTION_SHIP,
-    POTION_STRENGTH, SELF_DAMAGE, _resolve_move, card_name, search,
+    POTION_STRENGTH, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
 )
 
 
@@ -2812,12 +2812,16 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             history=tuple(observed["history"] or ()),
             respawns=2 if any(power.get("id") == "POWER.NEMESIS_POWER" for power in observed.get("powers", ())) else 1 if any(power.get("id") == "POWER.PAINFUL_STABS_POWER" for power in observed.get("powers", ())) else 0,
         )
-        if not any(state["id"] == enemy.move for state in spec["states"]):
+        if enemy.move != STUNNED_MOVE and not any(state["id"] == enemy.move for state in spec["states"]):
             # Some moves are synthesized at runtime and never appear in the exported state
             # machine - e.g. IllusionPower.AfterDeath (Parafright) SetMoveImmediate()s a
             # "REVIVE_MOVE" the exporter never saw. Left as-is, the next _enemy_turn() call
             # would look this move id up and raise StopIteration, crashing every rollout that
             # reaches this enemy's turn. Re-resolve back through the monster's own initial state.
+            # STUNNED is excluded: MonsterModel.stunnedMoveId is a real runtime state whose behaviour
+            # combat.py models directly (the monster does nothing that turn, then resumes its last
+            # move).  Re-resolving it from the opening state made a stunned monster attack - the
+            # Tunneler at STUNNED was scored as a 13 damage BITE while the game dealt 0.
             enemy = replace(enemy, move=_resolve_move(enemy, spec, random.Random(observation["seq"]), spec["initial_state"]))
         enemies.append(enemy)
         compact_to_observation_index.append(observation_index)
