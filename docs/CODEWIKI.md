@@ -6283,3 +6283,35 @@ Slimed（1枚引く）、Wound / Dazed（hook 無し）、Normality（autoplay �
 次の一手: 1 seed の FEED -2 を trace の前後ごと辿る。同じ段階で player に新しい power が載っているか、
 monster JSON の `effects` に React reactive 効果が export されているかをみる（export されていない monster
 側 hook なら、bridge 側で取るか model に effect として書く判断になる）。
+
+## 未解決 gap の切り分けをやり直した: 551 件の player ダメージ差は 48 件が今の build の話で、503 件は古い trace の artifact
+
+`ENCHANTMENT.CORRUPTED` を decompile で確認した（`Models.Enchantments/Corrupted.cs`）：Attack に only、
+`EnchantDamageMultiplicative` で **powered attack を 1.5 倍**、`OnPlay` で owner に **2 の unblockable・
+unpowered・Move ダメージ** ✓ model は両方すでに持っている（combat.py の `self_damage += 2` と
+`damage = damage * 3 // 2` ✓ 順序も 1.5 倍してから Strength 加算で、observation に出る live 値と整合）✓
+bridge も `enchantment = card.Enchantment?.Id.ToString()` を hand / draw / discard / exhaust すべてに出し、
+agent も `Card(enchantment=...)` に移している ✓ つまり **Corrupted 自体は実装済み**だった ✓
+
+group の数え直し（`data/player_damage_group.py` を追加 ✓ 同ターン transition だけ、`days` で trace の
+新期を絞る）：
+
+| 計測範囲 | player HP の差が出た play | seed |
+|---|---:|---:|
+| 直近 2 日の trace | **48** | **5** |
+| 直近 30 日の trace | 551 | 19 |
+
+`CARD.FEED` の -2 は 245 件 → 24 件になった ✓ corpus の trace は mod の別ビルドで書かれていて、現在の
+bridge が出す字段（card の enchantment 等）が古い trace には元々無い ✓ 古い trace で「model が知らない」
+のは bridge が渡していないからで、model の欠落ではない ✓ **group や gap を数えるときは新期 trace に絞る**
+ことを rules に追加する ✓
+
+残る 48 件（FEED -2 が 24、FEED +3 が 13、CASCADE -3 が 3、STRIKE -2 が 3 など）は未解決のまま ✓ 直近の
+run でも Attack を玩んだ瞬間 player がちょうど 2 減り、block は変わらず、新しい power も載らない ✓ card
+record は `enchantment: None` なのに live の `Damage` 値は 16 / 14.25 / 18（bridge は `DynamicVars...PreviewValue`
+を出しているので base 10 に補正が入った表示値 ✓ 14.25 のような非整数にもなる ✓ **この値から原因を逆算する
+方法は機能しない** ✓ 以前 observed-`Damage` 規則を棄却した理由と同じ ✓）✓
+
+次の一手: 公式 run で FEED を玩む瞬間に card が持つ enchantment と affliction を bridge から追加で
+export して（`official_mod/CombatBridge.cs` は policy code ではないので変更してよい ✓ 再 build が必要 ✓）、
+game 側で何が 2 ダメージを出しているかを実測する ✓ 実測なしの推定はこれ以上進めない ✓
