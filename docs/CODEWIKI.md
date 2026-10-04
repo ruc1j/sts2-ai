@@ -6623,3 +6623,37 @@ list は `data/exhaust_card_classes.json` に保存した ✓ これで **`SLIME
 `QUEEN CARD.IMPERVIOUS +1`（3 件 ✓ 保持 2,349 観測 ✓）の説明がつく** ✓ game は play 時に札を exhaust し ✓
 その run たちは `RELIC.FORGOTTEN_SOUL`（exhaust 1 枚につき 1 unpowered damage ✓ model は model 済み ✓
 `combat.py:602` ✓）を持っている ✓ model が exhaust を知らないから relic が発動しない ✓ 次の work ✓
+
+## Round 31: Tender panel は arm 38 勝 / control 37 勝、Exhaust keyword の 15 枚を model に入れないと relic が発動していなかった
+
+**Tender panel（3 seed ✓ 差分は policy commit 1 つ ✓ 同じ mod binary ✓）**
+
+| seed | arm `3522e06`（Tender 修正あり） | control `5ae7b13` |
+|---|---:|---:|
+| EAIF2UUVCK | 14 勝 1 敗 | 13 勝 1 敗 |
+| L3PN5HBQ8T | 13 勝 1 敗 | 13 勝 1 敗 |
+| K7M2QX9BTR | 11 勝 1 敗 | 11 勝 1 敗 |
+| 合計 | **38 勝** | 37 勝 |
+
+决定的变化は 1,652 観測中 361 件・35 seed ✓ 勝数は +1 ✓ **下がる方向では無い** ✓ かつ census の不一致を
+105 → 97 件に減らしているので忠実度修正として保持 ✓（`wins` は combat 勝数 ✓ Act 3 踏破ではない ✓）
+control の初回走行は dll 欠落で空だった ✓ 再走した結果 ✓
+
+**`CardModel.GetResultPileTypeForCardPlay` を読んだ** ✓ 「play 後にどの pile へ移すか」を決める関数で ✓
+`Keywords.Contains(CardKeyword.Exhaust)` なら **即 PileType.Exhaust** ✓ つまり StS2 の Exhaust は
+**play 直後**に発動する ✓ ターン終了時ではない ✓ model の `exhaust = card in EXHAUSTS`（`combat.py:2860`）の
+設計は正しい ✓ 不足していたのは list の中身 ✓
+
+**15 枚を足した**（commit `722cd26` ✓ 774 tests green ✓）: Brand・Burning Pact・Cinder・Dark Embrace・
+Dramatic Entrance・Evil Eye・Feel No Pain・Havoc・Howl From Beyond・Impervious・Molten Fist・Slimed・
+Thrash・Toxic・True Grit ✓ game 側は Exhaust 持ちが 119 枚 ✓ model が play できるのはこの 15 枚を含めて
+一部だけ ✓ census は不一致 **97 → 92 件** ✓ 閉じた group は `QUEEN CARD.IMPERVIOUS +1`（3 件 ✓）✓
+
+テスト 9 件がこの修正で壊れた ✓ 全部「play した札自身が exhaust pile に入らない」という以前の思い込みを
+固定していたもの ✓（`('Brand','Strike')` なのに `('Strike',)` を期待 ✓ など ✓）→ game の規則に沿って期待値を
+書き換えた ✓ ただし 1 件（`test_true_grit_only_chooses_when_upgraded`）は premise が違ったのではなく
+`exhaust_pile[0]` の index が古くなっただけ ✓ ランダムな犠牲札を読むように直した ✓
+
+`SLIMED_BERSERKER CARD.SLIMED +1`（5 件）は self-exhaust を入れても残った ✓ 原因は別 ✓
+次の対象はこれと `TUNNELER` の ±5（LetterOpener の発動枚数 ✓）、`BYGONE_EFFIGY STRIKE +1`（3 件 ✓
+Toasty Mittens など turn 開始の autoplay が agent のカウンタに乗らない ✓）✓
