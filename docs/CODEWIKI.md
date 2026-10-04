@@ -6202,3 +6202,45 @@ LetterOpener 側は与ダメージの再現が 393 件 → 93 件に改善した
 Shuriken 側に集中している：3 枚目の Attack 自身が自分の +1 Strength を使わなくなる、というタイミングの
 修正が Attack の評価を動かし、7 seed で 142 决定が変わった。採用基準（决定 3 件・seed 3 本）を満たすのは
 この側で、忠実度の実証と合わせて HEAD に残す。
+
+## Round 21: 玩札数の数え方を own play と pile の合成に直した（攻撃一致 97.54% → 97.65%）
+
+pile だけの数え方は「手札から消えたカード」を全部数えていた。card を玩んだ時だけじゃなく、
+**効果で捨てられた・exhaust されたカード**も discard / exhaust に移る：`CARD.BURNING_PACT` は他のカードを
+1枚 exhaust、`CARD.FIEND_FIRE` は手札をまとめて exhaust、`CARD.DARK_EMBRACE` は手札を捨てる。それで
+ターン内の Skill 数が必要より1-2増えて、**game が与えていない 5 ダメージを model が与える**形が
+36 件残っていた（replay で `game - model = -5`）。
+
+直した方法（commit `f2a107c`、768 tests green）。2つの情報源を合わせる：
+
+- **agent 自身が選んだ play**（型まで正確。ただし game 自身が玩んだカードは見えにくい）
+- **discard / exhaust の増加**（全部見えるが、上に書いた効果の分まで入る）
+
+自分で選んでいない消失は、**そのターンに手札として観測されたカード**であれば効果の仕業だとみなす
+（効果は手札にあるカードに作用する）。手札に一度も現れない消失だけが autoplay（同じ解決のうちに手札に
+入って玩ばれるので、どの observation にも手札として出ない）として play に数える。
+
+検証（`choose()` 経由で trace 順に replay し、記録された play 後の敵 HP と model を比べる）：
+
+| | play 数 | 一致 | combo relic 决定の不一致 |
+|---|---:|---:|---:|
+| pile のみ（`.wt-ctrl-pile` = `86ffe4c`） | 101,942 | 99,435 = 97.54% | 2,507 |
+| 合成（HEAD） | 101,955 | **99,554 = 97.65%** | **2,401** |
+
+内訳は `LETTER_OPENER` 単独の群で **model が多い −5 が 36 → 0**、**game が多い +5 が 55 → 13**、
+combo relic を持たない群の −1 が 82 → 61。小さな悪化は `LETTER_OPENER＋ORNAMENTAL_FAN＋PEN_NIB` の −5が
+4 → 16 と、combo relic なしの +1 が 406 → 425。
+
+决定母数：`.wt-ctrl-pile` と比較して **13,325 本 replay して决定の変化 0 件・seed 0 本**。記録された
+状态での选択順位が変わらないので、**この修正単独の panel は行わない**（选択が変わらなければ胜数は動かない）。
+機構全体の母数は no-counter の control（`2426496`）に対して SHURIKEN が 2,981 本で 142 决定・7 seed、
+LETTER_OPENER が 13,325 本で 8 决定・1 seed で、合成前後に変化はなかった。
+
+**確認して棄却した点**: `MONSTER.THE_INSATIABLE` の `LiquifyMove` は `SandpitPower 4` と
+`CARD.FRANTIC_ESCAPE` 6枚（3枚を draw pile、3枚を discard pile）をplayer の pile に足す。discard に
+直接入るこの生成カードが玩札数を水増しする可能性を疑ったが、`FranticEscape` は combat.py の SKILLS /
+ATTACKS に入っていないので数えられない（discard 観測 33,085 件の FRANTIC_ESCAPE が play 扱いされなかった
+census で確認）。`THE_INSATIABLE` 戦で `CARD.FEED` を玩んだ瞬間 player がちょうど 2 減る group（35 件）は
+未解決のまま：FEED は Attack command 1回で MaxHp +3 を得るだけ（自ダメージ無し）、THE_INSATIABLE の C#
+に play 起因の damage hook は無く、候補にした relic（PENDULUM・PLANISPHERE・STONE_HUMIDIFIER・
+TEA_OF_DISCOURTESY・ODDLY_SMOOTH_STONE・GREMLIN_HORN）にも play 時の damage hook は無い。
