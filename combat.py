@@ -2254,7 +2254,13 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             player_powers = combat.player_powers
             enemies = list(combat.enemies)
         crimson_mantle = _power(player_powers, "CrimsonMantlePower")
-        crimson_self_damage = _power(player_powers, "CrimsonMantleSelfDamage")
+        # CrimsonMantlePower keeps its self-damage in a DynamicVar (CanonicalVars base 0, and
+        # CrimsonMantle.cs calls IncrementSelfDamage once per card played), so the game exports no second
+        # power for it: a state rebuilt from an observation carries the mantle counter but no marker, and
+        # used to skip the Unblockable 1 self-damage on every turn start.  The counters seen in real runs
+        # are 8 (6,028 observations), 10 (2,225) and 18 (47), i.e. one base play, one upgraded play, or
+        # two plays, so counter // 8 recovers the number of plays for every value the game reports.
+        crimson_self_damage = max(_power(player_powers, "CrimsonMantleSelfDamage"), crimson_mantle // 8)
         if crimson_self_damage:
             combat = _apply_player_damage(combat, crimson_self_damage, trigger_inferno=True)
             player_powers = combat.player_powers

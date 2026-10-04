@@ -853,6 +853,21 @@ class CombatTest(unittest.TestCase):
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
         self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
 
+    def test_crimson_mantle_damages_itself_at_turn_start_from_the_observed_counter_alone(self) -> None:
+        # CrimsonMantlePower stores SelfDamage in a DynamicVar, so the game exports only
+        # POWER.CRIMSON_MANTLE_POWER (8,300 observations; the counters are 8, 10 and 18).  A rollout state
+        # rebuilt from such an observation has no self-damage marker and used to skip the 1 Unblockable
+        # damage every turn start, which showed up as the game being exactly 1 HP lower each turn in
+        # VANTOM (335 cases), QUEEN (238) and THE_INSATIABLE (199) end-turn replays.
+        enemy = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ())
+        combat = Combat(60, (), (), (), (enemy,), player_powers=(("CrimsonMantlePower", 8),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block), (59, 8))
+        upgraded = step(Combat(60, (), (), (), (enemy,), player_powers=(("CrimsonMantlePower", 10),)), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((upgraded.player_hp, upgraded.player_block), (59, 10))
+        two_plays = step(Combat(60, (), (), (), (enemy,), player_powers=(("CrimsonMantlePower", 18),)), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((two_plays.player_hp, two_plays.player_block), (58, 18))
+
     def test_player_regen_heals_at_the_end_of_the_turn_and_decrements_by_one(self) -> None:
         # RegenPower.AfterSideTurnEnd heals its owner by Amount and then decrements by 1 (recorded runs
         # show a held Regen of 5, 4, 3, 2, 1 on consecutive turns).  The enemy side was already modeled;
