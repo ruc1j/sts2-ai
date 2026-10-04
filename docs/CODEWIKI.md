@@ -6520,3 +6520,40 @@ panel 中 policy code（`official_agent.py`・`combat.py`）は触らない ✓
 ±1 ずれる場面 ✓）、`BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game+1` 3 件 ✓ model の rollout 内では
 TenderPower の `AfterCardPlayed`（-1/-1）と `AfterSideTurnEnd`（cards ぶん還元）が適用されない ✓
 観測由来の stack には追いつくが rollout の次のターンでは知らない ✓ そこが次の work ✓
+
+## Round 28: 残り 105 件の group を dump して game 側の fact を 4 つ確定した（policy は panel 中なので触らない）
+
+panel（arm = `3522e06` ✓ control = `5ae7b13` ✓ seeds EAIF2UUVCK / L3PN5HBQ8T / K7M2QX9BTR）が走っている
+間なので policy code には手を入れず ✓ 残 group の実例を1件ずつ dump して decompile と突き合わせた ✓
+
+**`RELIC.GREMLIN_HORN` は StS1 の exhaust 効果ではない** ✓ game の実装は `AfterDeath` ✓ 敵が死んだ時に
+**エネルギー +1 と draw 1** ✓ そして **combat.py は既に model している**（`combat.py:2009` ✓ `kills > 0` の
+時 ✓）✓ なので `SLIMED CARD.SLIMED game+1`（5 件）と `QUEEN CARD.IMPERVIOUS game+1`（3 件）の説明には
+ならない ✓ 最初に挙げた仮説は外れた ✓
+**`RELIC.MEAT_CLEAVER`** も `TryModifyRestSiteOptions` だけで combat 効果は無い ✓
+
+**`RELIC.FORGOTTEN_SOUL`** は `AfterCardExhausted` → `DamageVar(1, Unpowered)` のダメージ ✓ これも
+**combat.py が既に model している**（`combat.py:602` ✓）✓ ここも gap の原因ではない ✓
+
+**`SlipperyPower` の規則** ✓ `ModifyHpLostAfterOsty` は **受ける HP 減 that is less than 1 を 1 に戻す** ✓
+つまり完全吸収は起きず最低 1 は通る ✓ `AfterDamageReceived` は `UnblockedDamage >= 1` の時に 1 減る ✓
+`MONSTER.VANTOM` の `CARD.DISMANTLE`（game 2 / model 1 ✓ Slippery 7 → 5 ✓）はこれで説明がつく ✓ model は
+1 hit として 1 削り ✓ game は 2 hit として 1 ずつ通した ✓ Dismantle の hit 数側の確認が次 ✓
+
+**Shrink は model 側で単独の切り捨てになっている** ✓ `combat.py` の 4 か所（3105 / 3162 / 3195 / 3278）で
+`damage = damage * 7 // 10` ✓ game は `ShrinkPower.ModifyDamageMultiplicative` の factor ✓ つまり Weak・
+Vulnerable・Slow と **同じ鎖で最後に1回だけ切り捨てる** ✓ 実測: `fb_arm_b1_C7N4V9P2RX` seq 7 の
+`SHRINKER_BEETLE` への BASH（base 8 ✓ player に Shrink -1 ✓ 敵に Vulnerable ✓ live の Damage var は 5.6 =
+8 x 0.7 ✓) で game は 8 削り ✓ model は 7 ✓ Shrink を先に切り捨ててから Vulnerable を掛けたため ✓
+Slow でやったのと同じ直し方（`_apply_debuff_multipliers` の鎖に factor として入れる ✓ 4 か所の単独
+切り捨てを削除 ✓）が効く見込み ✓ **4 件の group ✓ 次の policy 作業の1つ目** ✓
+
+**`BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game+1`（3 件）の仮説**: `mantle_arm_b1_EH8UMY96NC` seq 104 で
+agent のカウンタは 0/0/0 ✓ 敵は SLOW 1 ✓ game は 8 x 1.5（Vulnerable ✓) x 1.1（SlowAmount 1 ✓) = 13.2 → 13 ✓
+model は Slow 1.0 で 12 ✓ つまり game の SlowAmount だけ 1 進んでいた ✓ その run は **`RELIC.TOASTY_MITTENS`
+を持っており** ✓ game はターンの開始時に札を1枚玩む ✓ model 側の relic 処理（`combat.py:2451`）はそれを
+知っている ✓ が agent のカウンタは **ターン開始スナップショットにその玩札が既に反映されている** ので
+観測できない ✓ ターン開始の autoplay をカウンタに載せる方法を決めるのが2つ目 ✓
+
+panel の1 seed 目: `RESULT tender_arm EAIF2UUVCK wins=14 losses=1 exit=1` ✓（`wins` は combat 勝数の数え ✓
+Act 3 踏破ではない ✓）control 側の run 待ち ✓
