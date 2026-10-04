@@ -6963,3 +6963,37 @@ trace の pile 実測（EVIL_EYE 74 play で exhaust +0 ✓ TRUE_GRIT 47 play �
 `combat_records=` を出力し ✓ **combat record が 5 件未満なら 1 度だけ再試行** ✓ して同じ file 名に戻す ✓
 空 run を 0 勝として数える誤りを防ぐ ✓（`RESULT` 行に `combat_records=` を入れた ✓）✓ 
 次の panel は sweep3.sh を使う ✓
+
+## Round 42: play した Power 札は combat から完全に抜ける（model は discard に戻して再使用させていた）
+
+`CardModel.GetResultPileTypeForCardPlay` は **`CardType.Power` の札に `PileType.None` を返す** ✓ つまり play
+した Power 札は discard にも exhaust にも入らない ✓ decompile 上 `CardType.Power` は **111 枚** ✓
+model が play できるのはそのうち **20 枚**（Aggression・Barricade・Crimson Mantle・Cruelty・Dark Embrace・
+Demon Form・Fasten・Feel No Pain・Hellraiser・Inferno・Inflame・Juggernaut・Juggling・Panache・Pyre・
+Rupture・Stampede・Stone Armor・Unmovable・Vicious ✓）✓
+
+**trace で検証した** ✓ 同じ turn ✓ 同じ fight の transition で play 後の pile 増分を数えた ✓
+`CARD.INFLAME` 58 play ✓ `CARD.STONE_ARMOR` 35 ✓ `CARD.RUPTURE` 30 ✓ `CARD.CRIMSON_MANTLE` 22 ✓
+`CARD.HELLRAISER` 16 ✓ `CARD.UNMOVABLE` 9 ✓ `CARD.VICIOUS` 4 ✓ `CARD.AGGRESSION` 3 ✓ Pyre 1 ✓
+Juggernaut 1 ✓ Stampede 1 ✓ → **すべて `exh+0 disc+0`** ✓ 1 枚も pile に残っていない ✓
+model は `discard ('Inflame',)` と discard に返していた ✓ → rollout では **使い済みの Power がシャッフルで
+戻って同じ combat で何度でも play できる** ✓ 長い combat の価値を過大評価する ✓
+
+修正（scratch `.wt-proto5` ✓ patch `/tmp/power_leaves_combat.patch` ✓ suite **778 件 green** ✓）:
+`POWER_CARDS` を追加し ✓ `exhaust` が無い play で `card in POWER_CARDS` なら discard にも exhaust にも
+入れない ✓ 顺序は game と同じ（Exhaust keyword が先 ✓その次に Power → None ✓）✓
+
+テスト 1 件がこの修正で壊れた ✓ `test_hellraiser_autoplays_a_strike_drawn_at_turn_start_for_free` は
+play 済みの Hellraiser が discard から引かれて **hand に戻ってくる**前提だった ✓ game の規則と違うので ✓
+「Hellraiser はどの pile にも無い ✓ ターン開始の draw で STRIKE が戻り HellraiserPower で無料で play される ✓
+hand () ✓ 敵 94 ✓ energy 3 ✓」に書き換えた ✓ 新しい test を 1 件追加 ✓
+`test_power_cards_leave_the_combat_when_played` ✓
+
+`AfterShuffle` を読む effect も 3 数えた ✓ **`StratagemPower`**（draw pile から Amount 枚選んで hand へ ✓
+**消えない ✓ shuffle ごとに発動 ✓**）✓ `RELIC.THE_ABACUS`（+6 unpowered block ✓）✓ `RELIC.BIIIG_HUG`
+（Soot を draw pile のランダム位置に追加 ✓）✓ model はいずれも未実装 ✓ trace での出現は
+`POWER.STRATAGEM_POWER` **24 trace** ✓ THE_ABACUS 0 ✓ BIIIG_HUG 0 ✓ なので **Stratagem から実装する** ✓
+model の reshape 点は `_draw` の `if not draw: draw, discard = discard, []` ✓（`combat.py` ✓）✓
+
+**未測定** ✓ control sweep（`9bfc18e` ✓ 06:33 開始 ✓ seed 1 走行中 ✓）が終わるまで重い replay は走らせない ✓
+（実行中の agent の 25 ms polling を奪う ✓）✓ 測定したら HEAD に適用する ✓
