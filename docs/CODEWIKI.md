@@ -6557,3 +6557,41 @@ model は Slow 1.0 で 12 ✓ つまり game の SlowAmount だけ 1 進んで�
 
 panel の1 seed 目: `RESULT tender_arm EAIF2UUVCK wins=14 losses=1 exit=1` ✓（`wins` は combat 勝数の数え ✓
 Act 3 踏破ではない ✓）control 側の run 待ち ✓
+
+## Round 29: Shrink を丸め鎖に入れ Dismantle を 2 hit にした prototype を計測（104 → 92 件）— panel 中なので policy には未適用
+
+Tender panel が走っている間 policy code を触らない約束なので ✓ 変更は **`.wt-proto` worktree の prototype**
+で作り ✓ 同じ script で baseline（`/Users/mao/workspace/sts2-ai` ✓ HEAD `76594d0` ✓）と比べた ✓
+patch は `/tmp/shrink_dismantle.patch` に保存済み ✓ panel 終了後に HEAD へ適用する ✓
+
+model を 2 つ変えた ✓
+
+1. **Shrink を `_apply_debuff_multipliers` の鎖に入れた** ✓ combat.py は 4 か所（3105 / 3162 / 3195 / 3278）で
+   `damage = damage * 7 // 10` と単独で切り捨てていた ✓ game は `ShrinkPower.ModifyDamageMultiplicative`
+   の factor ✓ corpus 中の Shrink は全部 amount -1 = 0.7 ✓ 鎖の factor として `numerator *= 70 /
+   denominator *= 100` に移し ✓ 単独切り捨て 4 か所を削除 ✓
+2. **Dismantle を Vulnerable な敵に対して 2 hit にした** ✓ game の `Dismantle.OnPlay` は
+   `hitCount = target.HasPower<VulnerablePower>() ? 2 : 1` ✓ model は damage 値を 2 倍していた ✓
+   それを落として `hits = 2` ✓ hit ごとに丸め・block 吸収・Slippery の減算が別々に走る ✓
+
+同じ script（build-valid trace ✓ 同じ filter ✓ 同じ配对）での測定:
+
+| model | replay | 一致 | 不一致 |
+|---|---:|---:|---:|
+| HEAD | 6,737 | 6,633 | **104** |
+| prototype | 6,746 | 6,654 | **92** |
+
+閉じた group: `SHRINKER_BEETLE CARD.BASH +1`（4 件 ✓ Shrink ✓）、`TUNNELER CARD.DEFEND_IRONCLAD +5`（3 件）
+と `TUNNELER CARD.BATTLE_TRANCE -5`（3 件 ✓ TUNNELER は Shrink を配る ✓ 同じ原因 ✓）、
+`VANTOM CARD.DISMANTLE +1`（2 件 ✓ 2 hit ✓）✓ **合計 12 件** ✓ prototype でも suite は 774 件 green ✓
+（`test_shrink_power_reduces_player_damage` は鎖に入れても同じ値で通る ✓）
+
+残って最上位の group: `SLIMED_BERSERKER CARD.SLIMED game+1`（5 件 ✓ 原因未特定 ✓ GremlinHorn でも
+ForgottenSoul でもないことは確認済み ✓）、`QUEEN CARD.ASHEN_STRIKE -1`（3 件 ✓ CalculatedDamage が
+22.5 のような半端な値 ✓ 丸めの位置 ✓）、`QUEEN CARD.IMPERVIOUS +1`（3 件 ✓ Block 23.25 ✓）、
+`VANTOM CARD.BATTLE_TRANCE +1`（3 件 ✓）、`THE_INSATIABLE CARD.DEFEND_IRONCLAD +5` と
+`CARD.SHRUG_IT_OFF -5`（各2件 ✓ Skill play 時に game だけ 5 削る ✓ LetterOpener の発動枚数 ✓）、
+`DECIMILLIPEDE_SEGMENT_BACK CARD.TRUE_GRIT +15`（2 件 ✓ 未確認 ✓）✓
+
+panel の途中結果: arm（`3522e06` ✓ Tender 修正あり ✓）は EAIF2UUVCK `wins=14 losses=1` ✓
+L3PN5HBQ8T `wins=13 losses=1` ✓ control（`5ae7b13`）は未開始 ✓ `wins` は combat 勝数で Act 3 踏破ではない ✓
