@@ -6166,3 +6166,24 @@ pile 差分が play 以外の移動（カードを捨てる効果・手札から
 で自分の side だけなので、**model の per-turn 基準で正しい**ことが分かった。combo relic を持たない group
 の不一致が 594 → 608 に 14 増えたのは、その group の `cards_played_this_turn`（`SlowPower` の ramp、
 Brilliant Scarf、Sloth、Normality の上限が読む）に対する pile 推定のずれであり、ルール不足ではない。
+
+### 玩札数再構成の panel：**-1 胜**（37 → 36、3 seed すべて測定になった）
+
+`data/plays_ab.sh`（arm = HEAD、control = `.wt-ctrl-plays` = `2426496` = `4c89254` と `e7d8836` の 2 commit
+前。2 つは「ターン内の玩札数を見せる」と「その bonus を game と同じタイミングで適用する」の1組なので
+束ねて測ったことは script 冒頭に書いた）。seed は combo relic 保持 run の観測数が多く、かつ従来の panel で
+測定されていない 3 本（E3L7S9A4KU 289 観測 / Q2W7N4K9DX 270 / V7D3M9H2XW 255、うち 199・196・174 がターン
+途中の state）。
+
+| seed | control | arm | 差分 | trace | combo relic 観測（arm / control） |
+|---|---:|---:|---:|---|---|
+| E3L7S9A4KU | 14勝 | 14勝 | +0 | 分岐（541 / 486 record） | 374 / 319 |
+| Q2W7N4K9DX | 11勝 | 12勝 | **+1** | 分岐（339 / 342） | 243 / 236 |
+| V7D3M9H2XW | 12勝 | 10勝 | **−2** | 分岐（325 / 252） | 230 / 168 |
+| 合計 | **37勝** | **36勝** | **−1** | 3 本すべて分岐 | |
+
+3 seed とも trace が分歧し、両 arm が combo relic を持つ戦闘を観測している（Weak の panel のように
+「同一 trace なのに測定された」という seed は無い）。胜数は 1 減った。単一 seed の ±2 はこの harness では
+通常の揺れで、しかも model の忠実度を上げる変更（game が実際に与えている 5 ダメージを価格に入れる）が
+胜数を増すとは限らない —— 以前 FlameBarrier の時と同じ形。忠実度の実証（攻撃一致 97.36% → 97.54%、
+LetterOpener 系の過小評価 393 → 93 件）を根拠に HEAD には残す。
