@@ -46,6 +46,15 @@ for line in open(paths, encoding="utf-8-sig"):
             for power in (record.get("player") or {}).get("powers") or ()
         ):
             continue
+    elif power_id.startswith("CARD:"):
+        # A card id list selects the decisions where an upgraded copy of one of those cards is in
+        # hand, i.e. the decisions a change to that card's upgrade value can touch.
+        wanted = power_id.split(":", 1)[1].split(",")
+        if not any(
+            card.get("id") in wanted and card.get("upgrade")
+            for card in record.get("hand") or ()
+        ):
+            continue
     elif power_id.startswith("MONSTER."):
         # A monster id selects the fights that monster is in (for gaps that are a move body rather
         # than a power, e.g. ThievingHopper.ThieveryMove's CardPileCmd.RemoveFromCombat).
@@ -81,7 +90,7 @@ def main() -> int:
     ]
     power_id = sys.argv[3] if len(sys.argv) > 3 else "POWER.RAMPART_POWER"
     enemy_data = Path(sys.argv[4]) if len(sys.argv) > 4 else REPO / "data/enemies_glory.json"
-    token = (power_id.split(":", 1)[1].split(",")[0] if power_id.startswith("PLAYER:") else power_id).encode()
+    token = (power_id.split(":", 1)[1].split(",")[0] if power_id.startswith(("PLAYER:", "CARD:")) else power_id).encode()
     # TRACE_GLOB overrides which traces are replayed (e.g. one panel's control traces) and
     # SIMULATIONS caps the rollout width so a large population still finishes.
     trace_glob = __import__("os").environ.get("TRACE_GLOB", "data/*_agent.jsonl")
