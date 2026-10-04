@@ -5448,3 +5448,62 @@ Amount ぶん回復して（`player_max_hp` を上限）、Regen は 1 減らす
 `player_max_hp` 上限 80 を既定値として使い、game 側の実際の最大 HP とずれるケース）で、後者は既知の
 小さな残差として残す。决定母数は **841 本 replay して 17 决定が変化・8 seed**（基準を満たす）。
 1 run あたり 2〜23 観測とまれなので panel では測らない（忠実度で採用）。
+
+## Round 12: potion census — 記録された potion 使用の 53% が model で評価できなかった（2026-10-04）
+
+### census
+
+前 round の audit が可視化した `no_equivalent_action` を追跡した。combat 観測に現れる potion を全部集めて
+`combat.py` の `POTION_*` 定数と照合すると、**30 種類が model に全く無い**。実際に agent が使った回数：
+
+- 記録された potion 使用は **3,274 件**、そのうち **1,738 件（53%）** が model の無い potion
+- 最多は `POTION.SPEED_POTION`（観測 16,425 件・使用 214 件・48 seed）、`POTION.SKILL_POTION`（7,549・145・39）、
+  `POTION.POWER_POTION`（9,101・139・38）、`POTION.WEAK_POTION`（7,898・120・23）、`POTION.FLEX_POTION`
+  （5,079・98・20）、`POTION.COLORLESS_POTION`（13,344・97・30）、`POTION.POTION_OF_BINDING`（5,195・95・16）、
+  `POTION.REGEN_POTION`（6,725・90・23）、`POTION.SWIFT_POTION`（10,082・82・27）、`POTION.FORTIFIER`（11,724・80・12）
+
+model 側は 13 種類（Block/Ship/Fire/Explosive/ShapedRock/Strength/Dexterity/Fysh/Energy/Blood/Heart/Bronze/
+Duplicator/Gigantification）だけを持っていた。`SpeedPotionPower`・`FlexPotionPower`・`RegenPower` は**すでに
+model 済み**だった（観測に現れる power を読んでいた）ので、欠けていたのは **potion を「使う」動作そのもの**：
+`ROLLOUT_POTION_IDS` に無いため rollout はその potion を候補にすら入れていなかった。
+
+### 実装（commit 257c4fe）
+
+decompile の `OnUse` をそのまま写した 7 種類：
+
+| potion | game の効果 | model での実装 |
+|---|---|---|
+| `SPEED_POTION` | `PowerCmd.Apply<SpeedPotionPower>(5)`（SpeedPotionPower は TemporaryDexterityPower の派生） | `SpeedPotionPower 5` + 対応する `DexterityPower 5`（END_TURN で両方消える処理は既存） |
+| `FLEX_POTION` | `PowerCmd.Apply<FlexPotionPower>(5)`（TemporaryStrengthPower の派生） | `FlexPotionPower 5` + `StrengthPower 5` |
+| `SWIFT_POTION` | `CardPileCmd.Draw(3)` | 3 枚ドロー |
+| `REGEN_POTION` | `PowerCmd.Apply<RegenPower>(5)` | RegenPower 5（前 round の player 側回復と connected） |
+| `FORTIFIER` | `CreatureCmd.GainBlock(target, target.Block * 2)` | Block を 2 倍（Block が 0 なら無効果） |
+| `WEAK_POTION` / `VULNERABLE_POTION` | 対象に Weak 3 / Vulnerable 3 | 対象 index 付き action で power を付与 |
+
+`legal_actions` の potion 一覧（無対象／対象付き）と `official_agent.ROLLOUT_POTION_IDS` にも追加した。
+テストは `test_the_colorless_potions_the_shops_sell_are_simulatable`（各効果と legality を1つずつ）を足して 759 件 green。
+
+### 検証
+
+これらの potion の**記録された使用 976 件・111 seed** を、修正前後のツリーで replay した：
+
+| | 修正前（`.wt-ctrl-potion` = `7f583c3`） | 修正後（HEAD） |
+|---|---:|---:|
+| simulator が再現できた使用 | **0 / 758**（比較できた窓） | **655 / 758** |
+| replay 後の player HP が game と一致 | — | **655 / 655** |
+
+audit 全体でも `no_equivalent_action` 69 → **56**、end_turn の player HP 一致 621 → **638**（不一致は 5 → 1）、
+全体の一致 2,885/2,920 → **2,902/2,933 = 98.9%** に改善した。tooling 側にも potion 対応を入れた
+（audit は対象 index 付き potion action を組み立てていなかった・attribution に `POTION:` セレクタを追加）。
+
+### 次の gap（この round では未実装）
+
+残るは**札を生成する potion** と効果の複雑な potion で、実際に使われた回数：
+`SKILL_POTION` 230・`POWER_POTION` 184・`COLORLESS_POTION` 136・`POTION_OF_BINDING` 124・`LUCKY_TONIC` 96・
+`GAMBLERS_BREW` 71・`SHACKLING_POTION` 69・`CURE_ALL` 67・`ATTACK_POTION` 61・`DISTILLED_CHAOS` 59・
+`CLARITY` 57・`RADIANT_TINCTURE` 36・`SNECKO_OIL` 34 ＝ **合計 1,224 件**。生成系は
+`CardSelectCmd.FromChooseACardScreen(...)` で札を選ばせて hand に入れるので、選ばれる札の集合
+（colorless pool など）を model が持つ必要がある。
+
+**胜数 panel は走らせていない。** この修正は agent が価格付けできる potion の集合そのものを増やす
+（= 振る舞いが変わる）ので、次 round では ROLLOUT_POTION_IDS の拡張を実測すべきレバーとして扱う。
