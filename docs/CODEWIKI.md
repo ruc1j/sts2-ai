@@ -2376,7 +2376,7 @@ panel で出現した未coverage event の effect（decompile 済み）：
 | `SAPPHIRE_SEED` | EAT = heal 9 / PLANT = `Sown` enchantment | 2 |
 | `COLOSSAL_FLOWER` | gold 35/75/135 で dig、damage 5/6/7 | 1 |
 
-fact 上 strict に優る選択は `LOST_WISP` の CLAIM だけで、reach 1（閾値 3 件/3 seed 未満）。残りは「heal/gold/curse/upgrade の trade-off」で、policy の既存 criterion（block-starved、low HP、relic axis）と同じ方向なので、单独の lever として测る意味が無い。よって event scores は追加分を書かない（reach ≥3 が出るまで書かない）。
+fact 上 strict に優る選択は `LOST_WISP` の CLAIM だけで、reach 1（閾値 3 件/3 seed 未満）。残りは「heal/gold/curse/upgrade の trade-off」で、policy の既存 criterion（block-starved、low HP、relic axis）と同じ方向なので、単独の lever として測る意味が無い。よって event scores は追加分を書かない（reach ≥3 が出るまで書かない）。
 
 ## shop の affordability は bridge の filter が source（v0.107.1、code + 全 trace で確認）
 
@@ -2479,7 +2479,7 @@ decision列を件数で照合した：
 | GEFYYKH1YK | 164 | 164 | 0 | 7 / 7 |
 | SWRUL944UU | 120 | 120 | 0 | 6 / 6 |
 
-7 seed は decision列が control と完全一致。同じ决定列なら outcome も同じ（game の RNG は seed 由来）
+7 seed は decision列が control と完全一致。同じ決定列なら outcome も同じ（game の RNG は seed 由来）
 なので、この7件は watchdog の有無に関係なく「測定不能」が確定。AM8 の分歧は seq 244（SWORD_BOOMERANG）
 からで、件数差は arm が早く負けたぶん。
 
@@ -2585,7 +2585,7 @@ mechanism panel の control 腕で `AM8C6YXHSG` を `e808bdf` に再走した。
 （351件）と比較し、**再走分の決定列（seq・card_id・decision_source）が全件一致**（2026-10-03 09:40 時点で
 351/351、再走は走行継続中）。条件は同一：固定ユーザーデータ、`simulations=100`、Act 3まで、単一 game instance。
 
-これで「同じ决定列なら outcome も同じ（game の RNG は seed 由来）」が harness 側でも確認できた。
+これで「同じ決定列なら outcome も同じ（game の RNG は seed 由来）」が harness 側でも確認できた。
 panel の ±0 が本当に「決定が変わっていない」かどうかの判定は、この再現性の上で使える。
 （決定列が一致しない場合の原因は policy 差か path 差かの切り分けが要る、という既存の rule はそのまま。）
 
@@ -2749,7 +2749,7 @@ sample の Chains 分歧34件は「Bound 札を打てない」という**忠実�
 ゲート単独の差）。Fiddle（76件）は rule が忠実と確認済みなのでそのまま。panel 実走で測れるのは、
 両腕が同じ機構を見た seed だけ、という条件もそのまま。
 
-### D1：决定は61件違うが outcome は同じ（14勝1敗）
+### D1：決定は61件違うが outcome は同じ（14勝1敗）
 
 mechanism panel の `D1W9Y3B7FC`：control 14勝1敗、arm（clean code、例外0件）14勝1敗。
 decision列は arm 294件 / control 306件で **61件分歧**（first divergence seq 82）。この seed は
@@ -2845,14 +2845,14 @@ panel 8 seed（control `e808bdf` vs arm）：
 | `Q6N3V8K2MT` | 12 | **12（clean code）** | 有効。ただし両腕で発火0 → 機構については測定不能 |
 
 忠実なゲート（Bound playable、第一 play 後 skip）の分歧率を gate-active record の30件/seed sample で測った：
-**88件で第一手分歧15件（約17%）、control 側の mapping fail 0件**。651件へ外挿すると約110件の决定分歧、
+**88件で第一手分歧15件（約17%）、control 側の mapping fail 0件**。651件へ外挿すると約110件の決定分歧、
 3 seed に分布 → 閾値（≥3 decisions かつ ≥3 seeds）超。re-run（tag `mechpanel_arm_clean`、job `bash-296`）
 が走っている間、gate の分歧件数を full で数える。
 
 ### clean re-run の照合方法（N8 で実装）
 
 clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control（`e808bdf`）の同じ seed run と、
-seqで揃った record 120件まで决定列が一致。この区間で gate-active record は **0件**（Chains がまだ
+seqで揃った record 120件まで決定列が一致。この区間で gate-active record は **0件**（Chains がまだ
 active ではない）→ 分歧が出ないのは预期どおり。
 
 照合の手顺（panel の arm 腕全体に使う）：
@@ -2867,7 +2867,7 @@ active ではない）→ 分歧が出ないのは预期どおり。
 `CARD.ONE_TWO_PUNCH` が載っていた）で、combat decision の state に机构が出ていた件数は0。
 `compare_panel` は発火を combat record の状態出現だけで数えるようにした（commit `9bbd4c5`）。
 
-clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control と决定列 **111/111件一致**、outcome も
+clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control と決定列 **111/111件一致**、outcome も
 5勝1敗で同値。つまり N8 はこの run で机构を見ず、機構については測定不能。N8 の到達性57件は
 同じ seed の**別の run**（`candidate` ほか）から来ていた。
 
@@ -2880,8 +2880,8 @@ clean run（`mechpanel_arm_clean_N8CQ4ZKP2W`）は control と决定列 **111/11
 `RELIC.FORGOTTEN_SOUL` は 0件。control（`e808bdf`）の同じ seed run は67件で所持 → **path が分かれて
 机构を引かなかった**。H2 の到達性24件は control 側が机构を持つ run（`candidate` ほか）から来ていた。
 
-决定列は seq で揃った213件の分歧0。機構の実装（exhaust 1枚につき random 1体へ1 unpowered）は
-1点 damage で、この path では决定を1つも動かしていない。機構の effect が决定へ伝播する母数として、
+決定列は seq で揃った213件の分歧0。機構の実装（exhaust 1枚につき random 1体へ1 unpowered）は
+1点 damage で、この path では決定を1つも動かしていない。機構の effect が決定へ伝播する母数として、
 Fiddle（76件）と Chains のゲート（651件で17%）は実測済み。control era で bound-hand decision の
 469件が heuristic_fallback に落ちていた件（model が game に無い札を top に並べた）は、忠実な形の
 arm では game-legal の中から rank する → こちらが機構単独の差として残る。
@@ -2936,7 +2936,7 @@ pair が揃う seed が増えてから判定する。現在 pair：H2 の1件。
 
 combat decision の分歧46件を、その decision の state（relics・powers・hand）で機構の出現を確認して
 割った：**46件すべて両腕に `RELIC.FORGOTTEN_SOUL` が在る**。arm 側にだけ Chains が在る位置での分歧は
-**0件** → H2 の path で Chains のゲートは决定を動かしていない。
+**0件** → H2 の path で Chains のゲートは決定を動かしていない。
 
 したがって H2 の +2（control 20勝1敗 → arm 22勝1敗）は Forgotten Soul の実装単独の差として attribution
 できる。母集団は1 seedなので採用根拠にはしない（rule 5）が、機構単独の差として立つ第一 pair。
@@ -2985,7 +2985,7 @@ clean AM8 run の「combat ごとの最初の decision」7件を見ると、turn
 
 （1 decision に複数の机构が両腕で揃っている場合があるので件数は機構別、合計は138超になりうる）
 
-AM8 は Fiddle が决定を動かす位置が最多の seed。run レベルの outcome（17勝0敗 vs control 17勝1敗）は
+AM8 は Fiddle が決定を動かす位置が最多の seed。run レベルの outcome（17勝0敗 vs control 17勝1敗）は
 机构と忠実化が混かるので、Fiddle 単独の成果へは開けない。開けるのは、同一 observation を両treeで
 replay して「機構単独」を隔離した件数（Fiddle 76件、Chains の忠実なゲート651件で17%）だけ。
 
@@ -2993,12 +2993,12 @@ replay して「機構単独」を隔離した件数（Fiddle 76件、Chains の
 
 | seed | control | arm（clean、例外0件） | delta | pair（両腕の combat state） |
 |---|---:|---:|---:|---|
-| `N8CQ4ZKP2W` | 5W1L | 5W1L | 0 | none（决定列111件完全一致） |
+| `N8CQ4ZKP2W` | 5W1L | 5W1L | 0 | none（決定列111件完全一致） |
 | `H2LV6ZJ4XW` | 20W1L | 22W1L | **+2** | Forgotten Soul |
-| `AM8C6YXHSG` | 17W1L | 17W1L | 0 | Fiddle・Forgotten Soul・Chains（决定分歧138件でも outcome 同値） |
+| `AM8C6YXHSG` | 17W1L | 17W1L | 0 | Fiddle・Forgotten Soul・Chains（決定分歧138件でも outcome 同値） |
 
 **MEASURABLE（両腕で同じ機構）= 2 seed：control 37勝 / arm 39勝、+2。**
-AM8 は决定を138件動かして勝敗が変わっていない → decision の分歧は outcome へ伝わらないことがある
+AM8 は決定を138件動かして勝敗が変わっていない → decision の分歧は outcome へ伝わらないことがある
 実例（D1 の61件と同じ形）。rule 5（1 seedの当たりで採用しない）の下では +2 はまだ採用根拠にならない。
 残4 seed：R8・D1・P3・B3。
 
@@ -3044,24 +3044,24 @@ Forgotten Soul）。AM8 の第一分歧 seq 248、R8 の分歧位置は机构な
 机构単独の差は同一 observation を両treeで replay する到達性計算でしか隔離できない（Fiddle 76件、
 Chains の忠実なゲート651件で17%、Forgotten Soul 24件、OneTwoPunch 2件、Duplication 2件、Panache 1件）。
 
-### R8：arm は机构を引かなかったから、决定列が control と301件一致
+### R8：arm は机构を引かなかったから、決定列が control と301件一致
 
 `mechpanel_arm_clean_R8V2H6N4ZB`（15勝0敗・走行中）は、seq で揃えた combat decision 301件の分歧が
 **0件**。arm 側は机构を state に出していない（control 側は Chains 17・Rose 154 record）が、control の
 model（`e808bdf`、机构を実装する前）は那些を無視するので、両腕が「机构を持たない run」として同じ
-决定を出す。機構を引かなかった path では机构の効果は出ない — 引くかどうかは reward の path 運。
+決定を出す。機構を引かなかった path では机构の効果は出ない — 引くかどうかは reward の path 運。
 
 この seed は机构単独の差を持たない。分歧が出るとすれば arm 側が机构を acquisition した後の位置で、
 その場合も第一分歧の位置（state が両腕で一致する位置）だけ attribution に使える。
 
-### R8 で二重計上修正の帰結が実走で出た：Rose を両腕が持っても决定列が完全一致
+### R8 で二重計上修正の帰結が実走で出た：Rose を両腕が持っても決定列が完全一致
 
 `mechpanel_arm_clean_R8V2H6N4ZB`（21勝0敗・走行中）は、seq で揃えた combat decision の分歧が
 **0件**（412 record、2026-10-03 11:30 時点）。両腕の record に `RELIC.BLOOD_SOAKED_ROSE` が出ている
 （control 154・arm 156 record）ので pair だが、修正後（`a328b5c`）model は Rose に何もしない（game が
 報告する `max_energy` に既に反映済み）→ 機構単独の差は0。arm が control と同じ決定を出している。
 
-これが「機構として model に載せるものがない（observation に既にある）」の实走形。pair でも effect が
+これが「機構として model に載せるものがない（observation に既にある）」の実走形。pair でも effect が
 無い case の記録。
 
 ### R8 の error log から実 bug を1件修正（commit `HEAD`：SoarPower + hit count 0）
@@ -3072,11 +3072,11 @@ model（`e808bdf`、机构を実装する前）は那些を無視するので、
 0になりうるのは Whirlwind の path だけ）。`HardToKill` 側は `if caps and hits` で guard 済みで、Soar 側
 だけ guard が无かった。
 
-R8 はこの decision（seq 546）で game 側の default を取ったが、决定列は control と **454件分歧0**、
+R8 はこの decision（seq 546）で game 側の default を取ったが、決定列は control と **454件分歧0**、
 outcome も 22勝1敗で同値 → 実走影响は出なかった。guard を入れてテスト
 `test_lethal_with_soar_power_does_not_divide_by_a_zero_hit_count`（suite **735件成功**）で固定。
 
-### P3：pair だが决定列の分歧0（Duplication の effect が出なかった path）
+### P3：pair だが決定列の分歧0（Duplication の effect が出なかった path）
 
 `mechpanel_arm_clean_P3V8N5K2RX`：393 aligned recordsで**全 decision field の分歧0**。両腕の combat
 state に `POWER.DUPLICATION_POWER` が出ている（control 16・arm record）ので pair。分歧が0なので
@@ -3134,11 +3134,11 @@ AM8 の138分歧は生成プールの忠実化（同一 observation で control 
 二重計上を除去した（`a328b5c`）後の model は Rose に何もしないので、分歧が出ないのは预期どおり。
 R8（454件分歧0）と同じ形。
 
-panel の MEASURABLE は H2・AM8・R8・P3（＋B3 の Rose）で、机构単独として决定を動かしたのは H2 の
+panel の MEASURABLE は H2・AM8・R8・P3（＋B3 の Rose）で、机构単独として決定を動かしたのは H2 の
 Forgotten Soul 46件だけ。run レベルで机构単独として立つのは第一分歧の位置（state が両腕で一致）の
 限り、という rule が B3 でも確認された。
 
-### H2 の第一分歧は机构単独で立つ（生成プールが决定に関与できない）
+### H2 の第一分歧は机构単独で立つ（生成プールが決定に関与できない）
 
 seq 441（両腕の state が一致、Forgotten Soul が両腕に出ている）の record を確認：hand は
 Uppercut・Iron Wave・Strike・Bloodleting、**draw/discard/exhaust に Stoke も Infernal Blade も無い**。
@@ -3214,7 +3214,7 @@ harness の残：AM8（1勝0敗・走行中、分歧0、機構未出現）、R8�
 
 `mechonly_H2LV6ZJ4XW` と `mechpanel_arm_clean_H2LV6ZJ4XW`（faithful 集合で走った arm）を照合：
 aligned 447件で**分歧0**。H2 は Stoke を打つ位置が無かった（少なくとも分歧に効く位置）ので、pin しても
-しなくても同じ决定列になる。＝ H2 の分歧46件は最初から機構単独で立っていた（上の state 確認と一致）。
+しなくても同じ決定列になる。＝ H2 の分歧46件は最初から機構単独で立っていた（上の state 確認と一致）。
 
 harness の価値は pool が効く seed 側にある。AM8 は panel で第一分歧が生成プール（seq 248）だったので、
 pin した harness run は control と揃った path を歩き、機構が両腕の state に出た位置から分歧する预期。
@@ -3224,7 +3224,7 @@ pin した harness run は control と揃った path を歩き、機構が両腕
 
 `ps` の command line：`-AgentScript ./data/mechonly_agent.py`（seed AM8C6YXHSG、`-AgentSimulations 100`、
 `-StopAfterAct 3`）。harness は repo の code を import して `STOKE_GENERATION`（110名）と
-`INFERNAL_BLADE_ATTACKS`（51名）を control 形へ上書きするだけなので、live の决定列が control と
+`INFERNAL_BLADE_ATTACKS`（51名）を control 形へ上書きするだけなので、live の決定列が control と
 揃うはずで、実際に AM8 は138件分歧0（机构未出現、pool の分歧点 seq 248 未通過）。
 
 harness の判定条件：`python3 data/compare_panel.py mechonly mechpanel_ctrl . .wt-ctrl-e808bdf <seed>`。
@@ -3240,7 +3240,7 @@ replay で control 形の集合なら control の選択、faithful なら arm �
 Fiddle は control 側で seq 322 の event で獲得。harness run は control と揃った path を歩いているので
 同じ点で獲得する预期。獲得後の第一分歧が機構単独の差になる。
 
-### 预测（1 record replay）：Fiddle を引いた直後の decision は分歧しない
+### 预測（1 record replay）：Fiddle を引いた直後の decision は分歧しない
 
 control AM8 の Fiddle grant（seq 322）の直後の combat decision seq 325 を、arm code（pin 済み）と
 control tree で replay：両方 `CARD.PERFECTED_STRIKE`（control の run の実際の選択と同じ）。
@@ -3287,7 +3287,7 @@ control は同じ path から17勝1敗）。
 | `R8V2H6N4ZB` | 22W1L | 1勝0敗・走行中 | — | control 側は Chains を17 record で所持 |
 | `P3V8N5K2RX` | 15W1L | 未走 | — | control 側は Duplication を1 record |
 
-AM8 で Fiddle は73件决定を動かしたが outcome は同じ → decision の分歧が win-rate へ伝わらないcase。
+AM8 で Fiddle は73件決定を動かしたが outcome は同じ → decision の分歧が win-rate へ伝わらないcase。
 机构単独の win-rate 効果は harness でも H2 の +2（1 seed）のまま。閾値 ≥3 seeds は R8・P3（機構が
 両腕の path に出る case）を待つ。
 
@@ -3305,7 +3305,7 @@ live の harness が control と同じ选择を返している＝pin が実走�
 
 ### Rose の effect 0：harness run でも同じ（R8、arm 130 record・分歧0）
 
-`mechonly_R8V2H6N4ZB`：harness run が Rose を保持する combat record **130件**で、control との决定分歧
+`mechonly_R8V2H6N4ZB`：harness run が Rose を保持する combat record **130件**で、control との決定分歧
 **0件**。二重計上を除去した model（`a328b5c`）は Rose に何も処理を持たないので、分歧が出ないのは构造上
 当然で、実走3件（panel clean R8 454件、panel clean B3 446件、harness R8 130件）で一致した。
 
@@ -3313,10 +3313,10 @@ Chains のゲート（忠実な形）は R8 の control run で17 record 効い�
 まだその点（seq 567）に達していない。ゲート単独の分歧は651件の母数で17%（sample）→ R8 の path で
 出るかは達してから見る。
 
-### R8：Chains が両腕の state に出た17件で决定分歧0（post-fix 到達性0の実走形）
+### R8：Chains が両腕の state に出た17件で決定分歧0（post-fix 到達性0の実走形）
 
 `mechonly_R8V2H6N4ZB` 完走：22勝1敗 = control と同値。Chains（忠実なゲート）が両腕の combat state に
-17 record 出ていて、决定分歧は0。＝ R8 の path ではゲートが决定を動かさなかった。sample で R8 の分歧が
+17 record 出ていて、決定分歧は0。＝ R8 の path ではゲートが決定を動かさなかった。sample で R8 の分歧が
 Rose の bug branch 由来（除去後0）だったことと実走で一致。
 
 harness reading（完走分）：H2 46分歧（Forgotten Soul）で +2、AM8 87分歧（Fiddle 73・Chains 14）で outcome
@@ -3370,7 +3370,7 @@ run は同じ path を追うので pair が成立する（機構が効く位置�
 ### batch2 の attribution は构造上clean（pin した arm は机构以外で分歧できない）
 
 batch2 は control（`e808bdf`、机构未実装）と arm（HEAD＋生成集合 pin）を同じ seed・同じ条件で比べる。
-arm 側に机构の実装以外に code の差が無い（生成集合は pin で無効化）ので、决定列が分歧する位置は
+arm 側に机构の実装以外に code の差が無い（生成集合は pin で無効化）ので、決定列が分歧する位置は
 機構が arm の state に出ている位置に限られる。control の run が機構を state に出した seed では、path が
 分歧するまで両腕が同じものを見る ＝ pair が成立する。
 
@@ -3441,7 +3441,7 @@ rule 9（再走後は exception 0件を確認）の形で、run ごとに例外�
 
 `mechpanel_ctrl_R8V2H6N4ZB_agent.err`：`damage()` の SoarPower branch での ZeroDivisionError（`value // hits`
 が hits 0）。＝ control 側にも同じ bug があり、その decision で game 側の default を取っている。R8 の
-read（control 22勝1敗 / arm 22勝1敗、分歧0）はその1 decision 以外は决定列が一致しているが、rule 9 の
+read（control 22勝1敗 / arm 22勝1敗、分歧0）はその1 decision 以外は決定列が一致しているが、rule 9 の
 形で言えば R8 の control run は汚染 → clean にしたい場合は `e808bdf` で re-take。
 
 batch2 の control では `M7C4Q9V2RH` に1件（Hellraiser recursion、control 側に cap が無い）が出ている。
@@ -3478,7 +3478,7 @@ commit `f16b256`（`_autoplay_top_of_draw` の再帰 cap）は batch2 の contro
 - arm stage（commit 後）＝ cap 入り
 
 cap は crash を止めるものなので、cap が実際に発火する位置（draw pile に Havoc が9枚以上並ぶ等）で
-ないと决定は変えない。したがって batch の解读は保つが、片腕だけ cap が発火した case は机构単独の差
+ないと決定は変えない。したがって batch の解读は保つが、片腕だけ cap が発火した case は机构単独の差
 として読めない。run ごとの例外数と code version を報告する。
 
 ### 訂正：札名出現は table knowledge で、机构ではない
@@ -3590,7 +3590,7 @@ first-diff-mech（第一分歧の位置の機構）を出すようにした（co
 ### T3XQ7WM2VP：clean pair だが机构位置で分歧0、outcome 同値（12勝1敗）
 
 両腕が `POWER.DUPLICATION_POWER` を seq 119、`POWER.GIGANTIFICATION_POWER` を seq 207 で同じ位置に見て
-いて（aligned 201件、分歧0）、arm 完走 12勝1敗 = control と同値。この path では机构が决定を動かさ
+いて（aligned 201件、分歧0）、arm 完走 12勝1敗 = control と同値。この path では机构が決定を動かさ
 なかった。
 
 run レベルで机构単独の差として分歧を出した seed は H2（Forgotten Soul、46件、+2）と AM8（Fiddle、87件、
@@ -3609,7 +3609,7 @@ knowledge-only で除外：`U2M7K5F9RA`。分歧0：`T3XQ7WM2VP`・`R8V2H6N4ZB`�
 ### `M7C4Q9V2RH` の分歧は knowledge-driven（seq 120、機構は state に出ていない）
 
 arm が `CARD.STRIKE_IRONCLAD`、control が `CARD.TREMBLE` を選んだ seq 120 は、両腕の state に power/relic
-が出ていない位置（＝card table の classification 差）。しかも control 側に exception（seq 138）が后续に
+が出ていない位置（＝card table の classification 差）。しかも control 側に exception（seq 138）が后続に
 ある。pin した arm は生成集合で control と同じなので、この分歧は机构の実装差ではない。
 → `M7C4Q9V2RH` は机构単独の測定に使えない（knowledge と exception の二重の confound）。
 
@@ -3667,11 +3667,11 @@ AM8 の87分歧の clean は2件。母集団は薄いまま、という読みが
 ### harness が机构の無い path で control と完全一致（M5）
 
 `mechonly_arm_b2_M5W9C3T7LQ`：303 aligned、分歧0、両 run 例外0件、outcome **16勝1敗 = control と同値**。
-机构が state に出ない seed では、pin した arm は control と决定列が完全一致する（生成集合の差を消した
+机构が state に出ない seed では、pin した arm は control と決定列が完全一致する（生成集合の差を消した
 ので、difference が机构以外に無い）。harness の预期どおり。
 
 机构の無い seed（M5・C8・N8・D1・Q6・B3）の分歧0は、機構の実装が無効だからではなく、机构を引かなかった
-から測定にならない（path 運）。分歧0の seed は機構の実装が决定を動かさなかった case と区別できない。
+から測定にならない（path 運）。分歧0の seed は機構の実装が決定を動かさなかった case と区別できない。
 
 ### `V7D3M9H2XW` は pair candidate（batch2 の control run は PanachePower を seq 221-224 に出している）
 
@@ -3687,7 +3687,7 @@ arm が同じ path を追えば同じ位置で Panache を見る预期 → 達�
 
 `mechonly_arm_b2_V7D3M9H2XW`：aligned 170件、分歧0、両 run 例外0件。arm が `POWER.PANACHE_POWER` を
 seq 221 で見た（control も 221）→ clean mechanism position。分歧は出ていない（Panache の
-counter 5枚目 play 触发がその path で决定を変えていない）。
+counter 5枚目 play 触发がその path で決定を変えていない）。
 
 note の fold：Rose（`a328b5c`）と生成プール（`77120b2`）の項目は完了として `[x]` にし、残る confound は
 card table の knowledge 差として書き直した。
@@ -3708,10 +3708,10 @@ live process は per-run の module state（`upgraded_cards` の memo、Paels Fl
 持つから。だから分割は**同一条件の replay 同士**の比較で、`control-replay-reproduces-record` として別に
 出している（H2 0/46、AM8 3/87）。
 ・ classification が空いている位置（H2 46-13、AM8 87-22）は、fresh replay 下では arm と control が同じ
-选择に落ちる位置＝live の决定は module state か fallback 由来。机构単独の差として clean に言えるのは
+选择に落ちる位置＝live の決定は module state か fallback 由来。机构単独の差として clean に言えるのは
 mechanism-only  counts（13件、22件）だけ。
 
-→ 機構単独の决定差（同一条件で隔离済み）：Forgotten Soul 13件（H2）、Fiddle 22件（AM8）。run レベルの
+→ 機構単独の決定差（同一条件で隔离済み）：Forgotten Soul 13件（H2）、Fiddle 22件（AM8）。run レベルの
 win 效果は H2 の +2（1 seed）のまま。
 
 ### H2 の mechanism-only 13件は机构が1つだけなので attribution が歧義がない
@@ -3749,7 +3749,7 @@ turn 終わりに remove。model は `play_duplicated` flag で damage hit と b
 の extra resolution が抜けている。**忠実度の gap として記録**（実装していない：play 本文が `_step` 内に
 インラインで、card effects は data-driven ではないため、loop 化は大きい refactor）。
 
-実走でこの gap が决定に出たcaseは Currently 0（P3 の pair で分歧0、batch2 の Duplication位置で分歧0）。
+実走でこの gap が決定に出たcaseは Currently 0（P3 の pair で分歧0、batch2 の Duplication位置で分歧0）。
 なので gap は correctness の記録として残し、win-rate の判定には影響しない。
 
 ### play count の semantics（`CardPlay.cs` の documentation）
@@ -3769,10 +3769,10 @@ Panache（`alreadyApplied`：適用 play を数えない、5 play ごとに Amou
 counter reset、turn end で CardsLeft=5 へ戻す）＝ model と一致。
 
 → 揃っていないのは play-count powers の「effect 全体の再走」だけ。card effects が `_step` 内 inline
-（data-driven でない）なので loop 化は大きい refactor。実走でこの gap が决定に出た case は0件
-（P3 の pair・batch2 の Duplication位置で分歧0）→ 记录してそのまま。
+（data-driven でない）なので loop 化は大きい refactor。実走でこの gap が決定に出た case は0件
+（P3 の pair・batch2 の Duplication位置で分歧0）→ 记録してそのまま。
 
-### play-count powers の gap が决定に出る母数を数えた（73件 / 15 seed）
+### play-count powers の gap が決定に出る母数を数えた（73件 / 15 seed）
 
 実走 corpus で、decision の時点で `DuplicationPower`・`OneTwoPunchPower` が active だった recordは
 **73件 / 15 seed**。打った札の内訳：
@@ -3782,7 +3782,7 @@ counter reset、turn end で CardsLeft=5 へ戻す）＝ model と一致。
 - end_turn / none **10件**
 
 model は block grant を2倍にする（line 1080）ので Defend は正しい。**Shrug It Off（block 5 + draw 1）は
-draw が2倍にならない** → gap が决定に出る位置は Shrug の25件（＋status 付与札 Taunt 1件、power 札 Colossus
+draw が2倍にならない** → gap が決定に出る位置は Shrug の25件（＋status 付与札 Taunt 1件、power 札 Colossus
 1件）。`CARD_VULNERABLE_TARGET` の status 付与も2倍にならないことを test で確認（Bash + Duplication →
 Vulnerable 2 のまま、commit `57011bc` の読みと一致）。
 
@@ -3834,7 +3834,7 @@ game は play count +1 で**play 本文全体**を再走するので、以下が
 
 母数（実走 corpus、play-count power が active だった decision 73件）：block cards 54（そのうち Shrug 25＝
 draw gate が必要）、attack 9（正しい）、none 10。status 付与札 chosen は 0（Bash は3件）→ status gate は
-corpus で决定的に効く母数が薄い。
+corpus で決定的に効く母数が薄い。
 
 実装は batch3 完走後（rule 9：run が in flight の間に policy code を触らない）。テストは
 `test_duplication_re_resolves_status_and_draw_effects`（draw gate）と status gate の2本を予定。
@@ -3859,11 +3859,11 @@ Fiddle との相互作用は正しい：Shrug の draw は `_draw_into_combat(..
 Fiddle を持つと game は draw を拒否する（model も拒否）。Shrug の母数25件の中で Fiddle を持つ run は
 Q6・D1（control-era）で、Fiddle 所持時に Shrug を打つ位置は拒否側で既に一致している。
 
-### gate 追加の母数（决定に影響しうる record）
+### gate 追加の母数（決定に影響しうる record）
 
 play-count power が active だった decision 73件の内訳で、model が既に gate している effect だけを持つ札
 （attack 9、Defend 25）は gate 追加で変わらない。**gate が足りない effect を持つ札は 27件**：
-Shrug It Off 25（draw）、Taunt 1（status）、Colossus 1（power）。＝ gate 追加が决定を変えうる母数は
+Shrug It Off 25（draw）、Taunt 1（status）、Colossus 1（power）。＝ gate 追加が決定を変えうる母数は
 27件 / 15 seed の中で最大27件。
 
 control（`e808bdf`）が機構を state に出した seed は、既に走った run では batch1 の4（H2・AM8・R8・P3）＋
@@ -3884,7 +3884,7 @@ batch2 の4（U2・T3・M7・V7）＋ batch3 の D6 の9件で、いずれも測
 
 → run レベルの机构単独の差は「機構が trigger した位置」でしか出ない。batch3 は D6 以外の seed が機構を
 state に出しておらず、D6 も trigger 位置が無いので、分歧が出ない見込み（arm stage は control の path を
-追うので同じ）。母数增やす の目的は、trigger 位置を持つ seed を find することとして继续します。
+追うので同じ）。母数增やす の目的は、trigger 位置を持つ seed を find することとして继続します。
 
 ### gap の trigger 母数（`e808bdf` の control run では1件だけ）
 
@@ -3896,7 +3896,7 @@ control run で play-count power が active だった decision を札の effect 
   （正しい）→ gap の trigger 母数 **1**
 
 corpus 側の27件（Shrug 25・Taunt 1・Colossus 1）は arm-era commit の run の数字。`e808bdf` の run では
-gap が决定に出る母数は1件（U2）でした。
+gap が決定に出る母数は1件（U2）でした。
 
 → gate 追加は**正しさの修正**としては意味がある（decompile 根拠）が、測った outcome を変える母数は
 ほぼ無い。実装は batch3 完走後に site 4箇所＋テスト2本で行う（rule 9）。
@@ -3962,7 +3962,7 @@ model（`combat.py` line 808-816）：`already_bound = hand に在る bound 札`
 （rule 9：run が in flight の間に policy code を触らない）。テストは
 `test_chains_afflicts_stop_at_the_per_turn_cap_after_a_bound_card_leaves_hand` を予定。
 
-実走ではこの gap が决定に出る母数が薄い：測った control run 9 seed で bound 札が hand に在る record は0件
+実走ではこの gap が決定に出る母数が薄い：測った control run 9 seed で bound 札が hand に在る record は0件
 （draw が decision で起きなかった）。Shrug の draw は play-count power の gate と同じ位置（U2 の1件）で、
 Chains の cap と絡む位置は corpus 側の651件（draw が起きた run）に属します。
 
@@ -4007,8 +4007,8 @@ model は両方一致（`combat.py` line 803 の拒否、turn start の +2）。
 - 実装差（hand 基準 vs entry 基準）は constructed test で示せた（draw 1 → bound 1、同じ turn で draw 3 →
   model は cap を超えて mark できる）が、実走での発生は0件
 
-→ cap の fix は正しさの修正として価値がある（game の entry 基準に揃う）が、実走の决定を変えた記録はない。
-play-count powers の gate 追加と同じ位置づけ：実装差はあるが、実走の母数が薄い（27件中実際に决定に
+→ cap の fix は正しさの修正として価値がある（game の entry 基準に揃う）が、実走の決定を変えた記録はない。
+play-count powers の gate 追加と同じ位置づけ：実装差はあるが、実走の母数が薄い（27件中実際に決定に
 出たcaseは U2 の1件）。
 
 ### batch3 の pair candidate 3件、すべて gate 母数0
@@ -4038,13 +4038,13 @@ arm stage を開始（job `bash-697`、start commit `c3d9fd2`）。忠実度の 
 D6 は両腕が同じ seq 454 で Chains を得た（clean pair）。分歧が出たら rollout gate 由来。arm run は現在
 aligned 62件（分歧0）。
 
-→ 前ラウンドの「batch3 は分歧を出さない見込み」は observed gate 关于；rollout gate は Still分歧を生む
+→ 前ラウンドの「batch3 は分歧を出さない見込み」は observed gate 関于；rollout gate は Still分歧を生む
 うる。判定は power/relic が両腕の state に出た位置で数える（`mechonly_attribution.py` の今の形）。
 
-### `D6A1F8C3E5`：clean pair だが gate が决定を動かさなかった（364件分歧0、outcome 同値）
+### `D6A1F8C3E5`：clean pair だが gate が決定を動かさなかった（364件分歧0、outcome 同値）
 
 arm 完走 17勝1敗 = control と同値。Chains が両腕の state に出た位置（38 record、両腕同じ seq 454 から）で
-分歧0。rollout gate（model が simulate する draw で bound mark する位置）でも决定が変わらなかった。
+分歧0。rollout gate（model が simulate する draw で bound mark する位置）でも決定が変わらなかった。
 
 batch3 の今の形：`D6` ±0、`X3` 115件分歧0・走行中、残 `SOS`・`L3`・`B4`・`T5`。
 机构単独の win 效果は H2（+2）のまま、AM8（22件 mechanism-only）は outcome 同値。
@@ -4146,10 +4146,10 @@ resolution ごとに走る。model は `_step` 1回で1回だけ counter を動�
 
 → 完全な忠実度は「play 本文を playCount 回 loop する」形。per-effect gate はその近似で、trigger category
 が抜ける。母数（実走）は play-count power が active だった decision **73件**、そのうち effect category が
-gate 外なのは 27件（draw/status/power/self damage）。trigger category が决定に出た母数は数えていない
+gate 外なのは 27件（draw/status/power/self damage）。trigger category が決定に出た母数は数えていない
 （Panache の trigger 位置は corpus で1件、その1件は knowledge-only 分歧だった）。
 
-apply 時に决める：loop 形（完全）か per-effect gate（近似、trigger は記録したまま）。母数が薄いので
+apply 時に決める：loop 形（完全）か per-effect gate（近似、trigger は記録したまま）。母数が薄いので
 近似で十分という読みも正直に書く。
 
 ### play loop の実物（`CardModel.cs`）：effect も `AfterCardPlayed` も playCount 回数走る
@@ -4171,10 +4171,10 @@ card の result pile への移動と cost（`resources`）は loop の外 ＝ pl
 
 → model が gate しているのは damage と block の2 category だけ。per-play trigger（Panache counter、
 Juggernaut、Fiend Fire count、Hellraiser autoplay）と draw・status・power・self damage が抜けている。
-完全な忠実度は play 本文を playCount 回 loop する形；per-effect gate は近似。実走の母数27件、决定に
+完全な忠実度は play 本文を playCount 回 loop する形；per-effect gate は近似。実走の母数27件、決定に
 出たcaseは U2 の1件（status）＋ Panache の1件（knowledge-only）。
 
-plan（apply 時に决める）：`_step` の play body を loop 化する（diff が大きい）か、per-effect gate を4
+plan（apply 時に決める）：`_step` の play body を loop 化する（diff が大きい）か、per-effect gate を4
 category に広げ、trigger category は limitation として記録したまま置く。どちらでもテストは
 「1 play で effect が2回走る」形を書く。
 
@@ -4185,8 +4185,8 @@ per-play trigger power（PanachePower・JuggernautPower・FiendFirePower・Hellr
 active だった case を cross した：**0件**。
 
 → trigger category の gap は観察された run で0母数。だから近似（per-effect gate 4 category を追加）で
-决定の变化は出ない。play count の effect category（draw・status・power・self damage）の母数27件の中で
-决定に出たcaseは U2 の1件（status）だけ。
+決定の変化は出ない。play count の effect category（draw・status・power・self damage）の母数27件の中で
+決定に出たcaseは U2 の1件（status）だけ。
 
 plan の形は変わらない：per-effect gate 4 category を追加＋Chains cap を entry 基準へ、テスト3本。loop 形
 （完全な playCount loop）は、trigger category も含むので、将来 trigger が同じ decision で active になる
@@ -4239,7 +4239,7 @@ display name へ map してから、control の table に在るかを見る。
 | 合計 | **123** | status 札だけ |
 
 `e808bdf` の control はこれらの status 札名を持たない（head では `HAND_INJECTED_STATUS` に WITHER 等が
-あり、status 札の扱いは後から入れた）。confound の母数は123件だが、batch3 では分歧0 → confound が决定
+あり、status 札の扱いは後から入れた）。confound の母数は123件だが、batch3 では分歧0 → confound が決定
 を変えなかった case。
 
 ### 訂正：H2・AM8 の分歧は knowledge-confound ではなかった（前数えは bug）
@@ -4262,7 +4262,7 @@ display name へ map してから table を見る（commit `8799324`）。
 同一条件 replay での分割（`data/mech_vs_knowledge.py`、commit `ab9634f`）の数字は別の根拠なのでそのまま：
 H2 mechanism-only 13件、AM8 mechanism-only 22件、knowledge-only 0件。
 
-### knowledge 差の正体：hand だけじゃなく deck/draw pile 経由でも决定を変える
+### knowledge 差の正体：hand だけじゃなく deck/draw pile 経由でも決定を変える
 
 arm と control の card table 差は次の6 entryだけ（`e808bdf` vs HEAD）：
 
@@ -4272,7 +4272,7 @@ arm と control の card table 差は次の6 entryだけ（`e808bdf` vs HEAD）�
 
 `mechonly_attribution.py` の confound 数えは hand に在る札だけを見ていた。だから `U2M7K5F9RA` の62分歧
 （hand に OneTwoPunch が無い位置）は confound 0 と出たが、rollout が draw pile からその札を引く位置では
-control は score できず arm はできる → 同じ knowledge 差で决定が変わる。
+control は score できず arm はできる → 同じ knowledge 差で決定が変わる。
 
 → confound の正しい母数は「hand OR rollout で draw される札」に arm だけの entry が現れる位置。hand だけ
 の数えは undercount。正しく分ける方法は `data/mech_vs_knowledge.py`（tables を control 形へ pin した
@@ -4329,11 +4329,11 @@ outcome 同値）の2 seedのまま。
 化）はまだ残っている。per-play trigger（Panache counter、Juggernaut、Fiend Fire、Hellraiser autoplay）も
 同様に未 gating（実走の母数0件）。
 
-忠実度の実装によって、同一条件 replay で「gate が决定を変える位置」の母数は draw 25件（Shrug）＋ status
-1件（U2 の Taunt）＝26件。実走 panel の决定列は変更前の code で走っているので、この gate が実走 outcome
-を変えた evidence は無い（rule のまま：offline の变化は採用根拠にしない）。
+忠実度の実装によって、同一条件 replay で「gate が決定を変える位置」の母数は draw 25件（Shrug）＋ status
+1件（U2 の Taunt）＝26件。実走 panel の決定列は変更前の code で走っているので、この gate が実走 outcome
+を変えた evidence は無い（rule のまま：offline の変化は採用根拠にしない）。
 
-### gate の effect を同一条件で隔离した：73件で决定变化0
+### gate の effect を同一条件で隔离した：73件で決定変化0
 
 同一 record・同一 seed・同一 simulations で、gate 入りの code と gate を外した code（同じ文件の copy で
 `(2 if play_duplicated else 1)` を `1` に置換）を比べた：
@@ -4341,11 +4341,11 @@ outcome 同値）の2 seedのまま。
 - records compared: **73**
 - gate が choice を変える位置: **0**
 
-＝忠実度の gate は正しさの修正として入れたが、観察された run の决定を変えない（draw/status が ranking
+＝忠実度の gate は正しさの修正として入れたが、観察された run の決定を変えない（draw/status が ranking
 に効く位置がなかった）。前ラウンドの「replay が recorded choice と39件違う」は module state 由来で、gate
 由来ではない（同一条件比較で0件）。
 
-→ play-count powers の决定效果は、実走（73件）と同一条件 replay（0件）の両方で0。机构単独で决定を
+→ play-count powers の決定效果は、実走（73件）と同一条件 replay（0件）の両方で0。机构単独で決定を
 動かした母数は Fiddle（sample で76件、harness run では分歧87件のうち同一条件で22件）と Forgotten Soul
 （108件 sample、harness run 46分歧のうち13件）だけ。
 
@@ -4357,12 +4357,12 @@ power grant・self damage）は model 側も play count 分だけ走る。
 
 - 確認：Demon Form + Duplication → DemonFormPower 4（gate 前2）。テスト
   `test_play_duplicated_re_applies_power_card_effects`
-- 同一条件での isolation（73 record、gate 入り vs 外した copy）：**决定变化的0件**（commit `b709c88` の
+- 同一条件での isolation（73 record、gate 入り vs 外した copy）：**決定変化的0件**（commit `b709c88` の
   draw/status/self damage に加え、power gate も0件）
 
 残る差：**per-play trigger**（`AfterCardPlayed` は play ごとに走る。Panache counter、Juggernaut の
 block-on-play、Fiend Fire count、Hellraiser autoplay）。model は play 1回で1回だけ counter を動かす。
-実走の母数は play-count power と trigger power が同じ decision で active だった case 0件なので、决定に
+実走の母数は play-count power と trigger power が同じ decision で active だった case 0件なので、決定に
 効く位置が観察されていない。完全形（play 本文の loop 化）は trigger を含めるために必要だが、母数0の
 現状では limitation として記録したままにする。
 
@@ -4377,11 +4377,11 @@ block-on-play、Fiend Fire count、Hellraiser autoplay）。model は play 1回�
   counter 4 の状態で duplicated play → trigger して reset、次の resolution で 1）
 
 実走の母数：play-count power と per-play trigger power が同じ decision で active だった record **0件**
-（re-confirm、commit `3661b48` の数字のまま）→ この gate は記録された决定を何も変えない。正しさの修正
+（re-confirm、commit `3661b48` の数字のまま）→ この gate は記録された決定を何も変えない。正しさの修正
 として入れた。
 
 まだ loop していない hook：Fiend Fire（OnPlay が hand を exhaust して count 分 damage。第二 resolution は
-hand が空なので 0 になる＝单回应用でfaithful である可能性が高いが、card 自身の pile 移動が loop 内か外で
+hand が空なので 0 になる＝単回応用でfaithful である可能性が高いが、card 自身の pile 移動が loop 内か外で
 確認していない）、Hellraiser autoplay、Mayhem。これらは play 本文の loop 化をしないと一般に faithful
 にならない。母数0なので、loop 化は保留（記録だけ）。
 
@@ -4389,7 +4389,7 @@ hand が空なので 0 になる＝单回应用でfaithful である可能性が
 
 `FiendFire.OnPlay`（decompile）：hand pile を its 自身で read して `cardCount` を取り、その札を exhaust、
 `DamageCmd.Attack(...).WithHitCount(cardCount)`。第二 resolution では hand は空（第一 resolution で全部
-exhaust 済み）→ `cardCount = 0` で hit なし。model の单回应用は第一 resolution 相当なので faithful。
+exhaust 済み）→ `cardCount = 0` で hit なし。model の単回応用は第一 resolution 相当なので faithful。
 
 残る un-looped hook：Hellraiser autoplay（play ごとに走る）、Mayhem。母数0なので実装しない（記録だけ）。
 per-play trigger category の実装範囲：Juggernaut（AfterBlockGained）と Panache（AfterCardPlayed）＝
@@ -4412,11 +4412,11 @@ Fiend Fire は loop 不要（第二 resolution で hand が空 → hit 0、commi
 AfterCardDrawn なので play count と無関係（draw が重复しない限り triggers しない）。
 
 **效果の測定**：同一条件（同一 record・同一 seed・同一 simulations）で loop 形と `plays = 1` の copy を
-比べた → play-count power が active だった decision **73件で决定变化0件**。per-play counter と counting
-relic が同じ decision で active だった record は47件あるが、その位置でも决定は変わらなかった。
+比べた → play-count power が active だった decision **73件で決定変化0件**。per-play counter と counting
+relic が同じ decision で active だった record は47件あるが、その位置でも決定は変わらなかった。
 
-＝loop 形は model の忠実度を game の形に揃える修正として入れた。実走の决定・outcome は変わらない
-（panel の决定列は変更前の code で走った run なので、rule どおり offline の变化は採用根拠にしない）。
+＝loop 形は model の忠実度を game の形に揃える修正として入れた。実走の決定・outcome は変わらない
+（panel の決定列は変更前の code で走った run なので、rule どおり offline の変化は採用根拠にしない）。
 
 ## RampartPower：ブロック再付与が敵側に見えていなかった（2026-10-04、commit `5f655ff`）
 
@@ -4462,17 +4462,17 @@ model の「1回だけ」 Contradiction が record 側に立っていた。
 - 回帰確認：親 commit の worktree で同じテストを走らせ、第2ターンの block が `0`（期待 25）で失敗
 - suite **745件成功**
 
-### 决定に出る母数（同一条件 replay）
+### 決定に出る母数（同一条件 replay）
 
 同一 record・同一 simulations・同一 seed で HEAD（grant あり）と親 commit（grant なし）を比べた。
  trees は差分 commit 1つだけなので、分歧は grant の帰属に閉じる。
 
 - records compared: **560**
-- 决定变化: **63**、不变 497、例外 0
+- 決定変化: **63**、不変 497、例外 0
 - seed 数: **10**（H2LV6ZJ4XW 25、B3N8V5T1WQ 10、R4A8D2K7ME 8、SOS6XYXCNO 6、R8V2H6N4ZB 4、
   D6A1F8C3E5 3、9X9WQB4QIH 3、L3PN5HBQ8T 2、M7C4Q9V2RH 1、B4J8Q1R6YK 1）
 
-play-count powers の gate（73件で0）と違い、**忠実度の修正が决定を動かす位置が実在する**。
+play-count powers の gate（73件で0）と違い、**忠実度の修正が決定を動かす位置が実在する**。
 分歧の形は「control が block（Shrug It Off / Defend）、arm が attack（Strike / Bash / Anger）」が中心で、
 ターの block が毎ターン戻るとなると block で削り合う価値が下ぐ方向。
 
@@ -4496,20 +4496,20 @@ measure は offline の replay で、run の outcome はまだ見ていない（
   Production は 0 energy で +2 energy、Dramatic Entrance は 0 energy で全体11 damage の Innate/Exhaust。
   これは model の忠実度ではなく reward policy の評価表の欠落なので、panel で測る話として保留。
 
-### 報酬 tier が無い札：tier を足しても决定は動かなかった（2026-10-04、`data/reward_tier_probe.py`）
+### 報酬 tier が無い札：tier を足しても決定は動かなかった（2026-10-04、`data/reward_tier_probe.py`）
 
 `CARD_NAMES` に在る（=combat.py で打てる）のに `CARD_TIERS` にエントリが無い札が35種類ある。
 tier 未登録は `priority.get(card_id, 0)` と `CARD_TIERS.get(card_id, "D")` で最下位になる。
-决定 trace の集計では Purity 22回・Dramatic Entrance 9回・Production 8回提示されて **1回も取られていない**。
+決定 trace の集計では Purity 22回・Dramatic Entrance 9回・Production 8回提示されて **1回も取られていない**。
 
-ただし决定 trace の card_reward record は `cards`（札 id の一覧）しか持たず、policy が見た
+ただし決定 trace の card_reward record は `cards`（札 id の一覧）しか持たず、policy が見た
 `legal_actions` / 札の詳細（cost・type・rarity）を持たない。観測を保存している
 `data/*_observations.jsonl`（139 run）と seq で対応付けて replay した：
 
 - paired reward observations: **1649件**
 - HEAD の replay が記録された選択を再現: **1622/1649**（98.4%）
 - Purity 提示 **9件**（すべて `D6A1F8C3E5` の act1 floor7、deck 20-21枚）
-- tier を **B / A / S** に変えても **决定变化 0件**（9件全部 Skip のまま）
+- tier を **B / A / S** に変えても **決定変化 0件**（9件全部 Skip のまま）
 
 理由は tier ではなく既存の Skip 規則だった。deck 20枚は act1 の `_large_deck_addition_allowed` の
 limit（20）に達しており、`strong_block_shortage`（16枚以上・強ブロック3枚未満）が立つため、
@@ -4519,7 +4519,7 @@ limit（20）に達しており、`strong_block_shortage`（16枚以上・強ブ
 ＝「tier 表の欠落が札を逃している」という仮説は、観測できた9件では **否定された**。
 強ブロック不足規則に段位の逃げ道を作る変更は 2026-09-08 に16seedで有害測定済み（上の §124）で、
 同じ扉を再度開く理由はこの計測からは出てこない。Dramatic Entrance・Production・Fasten は
-observations を保存している run で一度も提示されていない（决定 trace 側には 9・8・1件ある）。
+observations を保存している run で一度も提示されていない（決定 trace 側には 9・8・1件ある）。
 
 ### Rampart の実装を commit 1 つだけ違えた arm/control 実走 A/B（2026-10-04、`data/rampart_ab.sh`）
 
@@ -4537,7 +4537,7 @@ seed は同一条件 replay で分歧が多かった3件。
 | 合計 | 55勝 | 54勝 | **−1** | | | | | 3 seed すべて第一分歧が Rampart 位置 |
 
 **分歧は机构単独で立っている**（3 seed すべて第一分歧の record で `POWER.RAMPART_POWER` が両腕の state に
-出ており、その地点より前の决定列は一致）。つまりこれは「path が勝手にズレた」ではなく grant の差。
+出ており、その地点より前の決定列は一致）。つまりこれは「path が勝手にズレた」ではなく grant の差。
 
 H2 の −2 の中身：arm は **SLIMED_BERSERKER 戦で6ターン目に HP17 で死亡**（敵残り106HP）。control は
 同じ seed で QUEEN まで進み 400HP/20block のところで落ちている。arm の死亡はターのいる戦闘ではなく、
@@ -4547,7 +4547,7 @@ H2 の −2 の中身：arm は **SLIMED_BERSERKER 戦で6ターン目に HP17 �
 
 なので **Rampart の grant は正しさの修正として入れたまま、win-rate の改善根拠は無し** と記録する。
 「忠実度を上げても勝てるとは限らない」の同一形（Wound 対応表・Stratagem と同じ位置）。
-次はこの panel のまま他 seed を足して符号を見るか、grant の効果自体（盾を先に倒す価値）が决定に出る
+次はこの panel のまま他 seed を足して符号を見るか、grant の効果自体（盾を先に倒す価値）が決定に出る
 位置を replay で特定する。
 
 ### 同じ監査で分かった ThievingHopper のコスト（未実装、母数確定）
@@ -4600,12 +4600,12 @@ model は export の `initial_state` と 1体の HP だけを持っていた。�
 - 回帰確認：親 commit `cd24b1f` の worktree では2本とも失敗（respawn せず、Strength `[0,0,0]`）
 - suite **747件成功**
 
-### 决定に出る母数（同一条件 replay、`data/attribution_rampart.py` を power 指定可能にした）
+### 決定に出る母数（同一条件 replay、`data/attribution_rampart.py` を power 指定可能にした）
 
 `POWER.STOCK_POWER` が state に出ている record を HEAD と親 commit で replay：
 
 - records compared: **414**
-- 决定变化: **135**（不变 279、例外 0）＝ **提示された decision の33%**
+- 決定変化: **135**（不変 279、例外 0）＝ **提示された decision の33%**
 - seed 数: **4**（B3N8V5T1WQ 67、D6A1F8C3E5 33、R4A8D2K7ME 26、Q6N3V8K2MT 9）
 
 Rampart（560件で63件）より大きく、分歧の形も「attack を attack で受ける ↔ block や potion に切り替える」
@@ -4624,7 +4624,7 @@ arm = HEAD `03b2055`。seed は replay で分歧が多かった3件。
 | `R4A8D2K7ME` | 21勝1敗 | 21勝1敗 | **0** | 455（arm Maul / control Perfected Strike） |
 | 合計 | 55勝 | 55勝 | **0** | |
 
-同一条件 replay で决定を135件動かした机构なのに、3 seed の胜数は完全に同値。ただし中身は動いている：
+同一条件 replay で決定を135件動かした机构なのに、3 seed の勝敗は完全に同値。ただし中身は動いている：
 
 - `B3` の死亡戦闘 SOUL_NEXUS（234HP）：control は 13ターンで **26HP 残し**、arm は **13HP 残し**
 - `R4` の死亡戦闘 SLIMED_BERSERKER（261HP）：control は 57HP 残し・進入HP 19/72、arm は **5HP 残し**・進入HP 27/72
@@ -4688,7 +4688,7 @@ Frantic Escape・Giant Rock）を候補から除外して一致させる。
 回帰：`cd24b1f`（親）では2本とも失敗（抜かれない）。suite **749件成功**。
 
 母数（`data/attribution_rampart.py` に monster id 指定を追加）：`MONSTER.THIEVING_HOPPER` の
-record **2964件** replay → **决定变化 189件・34 seed**（AM8C6YXHSG 34、M5PC8TQ3BN 26、
+record **2964件** replay → **決定変化 189件・34 seed**（AM8C6YXHSG 34、M5PC8TQ3BN 26、
 H2LV6ZJ4XW 25、P3V8N5K2RX 13 …）。恒久的なデッキ喪失は 543 run 中31件だけなので、
 効果は「その戦闘の rollout が1枚少ない前提で計算される」範囲に留まる。
 
@@ -4705,9 +4705,9 @@ arm = `cd24b1f`（Rampart あり）、control = `d67896f`（親）。`5f655ff` 1
 
 1st panel と合わせて **6 seed で −2 / +1 / 0 / 0 / 0 / 0（合計 −1）**。replay で63件動く机构だが、
 実走では6 seed 中4 seed が无変化、1 seed だけ −2、1 seed だけ +1。
-忠実度修正の胜数効果はこのサイズだと panel で検出できない、が今回の実測の結論。
+忠実度修正の勝敗効果はこのサイズだと panel で検出できない、が今回の実測の結論。
 
-## 敵側 PlatingPower の実装と、その修正が胜数を**下げた**実走 A/B（2026-10-04、commit `ca5bd71`）
+## 敵側 PlatingPower の実装と、その修正が勝敗を**下げた**実走 A/B（2026-10-04、commit `ca5bd71`）
 
 `FrogKnight.AfterAddedToRoom` / `SlumberingBeetle.AfterAddedToRoom` は `Plating(PlatingAmount=15)` を
 自分にかける（export されない）。PlatingPower は
@@ -4724,7 +4724,7 @@ amount と Block は player turn 1..9 で **15, 15, 14, 13, 12, 11, 10, 9, 8**�
 実装後は同一の系列を model も再現する（`test_plated_enemy_re_grants_block_every_turn_and_its_plate_thins`）。
 回帰：親 commit `119cb28` の worktree ではこのテストが失敗（`(0,0) != (15,15)`）。suite **751件成功**。
 
-母数：`MONSTER.FROG_KNIGHT` の record **1489件** replay → **决定变化 368件（25%）・8 seed**
+母数：`MONSTER.FROG_KNIGHT` の record **1489件** replay → **決定変化 368件（25%）・8 seed**
 （H2LV6ZJ4XW 194、X3C9N6P4WQ 60、R4A8D2K7ME 46、T5R8K2N9QP 20 …）。これまでで最大の母数。
 
 ### 実走 A/B（arm = HEAD、control = 親 `119cb28`）
@@ -4736,7 +4736,7 @@ amount と Block は player turn 1..9 で **15, 15, 14, 13, 12, 11, 10, 9, 8**�
 | `R4A8D2K7ME` | 21勝1敗 | 13勝1敗 | **−8** | 245 | はい（arm **Iron Wave** / control **Uppercut**） |
 | 合計 | 56勝 | 46勝 | **−10** | | |
 
-**忠実度修正が胜数を明確に下げた最初の例。** 死因も変わった：
+**忠実度修正が勝敗を明確に下げた最初の例。** 死因も変わった：
 
 - arm `H2`：SLIMED_BERSERKER に進入 HP 41/110 で死亡（control は QUEEN まで行って 43/400 残し）
 - arm `R4`：OVICOPTER+TOUGH_EGG に **進入 HP 12/72** で死亡（control は SLIMED_BERSERKER で 5HP 差）
@@ -4857,9 +4857,9 @@ debuff が出ていない**（B3 seq 73、SOS 193、D6 342 で player powers は
 A/B の control 3 run だけ replay した（enemy data は act 横断でマージした
 `/tmp/sts2-ai-enemies-merged.json`、102 monsters / 80 encounters）。
 
-`PLAYER:POWER.WEAK_POWER,POWER.VULNERABLE_POWER,POWER.FRAIL_POWER` で **298 件の决定を replay →
-决定变化 18 件・3 seed**（B3N8V5T1WQ 13、D6A1F8C3E5 4、SOS6XYXCNO 1）、例外 0。
-A/B の胜数変化（+1 / 0 / 0）と同じ seed 順で母数が乗っている。
+`PLAYER:POWER.WEAK_POWER,POWER.VULNERABLE_POWER,POWER.FRAIL_POWER` で **298 件の決定を replay →
+決定変化 18 件・3 seed**（B3N8V5T1WQ 13、D6A1F8C3E5 4、SOS6XYXCNO 1）、例外 0。
+A/B の勝敗変化（+1 / 0 / 0）と同じ seed 順で母数が乗っている。
 
 ### 2. QUEEN 戦（wall 第2位）の忠実度監査：gap は見つからなかった
 
@@ -4997,7 +4997,7 @@ arm = HEAD、control = chain の起点 `d67896f` の worktree。seed はどの p
 
 **Act 3 を踏破した run は両腕とも 0 件**。arm 側は debuff・Plating・Swipe の出現 record 数が control より
 少ない（T5 で Vulnerable 230/311、Plating 66/98、Swipe 6/19）＝**arm は高い戦闘を避けるループに
-なっている**が、胜数は増えていない。忠実度をまとめて上げても 3 seed では胜数が動かない（符号も割れる）
+なっている**が、勝敗は増えていない。忠実度をまとめて上げても 3 seed では勝敗が動かない（符号も割れる）
 という、この repo で 4 回目になる同じ結果がまた出た。
 
 ### QUEEN 戦の火力浪费は無かった（2026-10-04）
@@ -5080,7 +5080,7 @@ Feed・Dismantle・Iron Wave（各 +1 過大）を過大評価していた。QUE
 - SlowPower（札を出すたびに受けるダメージ +10%）、ChainsOfBinding/Bound（QUEEN 戦で hand の 3 枚が
   遊べなくなる）、Slippery（VANTOM・INKLET、-hit を 1 に押える）、Soar、HardToKill、Flutter はすべて
   combat.py に実装済み（`_damage_enemy` 1305 付近と 2847 付近）
-- combat 外の决定（map 17,324・card_reward 7,441・event 5,926・shop 4,376・rest 3,649）は
+- combat 外の決定（map 17,324・card_reward 7,441・event 5,926・shop 4,376・rest 3,649）は
   すべて専用の policy 側で処理され、heuristic fallback への落ち込みは 0 件
 
 ### 未解決として残した実測：Feed が game より 5-8 少ない
@@ -5091,20 +5091,20 @@ Feed（`CARD.FEED`）の play 約 500 件で model の与えたダメージが g
 次回に回す（推測で damage 式は触らない）。同じく残る小グループ：Bash 15 件・Strike 8 件・
 end_turn 後の TUNNELER 5 件。
 
-### upgrade 値修正の决定母数（同一 record replay、2026-10-04）
+### upgrade 値修正の決定母数（同一 record replay、2026-10-04）
 
-`data/attribution_rampart.py` に `CARD:` フィルター（hand に upgrade 済みの対象札を持っている决定を選ぶ）を
+`data/attribution_rampart.py` に `CARD:` フィルター（hand に upgrade 済みの対象札を持っている決定を選ぶ）を
 追加し、HEAD と `bef34e7`（修正直前の worktree `.wt-ctrl-bef34e7`）で corpus を replay した。
 対象は修正した 18 枚（Bludgeon・Break・Ultimate Strike・Unrelenting・Hemokinesis・Giant Rock・
 Byrd Swoop・Volley・Molten Fist・Neow's Fury・Breakthrough・Iron Wave・Anger・Feed・Fisticuffs・
 Dismantle・Bolas・Rampage）。
 
-**1,251 件の决定を replay → 决定变化 158 件・17 seed・例外 0 件**。変化の例：
+**1,251 件の決定を replay → 決定変化 158 件・17 seed・例外 0 件**。変化の例：
 `seq 112 arm=CARD.DEFEND_IRONCLAD control=CARD.ANGER`、`seq 622 arm=CARD.BLUDGEON control=CARD.RUPTURE`、
 `seq 323 arm=CARD.SHRUG_IT_OFF control=CARD.HOWL_FROM_BEYOND`。
 
-repo の基準（决定 3 件以上かつ seed 3 件以上）を决定数・seed 数ともに満たす母数だが、これは offline replay
-なので胜数の証拠にはしない。胜数への影響は新しい 3 seed の A/B（arm = HEAD、control = `.wt-ctrl-bef34e7`）で
+repo の基準（決定 3 件以上かつ seed 3 件以上）を決定数・seed 数ともに満たす母数だが、これは offline replay
+なので勝敗の証拠にはしない。勝敗への影響は新しい 3 seed の A/B（arm = HEAD、control = `.wt-ctrl-bef34e7`）で
 測ることにし、panel の起動は次 round の先頭で行う（playbook の待機と panel 起動を game 稼働中に挟まないため）。
 
 ## Round 7: 付与（enchantment）が bridge から agent に届いていない（2026-10-04）
@@ -5150,7 +5150,7 @@ game を止めて `build_official_mod.ps1` で dll を作り直し、短い run 
 ### upgrade 値修正の A/B panel：新 3 seed で +1/+2/+3（合计 +6）（2026-10-04）
 
 `data/upgrade_ab.sh`。arm = HEAD（`a94a4dc` の upgrade 値修正込み）、control = 修正直前の `bef34e7` の
-worktree `.wt-ctrl-bef34e7`（2つの tree はその1コミット分だけ違う）。seed は replay で决定变化の多かった
+worktree `.wt-ctrl-bef34e7`（2つの tree はその1コミット分だけ違う）。seed は replay で決定変化の多かった
 M5W9C3T7LQ・D1W9Y3B7FC・C9RH5TXB3L（いずれも過去の panel で使っていない）。
 
 | seed | control | arm | delta | 最初の分岐 |
@@ -5160,7 +5160,7 @@ M5W9C3T7LQ・D1W9Y3B7FC・C9RH5TXB3L（いずれも過去の panel で使って�
 | `C9RH5TXB3L` | 12勝1敗 | **15勝1敗** | +3 | seq 198 control=Defend / arm=Strike |
 | 合計 | 41勝 | **47勝** | **+6** | |
 
-**3 seed すべてで arm が勝ち、胜数が上がった**（この repo で忠実度修正が run レベルで全 seed 正に振れた
+**3 seed すべてで arm が勝ち、勝敗が上がった**（この repo で忠実度修正が run レベルで全 seed 正に振れた
 のは初めて）。最初の分岐は3件とも rollout の札選びで、D1W9Y3B7FC の arm が Iron Wave を選ぶ件は
 upgrade 済み Iron Wave が 5→7 になったことと直接つながっている。**Act 3 を踏破した run は両腕とも 0 件のまま**。
 
@@ -5250,14 +5250,14 @@ combat.py の `official_agent.rollout_choice` は「export に無い move id」�
 | 修正後（HEAD） | **414 / 437 = 94.7%** | ±1 の丸め 15 件 |
 
 `model_match_audit.py` 全体でも一致 2,095/2,123 = 98.7% → **2,100/2,123 = 98.9%**、
-end_turn の不一致は 7 件 → **2 件**（TUNNELER グループは消えた）。决定母数は
-attribution replay で **Bowlbug Rock の戦闘 5,518 本中 241 决定・45 seed**、
-**Tunneler の戦闘 4,312 本中 52 决定・21 seed**（KeyError 84 / 126 件は両ツリーで replay できなかった
+end_turn の不一致は 7 件 → **2 件**（TUNNELER グループは消えた）。決定母数は
+attribution replay で **Bowlbug Rock の戦闘 5,518 本中 241 決定・45 seed**、
+**Tunneler の戦闘 4,312 本中 52 決定・21 seed**（KeyError 84 / 126 件は両ツリーで replay できなかった
 record の数で、この修正とは無関係の tooling 側の限界）。
 
 テストは `test_enemy_reported_as_stunned_does_nothing_and_resumes_its_opening_move`（test_combat）と
 `test_keeps_the_runtime_stunned_move_instead_of_re_resolving_it`（test_official_agent）を追加して 756 件 green。
-**胜数への影響は未測定**：arm = HEAD、control = `.wt-ctrl-ba30482` の panel を次 round の先頭で走らせる
+**勝敗への影響は未測定**：arm = HEAD、control = `.wt-ctrl-ba30482` の panel を次 round の先頭で走らせる
 （Bowlbug Rock・Tunneler・Thieving Hopper・Slumbering Beetle は Act 2/3 の hive 側なので、Act 3 到達に効く可能性が高い）。
 
 ### 同時にとれた別の結論
@@ -5275,10 +5275,10 @@ record の数で、この修正とは無関係の tooling 側の限界）。
 
 ## Round 9: STUNNED 修正の panel・power census・致命 match up は地図で避けられない（2026-10-04）
 
-### STUNNED 修正の胜数 panel：3 seed で 40勝 → 37勝（-3・0・0）
+### STUNNED 修正の勝敗 panel：3 seed で 40勝 → 37勝（-3・0・0）
 
 `data/stun_ab.sh`。arm = HEAD（`fc54807`）、control = 1コミット前の `.wt-ctrl-ba30482`（dll は同一物を
-md5 で照合してから起動するガードを追加した）。seed は stun の决定変化が多かった L3PN5HBQ8T・
+md5 で照合してから起動するガードを追加した）。seed は stun の決定変化が多かった L3PN5HBQ8T・
 F6L1X4P8MS・P7M4C2W9KS（いずれも初使用）。
 
 | seed | control | arm | delta | 最初の分岐 |
@@ -5293,9 +5293,9 @@ THE_INSATIABLE に arm は敗れ control は勝ったことで、arm が3戦少�
 
 **この panel は修正をほぼ試していない**ことが重要。走らせた6本の実走 trace に入った `STUNNED` の
 観測は arm 4・2・0 件、control 4・2・0 件だけで、corpus 全体でも seed あたり **1戦闘（9〜19 record）**
-程度。1 run への影響が小さいので panel の seed 間噪声（どの戦闘に当たるか）が勝って、胜数は測れない。
+程度。1 run への影響が小さいので panel の seed 間噪声（どの戦闘に当たるか）が勝って、勝敗は測れない。
 したがって採用の根拠は実走ではなく **同一 record replay の一致率 15.3% → 94.7%**（前 round）とし、
-Plating のときと同じ判断（model が game と違うなら胜数ではなく忠実度で残す）で残す。
+Plating のときと同じ判断（model が game と違うなら勝敗ではなく忠実度で残す）で残す。
 
 ### power の census：観測される power の名前で combat.py に出てこないものは 13 個（9,728 record）
 
@@ -5325,7 +5325,7 @@ Bash・Strike・Pommel Strike・Anger などの攻撃札の HP 照合で残っ�
 
 ### 致命 match up は地図で避けられていた（route policy は主要レバーではない）
 
-52,913 戦闘から致命 match up（THE_INSATIABLE・QUEEN・VANTOM など）に入る直前の地図决定を、
+52,913 戦闘から致命 match up（THE_INSATIABLE・QUEEN・VANTOM など）に入る直前の地図決定を、
 `data/<stem>_map.json` の parent/child で逆引きした。**その時点で合法な移動が1つだけ（強制的）**だった件数：
 
 - Boss 709 強制 / 26 選択可
@@ -5374,8 +5374,8 @@ max_hp のまま（26 件）で、combat 開始時点では発火しないこと
 | 修正後（HEAD） | 1,617 / 2,037 = **79.4%** | 420 |
 
 relic を**持たない** run の一致は両ツリーで完全に同一（36,486 一致 / 6,410 不一致）で、変更が無害である
-ことも確認した。决定母数は `data/attribution_rampart.py` に `RELIC.X` セレクタを足して
-**2,796 本 replay して 506 决定が変化・8 seed**（基準の 3 决定・3 seed を大きく超える）。
+ことも確認した。決定母数は `data/attribution_rampart.py` に `RELIC.X` セレクタを足して
+**2,796 本 replay して 506 決定が変化・8 seed**（基準の 3 決定・3 seed を大きく超える）。
 テストは `test_mr_struggles_ticks_the_new_turn_number_into_every_enemy`（Vulnerable でも 2 ダメージのまま、
 turn 3 では 3 追加）を足して 757 件 green。
 
@@ -5394,7 +5394,7 @@ potion は 108/111 本が boss 開始時に中央値 3 本を持ち、戦闘内�
 ここで Mr Struggles が効く：turn 12 まで生きれば **1+2+…+12 = 78 ダメージを敵1体ごとに**、QUEEN 戦なら
 Queen と amalgam 合計で **156 ダメージ**を、agent は織り込まずに見ていなかった。近接組の shortfall
 （19〜50 ダメージ）と同じ桁であり、しかも「長く生きると自動的に増える」型なので生存と相乗する。
-**胜数への影響は未測定**（panel は次 round）。
+**勝敗への影響は未測定**（panel は次 round）。
 
 ## Round 11: audit の action 変換を直し、player 側の Regeneration 欠落を見つけた（2026-10-04）
 
@@ -5446,7 +5446,7 @@ Amount ぶん回復して（`player_max_hp` を上限）、Regen は 1 減らす
 +5（47件）・+4（37件）・+3（30件）・+2（19件）のグループは消えた。残りは +55/+44/+30/+59 のグループ
 （戦闘中の potion や event の回復で、この audit の窓では区別できない）と **-1 が20件**（model が
 `player_max_hp` 上限 80 を既定値として使い、game 側の実際の最大 HP とずれるケース）で、後者は既知の
-小さな残差として残す。决定母数は **841 本 replay して 17 决定が変化・8 seed**（基準を満たす）。
+小さな残差として残す。決定母数は **841 本 replay して 17 決定が変化・8 seed**（基準を満たす）。
 1 run あたり 2〜23 観測とまれなので panel では測らない（忠実度で採用）。
 
 ## Round 12: potion census — 記録された potion 使用の 53% が model で評価できなかった（2026-10-04）
@@ -5505,12 +5505,12 @@ audit 全体でも `no_equivalent_action` 69 → **56**、end_turn の player HP
 `CardSelectCmd.FromChooseACardScreen(...)` で札を選ばせて hand に入れるので、選ばれる札の集合
 （colorless pool など）を model が持つ必要がある。
 
-**胜数 panel は走らせていない。** この修正は agent が価格付けできる potion の集合そのものを増やす
+**勝敗 panel は走らせていない。** この修正は agent が価格付けできる potion の集合そのものを増やす
 （= 振る舞いが変わる）ので、次 round では ROLLOUT_POTION_IDS の拡張を実測すべきレバーとして扱う。
 
 ## Round 13: potion 修正の panel（+0）と Gigantification の id 誤り（2026-10-04）
 
-### potion 7 種の実装は胜数を動かさなかった（忠実度で保持）
+### potion 7 種の実装は勝敗を動かさなかった（忠実度で保持）
 
 `data/potion_ab.sh`（arm = HEAD、control = `.wt-ctrl-potion` = `7f583c3`、dll の md5 一致を確認）。
 seed は記録された run がこの7種の実 potion を多く使い、かつ Act 3 boss に到達したものを選んだ。
@@ -5538,7 +5538,7 @@ legal_actions に出していたが、記録された使用 18 件はすべて `
 追加し、既存の `test_duplicator_and_gigantification_potions_apply_their_powers` の `@0` 期待値を
 実測（target_id None）に合わせて 760 件 green。
 
-**ただしこの修正だけでは决定は1件も変わらない**：control を `587cb46`（この修正の1コミット前）において
+**ただしこの修正だけでは決定は1件も変わらない**：control を `587cb46`（この修正の1コミット前）において
 Gigantification を提案している 1,838 件の observation で `choose_potion` の選択を比べた結果、
 **差分 0 件**、Gigantification が選ばれた件数は arm 0・control 0。理由は gate の方にあって、
 `ROLLOUT_POTION_IDS` に Gigantification が入っておらず、`SHOP_POTION_SCORES` にも無い（スコア -1 なので
@@ -5592,8 +5592,8 @@ Shackling は trace で挙動を確定させた。使用直後の敵 61 件す�
 simulator が knows なっても、`ROLLOUT_POTION_IDS` に無い potion は rollout の候補に入らない。実際に
 この6種の使用 352 件を両ツリーで replay すると**再現できた件数は 0 件**で、理由は gate 側にあった。
 そこで **choose_potion が普段の分岐で分類している4種**（Binding＝debuffs、CureAll＝healing、
-Clarity・RadiantTincture＝economy）だけを gate に足した。offline の决定母数は
-**5,331 本 replay して 64 决定が変化・10 seed**。
+Clarity・RadiantTincture＝economy）だけを gate に足した。offline の決定母数は
+**5,331 本 replay して 64 決定が変化・10 seed**。
 
 Shackling と LuckyTonic は意図的に入れていない。Shackling は -7 が1ターン分しか持たないため、
 「boss 戦まで温存する」という記録済みの修正（sim13 が通常戦闘で浪費した）を rollout が壊す可能性がある。
@@ -5645,7 +5645,7 @@ Sts2Ai.dll と Sts2Ai.json だけであることを確認して手動削除し�
 | 合計 | | **75勝** | **74勝（-1）** |
 
 つまり gate 拡張の実測は「**分岐した3本のうち1本で1勝减り、2本は無変化**」で、母数としては offline の
-64 决定・10 seed のほうが強い。判断が弱いので修正は HEAD に置いたまま、次以降の測定に持ち越す。
+64 決定・10 seed のほうが強い。判断が弱いので修正は HEAD に置いたまま、次以降の測定に持ち越す。
 教訓として、panel の RESULT 行だけでは「効いた/no-op」を区別できない：**trace が分岐したか**を必ず見る。
 
 ### 新しい gap：potion が hand に入れる札のなかに model に存在しないものがある
@@ -5668,8 +5668,8 @@ Secret Technique は同じく draw pile から Skill 札、Thinking Ahead は 0�
 ### 測り方を変えた
 
 これまで corpus 全体の一致率（1〜2% 残差）を見ていたが、**run が死ぬ boss 戦だけ**を切り出して
-HEAD で全决定を replay した（QUEEN・THE_INSATIABLE・VANTOM・AXEBOT・FROG_KNIGHT・THE_OBSCURA・FOGMOG、
-46,754 决定）。**不一致は 8.41%（3,934 件）**で、corpus 全体の残差率より明らかに悪い。
+HEAD で全決定を replay した（QUEEN・THE_INSATIABLE・VANTOM・AXEBOT・FROG_KNIGHT・THE_OBSCURA・FOGMOG、
+46,754 決定）。**不一致は 8.41%（3,934 件）**で、corpus 全体の残差率より明らかに悪い。
 模型が最も不正確なのは、まさに run が負けている場所だった。上位グループ：
 
 | グループ | 件数 |
@@ -5711,11 +5711,11 @@ mantle を持つ player の end_turn replay 1,907 件を修正前後で比べた
 
 boss 戦 audit の不一致も **8.41% → 6.67%（3,934 → 3,119 件）**に下がり、上位に並んでいた
 VANTOM 363・QUEEN 238・THE_INSATIABLE 199 の `player_hp end_turn` グループはリストから消えた。
-决定母数は **8,300 本 replay して 563 决定が変化・12 seed**（この session で最も大きい）。
+決定母数は **8,300 本 replay して 563 決定が変化・12 seed**（この session で最も大きい）。
 前回 round の Regen audit に残った「-1 が20件」も、対象が mantle 10 を持っていたことで説明がつく。
 
 **未測定：** panel は走らせていない。この修正は model の HP 予測を1だけ**厳しく**する（以前は楽観的だった）
-ので、胜数への影響は独立に測る必要がある。
+ので、勝敗への影響は独立に測る必要がある。
 
 **同じ形の実装で直していないもの：** `InfernoPower` も `IncrementSelfDamage` 経由で自ダメージを持つが、
 corpus に `POWER.INFERNO_POWER` の観測が1件也无い（agent が実走で Inferno を打っていない）。
@@ -5777,7 +5777,7 @@ dll の md5 一致を確認）。seed は Crimson Mantle を実際に打って�
 | 合計 | **35勝** | **43勝** | **+5** | | 3本すべて分岐 |
 
 3本とも trace が分岐し、両 arm が mantle を維持している（= 修正が実際に効いている）。offline で
-563 决定・12 seed 動いた修正が、実走でも胜数を動かした。**この session で最も明確なプラス測定**
+563 決定・12 seed 動いた修正が、実走でも勝敗を動かした。**この session で最も明確なプラス測定**
 （従前のプラスは upgrade 修正の +6/3 seed）。Act 3 踏破は今回も 3本とも未達。
 
 ### 未解決として残す：QUEEN 戦 end_turn で boss が毎回 1 減る（174 件）
@@ -5859,8 +5859,8 @@ AXEBOT 2 hit 3 件、HUNTER_KILLER 3 hit が 12 不一致 → 10 一致（2 件�
 残りの不一致は hit 数 1 の別原因（TUNNELER 17 件、FROG_KNIGHT 4 件、VANTOM 1 hit 2 件）で、
 そこは次以降の対象になる。
 
-决定母数は **1,752 本 replay して 59 决定が変化・15 seed**（`data/attribution_rampart.py`、
-selector `PLAYER:POWER.FLAME_BARRIER_POWER`）。胜数への影響は `data/flamebarrier_ab.sh` で測る
+決定母数は **1,752 本 replay して 59 決定が変化・15 seed**（`data/attribution_rampart.py`、
+selector `PLAYER:POWER.FLAME_BARRIER_POWER`）。勝敗への影響は `data/flamebarrier_ab.sh` で測る
 （FlameBarrier を実際に打って保持した観測が最も多い fresh seed C7N4V9P2RX 46・V7K2T9M5RH 33・
 S4QFLNDMB3 28）。
 
@@ -5906,7 +5906,7 @@ S4QFLNDMB3 は run が一度も FlameBarrier を使っておらず trace も完�
 
 修正は HEAD に残す。理由は忠実度の証拠が直接だからだ：game の `FlameBarrierPower.AfterDamageReceived` は
 ダメージインスタンスごとに走り、record 済みの replay 404 件で敵 HP 一致が 60.6% → 91.8%（multi-hit group
-は不一致→一致に反転、single-hit group は不変）に改善した。胜数が下がったのは model の側ではなく
+は不一致→一致に反転、single-hit group は不変）に改善した。勝敗が下がったのは model の側ではなく
 **policy の側**の説明が残る：反射ダメージを正しく数えた model は multi-hit 持ちの敵に対して
 「こちらが削れる量より向こうが削れる量」を大きく見積もり、search がより攻撃的な順を選ぶ。
 実走の悪化はその過信の帰結として整合的なので、次以降に調べる対象は
@@ -5938,9 +5938,9 @@ BurrowedPower 持ちが END_TURN 後も 20 を保ち、power 無しは 0 にな�
 | 敵 block 一致 | **8 / 186 = 4.3%** | **184 / 186 = 98.9%** |
 | 敵 HP 一致 | 163 / 186 | 181 / 186 |
 
-决定母数は **4,476 本 replay して 782 决定が変化・51 seed**（`data/attribution_rampart.py` の
+決定母数は **4,476 本 replay して 782 決定が変化・51 seed**（`data/attribution_rampart.py` の
 selector `MONSTER.TUNNELER`、KeyError 126 件は fallback）。潜行中の敵がブロックを保つことで、
-その戦闘内のあらゆる攻撃决定の評価が変わる。胜数への影響は `data/burrow_ab.sh` で測る。
+その戦闘内のあらゆる攻撃決定の評価が変わる。勝敗への影響は `data/burrow_ab.sh` で測る。
 ただし **この機構は MONSTER.TUNNELER と戦った run でしか発火せず、TUNNELER 観測の多い seed
 （640・363・355 件）はすべて過去の panel で使った seed** だった。fresh seed だと Tunneler に
 当たらない可能性が高く測定にならないので、この panel は「機構を狙った再測」として明示し、
@@ -5959,10 +5959,10 @@ panel の有効条件（MEASURABLE）にした。
 | L3PN5HBQ8T | 13勝 | 13勝 | +0 | 21 / 20 | 7 / 7 | あり（359 / 358 record） |
 | 合計 | **50勝** | **50勝** | **+0** | | | 3本すべて分岐 |
 
-分岐していて機構も両 arm に出ているので、この +0 は「効かなかった」ではなく「効いたが胜数は動かなかった」
-側の結果。忠実度の実証（block 一致 4.3% → 98.9%、决定 782 件・51 seed）を優先して修正は HEAD に残す。
+分岐していて機構も両 arm に出ているので、この +0 は「効かなかった」ではなく「効いたが勝敗は動かなかった」
+側の結果。忠実度の実証（block 一致 4.3% → 98.9%、決定 782 件・51 seed）を優先して修正は HEAD に残す。
 この session で +0 だった忠実度修正（stun、Mr Struggles、potion 7種、gate batch 2）と同じ位置づけで、
-胜数が動かないことをもって revert しない、という規則の一環として記録する。
+勝敗が動かないことをもって revert しない、という規則の一環として記録する。
 
 なお `ShouldClearBlock` を override する `BlurPower` は `CARD.BLUR`（1 コスト Skill、block 5 + Blur 1）経由の
 player 側 power で、corpus 全体で `CARD.BLUR` の play も reward 出現も 0 件だった（Ironclad の札ではない）。
@@ -6006,7 +6006,7 @@ game の `PlatingPower` は敵側のターン结束（`BeforeSideTurnEndEarly`�
 | QUEEN 戦の部分 | 不一致 182 | 不一致 66 | 不一致 66 |
 | FROG_KNIGHT + Toasty Mittens の不一致 | 0 | **189（model だけ +1）** | **0** |
 
-boss 戦 audit 全体（46,737 决定）は 3.52% → **3.29%** に改善し、上位 group から `QUEEN end_turn -1` と
+boss 戦 audit 全体（46,737 決定）は 3.52% → **3.29%** に改善し、上位 group から `QUEEN end_turn -1` と
 `FROG_KNIGHT` が消えた。残る上位は `QUEEN CARD.STRIKE_IRONCLAD -1 (69)`、`QUEEN CARD.ANGER -1 (65)`、
 `QUEEN CARD.ASHEN_STRIKE +1 (41)`、`THE_INSATIABLE player_hp CARD.FEED -2 (35)`、
 `VANTOM CARD.DEFEND_IRONCLAD -1 (35)`、`FROG_KNIGHT end_turn +3 (31)`。
@@ -6017,11 +6017,11 @@ panel は見送った。`RELIC.TOASTY_MITTENS` と `RELIC.FORGOTTEN_SOUL` を同
 seed H2LV6ZJ4XW の 76 件だけで、機構を狙った panel に必要な 3 seed が揃わないため。忠実度の実証
 （4,794 件の replay 一致率と、崩れた group の消滅）で HEAD に残す。
 
-决定母数は **24,651 本 replay して 1,600 决定が変化した**が、**変化が出た seed は 1 本だけ**
+決定母数は **24,651 本 replay して 1,600 決定が変化した**が、**変化が出た seed は 1 本だけ**
 （`data/attribution_rampart.py` の selector `RELIC.TOASTY_MITTENS`、control `5e5cb84`）。Toastymittens を
-持つ run は多いのに决定が変わった seed が少ないのは、ターン開始の 1 ダメージ差が探索の argmax を
-滅多に揺らさないためで、**「决定 3 seed 以上」という採用基準は満たさない**。この commit を残す根拠は
-忠実度（4,794 件の一致率 84.8% → 95.6%、崩れた group の消滅）であり、胜数や决定分布の改善ではない。
+持つ run は多いのに決定が変わった seed が少ないのは、ターン開始の 1 ダメージ差が探索の argmax を
+滅多に揺らさないためで、**「決定 3 seed 以上」という採用基準は満たさない**。この commit を残す根拠は
+忠実度（4,794 件の一致率 84.8% → 95.6%、崩れた group の消滅）であり、勝敗や決定分布の改善ではない。
 
 ## Round 19: Weak と Vulnerable は「丸める前に掛ける」（boss 戦 audit 3.29% → 2.60%）
 
@@ -6051,7 +6051,7 @@ Weak + Vulnerable で 10、Weak だけで 6、Vulnerable だけで 13 になる�
 | weak 無し | 一致 42,762 / 不一致 947 | 一致 42,762 / 不一致 947 |
 
 Weak と Vulnerable が同時に載る group の不一致が 170 → 26 に減り、其它の group は完全に同一だった。
-boss 戦 audit（46,737 决定）は **3.29% → 2.60%**（1,216 件）。上位 group から `QUEEN に対する
+boss 戦 audit（46,737 決定）は **3.29% → 2.60%**（1,216 件）。上位 group から `QUEEN に対する
 CARD.STRIKE_IRONCLAD -1` と `CARD.ANGER -1` が消えた。
 
 boss 戦の残る上位（次 round の対象）：`QUEEN CARD.ASHEN_STRIKE +1 43 件`（model が多い。Ashen Strike は
@@ -6060,9 +6060,9 @@ boss 戦の残る上位（次 round の対象）：`QUEEN CARD.ASHEN_STRIKE +1 4
 player_hp -2 35 件`、`VANTOM 戦 CARD.DEFEND_IRONCLAD -1 35 件`、`FROG_KNIGHT end_turn +3 31 件`、
 `QUEEN 戦 CARD.DEFEND_IRONCLAD で game 5 多い 23 件`。
 
-决定母数は **8,066 本 replay して 267 决定が変化・27 seed**（`data/attribution_rampart.py` の selector
+決定母数は **8,066 本 replay して 267 決定が変化・27 seed**（`data/attribution_rampart.py` の selector
 `PLAYER:POWER.WEAK_POWER`、control `dd2f0f4`）。Toastymittens の時と違い seed が 27 本に広がっている。
-胜数への影響を見る panel は次 round に回す（この round は panel を起動する残り時間がなく、起動すると
+勝敗への影響を見る panel は次 round に回す（この round は panel を起動する残り時間がなく、起動すると
 panel 完了まで policy code を編集できなくなるため）。panel の seed は player Weak を多く保持した
 run を持つ seed から選ぶ。
 
@@ -6078,10 +6078,10 @@ observation から作り直す agent はターン内の進行度を毎回 0 か�
 observation 側に無いことは bridge のコードで確認した（`CombatBridge.cs` / `Entry.cs` はいずれも
 `relics = player.Relics.Select(r => r.Id.ToString())` だけで、relic の `DisplayAmount` も play 数も出さない）。
 
-因果は replay の差分で閉じた。`RELIC.LETTER_OPENER` を持つ run の玩札决定を、trace から「同じターン内の
+因果は replay の差分で閉じた。`RELIC.LETTER_OPENER` を持つ run の玩札決定を、trace から「同じターン内の
 それまでの玩札数」付きで replay した:
 
-| 决定の種別 | そのターン内の prior plays | game - model の与ダメージ | game 側で発火する条件 | 件数 |
+| 決定の種別 | そのターン内の prior plays | game - model の与ダメージ | game 側で発火する条件 | 件数 |
 |---|---:|---:|---|---:|
 | Skill | 2 | **+5** | 発火する | **278** |
 | Skill | 2 | +10 | 発火する | 61 |
@@ -6089,12 +6089,12 @@ observation 側に無いことは bridge のコードで確認した（`CombatBr
 | Skill / Attack | 0,1,3,4 | 0 | 発火しない | 7,100 超 |
 
 **発火する条件のときだけ game が多い**形で、其它は完全に一致している。母数はさらに広い:
-ダメージを出す combo relic（LETTER_OPENER・KUSARIGAMA）を持つ玩札决定のうち **9,435 件が「ターン内に
+ダメージを出す combo relic（LETTER_OPENER・KUSARIGAMA）を持つ玩札決定のうち **9,435 件が「ターン内に
 既に玩んだ後」の状態**にあり、そのうち **1,895 件は counter がすでに 3 の倍数**（次の玩札で game が
 発火させる状態）で、model にはそこが見えない。
 
 実装方針（次 round、`official_agent.py` の policy 変更）。agent は 1 プロセスで observation を poll し
-続けています（`official_agent.py` の main ループが `last_seq` で顺次决定を作る）ので、**モジュールレベルで
+続けています（`official_agent.py` の main ループが `last_seq` で顺次決定を作る）ので、**モジュールレベルで
 ターン内の play 数を記憶して、observation から作る Combat に注入できる**。リセット条件は turn が変わった
 とき、または敵の `combat_id` 集合が前回と交差しなくなったとき（召喚で id は増えるが、新しい戦闘では
 全て新しい id になる）。注入先は `attacks_played_this_turn`・`skills_played_this_turn`・
@@ -6118,9 +6118,9 @@ game 側のトリガーが model の想定と違う可能性があるので、LE
 
 `compare_panel.py` の MEASURABLE 表示は「power が両 arm で出現」で判定しており、**N8CQ4ZKP2W は trace が
 完全に同一で Weak 観測も 0 件**だった（その +0 は測定ではない）。T5R8K2N9QP は Weak を 24 件見ているが
-arm と control の决定が最初から最後まで同一だった。分岐して機構も出ていた seed は P3V8N5K2RX の 1 本だけ。
+arm と control の決定が最初から最後まで同一だった。分岐して機構も出ていた seed は P3V8N5K2RX の 1 本だけ。
 3 run はいずれも QUEEN 戦に到達しておらず（QUEEN 観測 0 件）、Weak 97-99 というこの修正の主戦場自体が
-出ていない。忠実度の実証（攻撃一致 97.48% → 97.81%、Weak+Vulnerable group の不一致 170 → 26、决定 267 件・
+出ていない。忠実度の実証（攻撃一致 97.48% → 97.81%、Weak+Vulnerable group の不一致 170 → 26、決定 267 件・
 27 seed）を根拠に HEAD には残す。panel については「主戦場に到達する seed では測れていない」ことが分かったので、
 次回はこの修正 dedicated ではなく他の修正と束ねて測る。
 
@@ -6145,13 +6145,13 @@ Centennial Puzzle の autoplay）も含まれる。agent が選んだ play を�
 Attack の与ダメは 6、続く 4 枚目は 7 になることを `test_shuriken_strength_counts_from_the_attack_after_the_third`
 で固定）。
 
-検証（trace の play 决定を順番に `official_agent.choose()` 経由で replay し、記録された play 後の敵 HP と
+検証（trace の play 決定を順番に `official_agent.choose()` 経由で replay し、記録された play 後の敵 HP と
 model のそれ比べる。101,464 play、control は `.wt-ctrl-plays` = `2426496`）：
 
 | | control | arm |
 |---|---:|---:|
 | 与ダメージ一致 | 98,793 / 101,473 = **97.36%** | 98,969 / 101,464 = **97.54%** |
-| combo relic がある决定の不一致 | 2,680 | **2,495** |
+| combo relic がある決定の不一致 | 2,680 | **2,495** |
 | LETTER_OPENER だけで game が多い +5 | 222 | **55** |
 | 同 +10 / +15 | 35 / 46 | **3 / 4** |
 | LETTER_OPENER＋ORNAMENTAL_FAN＋PEN_NIB +5 | 69 | **4** |
@@ -6183,24 +6183,24 @@ Brilliant Scarf、Sloth、Normality の上限が読む）に対する pile 推�
 | 合計 | **37勝** | **36勝** | **−1** | 3 本すべて分岐 | |
 
 3 seed とも trace が分歧し、両 arm が combo relic を持つ戦闘を観測している（Weak の panel のように
-「同一 trace なのに測定された」という seed は無い）。胜数は 1 減った。単一 seed の ±2 はこの harness では
+「同一 trace なのに測定された」という seed は無い）。勝敗は 1 減った。単一 seed の ±2 はこの harness では
 通常の揺れで、しかも model の忠実度を上げる変更（game が実際に与えている 5 ダメージを価格に入れる）が
-胜数を増すとは限らない —— 以前 FlameBarrier の時と同じ形。忠実度の実証（攻撃一致 97.36% → 97.54%、
+勝敗を増すとは限らない —— 以前 FlameBarrier の時と同じ形。忠実度の実証（攻撃一致 97.36% → 97.54%、
 LetterOpener 系の過小評価 393 → 93 件）を根拠に HEAD には残す。
 
-### 玩札数再構成の决定母数（`data/attribution_rampart.py`、control `2426496`）
+### 玩札数再構成の決定母数（`data/attribution_rampart.py`、control `2426496`）
 
-selector ごとに replay して决定が変わった本数を数えた：
+selector ごとに replay して決定が変わった本数を数えた：
 
-| selector | replay した记录 | 决定が変わった | seed |
+| selector | replay した记録 | 決定が変わった | seed |
 |---|---:|---:|---:|
 | `RELIC.LETTER_OPENER` | 13,325 | 8 | 1 |
 | `RELIC.SHURIKEN` | 2,981 | **142** | **7** |
 
 LetterOpener 側は与ダメージの再現が 393 件 → 93 件に改善した割には agent の選ぶ action はあまり変わら
-なかった（5 ダメージの価格への寄与が、その战斗の选択の順位をほとんどこさなかった）。决定を変えた母数は
+なかった（5 ダメージの価格への寄与が、その战斗の选択の順位をほとんどこさなかった）。決定を変えた母数は
 Shuriken 側に集中している：3 枚目の Attack 自身が自分の +1 Strength を使わなくなる、というタイミングの
-修正が Attack の評価を動かし、7 seed で 142 决定が変わった。採用基準（决定 3 件・seed 3 本）を満たすのは
+修正が Attack の評価を動かし、7 seed で 142 決定が変わった。採用基準（決定 3 件・seed 3 本）を満たすのは
 この側で、忠実度の実証と合わせて HEAD に残す。
 
 ## Round 21: 玩札数の数え方を own play と pile の合成に直した（攻撃一致 97.54% → 97.65%）
@@ -6222,7 +6222,7 @@ pile だけの数え方は「手札から消えたカード」を全部数えて
 
 検証（`choose()` 経由で trace 順に replay し、記録された play 後の敵 HP と model を比べる）：
 
-| | play 数 | 一致 | combo relic 决定の不一致 |
+| | play 数 | 一致 | combo relic 決定の不一致 |
 |---|---:|---:|---:|
 | pile のみ（`.wt-ctrl-pile` = `86ffe4c`） | 101,942 | 99,435 = 97.54% | 2,507 |
 | 合成（HEAD） | 101,955 | **99,554 = 97.65%** | **2,401** |
@@ -6231,10 +6231,10 @@ pile だけの数え方は「手札から消えたカード」を全部数えて
 combo relic を持たない群の −1 が 82 → 61。小さな悪化は `LETTER_OPENER＋ORNAMENTAL_FAN＋PEN_NIB` の −5が
 4 → 16 と、combo relic なしの +1 が 406 → 425。
 
-决定母数：`.wt-ctrl-pile` と比較して **13,325 本 replay して决定の変化 0 件・seed 0 本**。記録された
-状态での选択順位が変わらないので、**この修正単独の panel は行わない**（选択が変わらなければ胜数は動かない）。
-機構全体の母数は no-counter の control（`2426496`）に対して SHURIKEN が 2,981 本で 142 决定・7 seed、
-LETTER_OPENER が 13,325 本で 8 决定・1 seed で、合成前後に変化はなかった。
+決定母数：`.wt-ctrl-pile` と比較して **13,325 本 replay して決定の変化 0 件・seed 0 本**。記録された
+状態での选択順位が変わらないので、**この修正単独の panel は行わない**（选択が変わらなければ勝敗は動かない）。
+機構全体の母数は no-counter の control（`2426496`）に対して SHURIKEN が 2,981 本で 142 決定・7 seed、
+LETTER_OPENER が 13,325 本で 8 決定・1 seed で、合成前後に変化はなかった。
 
 **確認して棄却した点**: `MONSTER.THE_INSATIABLE` の `LiquifyMove` は `SandpitPower 4` と
 `CARD.FRANTIC_ESCAPE` 6枚（3枚を draw pile、3枚を discard pile）をplayer の pile に足す。discard に
@@ -6248,7 +6248,7 @@ TEA_OF_DISCOURTESY・ODDLY_SMOOTH_STONE・GREMLIN_HORN）にも play 時の dama
 ## 未解決 gap の記録: Attack を玩んだ瞬間 player がちょうど 2 減る group（同ターン transition だけ、551 件）
 
 boss 戦 audit の `CARD.FEED player_hp game-2`（35 件）を辿った过程中に、もっと広い group だと分かった。
-全 corpus の play 决定を model と比べ、**player HP だけ model より game が少ない** transition を数えた
+全 corpus の play 決定を model と比べ、**player HP だけ model より game が少ない** transition を数えた
 （`prev.turn == nxt.turn` を必須にした同ターン比較のみ、enemy turn の混入を除外した）。
 
 - 該当 551 件のうち約 394 件が **ちょうど -2**：`CARD.FEED` 245、`CARD.STRIKE_IRONCLAD` 76、
@@ -6273,8 +6273,8 @@ play 時の damage hook は無い。status card も Toxic（ターン終わり�
 Slimed（1枚引く）、Wound / Dazed（hook 無し）、Normality（autoplay 上限＝model 済み）、Unmovable
 （`UnmovablePower`＝model 済み）で該当しない。
 
-**audit の妥当性について確認できたこと**: corpus 内の play 决定 transition（113,750 件）を数えたところ、
-**カード play から次の记录へターンが進むことが 1 件も無い**（`prev.turn != nxt.turn` が 0 件）。だから
+**audit の妥当性について確認できたこと**: corpus 内の play 決定 transition（113,750 件）を数えたところ、
+**カード play から次の记録へターンが進むことが 1 件も無い**（`prev.turn != nxt.turn` が 0 件）。だから
 1 action ずつの比較に enemy turn が混入することはない。同時に、observation の card `vars` の `Damage` は
 **実行時に補正済みの値**だと konkret に確認した（Strike で `Damage=4.2` が 5,869 件 = 6 × 0.7（Shrink）、
 `upgrade=False` なのに `Damage=9` が 69 seed で 10,778 件）。この値を「その card が出すダメージ」として
@@ -6393,7 +6393,7 @@ stack 値で ramp が見えない ✓）。model は per-player-turn の `cards_
 持つ敵がターンを execute しなかった場面（stun 中・sleep 中・行動しない state）で game の ramp だけが
 積み上がる** ✓ これが +1 の説明になるか、次の round でその 14 件を turn 単位で並べて確認する ✓
 
-## Round 25: 玩札カウントから抜けていた autoplay を戻した（决定の変化 0 件なので panel は行わない）
+## Round 25: 玩札カウントから抜けていた autoplay を戻した（決定の変化 0 件なので panel は行わない）
 
 前 round までの玩札数（commit `f2a107c`）は「そのターンに手札で観測された札が、自分で選んでもいないのに
 消えた」を全部効果の仕業として落としていた ✓ が game は **手札にある札を autoplay で玩む** ✓ Centennial
@@ -6413,8 +6413,8 @@ Burning Pact と Cinder は hand から1枚 exhaust ✓ Fiend Fire は hand を�
 を数える ✓ Burning Pact の exhaust は数えない ✓ 手札にあった autoplay は数える ✓ 手札に一度も出ない札は
 数える ✓ 次のターンは 0 ✓
 
-决定母数: 1 commit 前の tree（`.wt-ctrl-cards` = `965bdb3` ✓ 差分はこの commit のみ ✓ 同じ mod  binary）と
-比較して **Slow を持つ敵の 1,704 観測で决定の変化 0 件・seed 0 件** ✓ audit 側の一致件数も 5,872 のまま ✓
+決定母数: 1 commit 前の tree（`.wt-ctrl-cards` = `965bdb3` ✓ 差分はこの commit のみ ✓ 同じ mod  binary）と
+比較して **Slow を持つ敵の 1,704 観測で決定の変化 0 件・seed 0 件** ✓ audit 側の一致件数も 5,872 のまま ✓
 なので **この変更の panel は行わない** ✓ ただしこれは忠実度側の修正で、autoplay を数え忘れる状態に戻すと
 Slow 以外の counter 駆動 rules（LetterOpener・Kusarigama・Shuriken）でも同じ取りこぼしが起きる ✓
 `data/boss_gap_list.py` 側の欠点も直した: audit が **記録された play を credit していなかった** ✓（search を
@@ -6429,7 +6429,7 @@ SlowAmount = 1 の 1.1 倍 ✓ `SlowPower.AfterCardPlayed` は +1 するだけ�
 疑いが残るが ✓ 一様に +1 すると4件が逆向きに壊れる ✓ 原因は per-case の counter 再現性にある可能性が
 高い（観測される pile に載らない play がある ✓）→ HEAD は `-1` を維持し ✓ これは open のまま ✓
 
-## Round 26: Fairy in a Bottle（死防止）など potion 4種を model に入れたが、記録上は决定を変えなかった
+## Round 26: Fairy in a Bottle（死防止）など potion 4種を model に入れたが、記録上は決定を変えなかった
 
 `data/boss_gap_list.py` の内訳を出した ✓ 445 件の不一致は **317 group** に散らばっていて、**243 group は
 1 件だけ** ✓ 2 件以上の group が占めるのは 45.4% ✓ つまり上位 group を潰した残りは replay のRnd/引き順の
@@ -6456,14 +6456,14 @@ rollout で再現できなかった ✓ decompile で数値を確認できる順
 
 決定母数（control は 1 commit 前の tree `.wt-ctrl-fairy` = `6611237` ✓ 同じ mod binary ✓）:
 
-| selector | 比較した観測 | 决定の変化 | 変化の seed |
+| selector | 比較した観測 | 決定の変化 | 変化の seed |
 |---|---:|---:|---:|
 | `POTION:POTION.FAIRY_IN_A_BOTTLE` | 2,665 | **0** | 0 |
 | `POTION:POTION.FOUL_POTION,SNECKO_OIL,STABLE_SERUM` | 457 | **0** | 0 |
 | shop 観測の `choose_shop` を HEAD と control で比較 | 4,626 | **0** | 0 |
 
 記録された run で **Fairy が消費された観測は 0 件** ✓（持っていた 9 seed のいずれでも致死の一撃を食らって
-いない ✓）ので、この変更は今の corpus の决定を 1 つも変えない ✓ **决定変化 0 件の変更には panel を
+いない ✓）ので、この変更は今の corpus の決定を 1 つも変えない ✓ **決定変化 0 件の変更には panel を
 行わない** ✓ の判断で panel は省略 ✓ 忠実度の実装として HEAD に残す ✓ 価値は未来的で、Fairy を得る run
 では rollout が「そのターンで死ぬ」を正しく織り込み、shop で優先される ✓
 
@@ -6507,10 +6507,10 @@ cards_played 3 ✓ Strength -2 ✓ Strike base 6）で game は 4 削った ✓ 
 `_tender_penalty` と 3 か所の term を削除し ✓ 既存の `test_tender_weakens_later_cards_then_hands_the_stats_back`
 は model の思い込みを固定していたので `test_tender_does_not_take_damage_off_attacks` に書き換えた ✓
 
-**决定母数**: control を 1 commit 前（`.wt-ctrl-tender` = `5ae7b13` ✓ 同じ mod binary ✓）と比べ ✓
-TenderPower が載っている **1,652 観測で决定が 361 件変わり ✓ 35 seed** ✓ これまでで最大の変化 ✓
+**決定母数**: control を 1 commit 前（`.wt-ctrl-tender` = `5ae7b13` ✓ 同じ mod binary ✓）と比べ ✓
+TenderPower が載っている **1,652 観測で決定が 361 件変わり ✓ 35 seed** ✓ これまでで最大の変化 ✓
 EAIF2UUVCK 56 件・L3PN5HBQ8T 55 件・K7M2QX9BTR 33 件 ✓ なので **panel を起動した**（arm = `3522e06` ✓
-control = `5ae7b13` ✓ seeds は Tender の决定変化上位 3 つ ✓  mechanism-targeted な再使用 ✓）✓ 結果待ち ✓
+control = `5ae7b13` ✓ seeds は Tender の決定変化上位 3 つ ✓  mechanism-targeted な再使用 ✓）✓ 結果待ち ✓
 panel 中 policy code（`official_agent.py`・`combat.py`）は触らない ✓
 
 残っている group（105 件）と次の狙い: `SLIMED_BERSERKER CARD.SLIMED game+1` 5 件、
@@ -6635,7 +6635,7 @@ list は `data/exhaust_card_classes.json` に保存した ✓ これで **`SLIME
 | K7M2QX9BTR | 11 勝 1 敗 | 11 勝 1 敗 |
 | 合計 | **38 勝** | 37 勝 |
 
-决定的变化は 1,652 観測中 361 件・35 seed ✓ 勝数は +1 ✓ **下がる方向では無い** ✓ かつ census の不一致を
+決定的変化は 1,652 観測中 361 件・35 seed ✓ 勝数は +1 ✓ **下がる方向では無い** ✓ かつ census の不一致を
 105 → 97 件に減らしているので忠実度修正として保持 ✓（`wins` は combat 勝数 ✓ Act 3 踏破ではない ✓）
 control の初回走行は dll 欠落で空だった ✓ 再走した結果 ✓
 
@@ -6680,7 +6680,7 @@ game は OnPlay 後（draw 後 ✓) に pile を決める ✓）✓ regression t
 census（build-valid ✓ 同じ tool ✓）: 6,840 replay 中 **87 件** の不一致（92 → 87 ✓ 5 件閉じた ✓）✓
 `SLIMED_BERSERKER CARD.SLIMED` group は消えた ✓
 
-决定母数（control = `.wt-ctrl-slimed` = `722cd26` ✓ selector `RELIC.FORGOTTEN_SOUL` ✓ 同じ mod binary ✓）:
+決定母数（control = `.wt-ctrl-slimed` = `722cd26` ✓ selector `RELIC.FORGOTTEN_SOUL` ✓ 同じ mod binary ✓）:
 5,135 観測で **759 件 changed** ✓ ただし **1 seed（H2LV6ZJ4XW）だけ** ✓ 採否の基準は「3 件以上の変更 AND
 3 seed 以上」なので **panel は行わない** ✓ 忠実度修正として保持 ✓
 
@@ -6694,7 +6694,7 @@ agent が推定する Skill 枚数のずれが疑い ✓ 次の対象 ✓
 ## Round 33（診断のみ ✓ code 変更なし）: LetterOpener が1枚ずれる原因は agent の玩札カウントの取り落としと二重計上
 
 `TUNNELER CARD.DEFEND_IRONCLAD game+5`（3 件）と `CARD.BATTLE_TRANCE game-5`（3 件）を実行して数えた ✓
-同じターンの連続する2つの决定で ✓ model だけ 5 削る箇所と game だけ 5 削る箇所が対になっている ✓
+同じターンの連続する2つの決定で ✓ model だけ 5 削る箇所と game だけ 5 削る箇所が対になっている ✓
 `RELIC.LETTER_OPENER` を持つ build ✓ game の規則は `AfterCardPlayed` で Skill の時 `SkillsPlayedThisTurn++`
 し `% 3 == 0` で全員に 5 unpowered ✓ model は `skills_this_turn = skills_played_this_turn + 1`（今回の札込み ✓）
 で `% 3 == 0` ✓ 規則は同じ ✓ ずれているのは **agent が推定する `skills_played_this_turn`** ✓
@@ -6720,7 +6720,7 @@ play が計上される経路（reset が先に走って `_PENDING_ACTION` が�
 
 `data/boss_gap_list.py` は `same_fight` と same-turn を通る pair だけ `model_state` を呼んでいた ✓
 `model_state` は `choose` を通るので **ここでしかカウンタが進まない** ✓ つまり飛ばした record の玩札が
-カウンタから落ちていた ✓ そして飛ばされる record の典型は **そのターンの最後の决定** ✓ その次の record は
+カウンタから落ちていた ✓ そして飛ばされる record の典型は **そのターンの最後の決定** ✓ その次の record は
 新しいターンなので pair 条件を通らない ✓ 結果として **毎ターンほぼ1枚足りないカウンタ** で測っていた ✓
 
 直した ✓ 全 combat record を順に進め ✓（比べない record も `_advance_play_counters` で進める ✓）✓
@@ -6782,7 +6782,7 @@ pile だけを見る ✓）✓ なので前 round の「余分な exhaust がカ
 この変更後も残っている ✓ census は 6,840 replay 中 81 → **80 件** ✓（ほぼ変わらない ✓ 効果は rollout 内の
 relic 発動と pile 表現の忠実さ ✓）✓
 
-决定母数（control = `.wt-ctrl-exhaust` = `9bfc18e` ✓ selector はこの 10 枚の card ✓ 同じ mod binary ✓）:
+決定母数（control = `.wt-ctrl-exhaust` = `9bfc18e` ✓ selector はこの 10 枚の card ✓ 同じ mod binary ✓）:
 975 観測で **228 件 changed ✓ 9 seed**（AM8C6YXHSG 106 ✓ D6A1F8C3E5 45 ✓ EAIF2UUVCK 24 ✓ SOS6XYXCNO 17 ✓
 R8V2H6N4ZB 14 ✓）✓ 基準を満たすので **panel を起動した**（arm = `073aabf` ✓ control = `9bfc18e` ✓ seeds
 AM8C6YXHSG / D6A1F8C3E5 / EAIF2UUVCK ✓ mechanism-targeted な再使用 ✓）✓ 05:52 開始 ✓ 結果待ち ✓
@@ -6824,7 +6824,7 @@ panel が終わったら HEAD に適用して `data/boss_gap_list.py` で測り�
 「model の state は解決中の card を already 数えている ✓ game は AfterCardPlayed なので自分の damage 計算ではまだ数えていない ✓」
 という前提で合っている ✓ ただし次のずれが残っている ✓（`MONSTER.BYGONE_EFFIGY CARD.STRIKE_IRONCLAD` ✓ 3 件 ✓）
 
-- seq 98（turn 1 の最初の决定 ✓ agent の cards_played 0 ✓ upgrade 1 ✓ var Damage 11 ✓ 敵 SLOW ✓ VULN 無し ✓）:
+- seq 98（turn 1 の最初の決定 ✓ agent の cards_played 0 ✓ upgrade 1 ✓ var Damage 11 ✓ 敵 SLOW ✓ VULN 無し ✓）:
   game 12 = 11 x 1.1 ✓ **game の SlowAmount は 1** ✓ model は 0 として 11 ✓
 - seq 99（同じ fight ✓ cards_played 1 ✓ var 8 ✓）: game 9 = 8 x 1.2 ✓ **SlowAmount 2** ✓ model は 1 として 8 ✓
 - seq 106（turn 3 ✓ cards_played 2 ✓ var 8 ✓ 敵 VULN 1 ✓ SLOW ✓）: game 13 = 8 x 1.5 x 1.1 ✓ **SlowAmount 1** ✓
@@ -7022,11 +7022,54 @@ exhaust panel の比較（wins は combat 勝数 ✓ Act 3 踏破ではない �
 1. `python3 data/boss_gap_list.py 10` → `/tmp/gap_after_fixes.txt` ✓（HEAD に適用済みの Ashen/Second Wind と
    Power 計上の效果 ✓）
 2. attribution arm `.wt-attr-e10`（`e10e5ee` ✓）vs control `.wt-attr-073`（`073aabf` ✓）で
-   `PLAYER:POWER.STRENGTH_POWER` → `data/ashen_attr.log` ✓（Ashen/Second Wind の决定母数 ✓）
+   `PLAYER:POWER.STRENGTH_POWER` → `data/ashen_attr.log` ✓（Ashen/Second Wind の決定母数 ✓）
 3. attribution arm HEAD vs control `.wt-attr-e10` で `POWER.SLOW_POWER` → `data/powercredit_attr.log` ✓
-   （Power 計上の决定母数 ✓ Slow の ramp を読むのはその集団 ✓）
+   （Power 計上の決定母数 ✓ Slow の ramp を読むのはその集団 ✓）
 
 `attribution_rampart.py` の selector は **1 個だけ** ✓（usage ✓ line 15 ✓）✓ 最初に `RELIC.X,CARD:...` の
 複合を渡した版は empty になる ✗ 杀掉して直し ✓ selector を分離した ✓ `CARD:` は **upgraded copy が手札に
-ある决定だけ**を選ぶ ✓（line 48-52 ✓）ので upgrade 依存でないこの修正には合わない ✓
-`PLAYER:POWER.STRENGTH_POWER`（57,220 観測 ✓ ほぼ全 combat 决定 ✓）を母数の近似に使う ✓
+ある決定だけ**を選ぶ ✓（line 48-52 ✓）ので upgrade 依存でないこの修正には合わない ✓
+`PLAYER:POWER.STRENGTH_POWER`（57,220 観測 ✓ ほぼ全 combat 決定 ✓）を母数の近似に使う ✓
+
+## Round 44: exhaust panel 完了（勝敗は変化なし ✓ census は 80 → 74 件）と Stratagem の model 実装（scratch ✓ 779 件 green）
+
+**exhaust panel（10 枚の self-exhaust 取り消し ✓ arm `073aabf` vs control `9bfc18e` ✓ 同じ mod binary ✓）**
+
+| seed | arm | control |
+|---|---:|---:|
+| AM8C6YXHSG | 17 勝 1 敗 | 17 勝 1 敗 |
+| D6A1F8C3E5 | 15 勝 1 敗 | 15 勝 1 敗 |
+| EAIF2UUVCK | 空（main menu 停止 ✓ 前 round ✓） | 14 勝 1 敗 |
+
+比較できる 2 seed で **arm と control が同じ勝敗** ✓ 同じ数値は測定にならない ✓ 判定は出せない ✓
+EAIF2UUVCK は control 側は正常に完了したので **停止は断続的** と確認できた ✓（arm 側だけ止まった ✓）✓
+この変更は trace の pile 実測（EVIL_EYE 74 play で exhaust +0 / discard +1 ✓ TRUE_GRIT 47 ✓ BURNING_PACT 37 ✓ など ✓）で
+方向が確定している忠実度修正なので保持 ✓ 勝敗の改善としては計上しない ✓
+
+**HEAD に適用済みの 2 修正（`e10e5ee` Ashen/Second Wind ✓ `398c620` Power 計上 ✓）後の census** ✓
+`data/boss_gap_list.py 10`（build-valid trace ✓ 同じ group 定義 ✓）:
+**7,322 actions replayed ✓ 7,248 matching ✓ 不一致 74 件** ✓（適用前 80 件 ✓ tool 修正前 87 件 ✓）✓
+`QUEEN CARD.ASHEN_STRIKE game-1` と `QUEEN CARD.BREAKTHROUGH game-1` は消えた ✓
+残る上位: `VANTOM CARD.BATTLE_TRANCE game+1` 3 ✓ `BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game-1` 3 ✓
+`THE_INSATIABLE CARD.FEED game-1` 2 ✓ `THE_INSATIABLE CARD.SHRUG_IT_OFF game-5` 2 と
+`CARD.DEFEND_IRONCLAD game+5` 2 ✓（LetterOpener の ±5 ✓）✓
+attribution は実行中 ✓ `/tmp/gap_after_fixes.txt` ✓ **まだ main の policy を触らない** ✓
+（3 番目の attribution が main の HEAD と `.wt-attr-e10` を比べるから ✓ 実行中に main を変えると測る物が動く ✓）
+
+**Stratagem を model に入れた**（scratch `.wt-proto5` ✓ suite **779 件 green** ✓
+patch `/tmp/stratagem_plus_power.patch` 180 行 ✓ Power 除去単体は `/tmp/power_leaves_combat.patch` 63 行 ✓）:
+
+- `STRATAGEM = "Stratagem"` ✓ `CARD_COST` に 1 ✓ `POWERS` に追加 ✓ `UNTARGETED` に追加 ✓
+  （**legal_actions は `name in UNTARGETED` を通らないと標的付き扱いになる ✓** これが無いと
+  `int('')` で ValueError ✓）✓
+- play 効果は untargeted Power と同じ早期 return の形 ✓
+  `return replace(combat, player_powers=_add_power(combat.player_powers, "StratagemPower", 1))` ✓
+  （pile を触らない ✓ これは Power 札が combat から抜ける規則と整合 ✓）✓
+- shuffle hook は `_draw_into_combat` ✓ `reshuffled = len(combat.draw_pile) < count and bool(combat.discard_pile)` ✓
+  shuffle が起きた時だけ ✓ power 枚数ぶん draw pile から damage→block の順で高い札を選んで hand へ ✓
+  **power は減らない ✓以后の shuffle でも発動 ✓**（game の `AfterShuffle` は消費しない ✓）✓
+- `official_agent.py` に `"POWER.STRATAGEM_POWER": "StratagemPower"` と `"CARD.STRATAGEM": "Stratagem"` ✓
+  後者は test が要求した ✓（`test_every_playable_card_in_the_combat_model_is_reachable_from_the_observation` が
+  model で玩える card は observation の id 対応を持つ事を検査 ✓ **Stratagem を落ちた ✓良い検査 ✓**）✓
+- 新規 test `test_stratagem_pulls_cards_from_the_draw_pile_on_every_shuffle` ✓（Battle Trance の 3 枚 draw が
+  draw pile 1 枚で shuffle を起こし ✓ StratagemPower が BASH を hand へ ✓ power は 1 のまま ✓）✓
