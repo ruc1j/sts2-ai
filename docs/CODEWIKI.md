@@ -6595,3 +6595,31 @@ ForgottenSoul でもないことは確認済み ✓）、`QUEEN CARD.ASHEN_STRIK
 
 panel の途中結果: arm（`3522e06` ✓ Tender 修正あり ✓）は EAIF2UUVCK `wins=14 losses=1` ✓
 L3PN5HBQ8T `wins=13 losses=1` ✓ control（`5ae7b13`）は未開始 ✓ `wins` は combat 勝数で Act 3 踏破ではない ✓
+
+## Round 30: Shrink・Dismantle の修正を HEAD に入り、Tender panel の control が dll 無しで空走していたことが分かった
+
+**Shrink を `_apply_debuff_multipliers` の鎖に移し ✓ Dismantle を Vulnerable な敵に対して 2 hit にした**
+（commit `ab6f534` ✓ 774 tests green ✓）✓ 同じ tool・同じ trace での census: 不一致 **105 → 97 件** ✓
+閉じた group は `SHRINKER_BEETLE CARD.BASH +1`（4 件 ✓ Shrink ✓）と `VANTOM CARD.DISMANTLE +1`（2 件 ✓ 2 hit ✓）✓
+`TUNNELER CARD.DEFEND_IRONCLAD +5` と `CARD.BATTLE_TRANCE -5`（各3件）は残った ✓ つまりこれは Shrink ではなく
+LetterOpener の発動枚数側的问题 ✓ prototype 段階の script と boss_gap_list では replay 母数がずれる
+（6,737/6,746 と 6,315/6,840 ✓ Dismantle の hit 変更で `step` が成功する record 数が変わるため ✓）ので ✓
+**同じ tool での 105 → 97 だけを成果として数える** ✓
+
+**Tender panel**: arm（`3522e06` ✓ Tender の二重差し引きを落した方 ✓）は
+EAIF2UUVCK `wins=14 losses=1` ✓ L3PN5HBQ8T `wins=13 losses=1` ✓ K7M2QX9BTR `wins=11 losses=1` ✓
+（`wins` は combat 勝数 ✓ Act 3 踏破ではない ✓）✓ 一方 **control（`.wt-ctrl-tender` = `5ae7b13`）は 3 run
+すべて `wins=0 losses=0 exit=1`** ✓ これは 0 勝という意味ではない ✓ worktree に
+`official_mod/bin/Release/net9.0/Sts2Ai.dll` をコピーしていなくて ✓ mod がロードされず combat が 1 件も
+記録されなかったため ✓ **RESULT を信じる前に exit と記録数を見る** ✓ の既存教訓どおり ✓
+dll を入れて control だけ再走させた（`tender_ctrl2` ✓ 05:11 開始 ✓ 3 seed ✓）✓ 比較はまだ出ていない ✓
+
+**Exhaust keyword の data を取った** ✓ decompile の_cards_ 578 件のうち **119 件が `CardKeyword.Exhaust`**
+を持つ ✓ model の `EXHAUSTS`（play 時に自分を手札から出す ✓ `combat.py:2860` の `exhaust = card in EXHAUSTS`）は
+18 件だけ ✓ model が知っている札のうち **15 件が self-exhaust していない**:
+Brand・Burning Pact・Cinder・Dark Embrace・Dramatic Entrance・Evil Eye・Feel No Pain・Havoc・
+Howl From Beyond・Impervious・Molten Fist・Slimed・Thrash・Toxic・True Grit ✓
+list は `data/exhaust_card_classes.json` に保存した ✓ これで **`SLIMED CARD.SLIMED +1`（5 件 ✓ 保持 7,315 観測 ✓）と
+`QUEEN CARD.IMPERVIOUS +1`（3 件 ✓ 保持 2,349 観測 ✓）の説明がつく** ✓ game は play 時に札を exhaust し ✓
+その run たちは `RELIC.FORGOTTEN_SOUL`（exhaust 1 枚につき 1 unpowered damage ✓ model は model 済み ✓
+`combat.py:602` ✓）を持っている ✓ model が exhaust を知らないから relic が発動しない ✓ 次の work ✓
