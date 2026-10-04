@@ -357,6 +357,10 @@ class Combat:
     # Whole-combat cumulative counters (Nunchaku/Tuning Fork) - never reset until the fight ends.
     attacks_played_combat: int = 0
     skills_played_combat: int = 0
+    # Kunai / Shuriken grant their power in AfterCardPlayed, i.e. after the attack that triggered them
+    # has resolved, so the 3rd attack of the turn does not benefit from its own relic bonus.  A grant
+    # waiting here is folded into player_powers when the next card is played (or at the turn end).
+    pending_combo_powers: tuple[tuple[str, int], ...] = ()
     # DemonTongue.AfterDamageReceived: only the first unblocked hit each turn heals; reset
     # alongside the per-turn combo counters.
     damaged_this_turn: bool = False
@@ -1960,6 +1964,12 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     before = _enemy_vulnerable_total(combat)
     alive_before = sum(1 for enemy in combat.enemies if enemy.alive)
     after = _step(combat, action, data, rng)
+    if after.pending_combo_powers:
+        # Kunai / Shuriken grant their power in AfterCardPlayed: the play that reached the 3rd attack
+        # does not benefit from its own bonus, but the resulting state does carry the power.
+        for power_name, power_amount in after.pending_combo_powers:
+            after = replace(after, player_powers=_add_power(after.player_powers, power_name, power_amount))
+        after = replace(after, pending_combo_powers=())
     if vicious and action != END_TURN and _enemy_vulnerable_total(after) > before and not after.terminal:
         after = _draw_into_combat(after, vicious, data, rng)
     if action == END_TURN or after.terminal:
@@ -2590,6 +2600,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
     energy_gain_allowed = not _power(combat.player_powers, "NoEnergyGainPower")
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
+    combo_pending: list[tuple[str, int]] = []
     combo_block += helmet_block
     if card in ATTACKS and _power(combat.player_powers, "FreeAttackPower"):
         # FreeAttackPower.BeforeCardPlayed decrements once per Attack played from hand.
@@ -2602,9 +2613,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card in ATTACKS:
         combo_block += _power(combat.player_powers, "RagePower")
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
-            combo_powers = _add_power(combo_powers, "DexterityPower", 1)
+            combo_pending.append(("DexterityPower", 1))
         if RELIC_SHURIKEN in relics and attacks_this_turn % 3 == 0:
-            combo_powers = _add_power(combo_powers, "StrengthPower", 1)
+            combo_pending.append(("StrengthPower", 1))
         if RELIC_ORNAMENTAL_FAN in relics and attacks_this_turn % 3 == 0:
             combo_block += 4
         if RELIC_KUSARIGAMA in relics and attacks_this_turn % 3 == 0:
@@ -2625,6 +2636,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         combo_powers = _add_power(combo_powers, "ColossusPower", 1)
     combat = replace(
         combat, played_this_turn=True, player_powers=combo_powers, enemies=tuple(combo_enemies),
+        pending_combo_powers=combat.pending_combo_powers + tuple(combo_pending),
         player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
         attacks_played_this_turn=attacks_this_turn, skills_played_this_turn=skills_this_turn,
         attacks_played_combat=attacks_combat, skills_played_combat=skills_combat, cards_played_this_turn=cards_this_turn,
