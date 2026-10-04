@@ -4898,3 +4898,17 @@ StopIteration を出し、106 件中 83 件が失敗したかのように見え�
 
 **教訓**：corpus 集計（decision_source の件数など）は code の版を混ぜて数える。次の gap 探索は
 corpus の集計ではなく、**HEAD で全 trace を replay して今の code が落とす場所を数える**方法に切り替える。
+
+### HEAD で全 corpus を replay した結果：例外 0 件（2026-10-04、`data/current_gap_scan.py`）
+
+`data/current_gap_scan.py` は記録された combat observation を **現在の code** で `rollout_choice` に
+通し直し、落ちた場所を戦闘出現順に数える（enemy data は 4 act をマージして、他 act 由来の KeyError を
+紛れ込まない）。6000 record / 549 trace を simulations=5 で replay → **exceptions 0 件・rejected 0 件**。
+観測 schema が今の bridge と違う 6 trace（`slot` / `history` / `combat_id` 等の欠落）は対象から除外して
+別カウントにした（以前はここが `KeyError: 'slot'` → `'history'` → `'hp'` と 58 件を出していたが、
+すべて trace 側の旧形式で live run の gap ではなかった）。
+
+意味：corpus 内には「model がその戦闘を simulate できなくて heuristic に落ちる」型の実在 gap は
+残っていない。ここからの Act 3 未踏破は model の欠落ではなく**手数と火力の問題**なので、
+同じ replay  instrument を今後の回帰検査（新 trace で例外 0 を保つ）として使い、
+改善の探索は火力・ルートの測定に移す。
