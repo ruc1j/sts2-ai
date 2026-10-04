@@ -5090,3 +5090,19 @@ Feed（`CARD.FEED`）の play 約 500 件で model の与えたダメージが g
 10 ダメージ + Max HP +3 + Fatal 条件で、X 的な伸びは本体に無い。原因は特定できていないので
 次回に回す（推測で damage 式は触らない）。同じく残る小グループ：Bash 15 件・Strike 8 件・
 end_turn 後の TUNNELER 5 件。
+
+### upgrade 値修正の决定母数（同一 record replay、2026-10-04）
+
+`data/attribution_rampart.py` に `CARD:` フィルター（hand に upgrade 済みの対象札を持っている决定を選ぶ）を
+追加し、HEAD と `bef34e7`（修正直前の worktree `.wt-ctrl-bef34e7`）で corpus を replay した。
+対象は修正した 18 枚（Bludgeon・Break・Ultimate Strike・Unrelenting・Hemokinesis・Giant Rock・
+Byrd Swoop・Volley・Molten Fist・Neow's Fury・Breakthrough・Iron Wave・Anger・Feed・Fisticuffs・
+Dismantle・Bolas・Rampage）。
+
+**1,251 件の决定を replay → 决定变化 158 件・17 seed・例外 0 件**。変化の例：
+`seq 112 arm=CARD.DEFEND_IRONCLAD control=CARD.ANGER`、`seq 622 arm=CARD.BLUDGEON control=CARD.RUPTURE`、
+`seq 323 arm=CARD.SHRUG_IT_OFF control=CARD.HOWL_FROM_BEYOND`。
+
+repo の基準（决定 3 件以上かつ seed 3 件以上）を决定数・seed 数ともに満たす母数だが、これは offline replay
+なので胜数の証拠にはしない。胜数への影響は新しい 3 seed の A/B（arm = HEAD、control = `.wt-ctrl-bef34e7`）で
+測ることにし、panel の起動は次 round の先頭で行う（playbook の待機と panel 起動を game 稼働中に挟まないため）。
