@@ -7743,3 +7743,36 @@ Slimed で一度失敗している ✓ teaching 55 ✓）✓
 - 親札の選択は player の選び方 ✓ model は damage 最大で近似する ✓（近似である旨をコメントに残す ✓）✓
 - 母数: 新しい trace で legal_actions 4 件 / 1 seed ✓（古い corpus には 3 件 ✓）✓ 小さい ✓
   ただし play できる札が eval 対象に入っていないこと自体が model の穴 ✓
+
+## Round 65: Secret Weapon を model に入れた ✓ suite 782 件 green ✓ 母数は 4 record / 1 seed なので panel しない ✓
+
+main commit `1a73379` ✓ scratch `.wt-proto9` で実装してから適用 ✓ patch `/tmp/secret_weapon.patch` 135 行 ✓
+（`SECRET_WEAPON` 定数 ✓ `CARD_COST` に 0 ✓ `SKILLS` ✓ `UNTARGETED` ✓
+`official_agent.CARD_NAMES["CARD.SECRET_WEAPON"] = "Secret Weapon"` ✓）✓
+
+**配置で2回ハマった** ✓ 教訓として残す ✓
+1. 札を draw pile から hand へ移す処理を effect 側（`combat.py` の PRIMAL_FORCE の近く ✓）に置き ✓
+   draw pile からの除去は shared の main replace の後ろで index を使って除いた ✓
+   （`combat.py` の末尾は `hand` を list で持つ ✓ そこへ append すれば shared の処理がそのまま拾う ✓）✓
+2. **untargeted の札を shared return へ乗せないといけない** ✓ `combat.py:3180` の
+   `if card in {INFLAME, PRIMAL_FORCE, ..., ONE_TWO_PUNCH}: return combat` ✓ の集合に Secret Weapon が無いと ✓
+   下の攻撃適用に進んで `enemy = enemies[int(target)]` → `ValueError: invalid literal for int() with base 10: ''` ✓
+   （前 round まで見てきた「untargeted 札が targeted 分岐に落ちる」のと同じ形 ✓ その集合に入れた ✓）✓
+3. exhaust は共有の仕組みに乗せた ✓ `exhaust = card in EXHAUSTS or (card == SECRET_WEAPON and not card_was_upgraded)` ✓
+   `EXHAUSTS` は名前の集合なので ✓ 強化版（`OnUpgrade` が Exhaust を外す ✓）を区別するには play した value 側を見る ✓
+4. `Card` オブジェクトの play は action 文字列が `card:0`（index 指定 ✓）になる ✓ 素の string 札は名前 ✓
+
+**確認した振る舞い** ✓
+- 素の札: hand に Iron Wave が入る ✓（draw pile の Attack を 1 枚 ✓ Defend は Skill なので引かない ✓）✓
+  draw は `Defend` だけ ✓ exhaust に Secret Weapon ✓ discard は空 ✓
+- 強化版: hand に Bash ✓ draw 空 ✓ **exhaust 空 ✓ discard に Secret Weapon** ✓（Exhaust 除去と一致 ✓）✓
+- 選択の近似（draw pile の Attack を 1 枚選んで hand へ ✓ key は `CARD_DAMAGE + 2 * 強化` ✓）は ✓
+  **model の既存の Standing 近似と同じ** ✓ `combat.py:2972` の `card_value + 2 * card_block_value` ✓
+  （player が実際に何を選ぶかは観測できない ✓ 近似である旨はコメントに書いた ✓）✓
+
+**母数** ✓ 新しい trace で game が legal_actions に出す record 4 件 / 1 seed ✓（古い corpus で 3 件 ✓）✓
+ Adopt 基準の 3 seed に届かない ✓ **忠実度修正として保持 ✓ panel はしない** ✓
+（play できる札が search の対象に入っていないこと自体が穴なので ✓ 対応を入れた ✓）✓
+
+**テスト** ✓ `test_secret_weapon_pulls_an_attack_from_the_draw_pile_and_exhausts` ✓
+素の札と強化版の両方で hand / draw / exhaust / discard を assert ✓ main の suite **782 件 green** ✓
