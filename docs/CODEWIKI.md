@@ -5335,3 +5335,63 @@ Bash・Strike・Pommel Strike・Anger などの攻撃札の HP 照合で残っ�
 選択できた場合の代替は RestSite が最多（Monster+RestSite 56、Elite+RestSite 18）で、ここは改善余地だが、
 致命戦闘の **約83%は地図が強制する入口**だった。QUEEN 戦の火力不足と合わせて、route より先に deck の
 火力が壁という前 round までの結論と同じ方向を支持する。
+
+## Round 10: relic census で Mr Struggles の毎ターン全体攻撃を発見・実装（2026-10-04）
+
+### gap の見つけ方
+
+power census（前 round）に続けて **relic census** を回した：combat 観測に出る player の relic を全部集め、
+`combat.py` / `official_agent.py` に名前が出現しないものを game 側の C# の hook と対照表にした。
+対象外だった 83 個（572,248 record）の多くは「効果は observation に現れるので model 不要」だった：
+
+- `LANTERN`（エネルギー+1）・`ODDLY_SMOOTH_STONE`（Dexterity）・`ANCHOR`（開始 Block 10）・
+  `BRONZE_SCALES`（Thorns 3）は observation の energy / powers / block に既に反映されている
+- `AKABEKO`（Vigor 8）・`BAG_OF_MARBLES`（Vulnerable 1）・`RED_MASK`（Weak 1）・`BLOOD_VIAL`（Heal 2）は
+  **TurnNumber <= 1 のときだけ**発火して、その瞬間の observation に power として現れる → 反映済み
+- `TEA_OF_DISCOURTESY`（開始時に Dazed を2枚 draw pile へ、1,712 record で山札に見える）は
+  `CARD.DAZED` が **Unplayable + Ethereal** で legal_actions に出ないため、rollout が評価すべき手自体が存在しない
+- 残りの**観測に一切現れない**ものが本当の gap で、その筆頭が `RELIC.MR_STRUGGLES`（2,796 record）だった
+
+### 実装した内容
+
+`MrStruggles.AfterPlayerTurnStart` は `CreatureCmd.Damage(combatState.HittableEnemies, TurnNumber,
+ValueProp.Unpowered)`、つまり**各 player ターン開始時に、新しいターン数ぶんのダメージを全敵へ**通す
+（turn 2 → 2、turn 5 → 5）。combat.py のターン開始処理（Mercury Hourglass と同じ場所）に
+`RELIC_MR_STRUGGLES` を追加した。
+
+game 側の挙動は trace から確定させた：relic を持つ24 run で **ターン境界 548 件の敵 HP 低下がちょうど
+新しいターン数**だった。うち **141 件は対象が Vulnerable でも低下はターン数のまま**（Unpowered なので
+Vulnerable と Strength で伸びない ✓ 1.5倍になる件は 9 件しかなかった）。最初の observation では敵 HP が
+max_hp のまま（26 件）で、combat 開始時点では発火しないことも確認した。
+
+### 検証
+
+ターン境界（end_turn を model で再生して次の観測と照合）の一致率、relic を持つ run だけ：
+
+| ツリー | 一致 | 不一致 |
+|---|---:|---:|
+| 修正前（`.wt-ctrl-mr` = `e4b14b0`） | 1,094 / 2,037 = **53.7%** | 943 |
+| 修正後（HEAD） | 1,617 / 2,037 = **79.4%** | 420 |
+
+relic を**持たない** run の一致は両ツリーで完全に同一（36,486 一致 / 6,410 不一致）で、変更が無害である
+ことも確認した。决定母数は `data/attribution_rampart.py` に `RELIC.X` セレクタを足して
+**2,796 本 replay して 506 决定が変化・8 seed**（基準の 3 决定・3 seed を大きく超える）。
+テストは `test_mr_struggles_ticks_the_new_turn_number_into_every_enemy`（Vulnerable でも 2 ダメージのまま、
+turn 3 では 3 追加）を足して 757 件 green。
+
+### 同じ round に測った QUEEN の壁の分解（火力では説明がつかない）
+
+`data/enemies_glory.json` の QUEEN 400 HP + TORCH_HEAD_AMALGAM 199 HP の戦闘を 111 本分解した
+（**QUEEN は111本すべてで amalgam を連れている**）。戦闘中に与えた合計ダメージは
+**中央値 241、p75 366、p95 568、最大 580**（壁 599）で、**最大値は 19 差**だった。壁は遠くない。
+
+ near-clear（上位8本）と中央値半边を比べると：raw attack damage 93 vs 91.5、max HP 87 vs 89、
+戦闘中に使った potion 3 vs 2、relic 数 16 vs 13.5、deck の攻撃札 10 vs 13、upgraded 攻撃 0 vs 4 で、
+**火力・最大HP・potion・upgrade 数のどれもが近接組と typical を分離していない**。違うのは
+**生き延びたターン数 12 vs 6**（攻撃/ターン は両組 2.0、skill/ターン 1.6 vs 1.2）だった。
+potion は 108/111 本が boss 開始時に中央値 3 本を持ち、戦闘内で 3 本を消費している → 使い残しは無い。
+
+ここで Mr Struggles が効く：turn 12 まで生きれば **1+2+…+12 = 78 ダメージを敵1体ごとに**、QUEEN 戦なら
+Queen と amalgam 合計で **156 ダメージ**を、agent は織り込まずに見ていなかった。近接組の shortfall
+（19〜50 ダメージ）と同じ桁であり、しかも「長く生きると自動的に増える」型なので生存と相乗する。
+**胜数への影響は未測定**（panel は次 round）。
