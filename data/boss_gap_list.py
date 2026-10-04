@@ -19,12 +19,17 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import combat
+import official_agent
 from model_match_audit import combat_records, merged_enemy_data, model_state, recorded_action, same_fight
 from player_damage_group import trace_reports_enchantments
 
 
 def main(limit: int) -> int:
     data = merged_enemy_data()
+    # The agent infers the play counters from the actions it chose and the piles it saw, so the audit has
+    # to hand back the recorded action before the next observation or the counters the live agent had
+    # (LetterOpener, Kusarigama, Shuriken, SlowPower's ramp) are not the ones being measured.
+    previous_action: dict | None = None
     groups: collections.Counter = collections.Counter()
     replays = mismatches = 0
     for path in sorted(Path("data").glob("*_agent.jsonl")):
@@ -33,6 +38,16 @@ def main(limit: int) -> int:
         for prev, nxt in zip(combat_records(path), combat_records(path)[1:]):
             if not same_fight(prev, nxt) or prev.get("turn") != nxt.get("turn"):
                 continue
+            official_agent._PENDING_ACTION = previous_action
+            previous_action = None
+            if prev.get("card_id"):
+                previous_action = {
+                    "type": "card",
+                    "card_id": prev["card_id"],
+                    "hand_index": prev.get("hand_index", 0),
+                }
+            elif prev.get("action_type") == "end_turn":
+                previous_action = {"type": "end_turn"}
             state = model_state(prev, data)
             if state is None:
                 continue

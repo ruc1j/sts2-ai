@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import collections
@@ -13,6 +13,7 @@ from itertools import combinations
 from combat import (
     ALL_ENEMY_DAMAGE, ATTACKS, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
     POWERS, SKILLS,
+    BURNING_PACT, CINDER, FIEND_FIRE, THRASH,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
     POTION_STRENGTH, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
 )
@@ -402,9 +403,16 @@ _POTION_USED_ROOM: tuple[object, object] | None = None
 # turn - an effect acts on a card already in hand - and only otherwise to an autoplay, which enters
 # hand and is played inside the same resolution, so no observation ever shows it in hand.
 _PENDING_ACTION: dict | None = None
+_LAST_PLAY_MOVES_OTHER_CARDS = False
+# Cards that move other cards out of the hand as part of their own play, without playing them.
+MOVES_OTHER_CARDS_OUT_OF_HAND = frozenset({BURNING_PACT, CINDER, FIEND_FIRE, THRASH})
 _TURN_PILE_START: collections.Counter = collections.Counter()
 _TURN_SEEN_HAND: collections.Counter = collections.Counter()
 _TURN_OWN_PLAYS: collections.Counter = collections.Counter()
+# Departures already attributed to an effect.  unexplained is recomputed against the turn's opening
+# snapshot on every observation, so an exclusion has to be recorded or it reappears as a play later in
+# the same turn.
+_TURN_EFFECT_DEPARTURES: collections.Counter = collections.Counter()
 _TURN_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0, "turn": -1}
 _COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
@@ -429,18 +437,20 @@ def _enemy_instance_ids(observation: dict) -> frozenset:
 
 
 def _reset_play_counters() -> None:
-    global _COMBAT_ENEMY_IDS, _TURN_PILE_START, _TURN_SEEN_HAND, _TURN_OWN_PLAYS
+    global _COMBAT_ENEMY_IDS, _TURN_PILE_START, _TURN_SEEN_HAND, _TURN_OWN_PLAYS, _TURN_EFFECT_DEPARTURES
     _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=-1)
     _COMBAT_PLAYS.update(attacks=0, skills=0)
     _COMBAT_ENEMY_IDS = frozenset()
     _TURN_PILE_START = collections.Counter()
     _TURN_SEEN_HAND = collections.Counter()
     _TURN_OWN_PLAYS = collections.Counter()
+    _TURN_EFFECT_DEPARTURES = collections.Counter()
 
 
 def _advance_play_counters(observation: dict) -> None:
     """Rebuild the play counters the bridge hides from our own plays plus what the piles show."""
-    global _PENDING_ACTION, _COMBAT_ENEMY_IDS, _TURN_PILE_START, _TURN_SEEN_HAND, _TURN_OWN_PLAYS
+    global _PENDING_ACTION, _LAST_PLAY_MOVES_OTHER_CARDS, _COMBAT_ENEMY_IDS, _TURN_PILE_START
+    global _TURN_SEEN_HAND, _TURN_OWN_PLAYS, _TURN_EFFECT_DEPARTURES
     action, _PENDING_ACTION = _PENDING_ACTION, None
     if observation.get("phase") != "combat":
         _reset_play_counters()
@@ -457,6 +467,7 @@ def _advance_play_counters(observation: dict) -> None:
         _TURN_PILE_START = piles
         _TURN_SEEN_HAND = _hand_contents(observation)
         _TURN_OWN_PLAYS = collections.Counter()
+        _TURN_EFFECT_DEPARTURES = collections.Counter()
         _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=turn)
         if action is not None and action.get("type") == "card":
             # The play that closed the previous turn is not part of this turn's counters.
@@ -467,10 +478,21 @@ def _advance_play_counters(observation: dict) -> None:
         name = CARD_NAMES.get(action.get("card_id"), action.get("card_id"))
         if name in ATTACKS or name in SKILLS:
             _TURN_OWN_PLAYS[name] += 1
-    unexplained = (piles - _TURN_PILE_START) - _TURN_OWN_PLAYS
-    # A card we saw in hand that left without our choosing it was discarded or exhausted by an effect.
-    effects = unexplained & _TURN_SEEN_HAND
-    plays = _TURN_OWN_PLAYS + (unexplained - effects)
+        _LAST_PLAY_MOVES_OTHER_CARDS = name in MOVES_OTHER_CARDS_OUT_OF_HAND
+    unexplained = (piles - _TURN_PILE_START) - _TURN_OWN_PLAYS - _TURN_EFFECT_DEPARTURES
+    # A departure we did not choose is normally a play we could not see: the game autoplays cards from
+    # hand (Centennial Puzzle and Pyre play a card you already hold, Mayhem and Hellraiser one it just
+    # drew, Normality plays itself) and an autoplay is invisible until it lands in a pile.  The exception
+    # is our own play being a card whose effect moves other cards out of the hand without playing them -
+    # Burning Pact and Cinder exhaust one, Fiend Fire exhausts the rest of the hand, Thrash exhausts a
+    # random Attack - and only then is an unexplained departure an effect rather than a play.  Treating
+    # every departure as an effect hid those autoplays and left the SlowPower ramp one card short on 19
+    # recorded plays.
+    if _LAST_PLAY_MOVES_OTHER_CARDS:
+        attributed = unexplained & _TURN_SEEN_HAND
+        _TURN_EFFECT_DEPARTURES = _TURN_EFFECT_DEPARTURES + attributed
+        unexplained = unexplained - attributed
+    plays = _TURN_OWN_PLAYS + unexplained
     attacks = sum(amount for name, amount in plays.items() if name in ATTACKS)
     skills = sum(amount for name, amount in plays.items() if name in SKILLS)
     _TURN_PLAYS.update(attacks=attacks, skills=skills, cards=sum(plays.values()))

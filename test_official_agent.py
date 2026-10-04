@@ -1,10 +1,11 @@
-import json
+﻿import json
 import os
 import random
 import tempfile
 import unittest
 from unittest.mock import patch
 
+import official_agent
 from official_agent import CARD_NAMES, CARD_TIERS, SHOP_POTION_SCORES, DEFENSE_PRIORITY, NEOW_RELIC_PRIORITY, POWER_NAMES, POTION_BLOCK, POTION_EXPLOSIVE, POTION_FIRE, RELIC_SCORES, STRONG_BLOCK_CARDS, _rollout_allowed_potions, choose, choose_card_reward, choose_event, choose_map, choose_potion, choose_rest, choose_shop, rollout_choice
 from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND, CARD_BLOCK, CARD_COST, CARD_DAMAGE, legal_actions as combat_legal_actions, step
 
@@ -69,11 +70,13 @@ class OfficialAgentTest(unittest.TestCase):
     def test_rebuilds_the_play_counters_the_bridge_does_not_export(self) -> None:
         # The bridge writes relic ids only, so a state rebuilt from an observation knows nothing about the
         # plays the turn has already made - which is where LetterOpener's 3rd Skill (5 unpowered damage),
-        # Kusarigama's 3rd Attack, Shuriken's Strength and Ornamental Fan's block live.  Own plays and the
-        # growth of the discard and exhaust piles are combined: a card that left the hand without being
-        # chosen is treated as an effect (Burning Pact and Fiend Fire exhaust other cards, Dark Embrace
-        # discards them) when it was seen in hand this turn, which is what kept the model from dealing 5
-        # the game never dealt in 36 recorded plays.
+        # Kusarigama's 3rd Attack, Shuriken's Strength and Ornamental Fan's block live.  Own plays are
+        # credited from the action the agent returned, and every other card that left the hand counts as a
+        # play too, because the game autoplays cards (Centennial Puzzle, Mayhem, Pyre, Normality) that
+        # never show up as an action we chose.  The one exception is our own play being a card whose
+        # effect moves other cards out of the hand - Burning Pact and Cinder exhaust one, Fiend Fire the
+        # rest of the hand, Thrash a random Attack - and only there is a departure an effect rather than
+        # a play.
         data = {"monsters": [{
             "id": "MONSTER.DUMMY", "values": {},
             "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
@@ -102,30 +105,55 @@ class OfficialAgentTest(unittest.TestCase):
             captured.append(state)
             return [("card:0@0", 9.0)]  # the rollout proposes playing the first card in hand
 
-        def counters(observation: dict):
+        def counters(observation: dict, played: str | None):
+            # The credit for the previous decision is what makes the effect branch deterministic, so the
+            # test supplies it instead of depending on which card the policy's tail happens to prefer.
+            official_agent._PENDING_ACTION = None if played is None else {
+                "type": "card", "card_id": played, "hand_index": 0,
+            }
             with patch("official_agent.search", side_effect=capture):
                 choose(observation, data, 1)
             state = captured[-1]
             return state.attacks_played_this_turn, state.skills_played_this_turn, state.cards_played_this_turn
 
-        # Turn 1 opens: nothing played yet.  The agent then plays the Strike it was shown.
-        self.assertEqual(counters(observation(1, [], [], ["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"])), (0, 0, 0))
-        self.assertEqual(counters(observation(1, ["CARD.STRIKE_IRONCLAD"], [], ["CARD.DEFEND_IRONCLAD", "CARD.DEFEND_IRONCLAD"])), (1, 0, 1))
-        # The Defend we played counts as this turn's first Skill; the extra Defend in the exhaust pile was
-        # exhausted by an effect while it sat in hand, so it is not a play.
+        # Turn 1 opens with nothing played.  The rollout proposes hand[0], so the agent plays the Strike.
+        self.assertEqual(counters(observation(1, [], [], ["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"]), None), (0, 0, 0))
+        # The Strike is now in the discard pile and counts as this turn's only play.  The agent plays
+        # Burning Pact next.
+        self.assertEqual(counters(observation(1, ["CARD.STRIKE_IRONCLAD"], [], ["CARD.BURNING_PACT", "CARD.DEFEND_IRONCLAD"]), "CARD.STRIKE_IRONCLAD"), (1, 0, 1))
+        # Burning Pact exhausts a card while it sits in hand, so the Defend that appeared in the exhaust
+        # pile is an effect, not a second Skill: the model must not treat it as the 2nd Skill here.
         self.assertEqual(counters(observation(
             1,
-            ["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            ["CARD.STRIKE_IRONCLAD", "CARD.BURNING_PACT"],
             ["CARD.DEFEND_IRONCLAD"],
             ["CARD.DEFEND_IRONCLAD"],
-        )), (1, 1, 2))
-        # Turn 2 opens with all of it still in the piles, and none of it counts.
+        ), "CARD.BURNING_PACT"), (1, 1, 2))
+        # The agent played that Defend.  A second Defend left the hand unexplained and our play was not a
+        # move-other-cards effect, so it counts: an autoplay (Centennial Puzzle, Pyre, Mayhem) looks exactly
+        # like this in an observation.
+        self.assertEqual(counters(observation(
+            1,
+            ["CARD.STRIKE_IRONCLAD", "CARD.BURNING_PACT", "CARD.DEFEND_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            ["CARD.DEFEND_IRONCLAD"],
+            ["CARD.CINDER"],
+        ), "CARD.DEFEND_IRONCLAD"), (1, 3, 4))
+        # Turn 2 opens with all of it still in the piles, and none of it counts.  The agent plays Cinder.
         self.assertEqual(counters(observation(
             2,
-            ["CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            ["CARD.STRIKE_IRONCLAD", "CARD.BURNING_PACT", "CARD.DEFEND_IRONCLAD", "CARD.DEFEND_IRONCLAD"],
+            ["CARD.DEFEND_IRONCLAD"],
+            ["CARD.CINDER"],
+        ), None), (0, 0, 0))
+        # Cinder went to the discard, and an Anger we never held this turn arrived there: a card the game
+        # played without ever showing it in hand is a play, not an effect.
+        self.assertEqual(counters(observation(
+            2,
+            ["CARD.STRIKE_IRONCLAD", "CARD.BURNING_PACT", "CARD.DEFEND_IRONCLAD", "CARD.DEFEND_IRONCLAD",
+             "CARD.CINDER", "CARD.ANGER"],
             ["CARD.DEFEND_IRONCLAD"],
             ["CARD.DEFEND_IRONCLAD"],
-        )), (0, 0, 0))
+        ), "CARD.CINDER"), (2, 0, 2))
 
     def test_keeps_the_runtime_stunned_move_instead_of_re_resolving_it(self) -> None:
         # An unknown move id used to be re-resolved through the monster's opening state so that
