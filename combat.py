@@ -93,6 +93,8 @@ NON_DECK_CARDS = {
 # Shame/Doubt (apply Frail/Weak instead of damage) use the same hook.
 HAND_END_UNBLOCKABLE = {BECKON: 6, BAD_LUCK: 13}
 STARTING_DECK = (STRIKE,) * 5 + (DEFEND,) * 4 + (BASH,)
+STRATAGEM = "Stratagem"
+
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, FASTEN: 1, DEMON_FORM: 3, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, INFERNO: 1, CRUELTY: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3, BARRICADE: 3, PYRE: 2, BLOOD_WALL: 2,
@@ -105,7 +107,7 @@ CARD_COST = {
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
     MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0,
     STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
-    APOTHEOSIS: 2, JUGGLING: 1, PANACHE: 0, ONE_TWO_PUNCH: 1,
+    APOTHEOSIS: 2, JUGGLING: 1, PANACHE: 0, ONE_TWO_PUNCH: 1, STRATAGEM: 1,
 }
 # WHIRLWIND has an X cost and is resolved separately.
 CARD_DAMAGE = {
@@ -197,14 +199,14 @@ STOKE_GENERATION = tuple(sorted(
 ))
 # CardType.Power cards represented by this compact Ironclad model.  The live bridge already
 # applies any other power's effect; these are the power cards the rollout currently knows by name.
-POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT, JUGGLING, PANACHE}
+POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT, JUGGLING, PANACHE, STRATAGEM}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
     TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, VICIOUS, FASTEN, DEMON_FORM, STAMPEDE, CASCADE, JUGGERNAUT, PURITY, APOTHEOSIS, JUGGLING, PANACHE, ONE_TWO_PUNCH,
-}
+STRATAGEM, }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
@@ -937,6 +939,8 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
     # owner (AfterPreventingDraw only flashes the relic). It still adds 2 to the hand draw.
     if not from_hand_draw and RELIC_FIDDLE in combat.player_relics:
         return combat
+    # A shuffle happens whenever the draw pile cannot cover the draw on its own.
+    reshuffled = len(combat.draw_pile) < count and bool(combat.discard_pile)
     drawn, draw, discard = _draw(combat.draw_pile, combat.discard_pile, count, rng)
     # ChainsOfBindingPower.AfterCardDrawn afflicts cards the player draws with Bound, up to its amount
     # per turn. The per-turn count is the number of afflictions that happened this turn, not the number
@@ -952,6 +956,14 @@ def _draw_into_combat(combat: Combat, count: int, data: dict, rng: random.Random
             marked.append(value)
         drawn = tuple(marked)
         combat = replace(combat, chains_afflicted_this_turn=already_afflicted)
+    stratagem = _power(combat.player_powers, "StratagemPower")
+    if reshuffled and stratagem and draw:
+        # The game lets the player choose; the model takes the highest-damage-then-block cards, which is
+        # what the agent is trying to build a deck for anyway.
+        best = sorted(draw, key=lambda value: (CARD_DAMAGE.get(card_name(value), 0) + CARD_BLOCK.get(card_name(value), 0) * 2) * (2 if isinstance(value, Card) and value.upgraded else 1), reverse=True)[:stratagem]
+        taken = {id(value) for value in best}
+        draw = tuple(value for value in draw if id(value) not in taken)
+        drawn = drawn + tuple(best)
     combat = replace(combat, hand=combat.hand + drawn, draw_pile=draw, discard_pile=discard)
     if not _power(combat.player_powers, "HellraiserPower"):
         return combat
@@ -3075,6 +3087,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return _after_exhaust(combat, non_attacks, rng, data)
     if card == STONE_ARMOR:
         return replace(combat, player_powers=_add_power(combat.player_powers, "PlatingPower", 6 if card_was_upgraded else 4))
+    # StratagemPower.AfterShuffle: each time the player's draw pile is shuffled the player picks the
+    # power's amount of cards from the draw pile into hand.  Nothing consumes the stack, so it fires on
+    # every later shuffle too.  Like the other untargeted Powers this returns without touching a pile.
+    if card == STRATAGEM:
+        return replace(combat, player_powers=_add_power(combat.player_powers, "StratagemPower", 1))
     if card == FEEL_NO_PAIN:
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
     if card == VICIOUS:

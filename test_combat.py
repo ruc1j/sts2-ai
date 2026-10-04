@@ -5,7 +5,7 @@ from dataclasses import replace
 
 from combat import (
     AGGRESSION, ANGER, ASHEN_STRIKE, BASH, BATTLE_TRANCE, BELIEVE_IN_YOU, BLOODLETTING, BLOOD_WALL, BLUDGEON, BAD_LUCK, BECKON, BODY_SLAM, BOLAS, BRAND, BREAK, BREAKTHROUGH, BULLY, BURNING_PACT, BYRD_SWOOP, CINDER, CRIMSON_MANTLE, DARK_EMBRACE, DAZED, DEFEND,
-    CRUELTY, DECAY, CONFLAGRATION, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, VICIOUS, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
+    CRUELTY, DECAY, CONFLAGRATION, DISMANTLE, DOMINATE, DRUM_OF_BATTLE, HAVOC, NORMALITY, INFERNAL_BLADE_ATTACKS, METAMORPHOSIS, STOKE, STOKE_GENERATION, card_name, VICIOUS, STRATAGEM, EQUILIBRIUM, FEED, FINESSE, FISTICUFFS, FLAME_BARRIER, FRANTIC_ESCAPE, GIANT_ROCK, HELLRAISER, HEMOKINESIS, IMPATIENCE, INFERNO,
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_MR_STRUGGLES, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_TOASTY_MITTENS, RELIC_SHURIKEN, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
@@ -271,6 +271,23 @@ class CombatTest(unittest.TestCase):
             (94, 3, (), False),
         )
         self.assertEqual((after_turn.hellraiser_autoplays_this_turn, after_turn.free_cards), (1, ()))
+
+    def test_stratagem_pulls_cards_from_the_draw_pile_on_every_shuffle(self) -> None:
+        # StratagemPower.AfterShuffle fires whenever the player's draw pile is shuffled and is never
+        # consumed: the player picks its amount of cards from the draw pile into hand.  The model takes
+        # the highest damage-then-block cards, since that is the deck the agent is building toward.
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ())
+        combat = Combat(80, (STRATAGEM, BATTLE_TRANCE), (DEFEND,), (BASH, STRIKE, DEFEND, STRIKE, BASH), (enemy,), energy=3)
+        played = step(combat, STRATAGEM, DUMMY_DATA, random.Random(0))
+        self.assertEqual(
+            (_power(played.player_powers, "StratagemPower"), played.hand, played.discard_pile),
+            (1, (BATTLE_TRANCE,), (BASH, STRIKE, DEFEND, STRIKE, BASH)),
+        )
+        # Battle Trance draws 3 and only 1 card is left in the draw pile, so the discard is shuffled in.
+        drawn = step(played, BATTLE_TRANCE, DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(drawn.hand), 4)
+        self.assertIn(BASH, drawn.hand)
+        self.assertEqual(_power(drawn.player_powers, "StratagemPower"), 1)
 
     def test_power_cards_leave_the_combat_when_played(self) -> None:
         # CardModel.GetResultPileTypeForCardPlay returns PileType.None for CardType.Power cards, so a played

@@ -54,6 +54,7 @@ CARD_NAMES = {
     "CARD.INFECTION": "Infection",
     "CARD.DECAY": "Decay",
     "CARD.PANACHE": "Panache",
+    "CARD.STRATAGEM": "Stratagem",
     "CARD.ONE_TWO_PUNCH": "One-Two Punch",
     # Without this the observation id passes raw and combat.py never sees the card, so its
     # OnTurnEndInHand damage can never fire (the same class of gap as POWER.FRAIL_POWER).
@@ -315,6 +316,7 @@ POWER_NAMES = {
     "POWER.BLOCK_NEXT_TURN_POWER": "BlockNextTurnPower",
     "POWER.COLOSSUS_POWER": "ColossusPower",
     "POWER.HELLRAISER_POWER": "HellraiserPower",
+    "POWER.STRATAGEM_POWER": "StratagemPower",
     "POWER.CRIMSON_MANTLE_POWER": "CrimsonMantlePower",
     "POWER.BURROWED_POWER": "BurrowedPower",
     "POWER.STEAM_ERUPTION_POWER": "SteamEruptionPower",
