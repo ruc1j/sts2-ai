@@ -6814,3 +6814,37 @@ Ashen Strike の damage は `6 + 3 x len(exhaust_before)` で play 時点では�
 exhaust panel は走行中（05:52 開始 ✓ arm = `073aabf` ✓ control = `9bfc18e` ✓ seeds AM8C6YXHSG /
 D6A1F8C3E5 / EAIF2UUVCK ✓）✓ 走行中は policy code を触らない約束なので **この変更は未適用** ✓
 panel が終わったら HEAD に適用して `data/boss_gap_list.py` で測り直す ✓
+
+## Round 37（診断 ✓ code 変更なし ✓ panel 走行中）: Slow の ramp は stack 枚数ではなく SlowAmount ✓ 残 group は agent の玩札数のずれに帰着
+
+`SlowPower` を読み直した ✓ **`DisplayAmount => SlowAmount * 10`** ✓ つまり trace に見える
+`POWER.SLOW_POWER` の枚数は **stack の Amount で ✓ SlowAmount ではない** ✓ ramp は `SlowAmount` だけを見る ✓
+`AfterCardPlayed` は card の種類を問わず `SlowAmount++` ✓ `AfterSideTurnStart`（**終了時ではない ✓ 開始時 ✓**）で
+参加者に Owner がいれば 0 に戻す ✓ なので model の `cards_played_this_turn - 1` は
+「model の state は解決中の card を already 数えている ✓ game は AfterCardPlayed なので自分の damage 計算ではまだ数えていない ✓」
+という前提で合っている ✓ ただし次のずれが残っている ✓（`MONSTER.BYGONE_EFFIGY CARD.STRIKE_IRONCLAD` ✓ 3 件 ✓）
+
+- seq 98（turn 1 の最初の决定 ✓ agent の cards_played 0 ✓ upgrade 1 ✓ var Damage 11 ✓ 敵 SLOW ✓ VULN 無し ✓）:
+  game 12 = 11 x 1.1 ✓ **game の SlowAmount は 1** ✓ model は 0 として 11 ✓
+- seq 99（同じ fight ✓ cards_played 1 ✓ var 8 ✓）: game 9 = 8 x 1.2 ✓ **SlowAmount 2** ✓ model は 1 として 8 ✓
+- seq 106（turn 3 ✓ cards_played 2 ✓ var 8 ✓ 敵 VULN 1 ✓ SLOW ✓）: game 13 = 8 x 1.5 x 1.1 ✓ **SlowAmount 1** ✓
+  model は 2 として 14 ✓
+
+同じ fight で game の SlowAmount が agent の数えた枚数より **多い局面と少ない局面が両方ある** ✓
+その run の relic は BRONZE_SCALES・BURNING_BLOOD・**CANDELABRA**・FISHING_ROD ✓
+CANDELABRA は turn 2 に +2 energy ✓（`AfterSideTurnStart` で TurnNumber == 2 ✓ model 済み ✓）で ✓
+card を玩む効果はない ✓ つまり turn 開始の autoplay では説明できない ✓ **原因は未特定** ✓
+（`RELIC.TOASTY_MITTENS` を疑ったがこの build に無い ✓）✓ 3 件 ✓ 低優先 ✓
+
+`MONSTER.VANTOM CARD.BATTLE_TRANCE game+1`（3 件）も同じ形 ✓ 敵 SLIPPERY 6→5 ✓ HP -1 ✓
+game は hit を 1 だけ通している ✓ model は Slippery を `ModifyHpLostAfterOsty` と同じ規則
+（未 block の残り 1 に cap ✓ 1 以上通った時だけ減算 ✓ `combat.py:1409-1429` ✓）で正しく model している ✓
+so gap は LetterOpener が発動したかの側 ✓ seq 169 の dump では agent の skill 数 1 ✓ play 済みの card は
+Defend・Hemokinesis・Strike ✓ game が Skill と数えるのは Defend と Battle Trance の 2 枚 ✓
+`CARD.HEMOKINESIS` は `CardType.Attack` ✓ なので Skill 増分は説明できない ✓ **ここも未特定** ✓ 3 件 ✓
+
+`CARD.LEAD_PAPERWEIGHT` は combat 効果を持たない Ancient relic ✓ 取得時に colorless 札 2 枚から 1 枚選んで
+deck に入れるだけ ✓（`AfterObtained` ✓）✓ combat 側の gap の説明にはならない ✓
+`RELIC.PLANISPHERE` は Unknown room 進入で heal 5 ✓ combat 外 ✓ model 未処理 ✓（map 側の話 ✓）✓
+
+exhaust panel は arm 2 seed まで完了 ✓ control は未完了 ✓ 待機は background job `bash-703` ✓
