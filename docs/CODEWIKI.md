@@ -5912,3 +5912,36 @@ S4QFLNDMB3 は run が一度も FlameBarrier を使っておらず trace も完�
 実走の悪化はその過信の帰結として整合的なので、次以降に調べる対象は
 `search_value` が反射ダメージをどこまで信用するか（例えば反射を hit 数で割り増ししたまま放置しない）
 という policy の論点として持ち越す。忠実度修正そのものは revert しない、という session の規則に従う。
+
+## Round 17: 潜っている敵はブロックを保持する（burrowed replay の block 一致 8/186 → 184/186）
+
+`Hook.ShouldClearBlock(combatState, creature, out preventer)` は creature に載った
+`ShouldClearBlock` override をすべて照会し、1つでも false を返せば block を消さない。
+その override を持つのは **BurrowedPower・BlurPower・BarricadePower・relic SturdyClamp** の4つだけだった
+（`grep -rn ShouldClearBlock` の結果）。player 側（Barricade と SturdyClamp）は model も扱っていたが
+（`combat.py` の `barricaded` / `retained_block`）、**敵側の block を消す箇所 `_enemy_turn` が
+`replace(enemy, block=0)` を無条件で呼んでいた**ので、潜っている TUNNELER の残り block を毎ターン消していた。
+
+`BurrowedPower` の実装は `ShouldClearBlock(creature)` が `Owner != creature` のとき true、owner なら false。
+加えて `AfterBlockBroken` で Tunneler を STUNNED に送って `PowerCmd.Remove<BurrowedPower>`、
+`AfterRemoved` で `CreatureCmd.LoseBlock(999999999)` を呼ぶ（block が全部消えるのはこちら経由）✓ model は
+この break 側を `_damage_enemy` で持っていたので、**保持側だけが無かった**。
+
+実装（commit `6bf743a`、764 tests green）：`_enemy_turn` の block クリアを BurrowedPower / BlurPower を
+持つ敵に対してスキップする。テスト `test_burrowed_enemy_keeps_its_block_across_turns` は block 20 の
+BurrowedPower 持ちが END_TURN 後も 20 を保ち、power 無しは 0 になることを検証する。
+
+検証（BURROWED_POWER を持つ敵の end_turn replay 186 件、同一戦闘・同一 combat_id 限定）：
+
+| | 修正前（`.wt-ctrl-burrow` = `01e3ce2`） | 修正後（HEAD） |
+|---|---:|---:|
+| 敵 block 一致 | **8 / 186 = 4.3%** | **184 / 186 = 98.9%** |
+| 敵 HP 一致 | 163 / 186 | 181 / 186 |
+
+决定母数は **4,476 本 replay して 782 决定が変化・51 seed**（`data/attribution_rampart.py` の
+selector `MONSTER.TUNNELER`、KeyError 126 件は fallback）。潜行中の敵がブロックを保つことで、
+その戦闘内のあらゆる攻撃决定の評価が変わる。胜数への影響は `data/burrow_ab.sh` で測る。
+ただし **この機構は MONSTER.TUNNELER と戦った run でしか発火せず、TUNNELER 観測の多い seed
+（640・363・355 件）はすべて過去の panel で使った seed** だった。fresh seed だと Tunneler に
+当たらない可能性が高く測定にならないので、この panel は「機構を狙った再測」として明示し、
+seed の新しさは牺牲する（panel の判定基準は MEASURABLE = 両 arm が機構を見る ことを使う）。
