@@ -55,6 +55,7 @@ CARD_NAMES = {
     "CARD.DECAY": "Decay",
     "CARD.PANACHE": "Panache",
     "CARD.STRATAGEM": "Stratagem",
+    "CARD.SECRET_WEAPON": "Secret Weapon",
     "CARD.ONE_TWO_PUNCH": "One-Two Punch",
     # Without this the observation id passes raw and combat.py never sees the card, so its
     # OnTurnEndInHand damage can never fire (the same class of gap as POWER.FRAIL_POWER).

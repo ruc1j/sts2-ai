@@ -15,6 +15,7 @@ BYRD_SWOOP, PILLAGE, EQUILIBRIUM = "Byrd Swoop", "Pillage", "Equilibrium"
 BREAK, HOWL_FROM_BEYOND, IMPERVIOUS, RAMPAGE, TAUNT, THUNDERCLAP = "Break", "Howl From Beyond", "Impervious", "Rampage", "Taunt", "Thunderclap"
 BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, LIFT, THRUMMING_HATCHET, ULTIMATE_DEFEND, ULTIMATE_STRIKE = "Bolas", "Dramatic Entrance", "Fisticuffs", "Lift", "Thrumming Hatchet", "Ultimate Defend", "Ultimate Strike"
 TOXIC, BURN, DAZED, FLAME_BARRIER, INFECTION = "Toxic", "Burn", "Dazed", "Flame Barrier", "Infection"
+SECRET_WEAPON = "Secret Weapon"
 MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, POMMEL_STRIKE = "Molten Fist", "Not Yet", "Offering", "Pacts End", "Pommel Strike"
 DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE = "Drum of Battle", "Master of Strategy", "Production", "Impatience"
 RUPTURE, INFERNO, CRUELTY = "Rupture", "Inferno", "Cruelty"
@@ -97,6 +98,7 @@ STRATAGEM = "Stratagem"
 
 CARD_COST = {
     STRIKE: 1, DEFEND: 1, FASTEN: 1, DEMON_FORM: 3, BASH: 2, ANGER: 0, BLUDGEON: 3, STOMP: 3, SHRUG: 1, BATTLE_TRANCE: 0, BULLY: 0, DISMANTLE: 1, SLIMED: 1, FRANTIC_ESCAPE: 1, IRON_WAVE: 1, TWIN_STRIKE: 1,
+    SECRET_WEAPON: 0,
     CINDER: 2, ASHEN_STRIKE: 1, HEMOKINESIS: 1, PERFECTED_STRIKE: 2, INFLAME: 1, INFERNO: 1, CRUELTY: 1, PRIMAL_FORCE: 0, UNRELENTING: 2, GIANT_ROCK: 1, RELAX: 3, TREMBLE: 1, MANGLE: 3, BARRICADE: 3, PYRE: 2, BLOOD_WALL: 2,
     BREAKTHROUGH: 1, BLOODLETTING: 0, FEED: 1, DOMINATE: 1, BYRD_SWOOP: 0, PILLAGE: 1, EQUILIBRIUM: 2, PECK: 1, EXTERMINATE: 1, CONFLAGRATION: 1, SETUP_STRIKE: 1,
     BREAK: 1, HOWL_FROM_BEYOND: 3, IMPERVIOUS: 2, RAMPAGE: 1, TAUNT: 1, THUNDERCLAP: 1,
@@ -202,6 +204,7 @@ STOKE_GENERATION = tuple(sorted(
 POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE, PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT, JUGGLING, PANACHE, STRATAGEM}
 # Self-targeting skills and powers that never need a target.
 UNTARGETED = {
+    SECRET_WEAPON,
     DEFEND, SHRUG, BATTLE_TRANCE, SLIMED, FRANTIC_ESCAPE, RELAX, INFLAME, INFERNO, CRUELTY, PRIMAL_FORCE, BLOODLETTING, BLOOD_WALL, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, BARRICADE, PYRE, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, RUPTURE, STONE_ARMOR, FEEL_NO_PAIN, SECOND_WIND, ENLIGHTENMENT,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, VOLLEY, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, SWORD_BOOMERANG, HELLRAISER,
@@ -210,6 +213,7 @@ STRATAGEM, }
 # CardType.Skill cards (verified against each card's OnPlay base(cost, CardType.X, ...) constructor
 # call), used by Infested Prism's VitalSparkPower/TaintedPower Tainted-card mechanic below.
 SKILLS = {
+    SECRET_WEAPON,
     DEFEND, SHRUG, BATTLE_TRANCE, PRIMAL_FORCE, RELAX, TREMBLE, BLOODLETTING, BLOOD_WALL, DOMINATE, EQUILIBRIUM, IMPERVIOUS, LIFT, ULTIMATE_DEFEND, TAUNT, ARMAMENTS,
     FLAME_BARRIER, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, FINESSE, SECOND_WIND, ENLIGHTENMENT, FORGOTTEN_RITUAL,
     TRUE_GRIT, BURNING_PACT, EVIL_EYE, BRAND, INFERNAL_BLADE, RAGE, COLOSSUS, EXPECT_A_FIGHT, TORIC_TOUGHNESS, HAVOC, STOKE, METAMORPHOSIS, CASCADE, PURITY, APOTHEOSIS, ONE_TWO_PUNCH,
@@ -2913,7 +2917,22 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hand = [Card(GIANT_ROCK, card_was_upgraded) if card_name(value) in ATTACKS else value for value in hand]
         else:
             hand = [GIANT_ROCK if card_name(value) in ATTACKS else value for value in hand]
-    exhaust = card in EXHAUSTS
+    # SecretWeapon.OnPlay picks one CardType.Attack out of the draw pile and adds it to hand.  The
+    # player makes that choice; the model prices it as the strongest Attack in the draw pile, which is
+    # what our own heuristic would want there.  The chosen index is remembered so the post-play rewrite
+    # removes exactly that copy from the draw pile.
+    secret_weapon_draw_index: int | None = None
+    if card == SECRET_WEAPON:
+        candidates = [
+            (CARD_DAMAGE.get(card_name(value), 0) + (2 if card_is_upgraded(combat, value) else 0), index)
+            for index, value in enumerate(combat.draw_pile)
+            if card_name(value) in ATTACKS
+        ]
+        if candidates:
+            secret_weapon_draw_index = max(candidates)[1]
+            hand.append(combat.draw_pile[secret_weapon_draw_index])
+    # SecretWeapon carries CardKeyword.Exhaust on the base card, and OnUpgrade removes it.
+    exhaust = card in EXHAUSTS or (card == SECRET_WEAPON and not card_was_upgraded)
     # CardModel.GetResultPileTypeForCardPlay sends the played card to PileType.None when it is a
     # CardType.Power card (and the Exhaust keyword wins first), so a Power leaves the combat entirely.
     # POWERS is already exactly the CardType.Power set the model can play - the decompile has 111 of them.
@@ -2932,6 +2951,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         exhaust_pile=exhaust_pile,
         energy=energy, player_hp=player_hp, player_powers=player_powers, enlightened_this_turn=enlightened,
     )
+    if secret_weapon_draw_index is not None:
+        combat = replace(
+            combat,
+            draw_pile=combat.draw_pile[:secret_weapon_draw_index] + combat.draw_pile[secret_weapon_draw_index + 1:],
+        )
     if card == ARMAMENTS:
         upgradable = tuple(
             index for index, value in enumerate(hand)
@@ -3153,7 +3177,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
         # pile unordered, so "top" is the same random pick _draw makes.
         return _autoplay_from_draw_pile(combat, whirlwind_x + (1 if card_was_upgraded else 0), data, rng)
-    if card in {INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT, JUGGLING, PANACHE, ONE_TWO_PUNCH}:
+    if card in {SECRET_WEAPON, INFLAME, PRIMAL_FORCE, INFERNO, CRUELTY, BLOODLETTING, NOT_YET, OFFERING, DRUM_OF_BATTLE, MASTER_OF_STRATEGY, PRODUCTION, IMPATIENCE, BELIEVE_IN_YOU, RUPTURE, ENLIGHTENMENT, INFERNAL_BLADE, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, FORGOTTEN_RITUAL, HELLRAISER, FASTEN, DEMON_FORM, STAMPEDE, JUGGERNAUT, JUGGLING, PANACHE, ONE_TWO_PUNCH}:
         return combat
     enemies = list(combat.enemies)
     if card == TAUNT:
