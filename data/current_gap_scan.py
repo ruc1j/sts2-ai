@@ -44,8 +44,13 @@ def combat_records(path):
                 record = json.loads(line)
             except ValueError:
                 continue
-            if record.get("phase") == "combat":
-                yield record
+            if record.get("phase") != "combat":
+                continue
+            # The four oldest traces were recorded before the bridge emitted EnemyState.Slot; the
+            # current bridge always does, so fill it in rather than reporting a gap that no live run has.
+            for enemy in record.get("enemies") or ():
+                enemy.setdefault("slot", "")
+            yield record
 
 
 def main() -> int:
@@ -74,8 +79,9 @@ def main() -> int:
         try:
             choice = official_agent.rollout_choice(record, record.get("legal_actions") or [], data, simulations)
         except Exception as error:  # noqa: BLE001 - the point of the scan is to see every failure class
-            exceptions[type(error).__name__] += 1
-            by_monster[f"{monsters} :: {type(error).__name__}"] += 1
+            label = f"{type(error).__name__}: {error}" if isinstance(error, KeyError) else type(error).__name__
+            exceptions[label] += 1
+            by_monster[f"{monsters} :: {label}"] += 1
             if shown < 3:
                 shown += 1
                 print(f"FAIL {name} seq {record.get('seq')} turn {record.get('turn')} {monsters}")
