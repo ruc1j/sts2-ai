@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_MR_STRUGGLES, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_TOASTY_MITTENS, RELIC_SHURIKEN, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION, POTION_VULNERABLE_POTION, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION, POTION_VULNERABLE_POTION, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_FAIRY_IN_A_BOTTLE, POTION_FOUL_POTION, POTION_SNECKO_OIL, POTION_STABLE_SERUM, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _action_card, _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK, ULTIMATE_STRIKE, RAMPAGE,
     MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
@@ -866,6 +866,42 @@ class CombatTest(unittest.TestCase):
                        player_powers=(("WeakPower", 1),), cards_played_this_turn=2)
         after = step(state, "card:0@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(60 - after.enemies[0].hp, 12)
+
+    def test_fairy_in_a_bottle_prevents_death_and_heals_thirty_percent(self) -> None:
+        # FairyInABottle is PotionUsage.Automatic: CreatureCmd.Kill zeroes the HP, Hook.ShouldDie lets the
+        # potion prevent the death, and AfterPreventingDeath heals Math.Max(MaxHp * 0.3m, 1m).  The agent
+        # is never offered it as an action, so this is the only place the model can know about it.
+        attacker = Enemy("MONSTER.DUMMY", 60, "HIT_MOVE", ())
+        state = Combat(5, (), (), (), (attacker,), player_max_hp=80, energy=0,
+                       player_potions=(POTION_FAIRY_IN_A_BOTTLE,))
+        saved = step(state, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(saved.player_hp, 24)
+        self.assertEqual(saved.player_potions, ())
+        doomed = step(replace(state, player_potions=()), END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertLessEqual(doomed.player_hp, 0)
+
+    def test_foul_potion_hits_every_creature_in_the_combat_including_the_player(self) -> None:
+        # FoulPotion damages CombatState.Creatures (pets excluded), so the owner takes its own 12.
+        state = Combat(50, (), (), (), (Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ()),
+                                        Enemy("MONSTER.DUMMY", 20, "IDLE_MOVE", ())),
+                       energy=0, player_potions=(POTION_FOUL_POTION,))
+        after = step(state, f"potion:{POTION_FOUL_POTION}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 38)
+        self.assertEqual([enemy.hp for enemy in after.enemies], [8, 8])
+
+    def test_stable_serum_retains_the_hand_for_two_turns(self) -> None:
+        # StableSerum.OnUse: Apply<RetainHandPower>(RepeatVar 2).
+        state = Combat(50, (), (), (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),),
+                       energy=0, player_potions=(POTION_STABLE_SERUM,))
+        after = step(state, f"potion:{POTION_STABLE_SERUM}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(_power(after.player_powers, "RetainHandPower"), 2)
+
+    def test_snecko_oil_draws_seven_cards(self) -> None:
+        # SneckoOil.OnUse: CardPileCmd.Draw(CardsVar 7).  Its energy-cost randomization is not modeled.
+        state = Combat(50, (DEFEND,), (STRIKE,) * 8, (), (Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ()),),
+                       energy=0, player_potions=(POTION_SNECKO_OIL,))
+        after = step(state, f"potion:{POTION_SNECKO_OIL}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(len(after.hand), 8)
 
     def test_feed_raises_max_hp_and_heals_when_it_kills_the_target(self) -> None:
         # Feed.cs is a Fatal Attack: on a kill it calls CreatureCmd.GainMaxHp(Owner, MaxHp), MaxHpVar(3)

@@ -701,6 +701,11 @@ SHOP_RELIC_SCORES = {
 # high-impact options and leave unknown/self-damaging potions for the normal reward path.
 SHOP_POTION_SCORES = {
     "POTION.SHACKLING_POTION": 9, "POTION.GHOST_IN_A_JAR": 9,
+    # Fairy in a Bottle is PotionUsage.Automatic: the game consumes it instead of letting the player die
+    # and heals 30% of max HP (FairyInABottle.AfterPreventingDeath).  It is never offered as an action, so
+    # its value shows up only here - picking it up is a second Lizard Tail, which is the difference
+    # between a boss fight continuing and ending.
+    "POTION.FAIRY_IN_A_BOTTLE": 9,
     "POTION.BLOCK_POTION": 8, "POTION.SHIP_IN_A_BOTTLE": 8,
     "POTION.HEART_OF_IRON": 8, "POTION.FYSH_OIL": 8,
     "POTION.DEXTERITY_POTION": 8, "POTION.SPEED_POTION": 8,
@@ -1968,6 +1973,8 @@ def choose_potion(observation: dict, actions: list[dict]) -> dict | None:
             # SNECKO_OIL randomizes the energy cost (0-3) of every card drawn into hand; using
             # it as a blind emergency fallback can spike the cost of the exact card needed to
             # survive the turn, making a dangerous situation worse instead of better.
+            # FAIRY_IN_A_BOTTLE is the Automatic death-prevention potion above: combat.py applies its
+            # heal when a hit would kill, so it must not be spent as a manual action here either.
             # FOUL_POTION deals 12 damage to every creature INCLUDING the player - against a
             # high-HP boss this is a bad trade (a live run burned two full-HP casts, -24 HP, for
             # a negligible 24/408 dent), and "danger" here triggers on 2+ enemies alone, so it

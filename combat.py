@@ -65,6 +65,8 @@ POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION = "POTION.SPEED_POT
 POTION_WEAK_POTION, POTION_VULNERABLE_POTION = "POTION.WEAK_POTION", "POTION.VULNERABLE_POTION"
 POTION_REGEN_POTION, POTION_FORTIFIER = "POTION.REGEN_POTION", "POTION.FORTIFIER"
 POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL = "POTION.POTION_OF_BINDING", "POTION.LUCKY_TONIC", "POTION.CURE_ALL"
+POTION_FAIRY_IN_A_BOTTLE, POTION_FOUL_POTION = "POTION.FAIRY_IN_A_BOTTLE", "POTION.FOUL_POTION"
+POTION_SNECKO_OIL, POTION_STABLE_SERUM = "POTION.SNECKO_OIL", "POTION.STABLE_SERUM"
 POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE = "POTION.SHACKLING_POTION", "POTION.CLARITY", "POTION.RADIANT_TINCTURE"
 ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
@@ -512,6 +514,24 @@ def _sync_belt_buckle(combat: Combat) -> Combat:
     )
 
 
+def _survive_with_fairy_in_a_bottle(combat: Combat, hp: int, max_hp: int) -> tuple[int, tuple[str, ...]]:
+    """Let FairyInABottle prevent the player's death, and return the HP and remaining potions.
+
+    It is a PotionUsage.Automatic potion, so it is never offered as an action: CreatureCmd.Kill zeroes
+    the HP, Hook.ShouldDie asks the models whether the creature really dies, this potion answers no, and
+    AfterPreventingDeath heals Math.Max(MaxHp * 0.3m, 1m).  The player comes back at 30% of max HP with
+    the potion gone.  Both damage paths need it - _apply_player_damage for card and effect damage, and
+    _enemy_turn for the enemy's own attacks - because _enemy_turn tracks the player's HP in a local
+    instead of routing through _apply_player_damage.  Without it the rollout prices a lethal turn as a
+    loss that the game would have survived, and the agent has no reason to pick the potion up at all.
+    """
+    if hp > 0 or POTION_FAIRY_IN_A_BOTTLE not in combat.player_potions:
+        return hp, combat.player_potions
+    potions = list(combat.player_potions)
+    potions.remove(POTION_FAIRY_IN_A_BOTTLE)
+    return max(max_hp * 30 // 100, 1), tuple(potions)
+
+
 def _apply_player_damage(combat: Combat, amount: int, *, trigger_inferno: bool = True) -> Combat:
     """Apply unblocked HP loss and the relics that modify it."""
     if amount <= 0:
@@ -529,11 +549,12 @@ def _apply_player_damage(combat: Combat, amount: int, *, trigger_inferno: bool =
     if hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not used_tail:
         hp = max(1, combat.player_max_hp // 2)
         used_tail = True
+    hp, potions = _survive_with_fairy_in_a_bottle(combat, hp, combat.player_max_hp)
     powers = combat.player_powers
     if actual > 0 and RELIC_SELF_FORMING_CLAY in combat.player_relics:
         powers = _add_power(powers, "SelfFormingClayPower", 3)
     updated = _sync_red_skull(replace(
-        combat, player_hp=hp, player_powers=powers,
+        combat, player_hp=hp, player_powers=powers, player_potions=potions,
         damage_received_this_turn=combat.damage_received_this_turn + actual,
         lost_hp_this_turn=combat.lost_hp_this_turn or actual > 0,
         lizard_tail_used=used_tail,
@@ -1311,7 +1332,7 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         else:
             actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     for potion in dict.fromkeys(combat.player_potions):
-        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE}:
+        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE, POTION_SNECKO_OIL, POTION_STABLE_SERUM, POTION_FOUL_POTION}:
             actions.append(f"potion:{potion}")
         elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
             actions.extend(
@@ -1944,8 +1965,10 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     surviving_max_hp = max(1, combat.player_max_hp - max_hp_loss) if max_hp_loss else combat.player_max_hp
     if max_hp_loss:
         player_hp = min(player_hp, surviving_max_hp)
+    player_hp, player_potions = _survive_with_fairy_in_a_bottle(combat, player_hp, surviving_max_hp)
     combat_after_damage = replace(
-        combat, player_hp=player_hp, player_powers=player_powers, player_max_hp=surviving_max_hp,
+        combat, player_hp=player_hp, player_powers=player_powers, player_potions=player_potions,
+        player_max_hp=surviving_max_hp,
         damage_received_this_turn=damage_received, lizard_tail_used=lizard_tail_used,
         # TearAsunder counts DamageReceivedEntry rows with UnblockedDamage > 0 for the whole
         # combat, so each individual repeat hit that got through counts once.
@@ -2092,6 +2115,20 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             return replace(combat, enemies=tuple(enemies))
         if potion == POTION_LUCKY_TONIC:
             return replace(combat, player_powers=_add_power(combat.player_powers, "BufferPower", 1))
+        if potion == POTION_SNECKO_OIL:
+            # SneckoOil.OnUse: CardPileCmd.Draw(CardsVar 7).  The game also randomizes the energy cost
+            # of the cards it draws, which the model does not represent, so this is the draw half.
+            return _draw_into_combat(combat, 7, data, rng)
+        if potion == POTION_STABLE_SERUM:
+            # StableSerum.OnUse: Apply<RetainHandPower>(RepeatVar 2) - the hand carries into next turn.
+            return replace(combat, player_powers=_add_power(combat.player_powers, "RetainHandPower", 2))
+        if potion == POTION_FOUL_POTION:
+            # FoulPotion is TargetType.AllEnemies in combat and its DamageVar(12, Unpowered) is dealt to
+            # every non-pet creature in the combat - Owner included (the loop walks
+            # CombatState.Creatures), so the player takes it too.
+            combat = _apply_player_damage(combat, 12, trigger_inferno=True)
+            enemies = [_damage_enemy(enemy, 12) if enemy.alive else enemy for enemy in combat.enemies]
+            return replace(combat, enemies=tuple(enemies))
         if potion == POTION_CURE_ALL:
             return _draw_into_combat(replace(combat, energy=combat.energy + 1), 2, data, rng)
         if potion == POTION_CLARITY:
