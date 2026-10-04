@@ -6466,3 +6466,57 @@ rollout で再現できなかった ✓ decompile で数値を確認できる順
 いない ✓）ので、この変更は今の corpus の决定を 1 つも変えない ✓ **决定変化 0 件の変更には panel を
 行わない** ✓ の判断で panel は省略 ✓ 忠実度の実装として HEAD に残す ✓ 価値は未来的で、Fairy を得る run
 では rollout が「そのターンで死ぬ」を正しく織り込み、shop で優先される ✓
+
+## Round 27: audit の 2 つの欠点で gap が水増ししていた（445 → 105 件）と TenderPower の二重差し引き
+
+**`data/model_match_audit.py` の `model_state` が `rollout_choice` を直接呼んでいた** ✓ `choose` を通らない
+ので **agent が推定する玩札カウンタが audit の全 record で 0** だった ✓ LetterOpener の 3 枚目 Skill、
+Kusarigama の 3 枚目 Attack、Shuriken、Tuning Fork、Pen Nib、Nunchaku、SlowPower の ramp は全部その
+カウンタを読む ✓ なので audit は counter 駆動 rules の gap を量産していた ✓ `choose` 経由に変えた
+（policy branch が rollout より前に return した場合だけ rollout_choice に落ちる ✓ commit `5ae7b13` ✓）✓
+
+**audit は死んだ敵を数えていなかった** ✓ 死んだ monster は combat から完全に抜け ✓ 次の record の敵が
+少なくなる ✓ index と combat_id の両方で配对していた code はそれを 0 ダメージとして扱い ✓「model が
+5・14・22 多く削った」という group を丸ごと作っていた ✓ 次 record に居ない combat_id は kill とみなす
+ように直した ✓ 同じ commit ✓
+
+測定の動き（build-valid trace ✓ 6,315 action を replay ✓）:
+
+| 状態 | 不一致 | 一致率 |
+|---|---:|---:|
+| 修正前 | 445 | 92.96% |
+| 配对だけ修正 | 143 | 97.73% |
+| +カウンタ seeded | 139 | 97.95% |
+| +TenderPower の修正 | **105** | **98.34%** |
+
+`LEAF_SLIME_M` の Strike -5 / Pommel -7 / Perfected -14 / Hemokinesis -10、`NIBBIT` Perfected -12、
+`BOWLBUG_EGG` Perfected -22、`SLITHERING_STRANGLER` Strike -6 は**すべて audit の錯覚**だった ✓
+`BYGONE_EFFIGY` family（Strike +1 が 14 件など約 26 件）もカウンタを入れると消えた ✓ **前 round で
+「Slow ramp は -1 が正しいのか +1 なのか」と迷ったのは、audit 側にカウンタが無かったことが原因で、
+`cards_played_this_turn - 1` のまま正しい** ✓
+
+**`DexterityPower` は Block の power だった** ✓ hook は `ModifyBlockAdditive` だけ ✓ hover tip も Block ✓
+攻撃ダメージには無関係 ✓ model は攻撃に Dexterity を足していなかったのでここは正しい ✓
+
+`MONSTER.HUNTER_KILLER` の group を dump して原因を特定した（commit `3522e06` ✓ 774 tests green ✓）✓
+game の `TenderPower` は `AfterCardPlayed` で **Strength -1 と Dexterity -1 を実の stack として載せ** ✓
+`AfterSideTurnEnd` で cards played ぶんの Strength・Dexterity を返す ✓ その stack は observation に現れる
+ので model はそこから Strength を読む ✓ なのに model には「そのターンに既に玩んだ枚数だけ攻撃を引く」
+`_tender_penalty` があり ✓ **同じ差し引きを二重にやっていた** ✓ 実測: `L3PN5HBQ8T` seq 283（Tender 有効 ✓
+cards_played 3 ✓ Strength -2 ✓ Strike base 6）で game は 4 削った ✓ model は 1 ✓ term を落すと 4 ✓
+`_tender_penalty` と 3 か所の term を削除し ✓ 既存の `test_tender_weakens_later_cards_then_hands_the_stats_back`
+は model の思い込みを固定していたので `test_tender_does_not_take_damage_off_attacks` に書き換えた ✓
+
+**决定母数**: control を 1 commit 前（`.wt-ctrl-tender` = `5ae7b13` ✓ 同じ mod binary ✓）と比べ ✓
+TenderPower が載っている **1,652 観測で决定が 361 件変わり ✓ 35 seed** ✓ これまでで最大の変化 ✓
+EAIF2UUVCK 56 件・L3PN5HBQ8T 55 件・K7M2QX9BTR 33 件 ✓ なので **panel を起動した**（arm = `3522e06` ✓
+control = `5ae7b13` ✓ seeds は Tender の决定変化上位 3 つ ✓  mechanism-targeted な再使用 ✓）✓ 結果待ち ✓
+panel 中 policy code（`official_agent.py`・`combat.py`）は触らない ✓
+
+残っている group（105 件）と次の狙い: `SLIMED_BERSERKER CARD.SLIMED game+1` 5 件、
+`SHRINKER_BEETLE CARD.BASH game+1` 4 件、`QUEEN CARD.ASHEN_STRIKE game-1` 3 件と
+`QUEEN CARD.IMPERVIOUS game+1` 3 件、`TUNNELER CARD.DEFEND_IRONCLAD game+5` 3 件と
+`TUNNELER CARD.BATTLE_TRANCE game-5` 3 件（LetterOpener の発動枚数が前後する ✓ agent のカウンタ推定が
+±1 ずれる場面 ✓）、`BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game+1` 3 件 ✓ model の rollout 内では
+TenderPower の `AfterCardPlayed`（-1/-1）と `AfterSideTurnEnd`（cards ぶん還元）が適用されない ✓
+観測由来の stack には追いつくが rollout の次のターンでは知らない ✓ そこが次の work ✓
