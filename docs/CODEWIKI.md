@@ -5202,3 +5202,8 @@ Feed の -5〜-8 群のような「model が弱い」嘘の不一致を生んで
 以後の offline replay は付与を知ることができる。game は v0.107.1 系（`run_official_autoslay.ps1` が
 インストールする mods/Sts2Ai を毎回差し替え）、seed `H2LV6ZJ4XW` の win 数は 22 勝 1 敗で
 `plating_arm_b1` の 22 勝 1 敗と一致（trace の記録形式が変わっても run の挙動は変わっていない）。
+
+（運用メモ：`run_official_autoslay.ps1` は各 run で **その repo の `official_mod/bin/Release/net9.0/Sts2Ai.dll`**
+を game の mods にコピーする。だから bridge のソースを変えて再ビルドしたら、panel の control 用 worktree
+側の dll も同じものに差し替えないと「python だけ違う」比較が「dll も違う」比較になる。
+2026-10-04 に main で再ビルドした dll（231,424 バイト）を `.wt-ctrl-*` 全 7 本へコピーした。）
