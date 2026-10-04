@@ -6392,3 +6392,39 @@ observation には SlowAmount が出ない（`DisplayAmount = SlowAmount * 10` �
 stack 値で ramp が見えない ✓）。model は per-player-turn の `cards_played_this_turn` を使うので、**Slow を
 持つ敵がターンを execute しなかった場面（stun 中・sleep 中・行動しない state）で game の ramp だけが
 積み上がる** ✓ これが +1 の説明になるか、次の round でその 14 件を turn 単位で並べて確認する ✓
+
+## Round 25: 玩札カウントから抜けていた autoplay を戻した（决定の変化 0 件なので panel は行わない）
+
+前 round までの玩札数（commit `f2a107c`）は「そのターンに手札で観測された札が、自分で選んでもいないのに
+消えた」を全部効果の仕業として落としていた ✓ が game は **手札にある札を autoplay で玩む** ✓ Centennial
+Puzzle と Pyre は持ってる札を、Mayhem と Hellraiser は引いたばかりの札を、Normality は自分自身を玩む ✓
+それらは action として出てこないから pile の移出でしか見えない ✓ 全部落とすと SlowPower の ramp が
+1 枚足りなくなり、Slow を持つ敵との play で model だけの差が出ていた ✓
+
+直した rule（commit `f1ff3d3` ✓ 770 tests green ✓）: 未解释の移出は **基本的に play として数える** ✓
+例外は **自分で玩んだ札が他の札を移出する card だった場合だけ** ✓ その 4 枚は combat.py の実装で特定した:
+Burning Pact と Cinder は hand から1枚 exhaust ✓ Fiend Fire は hand を全部 exhaust ✓ Thrash は Attack を
+1枚 exhaust ✓ （Dark Embrace と Aggression はダメージを受けた時に捨てる効果なので play 時点の移出では
+無い ✓ 含めない ✓）
+
+実装中に見つけた実際のバグを1つテストが捕まえた ✓ `unexplained` は毎回 **そのターンの開始スナップショット
+に対して**計算し直すので、効果として落とした移出を記録しておかないと **同じ turn 内の次の観測で play に
+復活する** ✓ `_TURN_EFFECT_DEPARTURES` に固定して除外を持続させた ✓ テストは4パターンで固定: 自分の play
+を数える ✓ Burning Pact の exhaust は数えない ✓ 手札にあった autoplay は数える ✓ 手札に一度も出ない札は
+数える ✓ 次のターンは 0 ✓
+
+决定母数: 1 commit 前の tree（`.wt-ctrl-cards` = `965bdb3` ✓ 差分はこの commit のみ ✓ 同じ mod  binary）と
+比較して **Slow を持つ敵の 1,704 観測で决定の変化 0 件・seed 0 件** ✓ audit 側の一致件数も 5,872 のまま ✓
+なので **この変更の panel は行わない** ✓ ただしこれは忠実度側の修正で、autoplay を数え忘れる状態に戻すと
+Slow 以外の counter 駆動 rules（LetterOpener・Kusarigama・Shuriken）でも同じ取りこぼしが起きる ✓
+`data/boss_gap_list.py` 側の欠点も直した: audit が **記録された play を credit していなかった** ✓（search を
+END_TURN で差し替えるだけだった ✓）credit を入れると数値は変わらなかった ✓
+
+**Slow ramp の基準は確定できなかった** ✓ `-1` を外して「今玩んでる札も含める」実験をした:
+`BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game+1` が 14 → 10 に減り、逆に `game-1` が 4 出た ✓ 一致は
+5,872 → 5,873 の1件だけ ✓ 例: `burrow_arm_b1_H2LV6ZJ4XW` seq 116（turn 2 の最初の play ✓ energy 2/3 ✓
+hand 4 ✓ discard 5 / exhaust 1 ✓ agent の counters 0 ✓）で game は 13 に対して 14 を出している ✓ これは
+SlowAmount = 1 の 1.1 倍 ✓ `SlowPower.AfterCardPlayed` は +1 するだけで今の所 per-turn reset は
+`AfterSideTurnStart` で確認済み ✓ なので「その card 自身の damage が AfterCardPlayed より後に解決される」
+疑いが残るが ✓ 一様に +1 すると4件が逆向きに壊れる ✓ 原因は per-case の counter 再現性にある可能性が
+高い（観測される pile に載らない play がある ✓）→ HEAD は `-1` を維持し ✓ これは open のまま ✓
