@@ -687,6 +687,31 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_VAMBRACE,))
         self.assertEqual(step(combat, DEFEND, DUMMY_DATA, random.Random(0)).player_block, 10)
 
+    def test_a_duplicate_play_sees_the_vulnerable_its_earlier_resolution_applied(self) -> None:
+        # Bash deals damage and applies VulnerablePower inside the same OnPlay resolution, so when the play
+        # resolves twice (Throwing Axe) the second hit is amplified.  The recorded game shows exactly this:
+        # data/counts_arm_D6A1F8C3E5_agent.jsonl seq 298 took 25 from an upgraded Bash (10 then 10 x 3/2).
+        combat = Combat(
+            80, (Card(BASH, True),), (), (), (Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ()),),
+            player_relics=(RELIC_THROWING_AXE,),
+        )
+        after = step(combat, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(60 - after.enemies[0].hp, 25)
+        self.assertEqual(_power(after.enemies[0].powers, "VulnerablePower"), 6)  # 3 per resolution.
+
+        # Uppercut applies WeakPower and VulnerablePower after its DamageCmd (UpperCut.cs), so the same
+        # ordering gives 13 then 13 x 3/2 = 19 for 32 total - seq 314 of the same trace.
+        combat = Combat(
+            80, (UPPERCUT,), (), (), (Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ()),),
+            player_relics=(RELIC_THROWING_AXE,),
+        )
+        after = step(combat, f"{UPPERCUT}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(60 - after.enemies[0].hp, 32)
+        self.assertEqual(
+            sorted((name, amount) for name, amount in after.enemies[0].powers),
+            [("VulnerablePower", 2), ("WeakPower", 2)],
+        )
+
     def test_secret_weapon_pulls_an_attack_from_the_draw_pile_and_exhausts(self) -> None:
         # SecretWeapon.OnPlay selects one CardType.Attack from the draw pile and adds it to hand, and the
         # base card carries CardKeyword.Exhaust while OnUpgrade removes the keyword.  The model takes the

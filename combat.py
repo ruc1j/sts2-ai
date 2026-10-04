@@ -147,6 +147,19 @@ ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1, CONFLAGRATION: 0,
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16, TORIC_TOUGHNESS: 5}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, SQUASH: 2}
+
+def _card_resolution_debuffs(card: str, upgraded: bool) -> tuple[tuple[str, int], ...]:
+    """The debuffs one OnPlay resolution grants its target, in the order the card applies them.
+
+    Bash, Break and Squash carry `PowerVar<VulnerablePower>` in CanonicalVars, and Uppercut applies
+    WeakPower then VulnerablePower after its DamageCmd.  A play that resolves more than once (Throwing Axe,
+    DuplicationPower, OneTwoPunchPower) runs OnPlay again, so each resolution re-applies them.
+    """
+    if card in CARD_VULNERABLE_TARGET:
+        return (("VulnerablePower", CARD_VULNERABLE_TARGET[card] + (1 if card in {BASH, SQUASH} and upgraded else 0)),)
+    if card == UPPERCUT:
+        return (("WeakPower", 1 + (1 if upgraded else 0)), ("VulnerablePower", 1 + (1 if upgraded else 0)))
+    return ()
 # Flat card draw with no other effect - a Skill that just replaces itself with more options.
 CARD_DRAW = {DRUM_OF_BATTLE: 2, MASTER_OF_STRATEGY: 3, POMMEL_STRIKE: 1, FINESSE: 1, OFFERING: 3, FLASH_OF_STEEL: 1}
 # Score per drawn card inside _greedy_action's one-ply ordering, bounded by the energy left to
@@ -3372,11 +3385,24 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # GigantificationPower marks exactly one powered Attack command per play (the first one on
         # the turn) and multiplies that command's damage by 3.
         damage = damage * 3
+    base_damage = damage
     damage = _apply_debuff_multipliers(combat, enemy, damage)
-    for _ in range(hits):
+    # OnPlay deals the damage and applies its own debuffs in the same resolution (Bash, Break, Squash,
+    # Uppercut), so a play that resolves more than once has its later hits amplified by the Vulnerable the
+    # earlier resolution applied.  Deal the hit, re-apply that resolution's debuffs, and price the remaining
+    # hits from the target's new state.  The last resolution's debuffs go in below with the other
+    # end-of-play effects, so the total stays one grant per resolution.
+    resolution_debuffs = _card_resolution_debuffs(card, card_was_upgraded)
+    for hit_index in range(hits):
         if not enemies[int(target)].alive:
             break
         enemies[int(target)] = _damage_enemy(enemies[int(target)], damage)
+        if resolution_debuffs and hit_index + 1 < hits:
+            state = enemies[int(target)]
+            for power_name, amount in resolution_debuffs:
+                state = _apply_enemy_debuff(state, power_name, amount * (2 if lamp_double else 1))
+            enemies[int(target)] = state
+            damage = _apply_debuff_multipliers(combat, enemies[int(target)], base_damage)
     if card == MOLTEN_FIST and enemies[int(target)].alive:
         vulnerable = _power(enemy.powers, "VulnerablePower")
         if vulnerable:
@@ -3421,11 +3447,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     elif _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower"):
         player_powers = _add_power(_add_power(player_powers, "SurroundedLeft", -1), "SurroundedRight", 1)
     if card in CARD_VULNERABLE_TARGET:
-        vulnerable = (CARD_VULNERABLE_TARGET[card] + (1 if card in {BASH, SQUASH} and card_was_upgraded else 0)) * (2 if lamp_double else 1) * (2 if play_duplicated else 1)
+        # The earlier resolutions already applied their grant inside the hit loop above, so this one adds
+        # the grant for the last resolution only.  These cards hit once per resolution, so hits == play count.
+        vulnerable = (CARD_VULNERABLE_TARGET[card] + (1 if card in {BASH, SQUASH} and card_was_upgraded else 0)) * (2 if lamp_double else 1)
         enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], "VulnerablePower", vulnerable)
     if card == UPPERCUT:
-        # The status application is part of the play, so an increased play count applies it again.
-        plays = 2 if play_duplicated else 1
+        # The status application is part of the play, so each resolution applies it again.  The earlier
+        # resolutions were handled inside the hit loop, leaving this one for the last resolution.
+        plays = 1
         weak = (1 + (1 if card_was_upgraded else 0)) * plays
         enemy = _apply_enemy_debuff(enemies[int(target)], "WeakPower", weak * (2 if lamp_double else 1))
         vulnerable = 1 * (2 if lamp_double else 1) * plays
