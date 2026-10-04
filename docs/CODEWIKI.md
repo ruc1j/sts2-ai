@@ -5945,3 +5945,25 @@ selector `MONSTER.TUNNELER`、KeyError 126 件は fallback）。潜行中の敵�
 （640・363・355 件）はすべて過去の panel で使った seed** だった。fresh seed だと Tunneler に
 当たらない可能性が高く測定にならないので、この panel は「機構を狙った再測」として明示し、
 seed の新しさは牺牲する（panel の判定基準は MEASURABLE = 両 arm が機構を見る ことを使う）。
+
+### 潜っている敵のブロック保持の panel：**+0 胜**（50→50、3 seed すべて分岐・すべて Tunneler と交戦）
+
+`data/burrow_ab.sh`（arm = HEAD、control = `.wt-ctrl-burrow` = `01e3ce2`、policy code の差は commit
+`6bf743a` だけ）。seed は上記の理由で TUNNELER 観測が多い既存 seed を使い、機構が両 arm で見たことを
+panel の有効条件（MEASURABLE）にした。
+
+| seed | control | arm | 差分 | TUNNELER 観測（arm / control） | BURROWED 観測 | trace 分岐 |
+|---|---:|---:|---:|---|---|---|
+| H2LV6ZJ4XW | 22勝 | 22勝 | +0 | 13 / 14 | 4 / 5 | あり（596 / 592 record） |
+| P3V8N5K2RX | 15勝 | 15勝 | +0 | 20 / 20 | 7 / 7 | あり（405 / 405 record） |
+| L3PN5HBQ8T | 13勝 | 13勝 | +0 | 21 / 20 | 7 / 7 | あり（359 / 358 record） |
+| 合計 | **50勝** | **50勝** | **+0** | | | 3本すべて分岐 |
+
+分岐していて機構も両 arm に出ているので、この +0 は「効かなかった」ではなく「効いたが胜数は動かなかった」
+側の結果。忠実度の実証（block 一致 4.3% → 98.9%、决定 782 件・51 seed）を優先して修正は HEAD に残す。
+この session で +0 だった忠実度修正（stun、Mr Struggles、potion 7種、gate batch 2）と同じ位置づけで、
+胜数が動かないことをもって revert しない、という規則の一環として記録する。
+
+なお `ShouldClearBlock` を override する `BlurPower` は `CARD.BLUR`（1 コスト Skill、block 5 + Blur 1）経由の
+player 側 power で、corpus 全体で `CARD.BLUR` の play も reward 出現も 0 件だった（Ironclad の札ではない）。
+model は power 名で generically 処理しているので、もし他クラスを遊ぶ運用になれば自動的に効く。
