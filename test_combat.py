@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_MR_STRUGGLES, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION, POTION_VULNERABLE_POTION, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION, POTION_VULNERABLE_POTION, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _action_card, _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK, ULTIMATE_STRIKE, RAMPAGE,
     MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
@@ -779,6 +779,38 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_MERCURY_HOURGLASS,))
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 47)
+
+    def test_the_debuff_and_economy_potions_apply_the_game_side_effects(self) -> None:
+        # 393 recorded potion plays used one of these six and the simulator had no model for any of them,
+        # so the rollout could not price the option the agent was holding.  Each branch is the single
+        # command the decompiled potion model runs in OnUse, and every one of those 393 plays carries
+        # target_id None, so all six are listed as untargeted.
+        idle = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ())
+        plain = Combat(50, (), (), (), (idle,), energy=1)
+        for potion in (POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE):
+            self.assertIn(f"potion:{potion}", legal_actions(replace(plain, player_potions=(potion,))))
+        rng = random.Random(0)
+        tonic = step(replace(plain, player_potions=(POTION_LUCKY_TONIC,)), f"potion:{POTION_LUCKY_TONIC}", DUMMY_DATA, rng)
+        self.assertEqual(_power(tonic.player_powers, "BufferPower"), 1)
+        cured = step(replace(plain, player_potions=(POTION_CURE_ALL,), draw_pile=(DEFEND, DEFEND, DEFEND)), f"potion:{POTION_CURE_ALL}", DUMMY_DATA, rng)
+        self.assertEqual((cured.energy, len(cured.hand)), (2, 2))
+        clarified = step(replace(plain, player_potions=(POTION_CLARITY,), draw_pile=(DEFEND, DEFEND, DEFEND)), f"potion:{POTION_CLARITY}", DUMMY_DATA, rng)
+        self.assertEqual((len(clarified.hand), _power(clarified.player_powers, "ClarityPower")), (1, 3))
+        radiant = step(replace(plain, player_potions=(POTION_RADIANT_TINCTURE,)), f"potion:{POTION_RADIANT_TINCTURE}", DUMMY_DATA, rng)
+        self.assertEqual((radiant.energy, _power(radiant.player_powers, "RadiancePower")), (2, 3))
+
+        attacker = Enemy("MONSTER.DUMMY", 60, "HIT_MOVE", ())
+        facing = Combat(50, (), (), (), (attacker,), energy=1)
+        bound = step(replace(facing, player_potions=(POTION_POTION_OF_BINDING,)), f"potion:{POTION_POTION_OF_BINDING}", ATTACKING_DUMMY_DATA, rng)
+        self.assertEqual((_power(bound.enemies[0].powers, "WeakPower"), _power(bound.enemies[0].powers, "VulnerablePower")), (1, 1))
+        # After a Shackling play the observations read SHACKLING_POTION_POWER 7 next to STRENGTH_POWER -7
+        # on every enemy (61 of 61 enemy observations), and TemporaryStrengthPower.AfterSideTurnEnd puts
+        # the Strength back once that creature's own turn ends, so it blunts exactly one enemy turn.
+        shackled = step(replace(facing, player_potions=(POTION_SHACKLING_POTION,)), f"potion:{POTION_SHACKLING_POTION}", ATTACKING_DUMMY_DATA, rng)
+        self.assertEqual((_power(shackled.enemies[0].powers, "ShacklingPotionPower"), _power(shackled.enemies[0].powers, "StrengthPower")), (7, -7))
+        resolved = step(shackled, END_TURN, ATTACKING_DUMMY_DATA, rng)
+        self.assertEqual((_power(resolved.enemies[0].powers, "ShacklingPotionPower"), _power(resolved.enemies[0].powers, "StrengthPower")), (0, 0))
+        self.assertEqual(resolved.player_hp, 47)  # the 10 damage attack landed as 10 - 7
 
     def test_gigantification_potion_uses_the_id_the_game_reports(self) -> None:
         # The game's model class is GigantificationPotion, so the observation says

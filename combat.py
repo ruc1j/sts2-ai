@@ -64,6 +64,8 @@ POTION_BLOOD, POTION_HEART, POTION_BRONZE = "POTION.BLOOD_POTION", "POTION.HEART
 POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION = "POTION.SPEED_POTION", "POTION.FLEX_POTION", "POTION.SWIFT_POTION"
 POTION_WEAK_POTION, POTION_VULNERABLE_POTION = "POTION.WEAK_POTION", "POTION.VULNERABLE_POTION"
 POTION_REGEN_POTION, POTION_FORTIFIER = "POTION.REGEN_POTION", "POTION.FORTIFIER"
+POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL = "POTION.POTION_OF_BINDING", "POTION.LUCKY_TONIC", "POTION.CURE_ALL"
+POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE = "POTION.SHACKLING_POTION", "POTION.CLARITY", "POTION.RADIANT_TINCTURE"
 ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
@@ -1305,7 +1307,7 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         else:
             actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     for potion in dict.fromkeys(combat.player_potions):
-        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER}:
+        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE}:
             actions.append(f"potion:{potion}")
         elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
             actions.extend(
@@ -1739,6 +1741,14 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         ceiling = _dict(enemy.values).get("MaxInitialHp")
         healed = enemy.hp + regen if ceiling is None else min(int(ceiling), enemy.hp + regen)
         enemy = replace(enemy, hp=healed, powers=_add_power(enemy.powers, "RegenPower", -1))
+    shackled = _power(enemy.powers, "ShacklingPotionPower")
+    if shackled:
+        # TemporaryStrengthPower.AfterSideTurnEnd: the -7 Strength ShacklingPotion granted is restored
+        # when the affected creature's own side turn ends, so the potion blunts exactly one enemy turn.
+        enemy = replace(
+            enemy,
+            powers=_add_power(_add_power(enemy.powers, "ShacklingPotionPower", -shackled), "StrengthPower", shackled),
+        )
     if _power(enemy.powers, "NemesisPower"):
         # NemesisPower.AfterSideTurnEnd flips a private bool each of the owner's turn ends,
         # alternately applying and removing IntangiblePower - so Test Subject's third form is
@@ -1995,6 +2005,52 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             # Fortifier.OnUse: CreatureCmd.GainBlock(target, target.Block * 2, Unpowered), i.e. it
             # doubles the Block already held and does nothing on an empty Block.
             return replace(combat, player_block=combat.player_block * 2)
+        if potion == POTION_POTION_OF_BINDING:
+            # PotionOfBinding.OnUse: PowerCmd.Apply<WeakPower>(1) and Apply<VulnerablePower>(1) over
+            # combatState.HittableEnemies (TargetType.AllEnemies; all 124 recorded plays carry
+            # target_id None).
+            enemies = [
+                replace(
+                    enemy,
+                    powers=_add_power(_add_power(enemy.powers, "WeakPower", 1), "VulnerablePower", 1),
+                )
+                if enemy.alive
+                else enemy
+                for enemy in combat.enemies
+            ]
+            return replace(combat, enemies=tuple(enemies))
+        if potion == POTION_SHACKLING_POTION:
+            # ShacklingPotionPower extends TemporaryStrengthPower with IsPositive = false: the
+            # observations right after a play read SHACKLING_POTION_POWER 7 next to STRENGTH_POWER -7 on
+            # every enemy (61 of 61 enemy observations), and the exported intent damage drops to match
+            # (3 -> 0 for an Entomancer bees attack).  TemporaryStrengthPower.AfterSideTurnEnd restores
+            # it once that creature's own turn ends, which _enemy_turn does below.
+            enemies = [
+                replace(
+                    enemy,
+                    powers=_add_power(_add_power(enemy.powers, "ShacklingPotionPower", 7), "StrengthPower", -7),
+                )
+                if enemy.alive
+                else enemy
+                for enemy in combat.enemies
+            ]
+            return replace(combat, enemies=tuple(enemies))
+        if potion == POTION_LUCKY_TONIC:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "BufferPower", 1))
+        if potion == POTION_CURE_ALL:
+            return _draw_into_combat(replace(combat, energy=combat.energy + 1), 2, data, rng)
+        if potion == POTION_CLARITY:
+            # Clarity.OnUse: draw 1, then Apply<ClarityPower>(3) - ClarityPower.ModifyHandDraw adds a
+            # card to each of the next three turn-start draws, which the new-turn handling already reads.
+            return _draw_into_combat(
+                replace(combat, player_powers=_add_power(combat.player_powers, "ClarityPower", 3)), 1, data, rng
+            )
+        if potion == POTION_RADIANT_TINCTURE:
+            return replace(
+                combat,
+                energy=combat.energy + 1,
+                player_powers=_add_power(combat.player_powers, "RadiancePower", 3),
+            )
         if potion in {POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
             enemies = list(combat.enemies)
             power = "WeakPower" if potion == POTION_WEAK_POTION else "VulnerablePower"
