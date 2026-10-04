@@ -6657,3 +6657,36 @@ Thrash・Toxic・True Grit ✓ game 側は Exhaust 持ちが 119 枚 ✓ model �
 `SLIMED_BERSERKER CARD.SLIMED +1`（5 件）は self-exhaust を入れても残った ✓ 原因は別 ✓
 次の対象はこれと `TUNNELER` の ±5（LetterOpener の発動枚数 ✓）、`BYGONE_EFFIGY STRIKE +1`（3 件 ✓
 Toasty Mittens など turn 開始の autoplay が agent のカウンタに乗らない ✓）✓
+
+## Round 32: Slimed が play 後にどこへも移動していなかった（exhaust 未処理）→ 不一致 92 → 87 件
+
+`SLIMED_BERSERKER CARD.SLIMED game+1`（5 件 ✓ 前 round で Exhaust keyword を 15 枚に入れたのに残った ✓）を
+5 件すべて dump した ✓ 手札の枚数は game と model で同じなのに ✓ **exhaust pile の増え方が違った**:
+game は `exhaust 8 -> 9` と `draw 5 -> 4` ✓ model は `exhaust 8 -> 8` ✓ play した札が **どの pile にも
+入っていなかった** ✓ 原因は `combat.py` の Slimed 専用 branch（`if card == SLIMED:` ✓ 2740 行附近 ✓）が
+hand から外して `_draw_into_combat` だけで return していたこと ✓ `exhaust = card in EXHAUSTS` を通る
+共通経路（2860 行附近 ✓ ここで exhaust pile と `_after_exhaust` を処理する ✓）を **通っていなかった** ✓
+
+game は `Slimed.OnPlay` で 1 枚引き ✓ その後 `CardModel.GetResultPileTypeForCardPlay` が
+`CardKeyword.Exhaust` を見て即 exhaust pile へ送る ✓ そして `RELIC.FORGOTTEN_SOUL`
+（`AfterCardExhausted` → 1 unpowered damage ✓ model 済み ✓ `combat.py:602` ✓）が発動する ✓ つまり game の
++1 は Slimed の exhaust が起こした ✓ model は exhaust 自体を知らないので relic も発動しなかった ✓
+
+直し: Slimed branch で 1 枚引いた後に exhaust pile へ入れ ✓ `_after_exhaust` を呼ぶ ✓（顺序も game に合わせた ✓
+game は OnPlay 後（draw 後 ✓) に pile を決める ✓）✓ regression test を 2 件追加 ✓
+`test_slimed_exhausts_itself_and_fires_forgotten_soul`（exhaust pile = (SLIMED,) ✓ 敵 40 → 39 ✓）と
+`test_slimed_without_the_relic_exhausts_without_damage` ✓ suite **776 件 green** ✓ commit `359ae5b` ✓
+
+census（build-valid ✓ 同じ tool ✓）: 6,840 replay 中 **87 件** の不一致（92 → 87 ✓ 5 件閉じた ✓）✓
+`SLIMED_BERSERKER CARD.SLIMED` group は消えた ✓
+
+决定母数（control = `.wt-ctrl-slimed` = `722cd26` ✓ selector `RELIC.FORGOTTEN_SOUL` ✓ 同じ mod binary ✓）:
+5,135 観測で **759 件 changed** ✓ ただし **1 seed（H2LV6ZJ4XW）だけ** ✓ 採否の基準は「3 件以上の変更 AND
+3 seed 以上」なので **panel は行わない** ✓ 忠実度修正として保持 ✓
+
+`LetterOpener` の game 実装も読んだ ✓ `AfterCardPlayed` で `cardPlay.Card.Type == CardType.Skill` の時だけ
+`SkillsPlayedThisTurn++` ✓ `% 3 == 0` で `HittableEnemies` 全員に `DamageVar(5, Unpowered)` ✓
+`AfterSideTurnStart` は **TurnNumber == 1 を除いて** リセット ✓（model は毎回リセット ✓ 1 ターン目は 0 なので同じ ✓）✓
+`CARD.SLIMED` は `CardType.Status` ✓ なので game は Skill として数えない ✓ model の `SKILLS` にも Slimed は
+入っていない ✓ 残る `TUNNELER CARD.DEFEND_IRONCLAD game+5`（3 件）と `CARD.BATTLE_TRANCE game-5`（3 件）は
+agent が推定する Skill 枚数のずれが疑い ✓ 次の対象 ✓
