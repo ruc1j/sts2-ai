@@ -416,7 +416,7 @@ _TURN_OWN_PLAYS: collections.Counter = collections.Counter()
 # the same turn.
 _TURN_EFFECT_DEPARTURES: collections.Counter = collections.Counter()
 _TURN_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0, "turn": -1}
-_COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0}
+_COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
 # Set when the current observation carried the mod's exported play counts (unused today, kept so a run
 # can report which source priced it).
@@ -464,8 +464,12 @@ def _seed_exported_plays(observation: dict) -> bool:
     _TURN_PLAYS["cards"] = max(0, cards)
     _TURN_PLAYS["attacks"] = max(0, attacks)
     _TURN_PLAYS["skills"] = max(0, skills)
-    _COMBAT_PLAYS["attacks"] = max(_COMBAT_PLAYS["attacks"], max(0, _number(plays.get("attacks_combat"), 0)))
-    _COMBAT_PLAYS["skills"] = max(_COMBAT_PLAYS["skills"], max(0, _number(plays.get("skills_combat"), 0)))
+    # These are per-combat counts read off the game's own history, so they replace our running values
+    # instead of raising them: a new combat legitimately starts them back at zero, and a relic that
+    # fires on "the first card of the combat" depends on that reset.
+    _COMBAT_PLAYS["attacks"] = max(0, _number(plays.get("attacks_combat"), 0))
+    _COMBAT_PLAYS["skills"] = max(0, _number(plays.get("skills_combat"), 0))
+    _COMBAT_PLAYS["cards"] = max(0, _number(plays.get("cards_combat"), 0))
     _EXPORTED_PLAYS = True
     return True
 
@@ -473,7 +477,7 @@ def _seed_exported_plays(observation: dict) -> bool:
 def _reset_play_counters() -> None:
     global _COMBAT_ENEMY_IDS, _TURN_PILE_START, _TURN_SEEN_HAND, _TURN_OWN_PLAYS, _TURN_EFFECT_DEPARTURES
     _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=-1)
-    _COMBAT_PLAYS.update(attacks=0, skills=0)
+    _COMBAT_PLAYS.update(attacks=0, skills=0, cards=0)
     _COMBAT_ENEMY_IDS = frozenset()
     _TURN_PILE_START = collections.Counter()
     _TURN_SEEN_HAND = collections.Counter()
@@ -492,7 +496,7 @@ def _advance_play_counters(observation: dict) -> None:
     enemy_ids = _enemy_instance_ids(observation)
     if _COMBAT_ENEMY_IDS and enemy_ids and not (_COMBAT_ENEMY_IDS & enemy_ids):
         # No enemy instance carried over: a different fight, so its combat-long counters restart.
-        _COMBAT_PLAYS.update(attacks=0, skills=0)
+        _COMBAT_PLAYS.update(attacks=0, skills=0, cards=0)
     if enemy_ids:
         _COMBAT_ENEMY_IDS = enemy_ids
     piles = _pile_contents(observation)
@@ -541,6 +545,7 @@ def _advance_play_counters(observation: dict) -> None:
     # estimate available without a counter the bridge does not export.
     _COMBAT_PLAYS["attacks"] = max(_COMBAT_PLAYS["attacks"], attacks)
     _COMBAT_PLAYS["skills"] = max(_COMBAT_PLAYS["skills"], skills)
+    _COMBAT_PLAYS["cards"] = max(_COMBAT_PLAYS["cards"], sum(plays.values()))
 ROLLOUT_POTION_IDS = {
     POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK,
     POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE,
@@ -3040,6 +3045,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         # kept as a floor: it is derived from the discount being visible in the hand itself.
         attacks_played_this_turn=_TURN_PLAYS["attacks"],
         skills_played_this_turn=_TURN_PLAYS["skills"],
+        cards_played_combat=_COMBAT_PLAYS["cards"],
         attacks_played_combat=_COMBAT_PLAYS["attacks"],
         skills_played_combat=_COMBAT_PLAYS["skills"],
         cards_played_this_turn=max(

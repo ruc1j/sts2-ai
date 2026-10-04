@@ -270,6 +270,7 @@ RELIC_FORGOTTEN_SOUL = "RELIC.FORGOTTEN_SOUL"
 RELIC_RED_SKULL, RELIC_REPTILE_TRINKET, RELIC_RIPPLE_BASIN = "RELIC.RED_SKULL", "RELIC.REPTILE_TRINKET", "RELIC.RIPPLE_BASIN"
 RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_STURDY_CLAMP = "RELIC.RUINED_HELMET", "RELIC.SELF_FORMING_CLAY", "RELIC.STURDY_CLAMP"
 RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE = "RELIC.TUNGSTEN_ROD", "RELIC.UNSETTLING_LAMP", "RELIC.VAMBRACE"
+RELIC_THROWING_AXE = "RELIC.THROWING_AXE"
 RELIC_VENERABLE_TEA_SET = "RELIC.VENERABLE_TEA_SET"
 TEST_SUBJECT, RESPAWN_MOVE = "MONSTER.TEST_SUBJECT", "RESPAWN_MOVE"
 
@@ -417,6 +418,10 @@ class Combat:
     red_skull_active: bool = False
     lizard_tail_used: bool = False
     ruined_helmet_used: bool = False
+    # ThrowingAxe.ModifyCardPlayCount adds one play to the first card we play in each combat, and
+    # AfterModifyingCardPlayCount consumes it until the next CombatRoom.  The bridge exports the
+    # game's own combat-long play counts, so cards_played_combat == 0 is the game's "not used yet".
+    cards_played_combat: int = 0
     vambrace_used: bool = False
     unsettling_lamp_used: bool = False
     upgraded_cards: tuple[str, ...] = ()
@@ -2606,6 +2611,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # one - a leftover True from an earlier play would double the next card's block for free.
     combat = replace(combat, play_duplicated=play_duplicated)
     # An increased play count re-runs the card's OnPlay, so its power applies again.
+    # ThrowingAxe.ModifyCardPlayCount hands back playCount + 1 for the first card we play each combat.
+    # The model already has a "this play happens twice" mechanism (play_duplicated), which the attack
+    # branches consume as an extra hit, so the relic rides on it.  A card that some other effect already
+    # duplicates would really play three times; the model doubles it, which is the rare case.
+    if RELIC_THROWING_AXE in combat.player_relics and combat.cards_played_combat == 0:
+        play_duplicated = True
+    combat = replace(combat, play_duplicated=play_duplicated)
+    plays = 2 if play_duplicated else 1
     plays = 2 if play_duplicated else 1
     if gigantified:
         combat = replace(combat, player_powers=_add_power(combat.player_powers, "GigantificationPower", -1))
@@ -2663,6 +2676,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     skills_this_turn = combat.skills_played_this_turn + (plays if card in SKILLS else 0)
     attacks_combat = combat.attacks_played_combat + (plays if card in ATTACKS else 0)
     skills_combat = combat.skills_played_combat + (plays if card in SKILLS else 0)
+    cards_combat = combat.cards_played_combat + plays
     cards_this_turn = combat.cards_played_this_turn + plays
     powers_this_turn = combat.powers_played_this_turn + (plays if card in POWERS else 0)
     # Relic counters (Pen Nib's attacks-played, Nunchaku's) are not in the observation - the bridge
@@ -2716,6 +2730,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         player_block=combat.player_block + combo_block, energy=combat.energy + combo_energy,
         attacks_played_this_turn=attacks_this_turn, skills_played_this_turn=skills_this_turn,
         attacks_played_combat=attacks_combat, skills_played_combat=skills_combat, cards_played_this_turn=cards_this_turn,
+        cards_played_combat=cards_combat,
         powers_played_this_turn=powers_this_turn, free_cards=tuple(free_cards),
         vambrace_used=combat.vambrace_used or vambrace_double,
         unsettling_lamp_used=combat.unsettling_lamp_used or lamp_double,
