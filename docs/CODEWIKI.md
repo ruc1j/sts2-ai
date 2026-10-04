@@ -6187,3 +6187,18 @@ Brilliant Scarf、Sloth、Normality の上限が読む）に対する pile 推�
 通常の揺れで、しかも model の忠実度を上げる変更（game が実際に与えている 5 ダメージを価格に入れる）が
 胜数を増すとは限らない —— 以前 FlameBarrier の時と同じ形。忠実度の実証（攻撃一致 97.36% → 97.54%、
 LetterOpener 系の過小評価 393 → 93 件）を根拠に HEAD には残す。
+
+### 玩札数再構成の决定母数（`data/attribution_rampart.py`、control `2426496`）
+
+selector ごとに replay して决定が変わった本数を数えた：
+
+| selector | replay した记录 | 决定が変わった | seed |
+|---|---:|---:|---:|
+| `RELIC.LETTER_OPENER` | 13,325 | 8 | 1 |
+| `RELIC.SHURIKEN` | 2,981 | **142** | **7** |
+
+LetterOpener 側は与ダメージの再現が 393 件 → 93 件に改善した割には agent の選ぶ action はあまり変わら
+なかった（5 ダメージの価格への寄与が、その战斗の选択の順位をほとんどこさなかった）。决定を変えた母数は
+Shuriken 側に集中している：3 枚目の Attack 自身が自分の +1 Strength を使わなくなる、というタイミングの
+修正が Attack の評価を動かし、7 seed で 142 决定が変わった。採用基準（决定 3 件・seed 3 本）を満たすのは
+この側で、忠実度の実証と合わせて HEAD に残す。
