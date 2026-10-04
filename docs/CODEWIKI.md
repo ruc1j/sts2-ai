@@ -7493,3 +7493,32 @@ fail=Watchdog timeout: No progress for 30.1s. Last activity: Entering Monster ro
 panel: arm 3 本目（EAIF2UUVCK）走行中 ✓ control 未開始 ✓ 完了待ち background job `bash-879` ✓
 （`zsh -n` 文法確認済み ✓ ただし control 側に新しい sweep3.sh が効くのは次回起動から ✓ 今回の control は
 起動済みのスクリプトを再読するので効く ✓ 同じファイルを読むため ✓）✓
+
+## Round 58: arm 3 本完了 ✓ **走行中の shell script を編集したことが panel 出力の化け体の原因** ✓
+
+arm 完了 ✓（control は 07:43 に開始 ✓ seed `AM8C6YXHSG D6A1F8C3E5 EAIF2UUVCK` ✓ 同じ 3 seed ✓）
+
+```
+RESULT counts_arm AM8C6YXHSG wins=17 losses=1 combat_records=354 depth=Act 3, Floor 15
+RESULT counts_arm D6A1F8C3E5 wins=14 losses=1 combat_records=282 depth=Act 3, Floor 4
+RESULT counts_arm EAIF2UUVCK wins=11 losses=1 combat_records=225 depth=Act 2, Floor 10 fail=Rewards scree
+SWEEP DONE counts_arm
+```
+
+合計 **42 勝 3 敗** ✓ 2 本が Act 3 到達 ✓ 1 本目は Act 3 boss QUEEN の部屋で死亡 ✓
+3 本目は Act 2 Floor 10 で敗北 ✓（`fail=Rewards screen…` ✓ = 前 round 分類の敗北症状 ✓）✓
+`arm done rc=127` だったが run は 3 本とも完走出来ている ✓
+
+**rc=127 と `fail=Rewards scree` の切断の原因** ✓ log に出たエラーは
+`sweep3.sh:59: command not found: nt` ✓ しかし現在の sweep3.sh に 59 行目は無い ✓
+`sed -n '50,59l'` で byte 単位に見た ✓
+→ **panel は 07:29 に開始し ✓ 私は 07:33 に同じ sweep3.sh を編集した**（`depth=`/`fail=` 追加 ✓）✓
+zsh は script を実行しながら読むので ✓ **実行中の編集は解釈位置をずらして化け体を出す** ✓✓
+（前 sweep の `command not found: SWEEP DONE bcp1` も同じ説明で通る ✓ 単独試行で再現しなかったのは
+その時点で編集が終わっていたから ✓）✓
+**教訓: 走行中の shell script を編集しない** ✓ 編集が必要なら copy してその copy を実行する ✓
+rc=127 は実害ではなく ✓ ただし `exit=` を見る規則（teaching 10 ✓）と合わせて ✓
+「run 自体は 3 本成功 ✓ status file の rc は化け体の副产品 ✓」と切り分けた ✓
+
+control 側は新しい sweep3.sh（`fail` の锚を直した版 ✓）を読み直すので ✓ 今回の panel では
+`fail=` が正しい形で出るはず ✓（control 走行中は script を触らない ✓）✓
