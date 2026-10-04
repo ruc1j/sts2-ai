@@ -7901,7 +7901,7 @@ block 0 の状態で試すと「効果が消えた」ように見える ✓）�
 
 ## Round 69: census がほぼ空になった ✓ arm corpus 614 中 612 ✓ 新しい run の trace は 218 中 218 ✓（不一致 0 ✓）
 
-HEAD `9bbf6a6` 以降（`bc54a06` の多重 play 修正まで入った状態 ✓）で測り直した ✓
+HEAD `9bbf6a2` 以降（`bc54a06` の多重 play 修正まで入った状態 ✓）で測り直した ✓
 
 ```
 TRACE_GLOB=counts_arm_*_agent.jsonl → 614 actions replayed, 612 matching
