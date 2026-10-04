@@ -4912,3 +4912,71 @@ corpus の集計ではなく、**HEAD で全 trace を replay して今の code 
 残っていない。ここからの Act 3 未踏破は model の欠落ではなく**手数と火力の問題**なので、
 同じ replay  instrument を今後の回帰検査（新 trace で例外 0 を保つ）として使い、
 改善の探索は火力・ルートの測定に移す。
+
+## Round 5: 未実装の damage source を探す scan を作って、残る候補をすべて潰した（2026-10-04）
+
+### `data/damage_source_scan.py`：敵フェーズの被害が intent の総和で説明つくか
+
+player のターン最後の observation（`L`）に出ている攻撃 intent は、game が表示している最終ダメージ
+（敵の Strength、player の Vulnerable、敵の Weak を織り込んだ値）なので、block を差し引けば
+**その後の敵フェーズで減る HP は intent 総和を超えられない**。超える場所＝観測に現れない damage source。
+14,891 ターンを測った。
+
+初めて出た上位（MYTE 191・MECHA_KNIGHT 82・SLITHERING_STRANGLER 129・WRIGGLER 81）は
+すべて scan 側の誤りだった：
+
+- 観測の status 札の id は `CARD.BURN` / `CARD.TOXIC` … であって `CARD.BURN_STATUS` ではない。
+  名前を直すと MYTE（Toxic を hand に2枚入れる）と MECHA_KNIGHT（Flamethrower で Burn を4枚）は消えた
+- player 側の `ConstrictPower` はターン終了時に自分へダメージを与える（model 済み・combat.py 2010 付近）。
+  その分を被害から差し引くと SLITHERING_STRANGLER の大半は説明内に入った
+- SPINY_TOAD（expected 0 → 5）は `THORNS_POWER 5` 持たせ反撃で、被害は player の攻撃直後に起きていた
+  （`L` はその解決前の observation）＝測定窓のずれ
+
+残った小さな gap（QUEEN 53・VANTOM 47・THE_INSATIABLE 31・LOUSE_PROGENITOR 22・AXEBOT 9、いずれも +1）は
+下記の丸め測定の結果 **model の側は正しい**ので、damage source の欠落ではない。
+
+### 敵攻撃の表示値で game の丸めを確定：floor（model と一致）
+
+`raw_damage`（Strength 適用前の値）と `damage`（表示値）の組を corpus 全体で集め、
+`floor((raw + Strength) × 倍率)` と `ceil` を比較した：
+
+| 状況 | sample | floor 一致 | ceil 一致 |
+|---|---:|---:|---:|
+| 修正なし | 37,934 | 37,687 (99.4%) | 37,687 |
+| player Vulnerable のみ | 1,591 | **1,581 (99.4%)** | 645 |
+| 敵 Weak のみ | 1,149 | **1,139 (99.1%)** | 351 |
+| Vulnerable + Weak | 103 | 99 | 10 |
+
+game は `(raw + Strength) × 1.5`（Vulnerable）と `× 0.75`（Weak）を **floor** する。combat.py の
+`damage * 3 // 2`（1297 行）と `damage * 3 // 4`（1295 行）と同じ規則で、一致率は 99% 超
+（残りは Soar・Plating・Dexterity など別の修正の項）。**QUEEN 戦の 14-23 HP 不足は丸めの差ではない**
+という結論がこれで出る。player 側だけで floor 一致 98/440 と悪かった前回の測定は、relic と card var が
+絡む側だったため信用できない（敵側は relic の影響を受けないのでこの測定が正しい）。
+
+### 未映射 power の全 census：13 件すべて「効きは model にある」か「表示専用」
+
+`official_agent.POWER_NAMES` に無い id を観測から数えると：REATTACH 3,666（+25 revive で実装済み）、
+PLAYER PYRE_POWER 3,437・PLAYER STRATAGEM_POWER 724（札側で実装済みのマーカー）、
+ESCAPE_ARTIST 3,012（表示タイマー専用）、HATCH 2,470（`HATCH_MOVE` で HP を幅から引く）、
+**TERRITORIAL 2,460（Byrdonis）**、SWIPE 2,152（奪札の返却マーカー：戦闘内の効果は model 済み、
+返却は run 側の話）、INFESTED 969、POSSESS_SPEED 619・POSSESS_STRENGTH 328、SHACKLING_POTION 191、
+IMPROVEMENT 26、DARK_SHACKLES 2。
+
+TERRITORIAL は `AfterSideTurnEnd` で自分に Strength +Amount（観測でも Byrdonis の Strength が
+turn 1..6 で 0,1,2,3,4,5 と増える）だが、model は **monster id で +1 を毎ターン入れている**
+（combat.py 1724 付近）ので、mapping が無くても実走 rollout で効いている。観測の Territorial amount は
+常に 1 なので +1 固定も実データと一致。
+
+### 観測されないPlating保持者（LagavulinMatriarch 12・SewerClam）は corpus に 1 度も出現しない
+
+`data/*_agent.jsonl` 555 run に LAGAVULIN_MATRIARCH / SEWER_CLAM / MYSTERIOUS_KNIGHT は 1 件も居ない
+（Plating が出るのは FROG_KNIGHT 54 run・SLUMBERING_BEETLE 119 run だけ）。C# 側ハードコードで
+export に値が無いこの2体の Plating は、**観測母数がゼロなので実装対象にしない**。
+
+### この round の結論（探索面の変更）
+
+combat.py の忠実度について、corpus から観測できる gap（power の未映射・move 本体の欠落・
+damage の丸め・説明できない被害）は**この round で枯れた**。2 round 続けて新しい忠実度修正が出ていないのは
+探索面が尽きた側の話なので、次は (1) 忠実度修正を積んだ系列（`d6789a6f`→HEAD）を新しい複数 seed で
+まとめて panel にして Act 3 到達度を測る、(2) QUEEN 戦で agent がどのターンにどれだけ火力を捨てているかを
+observation から分解する、に進む。
