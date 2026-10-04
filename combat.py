@@ -214,11 +214,16 @@ SKILLS = {
 }
 SELF_DAMAGE = {HEMOKINESIS: 2, BLOODLETTING: 3, BLOOD_WALL: 2, BREAKTHROUGH: 1, OFFERING: 6, BRAND: 1}
 # CardModel.GetResultPileTypeForCardPlay sends a played card to the exhaust pile right away when it
-# carries CardKeyword.Exhaust, so every card with that keyword self-exhausts on play - not at turn end.
-# The keyword list in the game is 119 cards (data/exhaust_card_classes.json); these are the ones the
-# model can actually play.  Getting them right is not cosmetic: exhausting a card is what fires
-# ForgottenSoul and Charon's Ashes, and Slimed / Impervious were the top remaining damage gaps.
-EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS, BRAND, BURNING_PACT, CINDER, DARK_EMBRACE, DRAMATIC_ENTRANCE, EVIL_EYE, FEEL_NO_PAIN, HAVOC, HOWL_FROM_BEYOND, IMPERVIOUS, MOLTEN_FIST, SLIMED, THRASH, TOXIC, TRUE_GRIT}
+# carries CardKeyword.Exhaust - on play, not at turn end.  Exhausting a card is what fires
+# ForgottenSoul and Charon's Ashes, so this list is not cosmetic.  It is NOT the decompile's
+# CardKeyword.Exhaust mentions: 119 card files mention that token, but 10 of the ones here mention it
+# only in a hover tip and the recorded plays show the played card landing in the DISCARD - Burning Pact
+# (37 plays, exhaust +1 for the target and discard +1 for itself), Evil Eye (74 plays, exhaust +0),
+# True Grit (47 plays, exhaust +1 for its victim and discard +1), Howl From Beyond (6 plays, exhaust +0),
+# Havoc (5), Brand (4).  Keeping those in here inflated the inferred play counters through the extra
+# hand departure and made LetterOpener fire one Skill early.  Slimed is listed even though its own
+# branch handles it, so the keyword stays visible next to the others.
+EXHAUSTS = {METAMORPHOSIS, ASHEN_STRIKE, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MASTER_OF_STRATEGY, PRODUCTION, SECOND_WIND, ENLIGHTENMENT, FIEND_FIRE, INFERNAL_BLADE, FORGOTTEN_RITUAL, NEOWS_FURY, PURITY, APOTHEOSIS, DRAMATIC_ENTRANCE, IMPERVIOUS, MOLTEN_FIST, SLIMED, TOXIC}
 # Cards tagged as Strike, used by Perfected Strike scaling.
 # CanonicalTags per decompiled card (v0.107.1): Pommel Strike is tagged Strike too, so Perfected
 # Strike counts it.  Panel replay over the Perfected Strike decisions resolved 27 of 31 mismatches
