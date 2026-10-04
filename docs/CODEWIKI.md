@@ -5725,3 +5725,41 @@ model が自分で Inferno を打つ経路ではマーカーが立つので、ob
 
 `FOGMOG enemy_hp CARD.BASH` 219・`QUEEN enemy_hp end_turn` 192・`VANTOM player_hp CARD.STRIKE_IRONCLAD` 124・
 `THE_INSATIABLE enemy_hp end_turn` 99・`FROG_KNIGHT enemy_hp end_turn` 76・`QUEEN enemy_hp CARD.ANGER` 68。
+
+### boss 戦 audit の数字を訂正する（同じ測定のやり直し）
+
+Round 15 に書いた boss 戦の不一致率 **8.41%** と修正後の **6.67%** は、2つの測定ミスをしていた。
+`data/model_match_audit.py` が持つ `same_fight`（戦闘境界をまたぐ対を除外）を使っていないこと、
+そして model の敵 HP が 0 未満になる**超過キル（overkill）をそのまま差分として数えていた**ことだ。
+両方を入れて同じ replay を組み直した：
+
+| 測定 | 不一致 |
+|---|---|
+| combat.py の HP を 0 でクリップし、戦闘境界 956 対を除外 | **1,658 / 45,805 = 3.62%** |
+| （クリップのみ） | 2,597 / 46,754 = 5.55% |
+| （クリップなし・境界フィルタなし） | 3,934 / 46,754 = 8.41% |
+
+`FOGMOG enemy_hp CARD.BASH 219 件` は**丸ごと overkill の見かけ**だった（model が敵 HP を -4 にし、
+game は 0 で止める）。次に追うべき group はクリップ込みのこの順：
+`QUEEN enemy_hp end_turn 192`・`THE_INSATIABLE enemy_hp end_turn 99`・`QUEEN enemy_hp CARD.STRIKE_IRONCLAD 79`・
+`FROG_KNIGHT enemy_hp end_turn 76`・`VANTOM enemy_hp end_turn 73`・`QUEEN enemy_hp CARD.ANGER 68`。
+
+### falsified: Vulnerable のダメージ倍率は丸めではなく floor で正しい
+
+QUEEN 戦で STRIKE の与ダメージが 1 だけ game のほうが大きい group が目についたため、
+「game は ×1.5 を切り上げているのでは」と検証した。手札 entry の `vars`（`Damage` 等）が観測の実値なので、
+それを基に **単的対象・敵 block 0・プレイヤーの Strength 等の補正なし・敵 Vulnerable あり**の
+攻撃プレイ 8,966 件で5つの式を比べた：
+
+| 式 | 一致 |
+|---|---:|
+| `floor(raw × 1.5)`（model の実装） | **8,596 / 8,966 = 95.9%** |
+| `ceil(raw × 1.5)` | 7,074 |
+| `floor(raw × (1 + 0.5 × Vulnerable stacks))` | 4,122 |
+| `round(raw × (1 + 0.5 × stacks))` | 3,466 |
+| `ceil(raw × (1 + 0.5 × stacks))` | 3,395 |
+
+**切り上げ hypothesis は棄却**（model の floor が最良）。Vulnerable のスタック数による倍率拡大でもない
+（stacks 依存の式は明らかに悪い）。残る 370 件は私の base 抽出が悪いため方で、Twin Strike の multi-hit
+（`Damage` が hit あたりではない）や、`Damage` が runtime に書き換わった float（7.5、10.5 など）を
+そのまま使ったケースを含む。丸めは触らない。
