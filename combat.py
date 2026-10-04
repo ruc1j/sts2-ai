@@ -1445,6 +1445,29 @@ def _vulnerable_damage(combat: Combat, enemy: Enemy, damage: int) -> int:
     return damage * (150 + phrog + _power(combat.player_powers, "CrueltyPower")) // 100
 
 
+def _apply_debuff_multipliers(combat: Combat, enemy: Enemy, damage: int) -> int:
+    """Apply the dealer-side WeakPower and the target-side VulnerablePower in one rounding step.
+
+    ModifyDamageMultiplicative hooks return decimal factors that the game multiplies together before the
+    amount is rounded.  Truncating between them loses points: an upgraded Strike (9) played at Weak by a
+    boss that is Vulnerable is 9 x 3/4 x 1.5 = 10.125 -> 10 in the game, while the chained model gave
+    9 x 3 // 4 = 6 then 6 x 150 // 100 = 9.  That was the largest residual in the boss-fight audit -
+    QUEEN fights hold Weak 97-99 for the whole fight (QUEEN CARD.STRIKE_IRONCLAD -1 x69, CARD.ANGER -1
+    x65, CARD.POMMEL_STRIKE -1 x23) - and Weak applies whether or not the target is Vulnerable
+    (WeakPower.ModifyDamageMultiplicative: `dealer != Owner` or `!IsPoweredAttack()` returns 1m).
+    """
+    weak = _power(combat.player_powers, "WeakPower")
+    vulnerable = _power(enemy.powers, "VulnerablePower")
+    phrog = 25 if RELIC_PAPER_PHROG in combat.player_relics else 0
+    if weak and vulnerable:
+        return damage * 3 * (150 + phrog + _power(combat.player_powers, "CrueltyPower")) // 400
+    if weak:
+        return damage * 3 // 4
+    if vulnerable:
+        return _vulnerable_damage(combat, enemy, damage)
+    return damage
+
+
 def _apply_curl_up(before: tuple[Enemy, ...], enemies: list[Enemy], card: str) -> None:
     """Resolve Louse Progenitor's one-shot block after a powered attack card."""
     if card not in ATTACKS:
@@ -3024,8 +3047,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += vigor
         if card_was_upgraded:
             damage += ALL_ENEMY_UPGRADE_DAMAGE.get(card, 3)
-        if _power(combat.player_powers, "WeakPower"):
-            damage = damage * 3 // 4
         if _power(combat.player_powers, "ShrinkPower"):
             damage = damage * 7 // 10
         if pen_nib_double:
@@ -3039,7 +3060,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 if not enemies[index].alive:
                     break
                 target_enemy = enemies[index]
-                scaled = _vulnerable_damage(combat, target_enemy, damage)
+                scaled = _apply_debuff_multipliers(combat, target_enemy, damage)
                 # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage
                 # taken per card played earlier this turn (combat.cards_played_this_turn already
                 # counts the card resolving right now, hence the -1).
@@ -3088,8 +3109,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     if card == SWORD_BOOMERANG:
         damage = 3 + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
-        if _power(combat.player_powers, "WeakPower"):
-            damage = damage * 3 // 4
         if _power(combat.player_powers, "ShrinkPower"):
             damage = damage * 7 // 10
         if pen_nib_double:
@@ -3102,7 +3121,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 break
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
-            scaled = _vulnerable_damage(combat, before_enemy, damage)
+            scaled = _apply_debuff_multipliers(combat, before_enemy, damage)
             if _power(before_enemy.powers, "SlowPower"):
                 scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[hit] = _damage_enemy(before_enemy, scaled)
@@ -3125,8 +3144,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == VOLLEY:
         damage = 14 if card_was_upgraded else 10
         damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
-        if _power(combat.player_powers, "WeakPower"):
-            damage = damage * 3 // 4
         if _power(combat.player_powers, "ShrinkPower"):
             damage = damage * 7 // 10
         if pen_nib_double:
@@ -3139,7 +3156,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 break
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
-            scaled = _vulnerable_damage(combat, before_enemy, damage)
+            scaled = _apply_debuff_multipliers(combat, before_enemy, damage)
             if _power(before_enemy.powers, "SlowPower"):
                 scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[hit] = _damage_enemy(before_enemy, scaled)
@@ -3212,8 +3229,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += 3
     if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
         damage *= 2
-    if _power(combat.player_powers, "WeakPower"):
-        damage = damage * 3 // 4
     if _power(combat.player_powers, "ShrinkPower"):
         damage = damage * 7 // 10
     if pen_nib_double:
@@ -3222,8 +3237,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # GigantificationPower marks exactly one powered Attack command per play (the first one on
         # the turn) and multiplies that command's damage by 3.
         damage = damage * 3
-    if _power(enemy.powers, "VulnerablePower"):
-        damage = _vulnerable_damage(combat, enemy, damage)
+    damage = _apply_debuff_multipliers(combat, enemy, damage)
     # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage taken per
     # card played earlier this turn (combat.cards_played_this_turn already counts the card
     # resolving right now, hence the -1).

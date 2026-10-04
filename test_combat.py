@@ -853,6 +853,23 @@ class CombatTest(unittest.TestCase):
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
         self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
 
+    def test_weak_and_vulnerable_multiply_attack_damage_before_the_rounding(self) -> None:
+        # ModifyDamageMultiplicative hooks return decimal factors, and the game multiplies them together
+        # before it rounds the damage.  Truncating between Weak (3/4) and Vulnerable (1.5) loses points:
+        # an upgraded Strike (9) played by a Weak player onto a Vulnerable boss is 9 * 0.75 * 1.5 =
+        # 10.125 -> 10 in the game, where the chained model gave 9 * 3 // 4 = 6 then 6 * 150 // 100 = 9.
+        # QUEEN fights are where this showed up - they hold Weak 97-99 for the whole fight - and the
+        # boss-fight audit had CARD.STRIKE_IRONCLAD off by 1 in 69 cases and CARD.ANGER in 65.
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", (), powers=(("VulnerablePower", 1),))
+        combat = Combat(80, (Card("Strike", True),), (), (), (enemy,), energy=1, player_powers=(("WeakPower", 99),))
+        after = step(combat, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 50)
+        # Weak alone still rounds once, and Vulnerable alone is unchanged.
+        only_weak = step(Combat(80, (Card("Strike", True),), (), (), (Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ()),), energy=1, player_powers=(("WeakPower", 99),)), "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(only_weak.enemies[0].hp, 54)  # 9 * 3 / 4 = 6.75 -> 6
+        only_vuln = step(Combat(80, (Card("Strike", True),), (), (), (Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", (), powers=(("VulnerablePower", 1),)),), energy=1), "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(only_vuln.enemies[0].hp, 47)  # 9 * 3 / 2 = 13.5 -> 13
+
     def test_toasty_mittens_exhaust_runs_the_exhaust_relics(self) -> None:
         # ToastyMittens exhausts the top card of the draw pile at the start of every turn, and that
         # Exhaust goes through the same recurring hooks as a card's own Exhaust.  The QUEEN fights in real
