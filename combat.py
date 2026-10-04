@@ -1494,6 +1494,13 @@ def _apply_debuff_multipliers(combat: Combat, enemy: Enemy, damage: int) -> int:
         # old two-step rounding.
         numerator *= 10 + max(0, combat.cards_played_this_turn - 1)
         denominator *= 10
+    shrink = _power(combat.player_powers, "ShrinkPower")
+    if shrink:
+        # ShrinkPower.ModifyDamageMultiplicative scales the damage the holder DEALS - 0.7 at the amount
+        # -1 that every Shrink observation in the corpus carries - so it is one more factor in this
+        # chain rather than a separate truncation step of its own.
+        numerator *= 70
+        denominator *= 100
     if numerator == denominator:
         return damage
     return damage * numerator // denominator
@@ -3102,8 +3109,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += vigor
         if card_was_upgraded:
             damage += ALL_ENEMY_UPGRADE_DAMAGE.get(card, 3)
-        if _power(combat.player_powers, "ShrinkPower"):
-            damage = damage * 7 // 10
         if pen_nib_double:
             damage *= 2
         before = list(enemies)
@@ -3159,8 +3164,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     if card == SWORD_BOOMERANG:
         damage = 3 + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
-        if _power(combat.player_powers, "ShrinkPower"):
-            damage = damage * 7 // 10
         if pen_nib_double:
             damage *= 2
         before = tuple(enemies)
@@ -3192,8 +3195,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == VOLLEY:
         damage = 14 if card_was_upgraded else 10
         damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
-        if _power(combat.player_powers, "ShrinkPower"):
-            damage = damage * 7 // 10
         if pen_nib_double:
             damage *= 2
         before = tuple(enemies)
@@ -3233,6 +3234,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         hits = 1 + combat.unblocked_hits
     else:
         hits = fiend_fire_count if card == FIEND_FIRE else CARD_HITS.get(card, 1)
+        if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
+            # Dismantle.OnPlay: hitCount = target.HasPower<VulnerablePower>() ? 2 : 1 - two separate
+            # attacks, each with its own rounding, block absorption, and Slippery decrement.
+            hits = 2
     if play_duplicated:
         hits *= 2
     if card == PERFECTED_STRIKE:
@@ -3273,10 +3278,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # StrikeDummy.ModifyDamageAdditive: +3 on any powered attack tagged Strike.
     if RELIC_STRIKE_DUMMY in combat.player_relics and card in STRIKE_TAGGED:
         damage += 3
-    if card == DISMANTLE and _power(enemy.powers, "VulnerablePower"):
-        damage *= 2
-    if _power(combat.player_powers, "ShrinkPower"):
-        damage = damage * 7 // 10
     if pen_nib_double:
         damage *= 2
     if gigantified:
