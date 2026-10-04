@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import collections
 import json
 import os
 import random
@@ -10,7 +11,8 @@ from dataclasses import replace
 from itertools import combinations
 
 from combat import (
-    ALL_ENEMY_DAMAGE, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    ALL_ENEMY_DAMAGE, ATTACKS, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
+    POWERS, SKILLS,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
     POTION_STRENGTH, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
 )
@@ -384,6 +386,68 @@ def _intent_incoming(enemy: dict) -> int:
 _LAST_POTION_CONTEXT: tuple[object, ...] | None = None
 _LAST_POTION_ID: str | None = None
 _POTION_USED_ROOM: tuple[object, object] | None = None
+
+# The bridge exports relic ids only - never the counters those relics run on - so every state rebuilt
+# from an observation starts with zero cards played.  The real game does not: LetterOpener deals 5
+# unpowered damage on every 3rd Skill of a turn, Kusarigama 6 and Shuriken's Strength and Ornamental
+# Fan's block on every 3rd Attack, SlowPower raises the damage a slowed creature takes by 10% per card
+# played earlier in the turn, and Pen Nib / Nunchaku / TuningFork count plays across the combat.
+# The counters are reconstructed from the piles rather than from the actions the agent chose: a played
+# card always leaves the hand into the discard or exhaust pile, so the cards that appeared there since
+# this turn began are the cards the turn has actually played - including the ones the game played by
+# itself (Hellraiser / Pyre / Mayhem / Centennial Puzzle autoplays), which an action-derived count
+# misses and which misaligns every 3rd-play rule.
+_TURN_PILE_START: collections.Counter = collections.Counter()
+_TURN_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0, "turn": -1}
+_COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0}
+_COMBAT_ENEMY_IDS: frozenset = frozenset()
+
+
+def _pile_contents(observation: dict) -> collections.Counter:
+    return collections.Counter(
+        CARD_NAMES.get(card.get("id"), card.get("id"))
+        for pile in (observation.get("discard_pile"), observation.get("exhaust_pile"))
+        for card in pile or ()
+    )
+
+
+def _enemy_instance_ids(observation: dict) -> frozenset:
+    return frozenset(enemy.get("combat_id") for enemy in observation.get("enemies", ()) if enemy.get("combat_id"))
+
+
+def _reset_play_counters() -> None:
+    global _COMBAT_ENEMY_IDS, _TURN_PILE_START
+    _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=-1)
+    _COMBAT_PLAYS.update(attacks=0, skills=0)
+    _COMBAT_ENEMY_IDS = frozenset()
+    _TURN_PILE_START = collections.Counter()
+
+
+def _advance_play_counters(observation: dict) -> None:
+    """Rebuild the play counters the bridge hides from how far the discard and exhaust piles grew."""
+    global _COMBAT_ENEMY_IDS, _TURN_PILE_START
+    if observation.get("phase") != "combat":
+        _reset_play_counters()
+        return
+    enemy_ids = _enemy_instance_ids(observation)
+    if _COMBAT_ENEMY_IDS and enemy_ids and not (_COMBAT_ENEMY_IDS & enemy_ids):
+        # No enemy instance carried over: a different fight, so its combat-long counters restart.
+        _COMBAT_PLAYS.update(attacks=0, skills=0)
+    if enemy_ids:
+        _COMBAT_ENEMY_IDS = enemy_ids
+    piles = _pile_contents(observation)
+    if _number(observation.get("turn"), -1) != _TURN_PLAYS["turn"]:
+        _TURN_PILE_START = piles
+        _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=_number(observation.get("turn"), -1))
+    grown = piles - _TURN_PILE_START
+    attacks = sum(amount for name, amount in grown.items() if name in ATTACKS)
+    skills = sum(amount for name, amount in grown.items() if name in SKILLS)
+    _TURN_PLAYS.update(attacks=attacks, skills=skills, cards=sum(grown.values()))
+    # The combat-long counters only ever grow, so the largest per-turn reading seen so far is the best
+    # estimate available without a counter the bridge does not export.
+    _COMBAT_PLAYS["attacks"] = max(_COMBAT_PLAYS["attacks"], attacks)
+    _COMBAT_PLAYS["skills"] = max(_COMBAT_PLAYS["skills"], skills)
+
 ROLLOUT_POTION_IDS = {
     POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK,
     POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE,
@@ -760,6 +824,12 @@ def _tag_action(action: dict, source: str, reason: str | None = None) -> dict:
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
+    """Public entry point: rebuild the play counters the bridge hides, then delegate to the policy."""
+    _advance_play_counters(observation)
+    return _choose(observation, enemy_data, simulations)
+
+
+def _choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
     global _LAST_POTION_CONTEXT, _LAST_POTION_ID, _POTION_USED_ROOM
     if observation.get("phase") == "shop":
         return _tag_action(choose_shop(observation), "phase_shop")
@@ -2855,7 +2925,17 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         # in the hand: a card whose modeled base cost is positive shows up at 0. Restoring the
         # counter is what lets the rollout see that free fifth card and spend it (endturn1 seq476
         # ended the turn holding a free Giant Rock against a 121 HP boss).
-        cards_played_this_turn=(
+        # LetterOpener / Kusarigama key off how many Skills or Attacks the turn has already seen, Shuriken
+        # and Ornamental Fan off the 3rd Attack, SlowPower off every card played earlier in the turn, and
+        # Pen Nib / Nunchaku / TuningFork off counts across the combat.  None of those counters are in the
+        # observation, so they come from `_advance_play_counters`.  The Brilliant Scarf reading below is
+        # kept as a floor: it is derived from the discount being visible in the hand itself.
+        attacks_played_this_turn=_TURN_PLAYS["attacks"],
+        skills_played_this_turn=_TURN_PLAYS["skills"],
+        attacks_played_combat=_COMBAT_PLAYS["attacks"],
+        skills_played_combat=_COMBAT_PLAYS["skills"],
+        cards_played_this_turn=max(
+            _TURN_PLAYS["cards"],
             BRILLIANT_SCARF_FREE_AFTER
             if "RELIC.BRILLIANT_SCARF" in observation["player"].get("relics", ())
             and any(

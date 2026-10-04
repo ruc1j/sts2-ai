@@ -66,6 +66,63 @@ class OfficialAgentTest(unittest.TestCase):
             },
         )
 
+    def test_rebuilds_the_play_counters_the_bridge_does_not_export(self) -> None:
+        # The bridge writes relic ids only, so a state rebuilt from an observation knows nothing about the
+        # plays the turn has already made - which is where LetterOpener's 3rd Skill (5 unpowered damage),
+        # Kusarigama's 3rd Attack, Shuriken's Strength and Ornamental Fan's block live.  The counters come
+        # from the piles instead: a played card lands in the discard or exhaust pile, and the cards that
+        # appeared there since this turn began are the plays of this turn.
+        data = {"monsters": [{
+            "id": "MONSTER.DUMMY", "values": {},
+            "states": [{"id": "IDLE_MOVE", "type": "MoveState", "intents": [], "next": "IDLE_MOVE", "effects": []}],
+        }]}
+
+        def observation(turn: int, discard: list[str]) -> dict:
+            return {
+                "seq": turn, "phase": "combat", "turn": turn,
+                "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 1,
+                           "powers": [], "relics": ["RELIC.LETTER_OPENER"]},
+                "hand": [{"index": 0, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": []}],
+                "draw_pile": [], "discard_pile": [{"id": card} for card in discard], "exhaust_pile": [],
+                "potions": [],
+                "enemies": [{
+                    "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 60, "block": 0,
+                    "powers": [], "intents": [], "move": "IDLE_MOVE", "history": [], "slot": "boss",
+                }],
+                "legal_actions": [
+                    {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0},
+                    {"type": "end_turn"},
+                ],
+            }
+
+        captured = []
+
+        def capture(state, _data, _simulations, _seed):
+            captured.append(state)
+            return [("End turn", 0.0)]
+
+        def counters(observation: dict):
+            with patch("official_agent.search", side_effect=capture):
+                choose(observation, data, 1)
+            state = captured[-1]
+            return state.attacks_played_this_turn, state.skills_played_this_turn, state.cards_played_this_turn
+
+        # Opening of turn 1: nothing has been played, and the Defend left over from the previous turn is
+        # not part of this turn's counters.
+        self.assertEqual(counters(observation(1, ["CARD.DEFEND_IRONCLAD"])), (0, 0, 0))
+        # A Strike lands in the discard pile during the same turn.
+        self.assertEqual(counters(observation(1, ["CARD.DEFEND_IRONCLAD", "CARD.STRIKE_IRONCLAD"])), (1, 0, 1))
+        # Two more Skills: the third Skill of the turn is where LetterOpener deals its 5 damage.
+        self.assertEqual(
+            counters(observation(1, ["CARD.DEFEND_IRONCLAD", "CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD", "CARD.DEFEND_IRONCLAD"])),
+            (1, 2, 3),
+        )
+        # Turn 2 opens with all of those cards still in the discard pile, and none of them count.
+        self.assertEqual(
+            counters(observation(2, ["CARD.DEFEND_IRONCLAD", "CARD.STRIKE_IRONCLAD", "CARD.DEFEND_IRONCLAD", "CARD.DEFEND_IRONCLAD"])),
+            (0, 0, 0),
+        )
+
     def test_keeps_the_runtime_stunned_move_instead_of_re_resolving_it(self) -> None:
         # An unknown move id used to be re-resolved through the monster's opening state so that
         # _enemy_turn could look it up.  For the runtime stun id that made the rollout perform the
