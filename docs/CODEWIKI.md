@@ -7464,3 +7464,32 @@ HP 割合を出せなかった ✓ また `data/*_map.json` は map の graph（
 **通った経路は入っていない** ✓ 経路は result file の `routes` だけで ✓ それらは 12 本しか残っていない ✓
 → 経路の測定は mod log の `Entering ... room (Act N, Floor M)` 列から行うのが実務的で ✓
 trace と log を突き合わせる時刻情報（trace に timestamp が無い ✓）は無い ✓ 教訓として残す ✓
+
+## Round 57: QUEEN 戦の debuff 大量スタックは忠実度の穴ではなかった ✓ Frail は game でも固定 0.75 ✓
+
+arm の seed AM8C6YXHSG は **Act 3 boss `MONSTER.QUEEN` (max_hp 400) の turn 9 で死亡** ✓
+最後の敵 HP 284 ✓ 9 ターンで 116 ダメージ ✓ 約 13/ターン ✓
+最後のターンの player powers: `CHAINS_OF_BINDING 3` ✓ `FEEL_NO_PAIN 3` ✓ **`FRAIL 93`** ✓ `RUPTURE 1` ✓
+`THORNS 3` ✓ **`VULNERABLE 93`** ✓ **`WEAK 93`** ✓ block 0 ✓
+
+Frail が amount で強くなるなら model の固定 3/4 が穴になる ✓と見て読んだ ✓
+**`FrailPower.ModifyBlockMultiplicative` は `return 0.75m;`** ✓（`FrailPower.cs` ✓）✓
+つまり game でも Frail は **固定 25% 減** ✓ stack 数は持続/適用回数で ✓ 係数は 93 で深くならない ✓
+model は `combat.py:1232` の `block = base * 3 // 4 if apply_frail and _power(..., "FrailPower")` ✓
+**一致している** ✓ gate も対応 ✓ game の `props.IsPoweredCardOrMonsterMoveBlock()` ✓ に対し
+model は `apply_frail=False` を power で無い grant（`combat.py:2062` ✓ `2065` ✓ `3086` ✓）に使っている ✓
+Vulnerable も同様に固定（model は 150/100 ✓ 93  stack でも ×1.5 ✓）✓
+→ **debuff の意味は既に忠実 ✓ QUEEN 戦の壁は数そのもの** ✓（400 HP ✓ 味方 TORCH_HEAD_AMALGAM 599 HP ✓
+CODEWIKI 記録 ✓ に 13/ターンでは届かない ✓）✓ 誤った修正をせずに済んだ ✓
+
+**sweep3.sh の `fail=` 抽出を直した** ✓ 前 round の「fail の先頭が E」は log 行頭のタイムスタンプの
+콜론で `sed -E 's/.*: //'` が最後まで進んでいたため ✓
+`sed -E 's/.*Run failed with seed=[A-Z0-9]+: //'` に锚を置いて解決 ✓ 実 log で確認 ✓
+
+```
+fail=Watchdog timeout: No progress for 30.1s. Last activity: Entering Monster room (Act 1, Floor 11)
+```
+
+panel: arm 3 本目（EAIF2UUVCK）走行中 ✓ control 未開始 ✓ 完了待ち background job `bash-879` ✓
+（`zsh -n` 文法確認済み ✓ ただし control 側に新しい sweep3.sh が効くのは次回起動から ✓ 今回の control は
+起動済みのスクリプトを再読するので効く ✓ 同じファイルを読むため ✓）✓
