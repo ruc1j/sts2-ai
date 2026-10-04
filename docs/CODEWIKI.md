@@ -6016,3 +6016,9 @@ Forgotten Soul が撃つランダム対象の違い（rollout の RNG）とし�
 panel は見送った。`RELIC.TOASTY_MITTENS` と `RELIC.FORGOTTEN_SOUL` を同時に持つ観測は corpus 内で
 seed H2LV6ZJ4XW の 76 件だけで、機構を狙った panel に必要な 3 seed が揃わないため。忠実度の実証
 （4,794 件の replay 一致率と、崩れた group の消滅）で HEAD に残す。
+
+决定母数は **24,651 本 replay して 1,600 决定が変化した**が、**変化が出た seed は 1 本だけ**
+（`data/attribution_rampart.py` の selector `RELIC.TOASTY_MITTENS`、control `5e5cb84`）。Toastymittens を
+持つ run は多いのに决定が変わった seed が少ないのは、ターン開始の 1 ダメージ差が探索の argmax を
+滅多に揺らさないためで、**「决定 3 seed 以上」という採用基準は満たさない**。この commit を残す根拠は
+忠実度（4,794 件の一致率 84.8% → 95.6%、崩れた group の消滅）であり、胜数や决定分布の改善ではない。
