@@ -7628,3 +7628,47 @@ suite と census で測る ✓（残る game+19 の差がどこまで縮むか�
 
 panel: control 1 本目完了 ✓ arm と同一（17勝1敗 ✓ 354 records ✓ Act 3 Floor 15 ✓ **决定差分 0 件** ✓ 前 round ✓）✓
 control 2・3 本目は走行中 ✓ 完了待ち background job `bash-879` ✓
+
+## Round 62: `RELIC.THROWING_AXE` を model に入れた ✓ gap の幅が game+15 → game+5 ✓ game+19 → game+6 ✓（scratch ✓ 781 件 green ✓）
+
+scratch `.wt-proto8` に実装 ✓ patch `/tmp/throwing_axe.patch` ✓
+- `RELIC_THROWING_AXE = "RELIC.THROWING_AXE"` ✓
+- `Combat.cards_played_combat` を追加 ✓（`ruined_helmet_used` の後に置き ✓ 既存の positional 構築を崩さない場所 ✓）✓
+- `Combat` の `_step` で **`play_duplicated = True` にする** ✓
+  最初に `plays += 1` と書いたら効かなかった ✓（攻撃の hit 数は `plays` ではなく `play_duplicated` /
+  `hits *= 2` で決まる ✓ `combat.py:1233` ✓ 型の branch が duplication 機構を使う ✓）✓
+  実際に game は playCount + 1 なので ✓ 他の効果で既に 2 回になっている札は game では 3 回 ✓
+  model は 2 回にする ✓（稀なケースなのでコメントに残した ✓）✓
+- `official_agent.py`: `_COMBAT_PLAYS` に `cards` を追加 ✓ model state に `cards_played_combat` を渡す ✓
+
+**重要: export 値は running の値を「上書き」しなければならない** ✓ 最初は `max(...)` で取り込んだ ✗✗
+`max` だと新しい combat で 0 に戻るべき値が前の combat のまま残り ✓「combat の最初の札」の gate が
+二度と立たない ✓ 実際の census の数字が動かないことで分かった ✓ 代入に直した ✓
+（`plays.get("attacks_combat")` 等は combat 単位の値 ✓ game の履歴が正 ✓）✓
+
+**測定** ✓ 同じ corpus（arm の 3 trace ✓ 613 手 ✓ 609 一致 ✓）で group の幅だけ動いた ✓
+
+| group | 変更前 | 変更後 |
+|---|---|---|
+| `DEVOTED_SCULPTOR CARD.BASH` | game+15 | **game+5** ✓ |
+| `LIVING_SHIELD CARD.UPPERCUT` | game+19 | **game+6** ✓ |
+
+個別 probe でも確認 ✓（seq 298 ✓ model 10 → **20** ✓ game 25 ✓）✓
+残る +5 と +6 は別の source ✓ 次の手がかり: その run の relic の中で combat に出るものは
+ORICHALCUM ✓ PAELS_FLESH ✓ LOST_WISP ✓ STRIKE_DUMMY ✓ LUCKY_FYSH ✓ MEAT_ON_THE_BONE ✓ MUMMIFIED_HAND ✓
+MOLTEN_EGG は報酬と店の提示 ✓ LARGE_CAPSULE は deck と relic ✓ BURNING_BLOOD は勝利後 Heal 6 ✓
+ODDLY_SMOOTH_STONE は room 進入時の Dexterity +1 ✓（**Dexterity 1 の説明 ✓ combat の damage ではない ✓**）✓
+→ +5 / +6 の候補として PAELS_FLESH と ORICHALCUM の数値を game の実装と突き合わせる ✓（未実施 ✓）✓
+
+**panel は完了した** ✓ arm と control が 3 seed すべてで同一 ✓
+
+| seed | arm | control |
+|---|---|---|
+| AM8C6YXHSG | 17勝1敗 ✓ 354 records ✓ Act 3 Floor 15 | 17勝1敗 ✓ 354 ✓ Act 3 Floor 15 |
+| D6A1F8C3E5 | 14勝1敗 ✓ 282 ✓ Act 3 Floor 4 | 14勝1敗 ✓ 282 ✓ Act 3 Floor 4 |
+| EAIF2UUVCK | 11勝1敗 ✓ 225 ✓ Act 2 Floor 10 | 11勝1敗 ✓ 225 ✓ Act 2 Floor 10 |
+
+合計 arm 42 勝 3 敗 ✓ control 42 勝 3 敗 ✓ **玩札数 export は勝敗と到達を変えなかった** ✓
+（seed AM8C6YXHSG では决定差分 0 件も測済み ✓）✓ Act 3 完走は出なかった ✓
+THROWING_AXE の変更は pricing を変える（初手の攻撃が 2 hit になる ✓）ので ✓ **commit 前に决定母数を測る** ✓
+（arm の trace には `plays` があるので ✓ 新旧 tree の replay 差を出せる ✓）✓
