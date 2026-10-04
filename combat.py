@@ -2366,6 +2366,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                     combat, draw_pile=tuple(mittens_pile),
                     exhaust_pile=combat.exhaust_pile + (mittens_exhausted,),
                 )
+                # The relic's exhaust is a real card Exhaust, so the recurring exhaust hooks run on it.
+                # This is the reason the QUEEN fight's boss lost exactly 1 HP on every turn: those runs
+                # carry ToastyMittens and ForgottenSoul together, and ForgottenSoul.AfterCardExhausted
+                # deals 1 unpowered damage to a random hittable enemy per Exhaust
+                # (act3_verify_head_H2LV6ZJ4XW seq 555/561/577; 177 of 188 QUEEN end-turn replays were
+                # off by exactly 1 before this line existed).
+                combat = _after_exhaust(replace(combat, enemies=tuple(enemies), player_powers=player_powers), (mittens_exhausted,), rng, data)
+                enemies = list(combat.enemies)
         # ClarityPower.ModifyHandDraw: +1 card, then AfterSideTurnStart decrements the counter.
         clarity = _power(player_powers, "ClarityPower")
         if clarity:
