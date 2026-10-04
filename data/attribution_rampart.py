@@ -12,7 +12,7 @@ must differ by that commit only, otherwise a difference cannot be attributed to 
 It measures the population a fix is live on.  It is not evidence about run outcomes - that needs a
 real run (`data/rampart_ab.sh` shows the panel form).
 
-Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X | MONSTER.X | RELIC.X | PLAYER:POWER.X,POWER.Y] [enemy_data.json]
+Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X | MONSTER.X | RELIC.X | POTION:POTION.X,POTION.Y | PLAYER:POWER.X,POWER.Y] [enemy_data.json]
 """
 
 from __future__ import annotations
@@ -53,6 +53,15 @@ for line in open(paths, encoding="utf-8-sig"):
         if not any(
             card.get("id") in wanted and card.get("upgrade")
             for card in record.get("hand") or ()
+        ):
+            continue
+    elif power_id.startswith("POTION:"):
+        # A potion id list selects the decisions where the player holds one of those potions, for gaps
+        # where the simulator had no model for the potion at all.
+        wanted = power_id.split(":", 1)[1].split(",")
+        if not any(
+            (potion.get("id") if isinstance(potion, dict) else potion) in wanted
+            for potion in record.get("potions") or ()
         ):
             continue
     elif power_id.startswith("RELIC."):
@@ -96,7 +105,7 @@ def main() -> int:
     ]
     power_id = sys.argv[3] if len(sys.argv) > 3 else "POWER.RAMPART_POWER"
     enemy_data = Path(sys.argv[4]) if len(sys.argv) > 4 else REPO / "data/enemies_glory.json"
-    token = (power_id.split(":", 1)[1].split(",")[0] if power_id.startswith(("PLAYER:", "CARD:")) else power_id).encode()
+    token = (power_id.split(":", 1)[1].split(",")[0] if power_id.startswith(("PLAYER:", "CARD:", "POTION:")) else power_id).encode()
     # TRACE_GLOB overrides which traces are replayed (e.g. one panel's control traces) and
     # SIMULATIONS caps the rollout width so a large population still finishes.
     trace_glob = __import__("os").environ.get("TRACE_GLOB", "data/*_agent.jsonl")

@@ -93,7 +93,10 @@ def recorded_action(record, state, data):
     if card_id is None:
         if record.get("potion_id"):
             # The simulator names potions with the game's own id (POTION.BLOCK_POTION), not by slot.
-            for candidate in (f"potion:{record['potion_id']}", f"potion:{record.get('potion_index')}"):
+            candidates = [f"potion:{record['potion_id']}"] + [
+                f"potion:{record['potion_id']}@{position}" for position, enemy in enumerate(state.enemies) if enemy.alive
+            ]
+            for candidate in candidates:
                 if candidate in legal:
                     return candidate
             return None
