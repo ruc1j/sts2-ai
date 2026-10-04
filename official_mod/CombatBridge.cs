@@ -132,6 +132,11 @@ internal static class CombatBridge
                     id = card.Id.ToString(),
                     cost = card.EnergyCost.GetWithModifiers(CostModifiers.All),
                     upgrade = card.CurrentUpgradeLevel,
+                    // The live observation (below) already reports the enchantment; the trace record
+                    // omitted it, so offline replay built from a trace could not see that a card
+                    // carries Corrupted (x1.5 damage) or Tezcatara's Ember (+3) and mis-scored those
+                    // card plays when attributing a fix.
+                    enchantment = card.Enchantment?.Id.ToString(),
                     type = card.Type.ToString(),
                     rarity = card.Rarity.ToString(),
                     pool = card.Pool.Id.ToString(),

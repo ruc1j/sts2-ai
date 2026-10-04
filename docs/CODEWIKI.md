@@ -5172,3 +5172,33 @@ observation/action ファイルが 10:40 から更新されないまま 30 分 t
 RESULT 行には `wins=1 exit=1` と出てしまい、そのまま読むと delta +12 の誤計測になる。同じ seed の
 control を `upgrade_ctrl_b2` で走り直すと 12勝1敗で完走したので **halt は再現しない一時的なもの**として
 扱う。教訓：RESULT 行は `exit=1` と agent record 数（完走なら普通数千行）を確認してから使う。
+
+### 前項の訂正：live の observation には enchantment があった（2026-10-04、実走で確認）
+
+前項の「hand の enchantment が bridge に無い」は**半分間違い**だった。`CombatBridge.cs` には射影が2つある：
+
+- **observation 射影**（257 付近、python が実際に読む）：hand に `enchantment` を出す ✓ 実装済み
+- **trace 射影**（129 付近、`--bridge-trace` が書く `*_agent.jsonl`）：hand に `enchantment` が**無い**
+
+つまり live run の agent は付与を見ており、combat.py の Corrupted（×1.5 と play 時の self 2 ダメージ）と
+Tezcatara's Ember（+3）は**普段から発火していた**。無かったのは **corpus 側の記録**で、そのため
+`model_match_audit.py` や attribution replay は trace から state を組み直す限り付与を知らず、
+Feed の -5〜-8 群のような「model が弱い」嘘の不一致を生んでいた。dll 内の `enchantment` 文字列が 3 個
+だったのは、同じ形の anonymous type がメタデータで共有されるためで、ビルドの古さの証拠にはならない
+（これも前項の誤りの一部）。
+
+### 対策：trace 射影にも enchantment を出したら Feed の不一致が消えた
+
+`official_mod/CombatBridge.cs` の trace 射影の hand に `enchantment = card.Enchantment?.Id.ToString()` を
+1 行足して再ビルド（231,424 バイト、0 warnings / 0 errors）、`enchant_check_b1` で seed
+`H2LV6ZJ4XW`（`SYMBIOTE` イベントが seq 240＝以前と同じ位置）を走らせた：
+
+- hand card record 1,969 件すべてに `enchantment` キーが入るようになった
+- `('CARD.FEED', 'ENCHANTMENT.CORRUPTED')` が 27 件記録された＝var が 15+Strength に変わっていた札の正体
+- その trace だけで `model_match_audit` を回すと一致 284/294 = **96.6%**、Feed の不一致は
+  (model 289 / game 290) の 1 件だけになった（以前は -5〜-8 の群が 240 件）
+
+**结论：combat.py の側に付与処理の gap は無い。** 消えた不一致は観測チャネルの欠落による見かけのものだった。
+以後の offline replay は付与を知ることができる。game は v0.107.1 系（`run_official_autoslay.ps1` が
+インストールする mods/Sts2Ai を毎回差し替え）、seed `H2LV6ZJ4XW` の win 数は 22 勝 1 敗で
+`plating_arm_b1` の 22 勝 1 敗と一致（trace の記録形式が変わっても run の挙動は変わっていない）。
