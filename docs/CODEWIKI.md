@@ -6997,3 +6997,36 @@ model の reshape 点は `_draw` の `if not draw: draw, discard = discard, []` 
 
 **未測定** ✓ control sweep（`9bfc18e` ✓ 06:33 開始 ✓ seed 1 走行中 ✓）が終わるまで重い replay は走らせない ✓
 （実行中の agent の 25 ms polling を奪う ✓）✓ 測定したら HEAD に適用する ✓
+
+## Round 43: `combat.py` は Power 札の集合 `POWERS` を既に持っていた（20 枚 ✓ decompile と完全一致）
+
+前 round の scratch 修正は独自に `POWER_CARDS` を定義した ✓ が ✓ `combat.py:200` の
+`POWERS = {STAMPEDE, VICIOUS, INFLAME, RUPTURE, INFERNO, CRUELTY, STONE_ARMOR, FEEL_NO_PAIN, BARRICADE,
+PYRE, UNMOVABLE, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, HELLRAISER, FASTEN, DEMON_FORM, JUGGERNAUT,
+JUGGLING, PANACHE}` ✓ が **decompile から数えた CardType.Power の 20 枚とぴったり同じ** ✓
+重複定数をやめて `leaves_combat = not exhaust and card in POWERS` に載せ替えた ✓
+scratch suite **778 件 green** ✓ patch `/tmp/power_leaves_combat.patch`（63 行 ✓）✓
+
+exhaust panel の比較（wins は combat 勝数 ✓ Act 3 踏破ではない ✓）:
+
+| seed | arm `073aabf` | control `9bfc18e` |
+|---|---:|---:|
+| AM8C6YXHSG | 17 勝 1 敗 | **17 勝 1 敗** |
+| D6A1F8C3E5 | 15 勝 1 敗 | 走行中 |
+| EAIF2UUVCK | 空（main menu 停止 ✓） | 未開始 |
+
+1 seed 目は同じ ✓ 同じ数値は測定になっていない ✓ 3 seed 目が空なので基準（3 seed ✓）を満たさない見込み ✓
+
+**panel 完了後に走る測定を仕掛けた** ✓ `/tmp/measure_after_panel.sh`（panel の `PANEL_DONE` を待って実行 ✓
+実行中に重い replay を走らせないため ✓）:
+1. `python3 data/boss_gap_list.py 10` → `/tmp/gap_after_fixes.txt` ✓（HEAD に適用済みの Ashen/Second Wind と
+   Power 計上の效果 ✓）
+2. attribution arm `.wt-attr-e10`（`e10e5ee` ✓）vs control `.wt-attr-073`（`073aabf` ✓）で
+   `PLAYER:POWER.STRENGTH_POWER` → `data/ashen_attr.log` ✓（Ashen/Second Wind の决定母数 ✓）
+3. attribution arm HEAD vs control `.wt-attr-e10` で `POWER.SLOW_POWER` → `data/powercredit_attr.log` ✓
+   （Power 計上の决定母数 ✓ Slow の ramp を読むのはその集団 ✓）
+
+`attribution_rampart.py` の selector は **1 個だけ** ✓（usage ✓ line 15 ✓）✓ 最初に `RELIC.X,CARD:...` の
+複合を渡した版は empty になる ✗ 杀掉して直し ✓ selector を分離した ✓ `CARD:` は **upgraded copy が手札に
+ある决定だけ**を選ぶ ✓（line 48-52 ✓）ので upgrade 依存でないこの修正には合わない ✓
+`PLAYER:POWER.STRENGTH_POWER`（57,220 観測 ✓ ほぼ全 combat 决定 ✓）を母数の近似に使う ✓
