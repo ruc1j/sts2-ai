@@ -2489,6 +2489,26 @@ class CombatTest(unittest.TestCase):
                         break
                     combat = step(combat, rng.choice(legal_actions(combat)), self.data, rng)
 
+    def test_slimed_exhausts_itself_and_fires_forgotten_soul(self) -> None:
+        # Slimed carries CardKeyword.Exhaust: Slimed.OnUse draws 1, then
+        # CardModel.GetResultPileTypeForCardPlay sends the played card to the exhaust pile.  The game
+        # dealt 1 to the enemy on every Slimed play in runs holding RELIC_FORGOTTEN_SOUL (the
+        # SLIMED_BERSERKER CARD.SLIMED game+1 group, 5 cases), which the model priced at 0 because it
+        # sent the played card to no pile at all.
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (SLIMED, STRIKE), (DEFEND,) * 4, (), (enemy,), energy=1,
+                        player_relics=(RELIC_FORGOTTEN_SOUL,))
+        after = step(combat, SLIMED, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.exhaust_pile, (SLIMED,))
+        self.assertEqual(after.enemies[0].hp, 39)
+        self.assertIn(DEFEND, after.hand)
+
+    def test_slimed_without_the_relic_exhausts_without_damage(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 40, "IDLE_MOVE", ())
+        combat = Combat(80, (SLIMED, STRIKE), (DEFEND,) * 4, (), (enemy,), energy=1)
+        after = step(combat, SLIMED, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.exhaust_pile, after.enemies[0].hp), ((SLIMED,), 40))
+
     def test_cinder_damages_and_exhausts_a_random_hand_card(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
         after = step(Combat(80, (CINDER, STRIKE, DEFEND), (), (), (enemy,)), f"{CINDER}@0", {}, random.Random(0))

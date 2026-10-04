@@ -2738,8 +2738,16 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # BattleTrance applies NoDraw after its own draw, so nothing else draws this turn.
         return replace(combat, player_powers=_add_power(combat.player_powers, "NoDrawPower", 1))
     if card == SLIMED:
-        combat = replace(combat, hand=tuple(hand), energy=combat.energy - (0 if card_is_free else 1))
-        return _draw_into_combat(combat, 1, data, rng)
+        # Slimed.OnUse draws 1, then GetResultPileTypeForCardPlay sends it to the exhaust pile because it
+        # carries CardKeyword.Exhaust.  Sending it to no pile at all lost both the exhaust and the hooks
+        # that hang off it: the game dealt 1 from ForgottenSoul on every Slimed play in the runs that
+        # hold the relic, which the model priced at 0.
+        combat = _draw_into_combat(
+            replace(combat, hand=tuple(hand), energy=combat.energy - (0 if card_is_free else 1)), 1, data, rng
+        )
+        return _after_exhaust(
+            replace(combat, exhaust_pile=combat.exhaust_pile + (played_value,)), (played_value,), rng, data
+        )
     if card == FRANTIC_ESCAPE:
         enemies = list(combat.enemies)
         for index, enemy in enumerate(enemies):
