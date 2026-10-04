@@ -7816,3 +7816,43 @@ RESULT fixafter D6A1F8C3E5 wins=15 losses=1 combat_records=309 depth=Act 3, Floo
 反映して ✓ 以降の hit はその時点の敌状態から計算する ✓（game は resolution ごとに別の DamageCmd ✓）✓
 Bash は Basic rarity ✓ Uppercut は Uncommon ✓ で母数は大きく見えるので ✓
 **attribution で决定母数を出し ✓ 3 seed 以上なら panel する** ✓（teaching 32 ✓ 0 件なら panel しない ✓）✓
+
+## Round 67: 多重 play の debuff 順序を直した ✓ 記録された 25 / 32 をテストで固定 ✓（scratch ✓ 783 件 green ✓ 母数測定中 ✓）
+
+scratch `.wt-proto10` ✓ patch `/tmp/patch_multihit.py` ✓
+
+**追加した helper** ✓ `_card_resolution_debuffs(card, upgraded)` ✓（`CARD_VULNERABLE_TARGET` の直後 ✓）✓
+1回の OnPlay resolution が target に入れる debuff を、game が適用する順序のまま返す ✓
+- `CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, SQUASH: 2}` ✓ に強化の +1 ✓（`BASH` と `SQUASH` は upgrade で +1 ✓ 既存の tail と同じ ✓）✓
+- `UPPERCUT` は `WeakPower (1 + 強化)` → `VulnerablePower (1 + 強化)` ✓（`UpperCut.cs` が `Apply<WeakPower>` → `Apply<VulnerablePower>` ✓）✓
+
+**hits ループを変更** ✓（`combat.py` の `damage = _apply_debuff_multipliers(...)` の直後 ✓）✓
+hit を入れて ✓ まだ次の hit が残っているなら ✓ その resolution ぶんの debuff を target に載せ ✓
+**残りの hit を新しい敌状態から掛け直す** ✓（`base_damage` を保持して `_apply_debuff_multipliers` を掛け直す ✓）✓
+最後の resolution の debuff は従来どおり end-of-play 側で入れる ✓ → **総量は resolution 1 回ぶん × play 数 のまま ✓ 順序だけ直った** ✓
+`hits == 1` の通常 play はループ内で何も足さない ✓（`hit_index + 1 < hits` ✓）ので ✓ 既存の挙動はそのまま ✓
+
+**tail の重複を取り除いた** ✓
+- `CARD_VULNERABLE_TARGET` の grant から `* (2 if play_duplicated else 1)` を外した ✓（前回の resolution ぶんはループで入れた ✓）✓
+- Uppercut の `plays = 2 if play_duplicated else 1` を `plays = 1` にした ✓（同じ理由 ✓）✓
+- `lamp_double`（Unsettling Lamp ✓ `DEBUFF_CARDS` の debuff を倍にする ✓）は grant の係数として維持 ✓
+  lamp は play 数を増やさないので `hits` は 1 のまま ✓ → 既存の lamp テスト（`test_combat.py:1439` ✓）はそのまま ✓
+
+**テストで記録の数字を固定した** ✓ `test_a_duplicate_play_sees_the_vulnerable_its_earlier_resolution_applied` ✓
+- `Card(BASH, True)` + `RELIC_THROWING_AXE` ✓ → **25 ダメージ** ✓（10 → 10×3/2 ✓）敌の Vulnerable **6** ✓（1 resolution 3 ✓×2 ✓）
+  実際の trace `data/counts_arm_D6A1F8C3E5_agent.jsonl` seq 298 の game 数と一致 ✓
+- `UPPERCUT` + axe ✓ → **32 ダメージ** ✓（13 → 19 ✓）敌に `WeakPower 2` と `VulnerablePower 2` ✓
+  seq 314 の game 数（LIVING_SHIELD 55 → 23 ✓）と一致 ✓
+suite **783 件 green** ✓
+
+**action の form に注意** ✓ 強化札（`Card` オブジェクト）の targeted play は `card:0@0` ✓
+（untargeted は `card:0` ✓）✗ `card:0` だと `illegal action` ✓
+
+**main への commit は母数測定の後** ✓ attribution は arm（scratch ✓ 修正入り ✓）と control（main ✓ 修正無し ✓）の
+** policy 差**を測るので ✓ commit して両者を同じにしてはいけない ✓（teaching 2 ✓）✓
+selector `CARD.BASH` ✓ `CARD.UPPERCUT` ✓ `CARD.SQUASH` ✓ `CARD.BREAK` ✓ で実行中 ✓
+`/tmp/multihit_attr.status` ✓ logs `data/multihit_*_attr.log` ✓
+
+**waiter の鍵の失敗** ✓ `for ... done > /tmp/multihit_attr.status` の形だと **ファイルは開始時に空で作られる** ✓
+完了の目印にならない ✓（最初の waiter は即座に抜けた ✓）→ **完了後に入れる `echo ... > status` を使う** ✓
+または logs が全て non-empty になったかで待つ ✓
