@@ -2228,6 +2228,15 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         no_draw = _power(player_powers, "NoDrawPower")
         if no_draw:
             player_powers = _add_power(player_powers, "NoDrawPower", -no_draw)
+        regen = _power(player_powers, "RegenPower")
+        if regen and combat.player_hp > 0:
+            # RegenPower.AfterSideTurnEnd heals its owner by Amount at the end of the side's turn and
+            # decrements.  _enemy_turn already does this for enemies; the player side was missing, so a
+            # held Regen was invisible to the rollout.  Replaying the end_turn of every record where the
+            # player held Regen matched only 605/811 (74.6%), and the game's HP was higher by exactly the
+            # power amount in the top mismatch groups (+5 in 47, +4 in 37, +3 in 30, +2 in 19).
+            combat = replace(combat, player_hp=min(combat.player_max_hp, combat.player_hp + regen))
+            player_powers = _add_power(player_powers, "RegenPower", -1)
         if _power(player_powers, "PlatingPower") and new_turn > 1:
             player_powers = _add_power(player_powers, "PlatingPower", -1)
         if RELIC_POCKETWATCH in relics and new_turn > 1 and combat.cards_played_this_turn <= 3:

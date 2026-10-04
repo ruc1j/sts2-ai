@@ -780,6 +780,17 @@ class CombatTest(unittest.TestCase):
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 47)
 
+    def test_player_regen_heals_at_the_end_of_the_turn_and_decrements_by_one(self) -> None:
+        # RegenPower.AfterSideTurnEnd heals its owner by Amount and then decrements by 1 (recorded runs
+        # show a held Regen of 5, 4, 3, 2, 1 on consecutive turns).  The enemy side was already modeled;
+        # the player side was missing, which left 206 of 811 recorded end-of-turns unexplained by the model.
+        enemy = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ())
+        combat = Combat(40, (), (), (), (enemy,), player_powers=(("RegenPower", 3),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, _power(after.player_powers, "RegenPower")), (43, 2))
+        capped = step(Combat(79, (), (), (), (enemy,), player_powers=(("RegenPower", 3),)), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(capped.player_hp, 80)  # player_max_hp, which the enemy side also respects
+
     def test_mr_struggles_ticks_the_new_turn_number_into_every_enemy(self) -> None:
         # MrStruggles.AfterPlayerTurnStart deals TurnNumber damage to every hittable enemy at the start
         # of each player turn (turn 2 -> 2 damage, turn 5 -> 5).  24 recorded runs hold the relic and 548
