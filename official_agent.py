@@ -418,6 +418,10 @@ _TURN_EFFECT_DEPARTURES: collections.Counter = collections.Counter()
 _TURN_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0, "turn": -1}
 _COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
+# Set when the current observation carried the mod's exported play counts (unused today, kept so a run
+# can report which source priced it).
+_EXPORTED_PLAYS = False
+
 
 
 def _pile_contents(observation: dict) -> collections.Counter:
@@ -436,6 +440,34 @@ def _hand_contents(observation: dict) -> collections.Counter:
 
 def _enemy_instance_ids(observation: dict) -> frozenset:
     return frozenset(enemy.get("combat_id") for enemy in observation.get("enemies", ()) if enemy.get("combat_id"))
+
+
+def _seed_exported_plays(observation: dict) -> bool:
+    """Take the play counts the mod exported instead of guessing them from the piles.
+
+    The bridge can read them off the game's own combat history the way the game does, so they are exact
+    where our inference is not: a monster putting a card into your discard looked like a play (seed
+    AM8C6YXHSG turn 3, the discard gained two CARD.ANGER while only one left the hand), and a Power card
+    leaving the combat left no pile trace at all.  Returns False when the observation has no counts, which
+    is the older mod build, and the inference above stays in charge.
+    """
+    global _EXPORTED_PLAYS
+    plays = observation.get("plays")
+    if not isinstance(plays, dict):
+        return False
+    _EXPORTED_PLAYS = False
+    cards = _number(plays.get("cards_this_turn"), -1)
+    attacks = _number(plays.get("attacks_this_turn"), -1)
+    skills = _number(plays.get("skills_this_turn"), -1)
+    if cards < 0 and attacks < 0 and skills < 0:
+        return False
+    _TURN_PLAYS["cards"] = max(0, cards)
+    _TURN_PLAYS["attacks"] = max(0, attacks)
+    _TURN_PLAYS["skills"] = max(0, skills)
+    _COMBAT_PLAYS["attacks"] = max(_COMBAT_PLAYS["attacks"], max(0, _number(plays.get("attacks_combat"), 0)))
+    _COMBAT_PLAYS["skills"] = max(_COMBAT_PLAYS["skills"], max(0, _number(plays.get("skills_combat"), 0)))
+    _EXPORTED_PLAYS = True
+    return True
 
 
 def _reset_play_counters() -> None:
@@ -897,6 +929,7 @@ def choose(observation: dict, enemy_data: dict | None = None, simulations: int =
     """
     global _PENDING_ACTION
     _advance_play_counters(observation)
+    _seed_exported_plays(observation)
     action = _choose(observation, enemy_data, simulations)
     _PENDING_ACTION = action
     return action

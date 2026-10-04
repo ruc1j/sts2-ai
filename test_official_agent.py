@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 import random
 import tempfile
@@ -96,6 +96,27 @@ class OfficialAgentTest(unittest.TestCase):
                 "HellraiserPower": 1,
             },
         )
+
+    def test_exported_play_counts_replace_the_inferred_ones(self) -> None:
+        # The mod can read the play counts off the game's combat history, which is exact where the pile
+        # inference is not (a monster putting a card into your discard looked like a play, and a Power
+        # card leaves the combat with no pile trace at all).  When the observation carries them, the model
+        # state must use them; when it does not, the inference stays in charge.
+        official_agent._reset_play_counters()
+        observation = {
+            "phase": "combat", "seq": 1, "turn": 1,
+            "enemies": [{"combat_id": 7, "id": "MONSTER.BYGONE_EFFIGY", "hp": 100, "block": 0, "powers": []}],
+            "hand": [{"id": "CARD.STRIKE_IRONCLAD"}], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 2, "relics": [], "powers": []},
+            "plays": {"cards_this_turn": 2, "attacks_this_turn": 1, "skills_this_turn": 1,
+                      "cards_combat": 5, "attacks_combat": 3, "skills_combat": 2},
+        }
+        self.assertTrue(official_agent._seed_exported_plays(observation))
+        self.assertEqual((official_agent._TURN_PLAYS["cards"], official_agent._TURN_PLAYS["attacks"], official_agent._TURN_PLAYS["skills"]), (2, 1, 1))
+        self.assertEqual(official_agent._COMBAT_PLAYS["attacks"], 3)
+        official_agent._reset_play_counters()
+        self.assertFalse(official_agent._seed_exported_plays({k: v for k, v in observation.items() if k != "plays"}))
+        official_agent._reset_play_counters()
 
     def test_rebuilds_the_play_counters_the_bridge_does_not_export(self) -> None:
         # The bridge writes relic ids only, so a state rebuilt from an observation knows nothing about the

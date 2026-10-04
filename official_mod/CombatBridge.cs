@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
@@ -103,6 +103,15 @@ internal static class CombatBridge
                 seq = action.Seq,
                 phase = "combat",
                 turn = player.PlayerCombatState.TurnNumber,
+                plays = new
+                {
+                    cards_this_turn = PlayedCounts(player, thisTurnOnly: true).Cards,
+                    attacks_this_turn = PlayedCounts(player, thisTurnOnly: true).Attacks,
+                    skills_this_turn = PlayedCounts(player, thisTurnOnly: true).Skills,
+                    cards_combat = PlayedCounts(player, thisTurnOnly: false).Cards,
+                    attacks_combat = PlayedCounts(player, thisTurnOnly: false).Attacks,
+                    skills_combat = PlayedCounts(player, thisTurnOnly: false).Skills,
+                },
                 player_hp = player.Creature.CurrentHp,
                 player = new
                 {
@@ -211,6 +220,41 @@ internal static class CombatBridge
         }
     }
 
+    /// <summary>
+    /// The game's own play counts, read the way the game reads them: CombatHistory entries whose
+    /// CardPlay was started by this player.  Normality computes its own cap with exactly this
+    /// (CombatManager.Instance.History.CardPlaysStarted filtered by HappenedThisTurn and Owner), and our
+    /// agent currently has to guess these numbers from pile differences, which miscounts when a monster
+    /// puts a card into a pile or an autoplay plays a card it just drew.
+    /// </summary>
+    private static (int Cards, int Attacks, int Skills) PlayedCounts(MegaCrit.Sts2.Core.Entities.Players.Player player, bool thisTurnOnly)
+    {
+        var state = CombatManager.Instance.DebugOnlyGetState();
+        int cards = 0, attacks = 0, skills = 0;
+        foreach (var entry in CombatManager.Instance.History.CardPlaysStarted)
+        {
+            if (thisTurnOnly && !entry.HappenedThisTurn(state))
+            {
+                continue;
+            }
+            var card = entry.CardPlay.Card;
+            if (!ReferenceEquals(card.Owner, player))
+            {
+                continue;
+            }
+            cards++;
+            if (card.Type == CardType.Attack)
+            {
+                attacks++;
+            }
+            else if (card.Type == CardType.Skill)
+            {
+                skills++;
+            }
+        }
+        return (cards, attacks, skills);
+    }
+
     private static async Task<(AgentAction Action, List<object> Legal)> Exchange(RunState run, MegaCrit.Sts2.Core.Entities.Players.Player player, int seq, CancellationToken ct)
     {
         var combat = CombatManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("combat state unavailable");
@@ -258,6 +302,15 @@ internal static class CombatBridge
                 powers = player.Creature.Powers.Select(p => new { id = p.Id.ToString(), amount = p.Amount, facing = p is SurroundedPower surrounded ? surrounded.Facing.ToString() : null }),
                 relics = player.Relics.Select(r => r.Id.ToString()),
                 upgraded_cards = player.Deck.Cards.Concat(player.PlayerCombatState.AllCards).Where(card => card.CurrentUpgradeLevel > 0).Select(card => card.Id.ToString()),
+            },
+            plays = new
+            {
+                cards_this_turn = PlayedCounts(player, thisTurnOnly: true).Cards,
+                attacks_this_turn = PlayedCounts(player, thisTurnOnly: true).Attacks,
+                skills_this_turn = PlayedCounts(player, thisTurnOnly: true).Skills,
+                cards_combat = PlayedCounts(player, thisTurnOnly: false).Cards,
+                attacks_combat = PlayedCounts(player, thisTurnOnly: false).Attacks,
+                skills_combat = PlayedCounts(player, thisTurnOnly: false).Skills,
             },
             hand = hand.Select((card, index) => new
             {
