@@ -7345,3 +7345,54 @@ watchdog 39.9 秒 ✓「last: Entering Boss room (Act 2, Floor 16)」✓
 `/tmp/counts_ctrl.status` `/tmp/counts_panel.status` ✓
 **測定軸は wins だけでなく depth と Act 3 完走** ✓（推定の 34% 誤りを塞ぐことが boss 戦の勝敗と
 到達に効くかを見る ✓）✓
+
+## Round 53: model の SKILLS / ATTACKS 分類は game の CardType と一致していた（open question (a) をクローズ ✓）
+
+`LetterOpener` の規則を最後まで読んだ ✓（`LetterOpener.cs` ✓）:
+
+```csharp
+public override async Task AfterCardPlayed(PlayerChoiceContext choiceContext, CardPlay cardPlay)
+{
+    if (cardPlay.Card.Owner == Owner && CombatManager.Instance.IsInProgress && cardPlay.Card.Type == CardType.Skill)
+    {
+        SkillsPlayedThisTurn++;
+        if (SkillsPlayedThisTurn % DynamicVars.Cards.IntValue /* 3 */ == 0)
+        {
+            await CreatureCmd.Damage(choiceContext, Owner.Creature.CombatState.HittableEnemies, DynamicVars.Damage /* 5, unpowered */, Owner.Creature);
+        }
+    }
+}
+```
+
+✓ play の **後** に数え上げて ✓ 3 の倍数で発動 ✓ 数えるのは `CardType.Skill` の札だけ ✓
+`SkillsPlayedThisTurn = 0` のリセットは player 側 turn の境界（`:89` ✓ `:104` ✓ `TurnNumber == 1` の guard と
+`participants.Contains(Owner.Creature)` ✓）✓
+model の規則（`combat.py:2663` ✓ `combat.py:2705` ✓）は
+`skills_this_turn = combat.skills_played_this_turn + (plays if card in SKILLS else 0)` →
+`skills_this_turn % 3 == 0` で発動 ✓ **順序も剰余も game と同じ** ✓
+
+だから残る `THE_INSATIABLE CARD.SHRUG_IT_OFF game-5` / `CARD.DEFEND_IRONCLAD game+5` 群の原因は
+**入力（推定した skills 数）**だと絞れる ✓（前 round で推定の skills 誤りは 344 件中 12 件 ✓ 3.5% ✓
+cards / attacks は 34% ✓）✓
+
+**札型の対応を実測して open question (a) を閉じた** ✓ model の `SKILLS` 43 件のうち decompile で型が読める
+37 件は**すべて `CardType.Skill`** ✓ `ATTACKS` 53 件のうち読める 50 件は**すべて `CardType.Attack`** ✓
+型が違う札は 0 件 ✓ 残りは `base(...)` 行が読めなかった札で ✓ 個別に確認した ✓
+
+| 札 | game の型 |
+|---|---|
+| Drum of Battle | `base(1, CardType.Skill, Uncommon, Self)` ✓ |
+| Master of Strategy | `base(0, CardType.Skill, Rare, Self)` ✓ |
+| Expect a Fight | `base(2, CardType.Skill, Uncommon, Self)` ✓ |
+| Believe in You | `base(0, CardType.Skill, Uncommon, AnyAlly)` ✓ |
+| One-Two Punch | `base(1, CardType.Skill, Rare, Self)` ✓ |
+| Flash of Steel | `base(0, CardType.Attack, Uncommon, AnyEnemy)` ✓ |
+| Neow's Fury | `base(1, CardType.Attack, Ancient, AnyEnemy)` ✓ |
+
+`Defend` と `Strike` は `CardType` を明示する行が grep に出なかった ✓（別の初期化形 ✓）✓
+model の分類（Strike は ATTACKS ✓ Defend は SKILLS ✓）は実運用と矛盾していない ✓
+**教訓**: 集合名を比較するとき enum の表記（`SKILLS` と `Skill` ✓）をそろえないと全件不一致になる ✓
+（最初 `label='SKILLS'` で比べたので 37/37 と 50/50 が「不一致」に見えた ✓ 実際の不一致は 0 件 ✓）✓
+
+panel: 07:29 開始の arm 1 本目が走行中 ✓（`/tmp/counts_arm.log` は SWEEP START のみ ✓）✓
+完了待ち background job `bash-879` ✓
