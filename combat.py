@@ -52,6 +52,13 @@ ARMAMENTS, UNMOVABLE, EXPECT_A_FIGHT, AGGRESSION, DARK_EMBRACE, CRIMSON_MANTLE, 
 POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK = "POTION.BLOCK_POTION", "POTION.SHIP_IN_A_BOTTLE", "POTION.FIRE_POTION", "POTION.EXPLOSIVE_AMPOULE", "POTION.POTION_SHAPED_ROCK"
 POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY = "POTION.STRENGTH_POTION", "POTION.DEXTERITY_POTION", "POTION.FYSH_OIL", "POTION.ENERGY_POTION"
 POTION_BLOOD, POTION_HEART, POTION_BRONZE = "POTION.BLOOD_POTION", "POTION.HEART_OF_IRON", "POTION.LIQUID_BRONZE"
+# Colorless potions the colorless-pool shops sell often.  Each one's effect is a single command in the
+# decompiled model (PowerCmd.Apply / CardPileCmd.Draw / CreatureCmd.GainBlock), so they are cheap to
+# model - and 1,738 of the 3,274 recorded potion plays in the corpus used a potion the model could not
+# price at all.
+POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION = "POTION.SPEED_POTION", "POTION.FLEX_POTION", "POTION.SWIFT_POTION"
+POTION_WEAK_POTION, POTION_VULNERABLE_POTION = "POTION.WEAK_POTION", "POTION.VULNERABLE_POTION"
+POTION_REGEN_POTION, POTION_FORTIFIER = "POTION.REGEN_POTION", "POTION.FORTIFIER"
 ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
@@ -1293,9 +1300,9 @@ def legal_actions(combat: Combat) -> tuple[str, ...]:
         else:
             actions.extend(f"{action_name}@{index}" for index, enemy in enumerate(combat.enemies) if enemy.alive)
     for potion in dict.fromkeys(combat.player_potions):
-        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR}:
+        if potion in {POTION_BLOCK, POTION_SHIP, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER}:
             actions.append(f"potion:{potion}")
-        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_GIGANTIFICATION}:
+        elif potion in {POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_GIGANTIFICATION, POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
             actions.extend(
                 f"potion:{potion}@{index}"
                 for index, enemy in enumerate(combat.enemies)
@@ -1962,6 +1969,34 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             return replace(combat, player_powers=_add_power(combat.player_powers, "DuplicationPower", 1))
         if potion == POTION_GIGANTIFICATION:
             return replace(combat, player_powers=_add_power(combat.player_powers, "GigantificationPower", 1))
+        if potion == POTION_SPEED_POTION:
+            # SpeedPotion.OnUse applies SpeedPotionPower 5, and SpeedPotionPower extends
+            # TemporaryDexterityPower: the observations carry a matching DexterityPower next to the
+            # marker, and the END_TURN handling here removes both when the player's turn ends.
+            return replace(
+                combat,
+                player_powers=_add_power(_add_power(combat.player_powers, "SpeedPotionPower", 5), "DexterityPower", 5),
+            )
+        if potion == POTION_FLEX_POTION:
+            return replace(
+                combat,
+                player_powers=_add_power(_add_power(combat.player_powers, "FlexPotionPower", 5), "StrengthPower", 5),
+            )
+        if potion == POTION_SWIFT_POTION:
+            return _draw_into_combat(combat, 3, data, rng)
+        if potion == POTION_REGEN_POTION:
+            return replace(combat, player_powers=_add_power(combat.player_powers, "RegenPower", 5))
+        if potion == POTION_FORTIFIER:
+            # Fortifier.OnUse: CreatureCmd.GainBlock(target, target.Block * 2, Unpowered), i.e. it
+            # doubles the Block already held and does nothing on an empty Block.
+            return replace(combat, player_block=combat.player_block * 2)
+        if potion in {POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
+            enemies = list(combat.enemies)
+            power = "WeakPower" if potion == POTION_WEAK_POTION else "VulnerablePower"
+            enemies[int(target)] = replace(
+                enemies[int(target)], powers=_add_power(enemies[int(target)].powers, power, 3)
+            )
+            return replace(combat, enemies=tuple(enemies))
         enemies = list(combat.enemies)
         if potion == POTION_EXPLOSIVE:
             enemies = [_damage_enemy(enemy, 10, powered=False) if enemy.alive else enemy for enemy in enemies]

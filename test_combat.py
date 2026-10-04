@@ -9,7 +9,7 @@ from combat import (
     IMPERVIOUS, INFECTION, INFLAME, IRON_WAVE, LIFT, MASTER_OF_STRATEGY, MIND_BLAST, MOLTEN_FIST, NOT_YET, OFFERING, PACTS_END, PERFECTED_STRIKE, PILLAGE, POMMEL_STRIKE,
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_MR_STRUGGLES, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
-    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
+    SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION, POTION_VULNERABLE_POTION, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _action_card, _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK, ULTIMATE_STRIKE, RAMPAGE,
     MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
@@ -779,6 +779,33 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),), player_relics=(RELIC_MERCURY_HOURGLASS,))
         after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 47)
+
+    def test_the_colorless_potions_the_shops_sell_are_simulatable(self) -> None:
+        # 1,738 of the 3,274 potion plays recorded in real runs used a potion the simulator had no model
+        # for, so the rollout could not price the option the agent was actually holding.  Each effect here
+        # is the single command the decompiled potion model runs in OnUse.
+        enemy = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ())
+        combat = Combat(60, (), (), (), (enemy,), player_potions=(POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION))
+        self.assertIn("potion:POTION.SPEED_POTION", legal_actions(replace(combat, player_potions=(POTION_SPEED_POTION,))))
+        self.assertIn("potion:POTION.FORTIFIER", legal_actions(replace(combat, player_potions=(POTION_FORTIFIER,))))
+        self.assertIn("potion:POTION.WEAK_POTION@0", legal_actions(replace(combat, player_potions=(POTION_WEAK_POTION,))))
+        self.assertIn("potion:POTION.VULNERABLE_POTION@0", legal_actions(replace(combat, player_potions=(POTION_VULNERABLE_POTION,))))
+        data = DUMMY_DATA
+        rng = random.Random(0)
+        speed = step(replace(combat, player_potions=(POTION_SPEED_POTION,)), "potion:POTION.SPEED_POTION", data, rng)
+        self.assertEqual((_power(speed.player_powers, "SpeedPotionPower"), _power(speed.player_powers, "DexterityPower")), (5, 5))
+        flex = step(replace(combat, player_potions=(POTION_FLEX_POTION,)), "potion:POTION.FLEX_POTION", data, rng)
+        self.assertEqual((_power(flex.player_powers, "FlexPotionPower"), _power(flex.player_powers, "StrengthPower")), (5, 5))
+        swift = step(replace(combat, player_potions=(POTION_SWIFT_POTION,), draw_pile=(DEFEND, DEFEND, DEFEND, DEFEND)), "potion:POTION.SWIFT_POTION", data, rng)
+        self.assertEqual(len(swift.hand), 3)
+        regen = step(replace(combat, player_potions=(POTION_REGEN_POTION,)), "potion:POTION.REGEN_POTION", data, rng)
+        self.assertEqual(_power(regen.player_powers, "RegenPower"), 5)
+        fortified = step(replace(combat, player_potions=(POTION_FORTIFIER,), player_block=9), "potion:POTION.FORTIFIER", data, rng)
+        self.assertEqual(fortified.player_block, 18)
+        weak = step(replace(combat, player_potions=(POTION_WEAK_POTION,)), "potion:POTION.WEAK_POTION@0", data, rng)
+        self.assertEqual(_power(weak.enemies[0].powers, "WeakPower"), 3)
+        vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
+        self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
 
     def test_player_regen_heals_at_the_end_of_the_turn_and_decrements_by_one(self) -> None:
         # RegenPower.AfterSideTurnEnd heals its owner by Amount and then decrements by 1 (recorded runs
