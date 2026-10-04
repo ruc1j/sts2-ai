@@ -5395,3 +5395,38 @@ potion は 108/111 本が boss 開始時に中央値 3 本を持ち、戦闘内�
 Queen と amalgam 合計で **156 ダメージ**を、agent は織り込まずに見ていなかった。近接組の shortfall
 （19〜50 ダメージ）と同じ桁であり、しかも「長く生きると自動的に増える」型なので生存と相乗する。
 **胜数への影響は未測定**（panel は次 round）。
+
+## Round 11: audit の action 変換を直し、player 側の Regeneration 欠落を見つけた（2026-10-04）
+
+### 「model が legal な action でクラッシュしている」は測定の間違いだった
+
+`data/model_match_audit.py` は game が実際に選んだ action を model の語彙へ翻訳するが、翻訳が
+model の Action 表記と合っていなかった。model は (1) 単体攻撃も全体攻撃も **敵 index 付き**
+（`card:2@1`。全体攻撃でも `@index` を要求する）で、(2) potion は **名前一つ**（`potion:POTION.BLOCK_POTION`）
+でスロット番号ではない。audit は全体攻撃を `card:2`、potion を `potion:1` と組み立てていたため
+`combat.step` が `illegal action` で ValueError を投げていた。
+
+audit 側を「model 自身が legal_actions に挙げている候補を選ぶ」方式に直した：
+
+| 測定（4,000 ペア） | 修正前 | 修正後 |
+|---|---:|---:|
+| `step_raised:ValueError` | 106 | **1** |
+| `no_equivalent_action` | 0（隐性） | 69（新規に可視化） |
+| end_turn の player HP 一致 | 611 | 621 |
+| 全体の一致 | 2,875/2,910 = 98.8% | 2,885/2,920 = 98.8% |
+
+つまり**live run で rollout が例外 fallback に落ちていた証拠ではなかった**（実際の live fallback は
+AoE 札で 30 件だけで、内訳は TAUNT 23・BREAKTHROUGH 6・EXTERMINATE 1）。新しい `no_equivalent_action`
+の上位は potion 側：`POTION.SPEED_POTION` 8・`POTION.ATTACK_POTION` 5・`POTION.SKILL_POTION` 5・
+`POTION.POWER_POTION` 5・`POTION.COLORLESS_POTION` 3・`POTION.REGEN_POTION` 2 など。model の potion
+定数に無い種類で、rollout が potion を評価できない箇所として残っている。
+
+### 見つけた gap：player 側の RegenPower が turn End で回復していない
+
+`RegenPower.AfterSideTurnEnd` は owner を Amount だけ回復して Amount を 1 減らす。combat.py は
+**敵側だけ**実装している（1723 付近、コメント自身が player 側をやっていないことを書いている）。
+player が RegenPower を持つ observation で end_turn を再生した一致率は **605/811 = 74.6%** で、
+不一致の上位は game HP が model より **+5（47件）+4（37件）+3（30件）+2（19件）** ＝ ちょうど Regen の
+Amount ぶん game だけ回復していた。corpus では player が RegenPower を持つ combat observation は
+**841 件**（Amount 5:345・4:187・3:134・2:103・1:72）で、seed は1本（`Y7N3B9J5XR` 系）。
+母数が1 seed なので panel では測れないが、敵側と同じ規則を追加するだけの修正なので次ターンで実装する。
