@@ -7230,3 +7230,44 @@ Power 除去を先に commit した main には当たらない ✗（`patch fail
 policy は HEAD 適用前の code ✓）で seed AM8C6YXHSG ✓ 完了待ちは background job `bash-850` ✓
 trace `data/bcp1_AM8C6YXHSG_agent.jsonl` が出たら `/tmp/plays_diff.py` を走らせて
 **推定と game の数の食い違いの頻度**を出す ✓ 次に census を測り直す ✓（run 中は走らせない ✓）✓
+
+## Round 50: 従来の「Act 3 の壁 = 相性」という見方の訂正 ✓ Act 3 完走は記録済みで ✓ run の死に方の母数が違った
+
+**訂正 1: Act 3 完走は起きている** ✓ `data/*_result.json` 12 件のうち **10 件が `act_3_complete: true`** ✓
+（seed N8C6… ではなく N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓ H2LV6ZJ4XW ✓ `acts = [ACT.OVERGROWTH, ACT.HIVE, ACT.GLORY]` ✓
+HP 7/130〜29/87 ✓）✓ CODEWIKI 251 行目に 2026-09-07 の完走が詳しく記録されている ✓
+（seed D6A1F8C3E5 ✓ base `3fd097e` ✓ 終了コード 0 ✓ `Finished Boss room` Act 3 Floor 15 ✓ 15戦15勝 ✓）✓
+1765 行目に固定 seed N8CQ4ZKP2W の初完走 ✓ 私は最近の報告で「Act 3 完走 0 本」と繰り返したが ✓
+それは**直近の sweep の seed 集団についてのみ真**で ✓ 表現として誤っていた ✓
+
+**訂正 2: sweep の act3 検査が壊れていた** ✓ `grep -o '"act_3_complete":[a-z]*'` は
+JSON が `"act_3_complete": true`（コロンの後に空白 ✓）だと**何も出力しない** ✗✗
+sweep2.sh / sweep3.sh 両方に入っていた ✓ **両方を `grep -oE '"act_3_complete"[ ]*:[ ]*(true|false|null)'` に直した** ✓
+これで panel の RESULT 行に完走が出ます ✓
+
+**run の死に方の母数**（main と control worktree に残る全 mod log ✓）:
+
+| 失敗理由 | 件数 |
+|---|---:|
+| `Run failed with Watchdog timeout` | **336** |
+| `Run failed with Rewards screen did not appear after combat` | **300** |
+| `Screen NRewardsScreen not closing after being handled` | 2 |
+| `Tried to skip reward set ...` | 1 |
+
+watchdog が「動きがない」と見た直前の action:
+
+| last | 件数 |
+|---|---:|
+| Playing main menu | 730（launch 停止 ✓ 前 round ✓） |
+| Entering Boss room (Act 2, Floor 16) | **373** |
+| Entering Boss room (Act 3, Floor 15) | **194** |
+| Entering Boss room (Act 1, Floor 17) | 83 |
+
+`Rewards screen did not appear after combat` は combat 敗北後の処理でした ✓
+seed EAIF2UUVCK の control run の trace 末尾は `combat_end` の **`won: false`** ✓（seq 372 ✓ 373 records ✓）✓
+つまり 300 件は「敗北した combat の後に報酬画面が出ない」＝ **敗北そのもの** ✓ sweep の `losses=1` と整合 ✓
+残る **336 件の Watchdog timeout** が別物 ✓ Boss room 進入中に 15〜20 秒以上 progress がない ✓
+→ **長い boss 戦で agent の decision が遅く watchdog に負けている**可能性が高い ✓（未確認 ✓ 次の測定 ✓）
+`SIMULATIONS` 100 × 毎 decision ✓ boss 戦は turn 数が多い ✓ だから Act 3 の壁は相性だけでなく
+**run が boss 戦を完了できないこと**かもしれない ✓ 次の手: Watchdog timeout で死んだ run を 1 件選び ✓
+trace の末尾と mod log の時系列で「どの fight がどれだけ長かったか」を出す ✓
