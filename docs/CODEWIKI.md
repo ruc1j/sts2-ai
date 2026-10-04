@@ -5507,3 +5507,59 @@ audit 全体でも `no_equivalent_action` 69 → **56**、end_turn の player HP
 
 **胜数 panel は走らせていない。** この修正は agent が価格付けできる potion の集合そのものを増やす
 （= 振る舞いが変わる）ので、次 round では ROLLOUT_POTION_IDS の拡張を実測すべきレバーとして扱う。
+
+## Round 13: potion 修正の panel（+0）と Gigantification の id 誤り（2026-10-04）
+
+### potion 7 種の実装は胜数を動かさなかった（忠実度で保持）
+
+`data/potion_ab.sh`（arm = HEAD、control = `.wt-ctrl-potion` = `7f583c3`、dll の md5 一致を確認）。
+seed は記録された run がこの7種の実 potion を多く使い、かつ Act 3 boss に到達したものを選んだ。
+
+| seed | 記録された使用回数 | control | arm | 差分 |
+|---|---:|---:|---:|---:|
+| AM8C6YXHSG | 92 | 17勝 | 17勝 | +0 |
+| M5PC8TQ3BN | 80 | 8勝 | 8勝 | +0 |
+| NFH3RMVJ6D | 51 | 15勝 | 15勝 | +0 |
+| 合計 | | **40勝** | **40勝** | **+0** |
+
+panel は修正を実際に試している：出来上がった run の potion 欄に FORTIFIER・REGEN・WEAK・VULNERABLE・
+SPEED・FLEX・CLARITY・CURE_ALL が現れ、AM8C6YXHSG では Vulnerable 発火 167 vs 142・Weak 51 vs 38・
+Frail 57 vs 47 とプレイは分岐した（3 seed 中2 seed で分岐）。**勝数は同じ**だった。
+
+### Gigantification potion は id が1文字列分だけ違って、何も匹配していなかった（commit aebf7ca）
+
+game のクラス名は `GigantificationPotion` だから id は `POTION.GIGANTIFICATION_POTION`（観測 1,838 件）。
+combat.py の定数は `POTION.GIGANTIFICATION` で、これは**どの観測とも一致しない**。同じ誤りが
+`official_agent.choose_potion` の `offensive` 集合（1814 行付近）にも直書きされていて、そこでも
+実 potion は offensive として扱われていなかった。さらに model はこれを敵対象付き（`@index`）で
+legal_actions に出していたが、記録された使用 18 件はすべて `target_id: None`
+（game 側は `TargetType.AnyPlayer`）なので無対象が正しい。定数を実 id に直し、無対象側に移し、
+`offensive` は定数参照に変えた。テストは `test_gigantification_potion_uses_the_id_the_game_reports` を
+追加し、既存の `test_duplicator_and_gigantification_potions_apply_their_powers` の `@0` 期待値を
+実測（target_id None）に合わせて 760 件 green。
+
+**ただしこの修正だけでは决定は1件も変わらない**：control を `587cb46`（この修正の1コミット前）において
+Gigantification を提案している 1,838 件の observation で `choose_potion` の選択を比べた結果、
+**差分 0 件**、Gigantification が選ばれた件数は arm 0・control 0。理由は gate の方にあって、
+`ROLLOUT_POTION_IDS` に Gigantification が入っておらず、`SHOP_POTION_SCORES` にも無い（スコア -1 なので
+shop で買わない）。つまり** purchase も rollout も Gigantification を見ていない**のが現状で、id 修正は
+忠実度の訂正として入れ、価格付けに参加させるかは別の policy 判断として扱う（測定なしに gate へ
+入れない）。
+
+### census の残り
+
+- 公式 run に現れる potion 41 種のうち **4 種は official_agent のどこにも書かれていない**：
+  `POTION.FAIRY_IN_A_BOTTLE` 1,743 観測・`POTION.FOUL_POTION` 729・`POTION.BOTTLED_POTENTIAL` 587
+  （Gigantification は今回の修正で combat 側の定数が一致した）
+- model 側の定数のうち**一度も観測されない**もの：`POTION.BLOOD_POTION`・`POTION.SHIP_IN_A_BOTTLE`
+  （game にクラスは存在するが corpus に出てこない）と修正前の `POTION.GIGANTIFICATION`
+- 未 model の potion の実際の使用 counts（次の実装対象、game 側の `OnUse` は読む済み）：
+  `SKILL_POTION` 230・`POWER_POTION` 184・`COLORLESS_POTION` 136（生成札を hand へ、free このターン）、
+  `POTION_OF_BINDING` 124（全敵に Weak 1 + Vulnerable 1）、`LUCKY_TONIC` 96（BufferPower 1）、
+  `GAMBLERS_BREW` 71（手札を選んで捨てて同数引く）、`SHACKLING_POTION` 69（全敵に -7 Strength の
+  一時的 Strength。`ShacklingPotionPower` は TemporaryStrengthPower の派生で `IsPositive => false`、
+  **combat.py に名前が1度も無い**）、`CURE_ALL` 67（+1 エネルギー・2 枚ドロー）、
+  `ATTACK_POTION` 61、`DISTILLED_CHAOS` 59（draw pile 上から3枚自動プレイ）、`CLARITY` 57（1 枚引いて
+  ClarityPower 3）、`RADIANT_TINCTURE` 36（+1 エネルギー・RadiancePower 3）、`SNECKO_OIL` 34（7 枚引く）
+  ＝ **1,224 件**。このうち combat 中に使われた 912 件は `decision_source=direct_potion`、つまり
+  heuristic の尻尾で使われており、rollout は価格を付けていない。
