@@ -7776,3 +7776,43 @@ main commit `1a73379` ✓ scratch `.wt-proto9` で実装してから適用 ✓ p
 
 **テスト** ✓ `test_secret_weapon_pulls_an_attack_from_the_draw_pile_and_exhausts` ✓
 素の札と強化版の両方で hand / draw / exhaust / discard を assert ✓ main の suite **782 件 green** ✓
+
+## Round 66: 検証 run は Act 3 Floor 5 まで進んだ ✓ 残る +5 / +6 は **多重 play の 2 番目の hit が Vulnerable を引けていない** ことだと特定 ✓
+
+**HEAD `5b4f01d` の検証 run** ✓ seed D6A1F8C3E5 ✓
+
+```
+RESULT fixafter D6A1F8C3E5 wins=15 losses=1 combat_records=309 depth=Act 3, Floor 5
+  fail=Watchdog timeout: No progress for 30.0s. Last activity: Entering Monster room (Act 3, Floor 5)
+```
+
+同じ seed の panel arm（THROWING_AXE と Secret Weapon が入る前 ✓ `cb226c5`）は
+14 勝 ✓ 282 records ✓ **Act 3, Floor 4** ✓ → **+1 勝 ✓ +1 階層 ✓** ✓ 1 seed の話なので方向の目安 ✓
+落ち方（敗北後の watchdog ✓ 前 round 分類 ✓）と crash は無し ✓ Act 3 完走はまだしていない ✓
+
+**残る gap の原因を数式まで特定した** ✓ decompile の order が証拠 ✓
+
+- `Bash.cs` ✓: `await DamageCmd.Attack(...)` ✓ → `await PowerCmd.Apply<VulnerablePower>(target, 2)` ✓
+  （`DamageVar` と `PowerVar<VulnerablePower>(2m)` ✓）✓
+- `UpperCut.cs` ✓: `DamageVar(13m, Move)` ✓ `DynamicVar("Power", 1m)` ✓
+  `DamageCmd.Attack` ✓ → `Apply<WeakPower>(amount)` ✓ → `Apply<VulnerablePower>(amount)` ✓
+- model 側は debuff 自体を持っている ✓ 実際に走らせた ✓ Bash は 8 damage + 敌に `VulnerablePower 2` ✓
+  Uppercut は **13 damage + 敌に `Weak 1` と `Vulnerable 1`** ✓（game の `DamageVar(13m)` と一致 ✓）✓
+- **問題は順序** ✓ model は `_apply_debuff_multipliers` を hits ループの **前** で 1 回だけかける ✓
+  （`combat.py:3374-3379` ✓ `damage = _apply_debuff_multipliers(...)` ✓ `for _ in range(hits): enemies[...] = _damage_enemy(..., damage)` ✓）✓
+  だから 1 play が 2 回 resolve するとき（Throwing Axe ✓ DuplicationPower ✓ OneTwoPunchPower ✓）✓
+  2 番目の hit が ✓ 1 番目の resolve が入れた Vulnerable を引けない ✓✓
+
+**記録された数と完全に合う** ✓
+- `DEVOTED_SCULPTOR CARD.BASH` ✓ model 10 + 10 = **20** ✓ game は 10 + 10×1.5 = **25** ✓ → gap +5 ✓
+- `LIVING_SHIELD CARD.UPPERCUT` ✓ model 13 + 13 = **26** ✓ game は 13 + 13×1.5 = 19.5 → 19 で **32** ✓ → gap +6 ✓
+
+**model の display name には注意** ✓ `Uppercut` ✓（`UpperCut` ではない ✓）✓
+`UpperCut@0` で play しようとすると `ValueError: illegal action: UpperCut@0` になった ✓
+（`combat.py` の定数は `UPPERCUT = "Uppercut"` ✓）✓ 名前を間違えると「play できない札」に見える ✓
+
+**次の実装の設計** ✓ hits ループ内で hit ごとに multi を掛け直す ✓
+すなわち最初の hit の後に card が target に入れる debuff（Bash は Vulnerable 2 ✓ Uppercut は Weak 1 + Vulnerable 1 ✓）を
+反映して ✓ 以降の hit はその時点の敌状態から計算する ✓（game は resolution ごとに別の DamageCmd ✓）✓
+Bash は Basic rarity ✓ Uppercut は Uncommon ✓ で母数は大きく見えるので ✓
+**attribution で决定母数を出し ✓ 3 seed 以上なら panel する** ✓（teaching 32 ✓ 0 件なら panel しない ✓）✓
