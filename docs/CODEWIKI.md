@@ -7311,3 +7311,37 @@ bridge が observation と trace に `plays` を出し ✓ agent が `_seed_expo
 
 sweep3.sh の最後で `command not found: SWEEP DONE bcp1` が出た ✓ RESULT 行は正常なので実害はない ✓
 （`print --` の使い方の問題 ✓ 未修正 ✓ 次に sweep を組む時に見る ✓）✓
+
+## Round 52: watchdog 停止は長い combat のせいではなく **全敗北後の流れ**だと訂正 ✓ sweep に到達 depth を追加 ✓ panel 開始
+
+前 round の「長い boss 戦が watchdog に負けている可能性」は **誤りだった** ✓
+799 個の mod log を調べて `Watchdog timeout` で終わった run を trace と突き合わせた ✓
+
+```
+watchdog-timeout runs by final trace phase: {'combat_end_recorded': 406, 'stall_<60s': 392, 'stall_>=60s': 14}
+```
+
+**trace が残っている 406 件はすべて末尾が `combat_end` で `won: false`** ✓ つまり**combat に負けた** ✓
+30 秒の無進捗は敗北の後（ゲームが run 終了画面の流れで待っている ✓ AutoSlay 自身の action がない ✓）✓
+`Rewards screen did not appear after combat`（300 件 ✓）と同じで ✓ **どちらも敗北の症状** ✓
+例: `act3_pop2_F6L1X4P8MS` は Act 2 Boss room (Floor 16) まで進み 418 combat records ✓ `won: false` ✓
+watchdog 39.9 秒 ✓「last: Entering Boss room (Act 2, Floor 16)」✓
+→ **bridge に watchdog リセットを入れる必要はない** ✓（本来の停止検出を無効化するだけの修正だった ✓）✓
+壁は依然として **combat で負けること** ✓（Act 2 boss での敗北が最も多い ✓ 前の「7/8 seed が
+`MONSTER.THE_INSATIABLE` で死亡」と整合 ✓）✓
+
+**sweep3.sh に到達地点と失敗理由を追加した** ✓ 敗北した run は result file を書かない（game は exit 1 ✓）ので
+`act_3_complete` が読めない ✓ mod log に出る `Act N, Floor M` の最後の値を `depth=` として出し ✓
+`fail=` に失敗理由の 1 行目を出す ✓ 新 RESULT 行:
+`RESULT <tag> <seed> wins=… losses=… combat_records=… <act3> depth=… fail=…` ✓
+（`zsh -n` 文法確認 ✓ 前 round の `command not found: SWEEP DONE` は再現せず ✓ 単独で `print --` を試して正常 ✓）✓
+
+**panel を開始した** ✓ 07:29 ✓ `/tmp/panel_counts.sh` ✓ seed `AM8C6YXHSG D6A1F8C3E5 EAIF2UUVCK` ✓
+- arm: `/Users/mao/workspace/sts2-ai`（HEAD `cb226c5` ✓ dll 235,008 bytes ✓ `plays` を出す ✓ agent が使う ✓）
+- control: `.wt-ctrl-counts` @ `dfced8b` ✓ **policy は arm と同一 ✓ bridge が `plays` を出さない ✓**
+  dll 231,424 bytes ✓ `grep -c "plays = new"` = 0 ✓（worktree に `mkdir -p` とビルド ✓ dll 実在確認 ✓）✓
+  差分は export の 1 点だけ ✓
+ログ `/tmp/counts_arm.log` `/tmp/counts_ctrl.log` ✓ 完了印 `/tmp/counts_arm.status`
+`/tmp/counts_ctrl.status` `/tmp/counts_panel.status` ✓
+**測定軸は wins だけでなく depth と Act 3 完走** ✓（推定の 34% 誤りを塞ぐことが boss 戦の勝敗と
+到達に効くかを見る ✓）✓
