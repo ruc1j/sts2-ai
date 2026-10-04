@@ -5622,3 +5622,43 @@ potion 保持 records の attribution で `errors: {'KeyError': 312}` が出た�
 `candidate_rewardfix*`（`T3XQ7WM2VP` の一連）だけ。**live の bridge は slot を出力している**ので
 実走には影響しない。offline replay の母数を扱う時の注意として記録し、`.get("slot")` へ直すかは今後の
 robustness 項目として置く。
+
+### gate 拡張 panel の再測と、測定有效性のチェック（batch 1 + batch 2）
+
+batch 2 の arm 脚は初回は途中で kill され（exit=143）、`<game>/.../MacOS/mods/Sts2Ai` が残ったため続く2本が
+「refusing to overwrite existing mod」で start できなかった（wins=0 losses=0 exit=1）。残留フォルダは
+Sts2Ai.dll と Sts2Ai.json だけであることを確認して手動削除し、`data/gate_ab2_arm.sh` で arm 脚だけ再走した
+（control 脚 15/14/6 勝は有効）。
+
+再走の結果は 15→15・14→14・6→6 で **batch 2 は +0**。ただし trace を突き合わせると、**arm と control が
+1バイト違わない seed が混んでいる**（batch 1 の 73P61QQZNU と EAIF2UUVCK、batch 2 の P3V8N5K2RX）。
+実際に分岐したのは6 seed 中3本だけだった：
+
+| seed | 分岐 | control | arm |
+|---|---|---:|---:|
+| 73P61QQZNU | なし（trace 一致） | 13勝 | 13勝 |
+| EAIF2UUVCK | なし（trace 一致） | 14勝 | 14勝 |
+| K7M2QX9BTR | あり（293 / 313 record） | 13勝 | **12勝** |
+| P3V8N5K2RX | なし（trace 一致） | 15勝 | 15勝 |
+| F9P4X7N2LC | あり | 14勝 | 14勝 |
+| R9TB3LKD6M | あり | 6勝 | 6勝 |
+| 合計 | | **75勝** | **74勝（-1）** |
+
+つまり gate 拡張の実測は「**分岐した3本のうち1本で1勝减り、2本は無変化**」で、母数としては offline の
+64 决定・10 seed のほうが強い。判断が弱いので修正は HEAD に置いたまま、次以降の測定に持ち越す。
+教訓として、panel の RESULT 行だけでは「効いた/no-op」を区別できない：**trace が分岐したか**を必ず見る。
+
+### 新しい gap：potion が hand に入れる札のなかに model に存在しないものがある
+
+生成系 potion（SKILL 230・POWER 184・COLORLESS 136・ATTACK 61）の使用 438 件で、次の観測の hand に
+現れた札を数えると **76 種のうち 60 件分の札が `combat.CARD_COST` に存在しない**（`official_agent` にも
+名前が無い）。内訳：`CARD.SECRET_WEAPON` 13・`CARD.THINKING_AHEAD` 12・`CARD.MAYHEM` 8・
+`CARD.SECRET_TECHNIQUE` 5・`CARD.STRATAGEM` 5・`CARD.THE_GAMBIT` 4・`CARD.DISCOVERY` 2・
+`CARD.RESTLESSNESS` 2・`CARD.DARK_SHACKLES` 2・`CARD.ROLLING_BOULDER` 2・`CARD.THE_BOMB` 2・
+`CARD.PROLONG` 1・`CARD.SEEKER_STRIKE` 1・`CARD.GOLD_AXE` 1。`CARD.THE_GAMBIT` は即死 effect のため
+意図的に除外している（CODEWIKI 冒頭の記録） so 対象外で、他は未 model。
+
+game 側の実装は読んだ：Secret Weapon は 0コスト Skill・Exhaust で draw pile から Attack 札を選んで hand へ、
+Secret Technique は同じく draw pile から Skill 札、Thinking Ahead は 0コスト Skill・Exhaust で 2 枚引いて
+1 枚を draw pile 一番上に戻す、Discovery は 1コスト Skill・Exhaust で生成札を選んで hand へ
+（すべて `CardPileCmd` 系で、model が既に持つ hand / draw_pile 操作で書ける）。
