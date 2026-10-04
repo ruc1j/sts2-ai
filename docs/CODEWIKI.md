@@ -7104,3 +7104,45 @@ attribution 2 本は実行中（`/tmp/measure_after_panel.sh` ✓ 06:49 から �
 それが終わるまで main の policy は触らない ✓（3 番目が main の HEAD と `.wt-attr-e10` を比べる ✓）✓
 適用待ち: Power 除去（`/tmp/power_leaves_combat.patch` ✓ 63 行 ✓）と Stratagem
 （`/tmp/stratagem_plus_power.patch` ✓ 180 行 ✓ 両方含む ✓）✓ scratch `.wt-proto5` suite 779 件 green ✓
+
+## Round 46: 玩札推定を手札ベースで制限する案は観測データで成立せず ✓ 代わりに game 自身の玩札数を bridge 経由で出す実装を開始（ビルド成功 ✓）
+
+**失敗した案**（scratch `.wt-proto7` ✓ 削除済み ✓）: `unexplained`（pile への到着から導いた play 数）を
+「そのターンに hand と draw pile から出た札の数」で上限化した ✓ `BYGONE_EFFIGY` の seq 106
+（discard に `CARD.ANGER` が 2 枚増え ✓ 手札からは 1 枚だけ消え ✓ draw pile は減らず ✓）では正しく 1 枚引けた ✓
+が ✓ `test_rebuilds_the_play_counters_the_bridge_does_not_export` の Cinder/Defend ケースで autoplay 1 枚を
+消した ✗✗ 原因: 同名の札が区別できないため ✓ **Defend を 1 枚 play して別の Defend を引くと手札の
+Defend 枚数は変わらない ✓ 消失が見えない ✓** ✓ hand の枚数差は play の検出に使えない ✓
+この方向はすてる ✓
+
+**正しい方向**: game は玩札数を combat の履歴から正確に持っている ✓
+`Normality.CardsPlayedThisTurn => CombatManager.Instance.History.CardPlaysStarted.Count(e =>
+e.HappenedThisTurn(CombatState) && e.CardPlay.Card.Owner == Owner)` ✓（`Normality.cs:33` ✓）✓
+`CombatHistory.CardPlaysStarted => Entries.OfType<CardPlayStartedEntry>()` ✓（`CombatHistory.cs:26` ✓）✓
+`CombatHistoryEntry.HappenedThisTurn(ICombatState?)` ✓（`CombatHistoryEntry.cs:62` ✓）✓
+`CardModel.Owner` は **`Player`** ✓（`CardModel.cs:333` ✓）✓ `CombatManager.Instance.History` は public ✓
+bridge は既に `CombatManager.Instance.DebugOnlyGetState()` を使っている ✓
+
+**実装した**（scratch `.wt-bridge-counts` ✓ patch `/tmp/bridge_playcounts.patch` 84 行 ✓）✓
+`CombatBridge.cs` に `PlayedCounts(player, thisTurnOnly)` を追加 ✓（履歴を walk して Owner を `ReferenceEquals(card.Owner, player)`
+で絞り ✓ `card.Type` で Attack / Skill を数える ✓）✓ **observation と trace の両方**に次を追加 ✓
+
+```
+plays = { cards_this_turn, attacks_this_turn, skills_this_turn,
+          cards_combat,   attacks_combat,   skills_combat }
+```
+
+**ビルド成功** ✓（`pwsh -NoProfile -File ./build_official_mod.ps1 -GameDir ...` ✓
+`ビルドに成功しました / 0 個の警告 / 0 エラー` ✓ 経過 3.5 s ✓ `official_mod/bin/Release/net9.0/Sts2Ai.dll` 235,008 bytes ✓）✓
+API が全部解決しているので ✓ 型も含めて game 側に存在することが保証された ✓
+
+**まだ終わっていない** ✓ 次の順: (1) `official_agent.py` が `observation["plays"]` を使い ✓ 無いときだけ
+`_advance_play_counters` の推定に倒す ✓（テスト追加 ✓）(2) この dll での短い公式 run で
+実際の observation に数が出ることと ✓ trace の play 列と一致することを確かめる ✓
+(3) census を測り直す ✓ 期待して消える group: `THE_INSATIABLE CARD.SHRUG_IT_OFF game+5` /
+`CARD.DEFEND_IRONCLAD game+5`（LetterOpener ✓ 36 件时代の実測あり ✓）✓ `BYGONE_EFFIGY` の ±1 ✓
+`MONSTER.VANTOM` 系 ✓ (4) 决定母数が大きければ panel ✓（3 seed ✓ 上記 + 1 ✓）✓
+
+attribution は実行中 ✓（06:49 開始 ✓ 07:06 時点で経過 16 分 ✓ CPU 時間 0.6 秒 ✓ **停止ではなく
+trace ごとに subprocess を 1 個ずつ起動している** ✓ `attribution_rampart.py:115-119` ✓ 現在 child 50454 が稼働 ✓）✓
+完了待ちは background job `bash-811` ✓ 完了後に `data/ashen_attr.log` と `data/powercredit_attr.log` を読む ✓
