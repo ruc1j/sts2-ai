@@ -5020,3 +5020,73 @@ Strength 1 の変化に応じて分数で動く）。つまり mod が出す car
 前 round の「player 側の Weak の丸め」測定は base + Strength を作る前提が壊れていた
 （floor 一致 98/440 と悪く見えた理由）。**relic の影響を受けない敵側の測定
 （37,934/1,591/1,149 sample で floor 99% 一致）だけが有効**という扱いで確定する。
+
+## Round 6: 札の upgrade 値が 17 枚違っていた（既定 +3 の落とし穴）と model 一致率検査（2026-10-04）
+
+### 記録された1手を model で再生して game の次の observation と照合する検査を作った
+
+`data/model_match_audit.py`：連続する combat record の組 (L, F) から、live rollout と同じ手順で
+Combat を作り（`official_agent.search` を差し替えて state を捕捉）、その record で agent が実際に選んだ
+手を `combat.step` で進め、**model が predicts した次の状態が game の実際の F と一致するか**を見る。
+card play は狙った敵の HP、end_turn は player の HP（＝敵フェーズの被ダメージ）で比較する。
+戦闘境界をまたぐ組（次フロアの最初の observation）と model が非法扱いした手は別枠にして、
+4,000 組中 **比較可能 2,452 組**とした。
+
+修正前の一致：**2,336 / 2,452 = 95.3%**（card play の不一致 101 件）。不一致の最大グループが
+**Anger 50 件**で、内訳は model が 1 多く削る +1 が 542 件（upgraded Anger だけ 360+144 件）だった。
+
+### gap の正体：`CARD_UPGRADE_DAMAGE.get(card, 3)` の既定値
+
+combat.py は upgrade 済みの攻撃力を `CARD_UPGRADE_DAMAGE` から引き、表に無い札は **+3 と仮定**していた。
+decompile した札本体の `DynamicVars.Damage.UpgradeValueBy` と突き合わせると、**17 枚が違った**：
+
+| 札 | game base → up | model（修正前） |
+|---|---|---|
+| Bludgeon | 32 → **42** | 32 → 35 |
+| Break | 20 → **30** | 20 → 23 |
+| Ultimate Strike | 14 → **20** | 14 → 17 |
+| Unrelenting | 14 → **20** | 14 → 17 |
+| Hemokinesis | 15 → **20** | 15 → 18 |
+| Giant Rock | 16 → **20** | 16 → 19 |
+| Byrd Swoop | 14 → **18** | 14 → 17 |
+| Volley / Molten Fist / Neow's Fury | 10 → **14** | 10 → 13 |
+| Breakthrough | 9 → **13** | 9 → 12 |
+| Iron Wave | 5 → **7** | 5 → 8 |
+| Anger / Feed / Fisticuffs / Dismantle | 6→8・10→12・7→9・8→10 | すべて +1 過大 |
+| Bolas | 3 → **4** | 3 → 6（+3 過大） |
+
+`ALL_ENEMY_DAMAGE` 側（全体攻撃）も同じ既定値を使っており、Howl From Beyond は +5、Pacts End は +6、
+Dramatic Entrance と Breakthrough は +4 だった。Rampage の upgrade は `DynamicVars["Increase"]`（攻撃札を
+出すたびに得る Strength）を 4 増やすものでダメージは変わらないので、Rampage は 0 にした。
+
+修正後：**一致 2,396 / 2,452 = 97.7%**、card play の不一致は 101 → 41 件に減り、Anger のグループは
+ほぼ消えた（upgraded Anger は 738 件中 一致738・-1 が17・+3 が5）。suite は 754 件 green
+（`test_upgrade_damage_matches_each_cards_own_upgrade_value_by` を追加）。既存の policy test は
+1 件も壊れていない＝旧い +3 を前提にした回帰テストは無かった。
+
+意図と影響：agent は upgrade 済みの大物攻撃（Bludgeon・Break・Ultimate Strike・Unrelenting）を **7 損も
+低く積んで** card reward で選び、戦闘中も弱く評価していた。逆に Bolas（+3 過大）や Fisticuffs・Anger・
+Feed・Dismantle・Iron Wave（各 +1 過大）を過大評価していた。QUEEN 戦の火力不足（毎ターン raw 50 が
+必要で中央値 33.8）に対する、model 側の実測可能な改善になる。
+
+### 同じ round で確認できた「gap では無い」もの
+
+- 拾った札の可視性：corpus 全体で拾われた 66 枚は全て `CARD_NAMES` にあり、`legal_actions` に現れ、
+  一度も使われていない札は無い（CLAUDE.md の "never played a card" 検査を corpus 版でやった）
+- player 側の damage path：単一目標の攻撃 play 58,232 件を実測し、model と同じ補正連鎖
+  （target Vulnerable ×1.5 floor、Soar/Flutter の半分、HardToKill の上限、Slippery/Intangible の 1 本化、
+  player Weak ×0.75）を再現式に入れると 97.6% 一致。残りは multi-hit 札の hit 数（Twin Strike 等）と
+  REATTACH（+25 HP の回復）と Illusion/Minion の蘇生窓だった
+- SlowPower（札を出すたびに受けるダメージ +10%）、ChainsOfBinding/Bound（QUEEN 戦で hand の 3 枚が
+  遊べなくなる）、Slippery（VANTOM・INKLET、-hit を 1 に押える）、Soar、HardToKill、Flutter はすべて
+  combat.py に実装済み（`_damage_enemy` 1305 付近と 2847 付近）
+- combat 外の决定（map 17,324・card_reward 7,441・event 5,926・shop 4,376・rest 3,649）は
+  すべて専用の policy 側で処理され、heuristic fallback への落ち込みは 0 件
+
+### 未解決として残した実測：Feed が game より 5-8 少ない
+
+Feed（`CARD.FEED`）の play 約 500 件で model の与えたダメージが game より **-5〜-8 偏る群**が
+240 件残っている（例：player Strength 1・敵 power 無しで model 11 / game 16）。game 側の Feed は
+10 ダメージ + Max HP +3 + Fatal 条件で、X 的な伸びは本体に無い。原因は特定できていないので
+次回に回す（推測で damage 式は触らない）。同じく残る小グループ：Bash 15 件・Strike 8 件・
+end_turn 後の TUNNELER 5 件。
