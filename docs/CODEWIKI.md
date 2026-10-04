@@ -3073,7 +3073,7 @@ model（`e808bdf`、机构を実装する前）は那些を無視するので、
 だけ guard が无かった。
 
 R8 はこの decision（seq 546）で game 側の default を取ったが、決定列は control と **454件分歧0**、
-outcome も 22勝1敗で同値 → 実走影响は出なかった。guard を入れてテスト
+outcome も 22勝1敗で同値 → 実走影響は出なかった。guard を入れてテスト
 `test_lethal_with_soar_power_does_not_divide_by_a_zero_hit_count`（suite **735件成功**）で固定。
 
 ### P3：pair だが決定列の分歧0（Duplication の effect が出なかった path）
@@ -7073,3 +7073,34 @@ patch `/tmp/stratagem_plus_power.patch` 180 行 ✓ Power 除去単体は `/tmp/
   model で玩える card は observation の id 対応を持つ事を検査 ✓ **Stratagem を落ちた ✓良い検査 ✓**）✓
 - 新規 test `test_stratagem_pulls_cards_from_the_draw_pile_on_every_shuffle` ✓（Battle Trance の 3 枚 draw が
   draw pile 1 枚で shuffle を起こし ✓ StratagemPower が BASH を hand へ ✓ power は 1 のまま ✓）✓
+
+## Round 45: `THE_INSATIABLE CARD.SHRUG_IT_OFF game+13 / +9` は Hellraiser の autoplay ✓ rollout の draw 順違いで再現不能
+
+大きい delta の group を faithful dump で割った ✓ seed AM8C6YXHSG の 2 件 ✓ turn 4 seq 278 は
+**game 13 / model 0** ✓ turn 7 seq 288 は **game 9 / model 0** ✓ 両方 `POWER.HELLRAISER_POWER` 1 を持つ ✓
+relic は BAG_OF_MARBLES・BRONZE_SCALES・BURNING_BLOOD・CANDELABRA・FISHING_ROD・JUZU_BRACELET・
+ORICHALCUM・YUMMY_COOKIE ✓ 敵は SANDPIT と（1 件目は）VULNERABLE 3 ✓ Strength 3 ✓
+数字が一致する ✓ 2 件目は Vulnerable 3 あり → Strike (6+3=9) × 1.5 = 13.5 → **13** ✓
+3 件目は Vulnerable 無し → 6+3 = **9** ✓ つまり game は Shrug It Off の draw で引いた **Strike を
+HellraiserPower が自動で玩んだ** ✓ model は同じカードを引かなかった ✓（rollout の draw 順が game と違う ✓）✓
+→ **これは忠実度では直せない group** ✓（game の draw は乱数 ✓ model の rollout は別の乱数 ✓）✓
+前 round まで残っていた `CARD.DEFEND_IRONCLAD game+5` / `CARD.SHRUG_IT_OFF game-5` の LetterOpener 群とは
+別物なので ✓ これ以上触らない ✓
+
+一方 `game 0 / model 5`（seed P3V8N5K2RX seq 356 ✓ model だけ LetterOpener の 5 を出した ✓）は
+**玩札数の過大計上** ✓ 同じ turn 内に pile へ「よそから」入った札を play として数える ✓
+`unexplained = (piles - _TURN_PILE_START) - _TURN_OWN_PLAYS - _TURN_EFFECT_DEPARTURES` は
+**pile への到着数**を見ているので ✓ (a) 敵の効果などが discard に足した札 ✓
+(b) 引かれて即 autoplay された札 ✓ の両方を区別せずに play にする ✓
+
+素朴な直し（到着数が手札からの消失を超える分を引く ✓）は (b) を壊す ✓ seq 278 では
+hand 2→1 ✓ discard +2 ✓ 到着 > 消失 ✓ でもその 1 枚は本物の play（Hellraiser の autoplay ✓）✓
+**区別に必要な情報は draw pile の減少** ✓（autoplay は draw pile から直接玩む ✓ 敵が札を足す場合は
+draw pile は減らない ✓）✓ まだ実装していない ✓ 影響測定 は BYGONE_EFFIGY 群 5 件と LetterOpener 系の一部 ✓
+7,322 件中 74 件の一部分 ✓ 割合は小さい ✓ 実装するなら census と suite で壊れる規則を特定してから ✓
+
+**現在の状態** ✓ HEAD `4dfc611` ✓ suite 777 件 green ✓ 公式 run なし ✓
+attribution 2 本は実行中（`/tmp/measure_after_panel.sh` ✓ 06:49 から ✓ `data/ashen_attr.log` はまだ空 ✓）✓
+それが終わるまで main の policy は触らない ✓（3 番目が main の HEAD と `.wt-attr-e10` を比べる ✓）✓
+適用待ち: Power 除去（`/tmp/power_leaves_combat.patch` ✓ 63 行 ✓）と Stratagem
+（`/tmp/stratagem_plus_power.patch` ✓ 180 行 ✓ 両方含む ✓）✓ scratch `.wt-proto5` suite 779 件 green ✓
