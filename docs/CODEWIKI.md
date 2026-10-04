@@ -7553,3 +7553,32 @@ group と dump の要約 ✓(`/tmp/newgap.py` ✓) ✓
 2 件は分類済みの noise ✓ 2 件（game+15 ✓ game+19 ✓）は**新しい手がかり** ✓ 次の測定:
 relic 一覧 ✓ 敵の intents の vars ✓ その record 前後の pile 変化 ✓ を同じ dump に出す ✓
 control sweep は 07:43 開始 ✓ seed 1 走行中 ✓（`counts_ctrl` ✓ `dfced8b` ✓）✓
+
+## Round 60: 玩札数 export は决定を 1 件も変えなかった（seed AM8C6YXHSG ✓ 354 件比較 ✓ 差分 0 ✓）
+
+control 1 本目が終わった ✓ arm と並べて決定的な測定が出た ✓
+
+```
+RESULT counts_arm  AM8C6YXHSG wins=17 losses=1 combat_records=354 depth=Act 3, Floor 15
+RESULT counts_ctrl AM8C6YXHSG wins=17 losses=1 combat_records=354 depth=Act 3, Floor 15
+  fail=Watchdog timeout: No progress for 30.1s. Last activity: Entering Boss room (Act 3, Floor 15)
+```
+
+**combat record 354 件を 1 件ずつ突き合わせると ✓ 選択の差分は 0 件** ✓（card_id と action_type を比較 ✓）✓
+arm は export した玩札数を model state に seed し ✓ control は pile から推定する ✓ 差分はその 1 点だけ ✓
+（`fail=` の形が正しいのは control 側 ✓ 前 round の sed 锚修正が効いている ✓ 走行中に script を触っていない ✓）✓
+
+**前の round まで測っていた 34% の推定誤りと矛盾しない** ✓ 推定が間違っていたのは
+`cards_this_turn` と `attacks_this_turn` ✓（skills は 3.5% ✓）で ✓ それを読むのは SlowPower の ramp ✓
+Pen Nib ✓ Rampart ✓ Nunchaku ✓ Kusarigama ✓ Ornamental Fan ✓ の「3 番目の攻撃」条件 ✓
+しかし ±1〜2 ダメージの差は hand の argmax を引っ繰り返さない ✓
+加えて `_seed_exported_plays` は **observation 時点の値**を入れるだけで ✓ rollout の内部カウンタは model の
+play 順で進む ✓（前 round 記録 ✓）✓
+→ **玩札数の精度は Act 3 のボトルネックではなかった** ✓ 新しい trace の census（613 中 609 一致 ✓）と
+合わせて ✓ この変更は忠実度修正として保持するが ✓ win の改善は期待しない ✓
+（teaching 7「arm と control が同じ数なら測定がない」は今回のケースではない ✓
+ 354 件比較して 0 件という母数を取っている ✓）✓
+
+残る control 2 本（D6A1F8C3E5 ✓ EAIF2UUVCK）は走行中 ✓ 完了待ち background job `bash-879` ✓
+Act 3 完走はまだ出ていない ✓（この seed は Act 3 boss QUEEN の部屋で敗北 ✓ turn 9 で敵 HP 284/400 ✓
+前 round 記録 ✓ 13 ダメージ/ターン ✓）✓
