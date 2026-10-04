@@ -7196,3 +7196,37 @@ cards / attacks / skills と ✓ record の `plays` 字段を突き合わせて 
 `PROBE_TREE=<bridge 変更のある repo>` で tree を選べ ✓ 検証 run（`/tmp/bcp1.log` ✓
 trace は `data/bcp1_AM8C6YXHSG_agent.jsonl` ✓）が終わったらこれを走らせる ✓
 **推定がどれだけ頻繁に間違っていたかを直接測る道具** ✓
+
+## Round 49: Power 計上の决定母数は 0 件（panel しない ✓）と Power 除去・Stratagem を HEAD に適用
+
+attribution（arm = HEAD ✓ control = `.wt-attr-e10` ✓ selector `POWER.SLOW_POWER` ✓ SIMULATIONS=1 ✓）:
+
+```
+power: POWER.SLOW_POWER  records compared: 1718  trees: 2
+decision changed: 0  unchanged: 1718  errors: {'KeyError': 108}
+seeds with a changed decision: 0
+```
+
+**Slow の ramp を読む集団 1,718 件の决定が 1 件も変わらなかった** ✓ つまり Power 札をカウンタに載せる修正は
+state の数値は直す（census 80 → 74 件 ✓）が ✓ その時点の agent の選択は変えない ✓
+**决定が 0 件の変更には win panel をしない** ✓（前の教訓 ✓）✓ 忠実度修正として保持 ✓
+`KeyError` 108 件は model の知らない card id を再生した時の形 ✓（`CARD.SPOILS_MAP` ✓ `CARD.STRATAGEM` ✓
+`CARD.CLUMSY` など ✓ 前 round の unknown card 実測 ✓ と整合 ✓）✓
+
+**HEAD に適用した** ✓ suite **779 件 green** ✓ ツリー clean ✓
+- `84dfb91` play した Power 札を combat から取り除く ✓（`POWERS` を使い ✓ exhaust で無い play は
+  discard にも exhaust にも入れない ✓ 実測 Inflame 58 play などで exhaust+0 discard+0 ✓）✓
+- `dfced8b` Stratagem を model に入れる ✓（cost 1 ✓ untargeted Power ✓ `StratagemPower` 1 ✓
+  reshape 時に power 枚数ぶん draw pile から hand へ ✓ 消費されない ✓）✓
+
+**patch の手順ミス** ✓ `/tmp/stratagem_plus_power.patch` は Power 除去と Stratagem の**合算** diff だった ✓
+Power 除去を先に commit した main には当たらない ✗（`patch failed: combat.py:2887` ✓）✓
+直し方: 新しい HEAD（`84dfb91`）に worktree を切り ✓ scratch の 3 ファイルをコピーして ✓
+`git diff` で **Stratagem 単体**の diff（`/tmp/stratagem_only.patch` 132 行 ✓）を作り適用 ✓
+合算 patch を commit 後に使い回さない ✓
+
+**検証 run が始まった** ✓ 07:15 ✓ game process 1 ✓ `/tmp/bcp1.log` に SWEEP START ✓
+`REPO=/Users/mao/workspace/sts2-ai/.wt-bridge-counts`（bridge が `plays` を出し ✓ agent がそれを使う ✓
+policy は HEAD 適用前の code ✓）で seed AM8C6YXHSG ✓ 完了待ちは background job `bash-850` ✓
+trace `data/bcp1_AM8C6YXHSG_agent.jsonl` が出たら `/tmp/plays_diff.py` を走らせて
+**推定と game の数の食い違いの頻度**を出す ✓ 次に census を測り直す ✓（run 中は走らせない ✓）✓
