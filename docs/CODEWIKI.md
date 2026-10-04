@@ -7898,3 +7898,28 @@ Owl Magistrate の `JUDICIAL_FLIGHT` state が SoarPower 1 を載せることも
 （Inflame 単体 0 ✓ Soar 無しでも 0 ✓ Lost Wisp 単体 8 ✓ で切り分けられた ✓）✓
 **教訓: probe の数字を解釈する前に、その札自身の damage の出方を確認する** ✓（ブロック前提の札を
 block 0 の状態で試すと「効果が消えた」ように見える ✓）✓
+
+## Round 69: census がほぼ空になった ✓ arm corpus 614 中 612 ✓ 新しい run の trace は 218 中 218 ✓（不一致 0 ✓）
+
+HEAD `9bbf6a6` 以降（`bc54a06` の多重 play 修正まで入った状態 ✓）で測り直した ✓
+
+```
+TRACE_GLOB=counts_arm_*_agent.jsonl → 614 actions replayed, 612 matching
+  ('THE_INSATIABLE','enemy_hp','CARD.SHRUG_IT_OFF','game-18')  1
+  ('THE_INSATIABLE','enemy_hp','CARD.SHRUG_IT_OFF','game-5')   1
+TRACE_GLOB=fixafter_*_agent.jsonl   → 218 actions replayed, 218 matching ✓ 不一致 0 ✓
+```
+
+**多重 play の debuff 順序修正で `DEVOTED_SCULPTOR CARD.BASH game+5` ✓ と
+`LIVING_SHIELD CARD.UPPERCUT game+6` ✓ が無くなった** ✓ 前 round の予測どおり ✓
+arm corpus の残り 2 件は **Shrug の draw で model が Strike を引いて Hellraiser に自動で玩ませる**
+rollout の draw 順の違い ✓ 前に「忠実度では直せない」と分類したもの ✓
+**新しい run（fixafter ✓ HEAD `5b4f01d` ✓）の combat record は 218 手すべて model と game が一致** ✓
+→ combat model の食い違いはほぼ無くなった ✓ 次の work は model の穴探しではなく **damage と HP の経済** ✓
+（Act 2 boss 321 HP ✓ Act 3 boss QUEEN 400 HP + TORCH_HEAD_AMALGAM 599 HP ✓ に対し 13〜22/ターン ✓）✓
+
+**4 seed sweep を開始した** ✓ tag `sw59` ✓ 08:46 ✓ HEAD `9bbf6a2` ✓
+seed `AM8C6YXHSG` ✓（panel arm で Act 3 Floor 15 ✓ QUEEN 戦まで到達 ✓）✓ `D6A1F8C3E5` ✓（fixafter で Act 3 Floor 5 ✓）✓
+`H2LV6ZJ4XW` ✓（**過去に Act 3 完走の記録がある seed ✓** 現在の build で再び届くか見る ✓）✓ `VTW80ZJA2G` ✓（8 seed panel の其中之一 ✓ Act 2 boss 付近で死亡 ✓）✓
+測定軸は wins ✓ 到達 depth ✓ Act 3 完走 ✓ 失敗理由 ✓（sweep3.sh の `RESULT` 行 ✓）✓
+log `/tmp/sw59.log` ✓ status `/tmp/sweep59.status` ✓ 完了待ち background job `bash-1045` ✓
