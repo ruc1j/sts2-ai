@@ -7271,3 +7271,43 @@ seed EAIF2UUVCK の control run の trace 末尾は `combat_end` の **`won: fal
 `SIMULATIONS` 100 × 毎 decision ✓ boss 戦は turn 数が多い ✓ だから Act 3 の壁は相性だけでなく
 **run が boss 戦を完了できないこと**かもしれない ✓ 次の手: Watchdog timeout で死んだ run を 1 件選び ✓
 trace の末尾と mod log の時系列で「どの fight がどれだけ長かったか」を出す ✓
+
+## Round 51: 玩札推定の誤りを実測（combat record 344 件中 119 件）✓ bridge 変更を HEAD に適用 ✓ watchdog は 30 秒で kill する
+
+検証 run（`bcp1` ✓ seed AM8C6YXHSG ✓ `REPO=.wt-bridge-counts` ✓ 07:15-07:21 ✓
+`combat_records=344` ✓ wins 17 losses 1 exit 1 ✓）の trace に `plays` 字段が **344 件すべて**出た ✓
+`/tmp/plays_diff.py` で **main の推定**と同じ record の export 値を突き合わせた ✓
+
+| 項目 | 一致 | 不一致 |
+|---|---:|---:|
+| cards | 225 | **119（34.6%）** |
+| attacks | 226 | **118（34.3%）** |
+| skills | 332 | 12（3.5%） |
+
+delta の分布: `cards +1` 53 ✓ `cards +2` 16 ✓ `cards -1` 20 ✓ `cards -2` 22 ✓ `cards -3` 4 ✓
+`attacks +1` 52 ✓ `attacks +2` 16 ✓ `attacks -1` 23 ✓ `attacks -2` 23 ✓ `attacks -3` 4 ✓
+skills は `−1` 7 と `+2` 5 のみ ✓ **cards と attacks は約 3 回に 1 回違った** ✓
+前 round まで推定の誤りとして理論的に数えていたもの（Power 札は pile に現れない ✓ 敵が札を pile に足す ✓
+autoplay は draw pile から直接玩む ✓）が ✓ **量として確認された** ✓
+skills が強いのは LetterOpener・Kusarigama・Shuriken などの価格がほぼ合っていたことで ✓
+Slow の ramp（cards）と Pen Nib・Rampart などの attacks が狂っていた ✓
+
+**HEAD に適用した** ✓ commit `ebf2ef9` ✓ suite **780 件 green** ✓ mod 再ビルド ✓ `Sts2Ai.dll` 235,008 bytes ✓
+bridge が observation と trace に `plays` を出し ✓ agent が `_seed_exported_plays` で model state に注入 ✓
+**offline replay ではこの変更の决定母数を測れない** ✓（古い trace に `plays` が無い ✓）✓
+だから測定は live panel になる ✓（arm = HEAD + 新しい dll ✓ control = `dfced8b` の worktree + そこにビルドした dll ✓）✓
+
+**watchdog の実測** ✓ `AutoSlayConfig.watchdogTimeout = TimeSpan.FromSeconds(30)` ✓
+`watchdogLogInterval = 5s` ✓（`AutoSlayConfig.cs:41,44` ✓ `public static readonly` ✓ 変更不可 ✓）✓
+`Watchdog.Reset(string activity)` は public で「意味ある進捗のたびに呼べ」とコメントされている ✓
+（`Watchdog.cs` ✓ `Check()` は 30 秒進捗がないと `AutoSlayTimeoutException` ✓）✓
+**長い combat は 30 秒を普通に越える** ✓（1 decision ごとに observation/action の往復 ✓ 16 turn 戦 ✓）✓
+実際 `data/act3_pop2_G3Q7Y5K9DT` は turn 16 まで戦って `won: false` で終わり ✓ 同じ run の log は
+`Stuck detected! No progress for 30.1s (last: Entering Monster room (Act 1, Floor 11))` を出している ✓
+→ **AutoSlay 側の「進捗」は AutoSlay自身の action で ✓ agent 駆動の combat 中は進捗が見えない** ✓
+次手の候補: Harmony で `Watchdog.Check()` に postfix を掛け ✓ **bridge が直近の observation/action 交換に
+成功している時だけ `Reset()` を呼ぶ** ✓（本来の目的である本物の停止検出は残す ✓）✓
+これは run が boss 戦を最後まで戦えるかに直結する ✓（336 件の Watchdog timeout ✓ 前 round ✓）✓
+
+sweep3.sh の最後で `command not found: SWEEP DONE bcp1` が出た ✓ RESULT 行は正常なので実害はない ✓
+（`print --` の使い方の問題 ✓ 未修正 ✓ 次に sweep を組む時に見る ✓）✓
