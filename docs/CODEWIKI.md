@@ -6786,3 +6786,31 @@ relic 発動と pile 表現の忠実さ ✓）✓
 975 観測で **228 件 changed ✓ 9 seed**（AM8C6YXHSG 106 ✓ D6A1F8C3E5 45 ✓ EAIF2UUVCK 24 ✓ SOS6XYXCNO 17 ✓
 R8V2H6N4ZB 14 ✓）✓ 基準を満たすので **panel を起動した**（arm = `073aabf` ✓ control = `9bfc18e` ✓ seeds
 AM8C6YXHSG / D6A1F8C3E5 / EAIF2UUVCK ✓ mechanism-targeted な再使用 ✓）✓ 05:52 開始 ✓ 結果待ち ✓
+
+## Round 36（scratch まで ✓ 未適用 ✓）: model が元から self-exhaust させていた Ashen Strike と Second Wind も discard に落ちる
+
+model の `EXHAUSTS` の 18 枚を **trace の pile 差分で一枚ずつ検証した** ✓（同じ turn ✓ 同じ fight ✓ の
+transition で play 後の exhaust/discard の増分を数える ✓）✓ 合っていたのは TREMBLE（63 play ✓ exhaust +1
+discard +0 ✓）✓ FEED（47 ✓）✓ IMPERVIOUS（31 ✓）✓ SLIMED（28 ✓）✓ OFFERING（5 ✓）✓ FORGOTTEN_RITUAL（1 ✓）✓
+FIEND_FIRE（1 ✓ exhaust +7 ✓ 手札ごと ✓）✓ METAMORPHOSIS（1 ✓）✓
+
+違ったのは 2 枚 ✓
+- **`CARD.ASHEN_STRIKE`**: 4 play すべて **exhaust +0 / discard +1** ✓
+- **`CARD.SECOND_WIND`**: 43 play すべて discard +1 ✓ exhaust 側は自分の効果（非 Attack を exhaust ✓
+  `SecondWind.OnPlay` の `CardCmd.Exhaust(choiceContext, item)` ✓）で ✓ 自身は discard ✓
+
+decompile でも **両方 `HoverTipFactory.FromKeyword(CardKeyword.Exhaust)` しか出てこない** ✓
+`CanonicalKeywords` override は無い ✓ つまり keyword を持たない ✓
+
+`.wt-proto3`（HEAD の scratch worktree ✓）から落して測った ✓ patch は `/tmp/ashen_secondwind.patch` ✓
+scratch の suite は **776 件 green** ✓（`test_ashen_strike_scales_with_exhaust_pile` と
+`test_second_wind_exhausts_for_block` は play した札が exhaust pile に入る前提で書かれていたので ✓
+game の動きに合わせて書き換えた ✓）✓ group 別では **`QUEEN CARD.ASHEN_STRIKE game-1`（3 件）と
+`QUEEN CARD.BREAKTHROUGH game-1`（2 件）が消えた** ✓ 総不一致は scratch 6,936/7,022 = 86 件 ✓ HEAD
+6,757/6,840 = 83 件 ✓ **率はほぼ同じ**（1.22% と 1.21% ✓ rollout のたどる状態が変わって母数が動く ✓）✓
+Ashen Strike の damage は `6 + 3 x len(exhaust_before)` で play 時点では自分を含めないため ✓
+このずれは **後続の card の exponent 側**に出る ✓
+
+exhaust panel は走行中（05:52 開始 ✓ arm = `073aabf` ✓ control = `9bfc18e` ✓ seeds AM8C6YXHSG /
+D6A1F8C3E5 / EAIF2UUVCK ✓）✓ 走行中は policy code を触らない約束なので **この変更は未適用** ✓
+panel が終わったら HEAD に適用して `data/boss_gap_list.py` で測り直す ✓
