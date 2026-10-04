@@ -6901,3 +6901,34 @@ autoplay ✓ Mayhem・Hellraiser など ✓ でも同じ形になる ✓）✓
 
 Slow 側の下側（Power 札が計上されない ✓ 前 round ✓）は `.wt-proto4` に修正済み ✓
 `/tmp/power_credit.patch` ✓ scratch suite 777 件 green ✓ HEAD 未適用 ✓
+
+## Round 40（診断 ✓ code 変更なし ✓ panel 走行中）: model が名前の知らない card id と Stratagem の未実装効果
+
+build-valid trace の hand / deck / discard に現れる card id を model の既知名と突き合わせた ✓
+**`CARD.WOUND` は既知だった** ✓（私の名前抽出 heuristic が取りこぼした ✓ 下の list から除外すべき ✓）✓
+本当に知らないのは次 ✓（観測数 ✓ seed 数 ✓）:
+
+| card id | 観測 | seed | game 側の定義 |
+|---|---:|---:|---|
+| `CARD.STRATAGEM` | 581 | 3 | `base(1, CardType.Power)` ✓ `PowerCmd.Apply<StratagemPower>(1)` ✓ |
+| `CARD.BYRDONIS_EGG` | 214 | 3 | `base(-1, CardType.Quest)` ✓ `CardKeyword.Unplayable` ✓ |
+| `CARD.SPOILS_MAP` | 136 | 1 | （未読 ✓） |
+| `CARD.CLUMSY` | 86 | 4 | `base(-1, CardType.Curse)` ✓ `Unplayable` + `Ethereal` ✓ |
+| `CARD.LANTERN_KEY` | 44 | 1 | `base(-1, CardType.Quest)` ✓ `Unplayable` ✓ |
+| `CARD.ENTHRALLED` | 34 | 1 | `base(2, CardType.Curse)` ✓ `CardKeyword.Eternal` ✓ `ShouldPlay` override ✓ |
+| `CARD.MAYHEM` / `CARD.SECRET_WEAPON` / `CARD.THINKING_AHEAD` | 3 / 3 / 2 | 2 / 1 / 1 | 既知の効果 ✓ play 計上側の話 ✓ |
+
+**Stratagem の効果は `StratagemPower.AfterShuffle`** ✓ draw pile をシャッフルする時（= 引き札が尽きた時 ✓）
+`Amount` 枚を draw pile から選んで **hand に置く** ✓ つまり 1 枚で山を掘る効果 ✓
+そして **`POWER.STRATAGEM_POWER`（amount 1）は trace の player powers に 793 回・4 seed 現れる** ✓
+観測できる ✓ なのに model は知らない ✓ → reward 選択・play の価値・draw pile の中身のすべてで
+model が過小評価する ✓ 実装案: model の draw 処理が draw pile 尽きて reshape する箇所で hook を置き ✓
+`Amount` 枚を draw pile から best-first で hand へ移す ✓（game は player 選択 ✓ model は楽観選択 ✓）✓
+
+Unplayable の Quest / Curse 札（Byrdonis Egg ✓ Clumsy ✓ Lantern Key ✓）は hand に居ても play できない ✓
+model はこれらの card を legal_actions に出さない ✓ 一方で **draw pile の中身を変えて** Battle Trance や
+Perfected Strike の価値、`AfterShuffle` 系効果の有無に影響する ✓ ここも未処理 ✓
+
+**HEAD の policy 変更は保留中 2 件** ✓（`/tmp/ashen_secondwind.patch` ✓ `/tmp/power_credit.patch` ✓）✓
+exhaust panel の arm 3 seed 目がまだ走行中 ✓ 完了後に応用して測定する顺序: panel 収集 → Ashen/Second Wind
+→ Power 計上 → Stratagem ✓
