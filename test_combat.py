@@ -853,6 +853,20 @@ class CombatTest(unittest.TestCase):
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
         self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
 
+    def test_slow_ramp_rounds_once_with_the_other_damage_multipliers(self) -> None:
+        # WeakPower (3/4), VulnerablePower (150/100) and SlowPower (1 + 0.1 * SlowAmount) are
+        # ModifyDamageMultiplicative hooks: the game multiplies the factors together and truncates the
+        # result once.  Rounding each step on its own loses points.  An upgraded Strike (9) played at Weak
+        # against a Vulnerable, Slow holder, with the Slow ramp at 1.2 (cards_played_this_turn counts the
+        # play resolving right now, so the ramp reads 2 earlier cards), is 9 x 3/4 x 1.5 x 1.2 = 12.15
+        # -> 12.  Truncating between the factors gave 9 x 3 // 4 = 6, then 6 x 150 // 100 = 9, then
+        # 9 x 12 // 10 = 10 - two points lost on one hit.
+        slow = Enemy("MONSTER.BYGONE_EFFIGY", 60, "IDLE_MOVE", (), powers=(("SlowPower", 1), ("VulnerablePower", 1)))
+        state = Combat(60, (Card("Strike", upgraded=True),), (), (), (slow,), energy=2,
+                       player_powers=(("WeakPower", 1),), cards_played_this_turn=2)
+        after = step(state, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(60 - after.enemies[0].hp, 12)
+
     def test_feed_raises_max_hp_and_heals_when_it_kills_the_target(self) -> None:
         # Feed.cs is a Fatal Attack: on a kill it calls CreatureCmd.GainMaxHp(Owner, MaxHp), MaxHpVar(3)
         # (upgraded 4), which raises max HP and current HP together.  The recorded game went hp 54 -> 57

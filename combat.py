@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import argparse
 import ast
@@ -1463,13 +1463,26 @@ def _apply_debuff_multipliers(combat: Combat, enemy: Enemy, damage: int) -> int:
     weak = _power(combat.player_powers, "WeakPower")
     vulnerable = _power(enemy.powers, "VulnerablePower")
     phrog = 25 if RELIC_PAPER_PHROG in combat.player_relics else 0
-    if weak and vulnerable:
-        return damage * 3 * (150 + phrog + _power(combat.player_powers, "CrueltyPower")) // 400
-    if weak:
-        return damage * 3 // 4
+    slow = _power(enemy.powers, "SlowPower")
+    numerator = 3 if weak else 1
+    denominator = 4 if weak else 1
     if vulnerable:
-        return _vulnerable_damage(combat, enemy, damage)
-    return damage
+        numerator *= 150 + phrog + _power(combat.player_powers, "CrueltyPower")
+        denominator *= 100
+    if slow:
+        # SlowPower.ModifyDamageMultiplicative: `1m + 0.1m * SlowAmount` when the target is the holder and
+        # the damage is a powered attack, so it is one more factor in the same chain as Weak and
+        # Vulnerable, and the game truncates that chain once at the end.  combat.cards_played_this_turn
+        # already counts the card resolving right now, hence the -1 (the game raises SlowAmount in
+        # AfterCardPlayed, i.e. after the card's own damage resolved).  Folding it in is what the game
+        # does; measured over the traces the current build could have produced it changed nothing, because
+        # those Slow fights had no Weak or Vulnerable on the same hit, so no point was being lost to the
+        # old two-step rounding.
+        numerator *= 10 + max(0, combat.cards_played_this_turn - 1)
+        denominator *= 10
+    if numerator == denominator:
+        return damage
+    return damage * numerator // denominator
 
 
 def _apply_curl_up(before: tuple[Enemy, ...], enemies: list[Enemy], card: str) -> None:
@@ -3073,11 +3086,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                     break
                 target_enemy = enemies[index]
                 scaled = _apply_debuff_multipliers(combat, target_enemy, damage)
-                # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage
-                # taken per card played earlier this turn (combat.cards_played_this_turn already
-                # counts the card resolving right now, hence the -1).
-                if _power(target_enemy.powers, "SlowPower"):
-                    scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
                 enemies[index] = _damage_enemy(target_enemy, scaled)
         if card == THUNDERCLAP:
             for index, enemy in enumerate(enemies):
@@ -3134,8 +3142,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
             scaled = _apply_debuff_multipliers(combat, before_enemy, damage)
-            if _power(before_enemy.powers, "SlowPower"):
-                scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[hit] = _damage_enemy(before_enemy, scaled)
             reflected += _power(before_enemy.powers, "ThornsPower")
             hive += _power(before_enemy.powers, "PersonalHivePower")
@@ -3169,8 +3175,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
             scaled = _apply_debuff_multipliers(combat, before_enemy, damage)
-            if _power(before_enemy.powers, "SlowPower"):
-                scaled = scaled * (10 + combat.cards_played_this_turn - 1) // 10
             enemies[hit] = _damage_enemy(before_enemy, scaled)
             reflected += _power(before_enemy.powers, "ThornsPower")
             hive += _power(before_enemy.powers, "PersonalHivePower")
@@ -3250,11 +3254,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # the turn) and multiplies that command's damage by 3.
         damage = damage * 3
     damage = _apply_debuff_multipliers(combat, enemy, damage)
-    # SlowPower.ModifyDamageMultiplicative (Bygone Effigy): +10% powered-attack damage taken per
-    # card played earlier this turn (combat.cards_played_this_turn already counts the card
-    # resolving right now, hence the -1).
-    if _power(enemy.powers, "SlowPower"):
-        damage = damage * (10 + combat.cards_played_this_turn - 1) // 10
     for _ in range(hits):
         if not enemies[int(target)].alive:
             break
