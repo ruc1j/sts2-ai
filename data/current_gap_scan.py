@@ -38,19 +38,24 @@ def merged_enemy_data() -> dict:
 
 
 def combat_records(path):
+    """Yield the trace's combat records, or nothing at all if the trace predates the current
+    observation schema (four traces were recorded before the bridge emitted Slot, the move history and
+    the stable combat id, and their records differ in more fields than it is worth patching)."""
+    required = {"id", "hp", "block", "powers", "move", "intents", "combat_id", "slot", "history"}
     with path.open(encoding="utf-8-sig") as handle:
+        records = []
         for line in handle:
             try:
                 record = json.loads(line)
             except ValueError:
                 continue
-            if record.get("phase") != "combat":
-                continue
-            # The four oldest traces were recorded before the bridge emitted EnemyState.Slot; the
-            # current bridge always does, so fill it in rather than reporting a gap that no live run has.
-            for enemy in record.get("enemies") or ():
-                enemy.setdefault("slot", "")
-            yield record
+            if record.get("phase") == "combat":
+                records.append(record)
+    for record in records:
+        enemies = record.get("enemies") or ()
+        if any(not required.issubset(enemy) for enemy in enemies):
+            return
+        yield record
 
 
 def main() -> int:
@@ -60,9 +65,11 @@ def main() -> int:
     traces = sorted(REPO.glob("data/*_agent.jsonl"))
     rng = random.Random(0)
     sampled: list[tuple[str, dict]] = []
+    skipped: list[str] = []
     for path in traces:
         records = list(combat_records(path))
         if not records:
+            skipped.append(path.name)
             continue
         # Spread the sample over whole runs instead of over the first fights of every run.
         stride = max(1, len(records) // max(1, sample_size // len(traces) + 1))
@@ -91,6 +98,7 @@ def main() -> int:
                 rejected["no_choice"] += 1
                 by_monster[f"{monsters} :: no_choice"] += 1
     print(f"records replayed through HEAD: {len(sampled)}  traces: {len(traces)}  simulations: {simulations}")
+    print(f"traces skipped for a pre-current observation schema: {len(skipped)}")
     print("exceptions:", dict(exceptions.most_common()))
     print("rejected rollouts:", dict(rejected.most_common()))
     print("top encounter / failure pairs:")
