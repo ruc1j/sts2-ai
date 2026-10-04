@@ -5428,5 +5428,23 @@ AoE 札で 30 件だけで、内訳は TAUNT 23・BREAKTHROUGH 6・EXTERMINATE 1
 player が RegenPower を持つ observation で end_turn を再生した一致率は **605/811 = 74.6%** で、
 不一致の上位は game HP が model より **+5（47件）+4（37件）+3（30件）+2（19件）** ＝ ちょうど Regen の
 Amount ぶん game だけ回復していた。corpus では player が RegenPower を持つ combat observation は
-**841 件**（Amount 5:345・4:187・3:134・2:103・1:72）で、seed は1本（`Y7N3B9J5XR` 系）。
+**841 件**（Amount 5:345・4:187・3:134・2:103・1:72）で、88 本の trace・**23 seed** に現れる。
 母数が1 seed なので panel では測れないが、敵側と同じ規則を追加するだけの修正なので次ターンで実装する。
+
+### 実装した：player 側の RegenPower（commit e273427）
+
+`_end_turn` のターン終了処理（TangledPower・NoDrawPower と同じ AfterSideTurnEnd のグループ）に追加した。
+Amount ぶん回復して（`player_max_hp` を上限）、Regen は 1 減らす（敵側と同じ規則）。
+テストは `test_player_regen_heals_at_the_end_of_the_turn_and_decrements_by_one`（3 回復して 2 に減る、
+上限 80 で頭打ち）を足して 758 件 green。
+
+| 測定（Regen を持つ player の end_turn 再生） | 一致 |
+|---|---:|
+| 修正前 | 605 / 811 = **74.6%** |
+| 修正後 | 729 / 811 = **89.9%** |
+
++5（47件）・+4（37件）・+3（30件）・+2（19件）のグループは消えた。残りは +55/+44/+30/+59 のグループ
+（戦闘中の potion や event の回復で、この audit の窓では区別できない）と **-1 が20件**（model が
+`player_max_hp` 上限 80 を既定値として使い、game 側の実際の最大 HP とずれるケース）で、後者は既知の
+小さな残差として残す。决定母数は **841 本 replay して 17 决定が変化・8 seed**（基準を満たす）。
+1 run あたり 2〜23 観測とまれなので panel では測らない（忠実度で採用）。
