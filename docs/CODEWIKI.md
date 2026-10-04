@@ -5863,3 +5863,28 @@ AXEBOT 2 hit 3 件、HUNTER_KILLER 3 hit が 12 不一致 → 10 一致（2 件�
 selector `PLAYER:POWER.FLAME_BARRIER_POWER`）。胜数への影響は `data/flamebarrier_ab.sh` で測る
 （FlameBarrier を実際に打って保持した観測が最も多い fresh seed C7N4V9P2RX 46・V7K2T9M5RH 33・
 S4QFLNDMB3 28）。
+
+### 次の gap 候補：TUNNELER の Burrowed（BELOW_MOVE）で model だけ HP を削る
+
+Flame Barrier 修正後の replay で残った単一 hit の不一致のうち最大が TUNNELER 17 件だった。
+形ははっきりしている。**BurrowedPower を持つ BELOW_MOVE のターンで、game は HP を 1 も減らさない**
+のに model は削っている：
+
+| trace seq | /block の変化 | game の被ダメージ | model の被ダメージ |
+|---|---|---:|---:|
+| 207 (act3_pop2_R8V2H6N4ZB) | 20 → 2 | 0（HP 54 のまま） | 51 |
+| 各例 | 16 → 9 | 0 | 7 |
+| 各例 | 29 → 22 | 0 | 7 |
+| 各例 | 4 → 0（STUNNED へ） | 0 | 4 |
+
+model は `BurrowedPower.AfterBlockBroken` を「block が 0 になった瞬間に STUNNED へ移行」としてだけ
+扱っており（`combat.py` の `_damage_enemy` 内）、地上に潜っている間の**HP 無効**は扱っていない。
+game 側は block だけ減らし、HP には触らない可能性が高い。次 round は `BurrowedPower` の
+`ModifyDamageAdditive` / `IsHittable` 系フックをデコンパイル読んで確定させる。
+
+### 測定メモ：`pgrep -f "SlayTheSpire2"` は自分の起動コマンドに反応する
+
+panel スクリプトの「game が走っていたら refuse」ガードが、**起動した bash コマンド自体の
+command line に game の path 文字列が含まれている**だけでヒットして誤 refuse した
+（`ps` には game が出ていない）。ガード自体は正しいので、起動コマンド側に path 文字列を
+置かない（別コマンドで path を確認してから launch する）で回避する。
