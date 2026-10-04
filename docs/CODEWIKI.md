@@ -7947,7 +7947,7 @@ potential は「引ける手札」と「1 combat 1 回の制限」を無視し�
 （8 seed panel 以来の一貫した傾向 ✓）✓
 
 **`Rampage.cs` を読んだ** ✓
-`base(1, CardType.Attack, CardTarity.Uncommon, TargetType.AnyEnemy)` ✓（原文は CardRarity ✓）
+(`base(1, CardType.Attack, CardRarity.Uncommon, TargetType.AnyEnemy)`) ✓
 `CanonicalVars`: `DamageVar(9m, Move)` ✓ **`DynamicVar("Increase", 5m)`** ✓
 `OnPlay`: `DamageCmd.Attack(DynamicVars.Damage.BaseValue)` ✓ → **`DynamicVars.Damage.BaseValue += Increase`** ✓
 `OnUpgrade`: `Increase.UpgradeValueBy(4m)` ✓ → **強化版は play ごとに +9** ✓（base damage の強化は 0 ✓
