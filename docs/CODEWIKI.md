@@ -6690,3 +6690,28 @@ census（build-valid ✓ 同じ tool ✓）: 6,840 replay 中 **87 件** の不�
 `CARD.SLIMED` は `CardType.Status` ✓ なので game は Skill として数えない ✓ model の `SKILLS` にも Slimed は
 入っていない ✓ 残る `TUNNELER CARD.DEFEND_IRONCLAD game+5`（3 件）と `CARD.BATTLE_TRANCE game-5`（3 件）は
 agent が推定する Skill 枚数のずれが疑い ✓ 次の対象 ✓
+
+## Round 33（診断のみ ✓ code 変更なし）: LetterOpener が1枚ずれる原因は agent の玩札カウントの取り落としと二重計上
+
+`TUNNELER CARD.DEFEND_IRONCLAD game+5`（3 件）と `CARD.BATTLE_TRANCE game-5`（3 件）を実行して数えた ✓
+同じターンの連続する2つの决定で ✓ model だけ 5 削る箇所と game だけ 5 削る箇所が対になっている ✓
+`RELIC.LETTER_OPENER` を持つ build ✓ game の規則は `AfterCardPlayed` で Skill の時 `SkillsPlayedThisTurn++`
+し `% 3 == 0` で全員に 5 unpowered ✓ model は `skills_this_turn = skills_played_this_turn + 1`（今回の札込み ✓）
+で `% 3 == 0` ✓ 規則は同じ ✓ ずれているのは **agent が推定する `skills_played_this_turn`** ✓
+
+`burrow_arm_b1_P3V8N5K2RX` seq 234/237 の dump: seq 234 で model は LetterOpener を発動させた（5 ✓ game は 0 ✓）✓
+seq 237 で発動させなかった（0 ✓ game は 5 ✓）✓ つまり **game の 3 枚目が seq 237 なのに ✓ model は seq 234 で
+3 枚目だと読んでいた** ✓ agent のカウントが 1 枚早い ✓
+
+同じ fight の turn 1 を seq 229 から追うと ✓ 取り落としと二重計上が同時に出ている ✓
+seq 229 の `CARD.HEMOKINESIS`（Attack ✓ hand 5→4 ✓ discard 0→1 ✓）を玩んだ後の seq 230 でカウンタが
+0/0/0 のまま ✓ **HEMOKINESIS が計上されていない** ✓ その次の seq 230 の Strike を玩んだ後の seq 231 で
+カウンタは 2/0/2 に跳ぶ ✓ **1 枚の玩札が 2 枚として計上された** ✓ この2つは見かけ上打ち消すことが多く ✓
+総枚数が合う局面では gap が出ない ✓ が Skill 枚数だけを見る LetterOpener では1枚のずれがそのまま
+発動タイミングのずれになる ✓（同じ fight の `gate_arm_b2r` でも同じ形 ✓）✓
+
+次の work は `_advance_play_counters` のこの2点 ✓ 具体的には (1) 新しい combat 最初の observation で
+play が計上される経路（reset が先に走って `_PENDING_ACTION` が消える ✓ 疑い ✓）と ✓ (2) 計上済みの play の
+札離脱が pile diff でもう一度数えられる経路 ✓（`_TURN_OWN_PLAYS` はそれを防ぐためにある ✓ HEMOKINESIS のような
+全員に damage を入れる card でなぜずれるか ✓）✓ 実測値（seq 229-238 の手札・discard・カウンタ）を
+検証用の固定データとして使う ✓
