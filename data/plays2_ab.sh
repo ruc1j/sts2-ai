@@ -13,9 +13,13 @@
 # relic mismatches 2,507 -> 2,401, LETTER_OPENER over-damage 36 -> 0 and its under-damage 55 -> 13.
 #
 # Seeds: the same three that measured the previous commit (E3L7S9A4KU, Q2W7N4K9DX, V7D3M9H2XW - the corpus
-# seeds with the most combo-relic observations that no earlier panel had measured).  Reusing them here is
-# deliberate: the earlier panel gave 37 -> 36 wins for the pile-only version, and the question this panel
-# answers is whether the corrected counting reverses that on the same mechanism-heavy sample.
+# seeds with the most combo-relic observations that no earlier panel had measured).
+#
+# NOT RUN.  After this script was written, attribution against the pile-only control replayed 13,325
+# LETTER_OPENER records and found 0 changed decisions across 0 seeds: the corrected counting changes the
+# damage the model reports but not the action the agent picks on any recorded state, so a win-rate panel
+# had nothing it could move.  The script is kept so the comparison can be re-run if a later change makes
+# those decisions live again.
 set -u
 repo=/Users/mao/workspace/sts2-ai
 ctrl=$repo/.wt-ctrl-pile
