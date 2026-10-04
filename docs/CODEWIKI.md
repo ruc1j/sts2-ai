@@ -6750,3 +6750,39 @@ compare するのは条件を通る pair だけ ✓ 同じ直し方を `data/mod
 `CARD.SHRUG_IT_OFF game-5` 2 件 ✓（LetterOpener の ±5 が残る ✓ ここは実際の model/agent 側の问题 ✓）✓
 `QUEEN CARD.BREAKTHROUGH game-1` 2 件 ✓ `VANTOM CARD.UNRELENTING game+2` 2 件 ✓
 `LOUSE_PROGENITOR CARD.PERFECTED_STRIKE game+3` 2 件 ✓ `THE_INSATIABLE CARD.ULTIMATE_STRIKE game+3` 2 件 ✓
+
+## Round 35: 前に足した Exhaust 15 枚のうち 10 枚は keyword を持っていなかった（実測で discard に落ちる）
+
+`CardKeyword.Exhaust` を decompile から数えた 119 枚は **token が mentioned された file の数** だった ✓
+`HoverTipFactory.FromKeyword(CardKeyword.Exhaust)` のように **hover tip 内にだけ出す card が混ざっていた** ✓
+play 時に自分の札がどの pile へ行くかを **trace の pile 差分で測った** ✓（同じ turn ✓ 同じ fight ✓ の
+transition で exhaust/discard の増分を数える ✓）✓
+
+| card | 実測 | 判定 |
+|---|---|---|
+| `CARD.EVIL_EYE` | exhaust +0 / discard +1（74 play ✓） | self-exhaust しない ✓ |
+| `CARD.TRUE_GRIT` | exhaust +1 / discard +1（47 play ✓） | +1 は犠牲の札 ✓ 自身は discard ✓ |
+| `CARD.BURNING_PACT` | exhaust +1 / discard +1（37 play ✓） | 対象を exhaust ✓ 自身は discard ✓ |
+| `CARD.HOWL_FROM_BEYOND` | exhaust +0 / discard +1（6 play ✓） | しない ✓ |
+| `CARD.HAVOC` | exhaust +1 / discard +1（5 play ✓） | 自身は discard ✓ |
+| `CARD.BRAND` | exhaust +1 / discard +1（4 play ✓） | 自身は discard ✓ |
+| `CARD.IMPERVIOUS` | exhaust +1 / discard +0（31 play ✓） | **する** ✓ |
+| `CARD.SLIMED` | exhaust +1 / discard +0（27 play ✓） | **する** ✓ |
+
+`CanonicalKeywords` override として宣言しているのも確認できた ✓ Dramatic Entrance・Impervious・
+Molten Fist・Slimed・Toxic ✓ なので **この 5 枚だけ残し** ✓ Brand・Burning Pact・Cinder・Dark Embrace・
+Evil Eye・Feel No Pain・Havoc・Howl From Beyond・Thrash・True Grit の 10 枚を `EXHAUSTS` から落とした ✓
+（commit `073aabf` ✓ suite 776 件 green ✓ 前 round で書き換えたテスト 8 件は元の期待値に戻した ✓）✓
+`data/exhaust_card_classes.json` は「token に言及した card 一覧」として残す ✓ 使い方注意を combat.py の
+コメントに書いた ✓
+
+正直に書いておく ✓ **model の `EXHAUSTS` は agent の玩札カウンタ推定に影響しない** ✓（推定は観測された
+pile だけを見る ✓）✓ なので前 round の「余分な exhaust がカウンタを膨らませて LetterOpener が早い」は
+**筋が違った** ✓ `THE_INSATIABLE CARD.DEFEND_IRONCLAD +5`（2 件）と `CARD.SHRUG_IT_OFF -5`（2 件）は
+この変更後も残っている ✓ census は 6,840 replay 中 81 → **80 件** ✓（ほぼ変わらない ✓ 効果は rollout 内の
+relic 発動と pile 表現の忠実さ ✓）✓
+
+决定母数（control = `.wt-ctrl-exhaust` = `9bfc18e` ✓ selector はこの 10 枚の card ✓ 同じ mod binary ✓）:
+975 観測で **228 件 changed ✓ 9 seed**（AM8C6YXHSG 106 ✓ D6A1F8C3E5 45 ✓ EAIF2UUVCK 24 ✓ SOS6XYXCNO 17 ✓
+R8V2H6N4ZB 14 ✓）✓ 基準を満たすので **panel を起動した**（arm = `073aabf` ✓ control = `9bfc18e` ✓ seeds
+AM8C6YXHSG / D6A1F8C3E5 / EAIF2UUVCK ✓ mechanism-targeted な再使用 ✓）✓ 05:52 開始 ✓ 結果待ち ✓
