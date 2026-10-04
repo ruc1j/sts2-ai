@@ -7856,3 +7856,45 @@ selector `CARD.BASH` ✓ `CARD.UPPERCUT` ✓ `CARD.SQUASH` ✓ `CARD.BREAK` ✓ 
 **waiter の鍵の失敗** ✓ `for ... done > /tmp/multihit_attr.status` の形だと **ファイルは開始時に空で作られる** ✓
 完了の目印にならない ✓（最初の waiter は即座に抜けた ✓）→ **完了後に入れる `echo ... > status` を使う** ✓
 または logs が全て non-empty になったかで待つ ✓
+
+## Round 68: 多重 play の debuff 順序を HEAD に入れた ✓ 母数 1,596 件中 22 件（1 seed ✓ panel しない ✓）
+
+main commit `bc54a06` ✓ suite **783 件 green** ✓ patch `/tmp/multihit.patch` 104 行 ✓
+
+**母数** ✓ arm = `.wt-proto10`（順序修正入り ✓）control = HEAD `28d19f2`（修正無し ✓）✓
+selector は **`RELIC.THROWING_AXE`** ✓（play が複製される場を選ぶ ✓ `CARD.BASH` は 0 件で測定にならなかった ✓ 前 round ✓）✓
+
+```
+power: RELIC.THROWING_AXE  records compared: 1596  trees: 2
+decision changed: 22  unchanged: 1574  errors: {}
+seeds with a changed decision: 1
+  D6A1F8C3E5: 22
+```
+
+1,596 件中 22 件 ✓ 約 1.4% ✓ **seed が 1 本**なので Adopt 基準（3 seed ✓）に届かない ✓
+忠実度修正として保持 ✓ panel はしない ✓（teaching 57 ✓）✓
+同じ selector で前の Throwing Axe 実装自体は 302 件を変えていた ✓（前 round ✓）✓
+
+**新しい run（fixafter ✓ HEAD `5b4f01d` ✓ Act 3 Floor 5）の死因を見た** ✓
+最後の fight は `MONSTER.OWL_MAGISTRATE`（max_hp 231 ✓ 残り **15 HP** ✓ `SOAR_POWER 1` ✓ Vulnerable 5 ✓）✓
+player は **13 HP ✓ block 0 ✓ energy 0** ✓ hand は Iron Wave / Bloodletting / Uppercut ✓ turn 8 ✓
+最後の决定を model で再生した ✓
+```
+legal: ('card:1', 'End turn')
+  card:1   dmg 0  killed False  player_hp 10    (Bloodletting: 2 HP を払って energy +1 ✓)
+  End turn dmg 0  killed False  player_hp -30   (敌の attack で死亡 ✓)
+```
+→ **その時点で win の道は無かった** ✓ Soar 済み敵 15 HP に Uppercut は半減で 6 ✓ 届かない ✓
+model の穴ではなく **资源不足** ✓（Act 3 Floor 5 の elite で削られ尽くしている ✓）✓
+
+**Soar は model 済みと確認した** ✓ `combat.py:1448-1450` ✓
+`if powered and _power(enemy.powers, "SoarPower")` ✓ → game の `SoarPower.ModifyDamageMultiplicative`
+（`DamageDecrease 50 / 100` ✓ powered attack で owner にだけ ✓）と一致 ✓
+Owl Magistrate の `JUDICIAL_FLIGHT` state が SoarPower 1 を載せることも enemy JSON に出ている ✓
+**Lost Wisp の 8 unpowered damage は Soar を抜ける** ✓ 実際に測った ✓（Soar 有りでも 8 ✓）✓
+
+**probe の読み間違いを 1 件記録** ✓ 最初に「Inflame + Lost Wisp が 8 しかない = Inflame の 3 が消えている」と見た ✓
+しかし Inflame は **block に応じて damage が出る札** ✓ probe では player_block 0 ✓ → Inflame 自体 0 ✓
+（Inflame 単体 0 ✓ Soar 無しでも 0 ✓ Lost Wisp 単体 8 ✓ で切り分けられた ✓）✓
+**教訓: probe の数字を解釈する前に、その札自身の damage の出方を確認する** ✓（ブロック前提の札を
+block 0 の状態で試すと「効果が消えた」ように見える ✓）✓
