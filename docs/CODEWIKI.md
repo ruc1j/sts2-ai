@@ -5106,3 +5106,43 @@ Dismantle・Bolas・Rampage）。
 repo の基準（决定 3 件以上かつ seed 3 件以上）を决定数・seed 数ともに満たす母数だが、これは offline replay
 なので胜数の証拠にはしない。胜数への影響は新しい 3 seed の A/B（arm = HEAD、control = `.wt-ctrl-bef34e7`）で
 測ることにし、panel の起動は次 round の先頭で行う（playbook の待機と panel 起動を game 稼働中に挟まないため）。
+
+## Round 7: 付与（enchantment）が bridge から agent に届いていない（2026-10-04）
+
+### きっかけ：Feed のダメージが game より 5-8 少ない群
+
+`model_match_audit.py` の残り不一致のうち Feed が約 240 手で -5〜-8 偏る群を追った。観測された
+`CARD.FEED` の Damage var を集计すると base（var から player Strength を引いた値）が **10 の群と 15 の群**
+に分かれ、15 の側は 877 record ある。15 = 10 × 1.5 で、player の Strength は普通に足されていた
+（Strength 1 → 16.0、2 → 17.0、4 → 19.0）。
+
+`plating_arm_b1_H2LV6ZJ4XW` の時系列で原因が特定できた：seq 188 で Feed の var は 11（base10+Str1）、
+seq 240 の **イベント `SYMBIOTE`**（`CardCmd.Enchant<Corrupted>(card, 1m)` で攻撃札1枚に付与）の直後の
+seq 242 から 16.0 (=15+1) になっている。`Corrupted.cs` は `EnchantDamageMultiplicative = 1.5m`（powered
+attack のみ）と `OnPlay` で owner に 2 ダメージで、combat.py は両方実装済み
+（`ENCHANTMENT_CORRUPTED` で damage ×3//2、テスト `test_corrupted_enchantment_increases_damage_and_hurts_player`）。
+
+### 何が壊れているか：hand の enchantment が bridge の成果物に無い
+
+`official_mod/CombatBridge.cs` の hand 射影は `enchantment = card.Enchantment?.Id.ToString()` を
+持っており（commit `c6ef39b`、2026-09-05）、`official_agent._observation_card`（2652 付近）はその値を
+`Card.enchantment` に写す。ところが**今日走らせた run の trace でも hand の card には `enchantment`
+キーが1つも無い**（`chain_arm_b1_T5R8K2N9QP` の hand card 1,730 件のキー集合は
+`index,id,cost,upgrade,type,rarity,pool,vars,rider,target`）。`enchantment` が出るのは
+draw_pile / discard_pile / exhaust_pile の 4,075+3,454+368 件だけ。
+
+裏取り：走らせている成果物 `official_mod/bin/Release/net9.0/Sts2Ai.dll` 内に `enchantment` 文字列は
+**3 個**、今の `CombatBridge.cs` には **7 個**ある。つまり run に使われている dll は hand 射影の
+この行が入る前のソースからビルドされたもの（mtime は 2026-10-02 だが、中の field 数が古い）。
+
+結果として live run では `Card.enchantment` が常に None で、combat.py の Corrupted（×1.5 と self 2 ダメージ）
+と Tezcatara's Ember（+3）の扱いは**一度も発火していない**。札の `vars` には倍率が焼き込まれて
+現れるのに、model は `vars` を（Mad Science と Frantic Escape を除き）使わず自分の表を見るため、
+付与された札を永久に base 値で評価する。
+
+### 次の一手（未実施）
+
+game を止めて `build_official_mod.ps1` で dll を作り直し、短い run で hand card に `enchantment` が
+出ることを確認する。それまで combat.py / official_agent.py は触らない（panel が走っているためでもあり、
+観測チャネルの話なので model 側をいじっても取り違える）。なお `+3` 系の group（Strike 3,509 record）は
+`RELIC.STRIKE_DUMMY`（Strike に +3、model 済み）で説明がつくので、付与の証拠として使えない。
