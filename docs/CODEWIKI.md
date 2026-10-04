@@ -6353,3 +6353,42 @@ Shrink に対しては正しい ✓ 正の量の Shrink を適用する敵はま
 **まだ bridge に出ていない状態**: `CardModel.Affliction`（単一 ✓ CardModel.cs:602 ✓ Bound / Entangled /
 Galvanized / Hexed / Ringing / Smog / Tainted）✓ model は Galvanized を `GalvanicPower`、Bound を `bound` で
 個別に扱っている ✓ 次の候補 ✓
+
+## Round 24: gap の順位を「現在の build が書けた trace」だけで出し直した（6,317 action 中 445 件）と SlowPower の基準
+
+`data/boss_gap_list.py` を追加した ✓ 条件は card の `enchantment` 字段が **combat の hand record に付いているか**
+で、それを満たす trace は 593 文件中 **32 文件だけ** ✓ `fe94c71`（10-04）で hand に追加された字段なので、
+それより後の run だけ ✓ pile record には以前から字段があったため「字段を含む文件」は 588 文件になり、
+ここを混同すると古い trace を交えてしまう ✓ 実測: **6,317 action を replay して 5,872 件一致（92.96%）** ✓
+
+| 件数 | group |
+|---:|---|
+| 14 | `BYGONE_EFFIGY` `CARD.STRIKE_IRONCLAD` game+1 |
+| 5 | `SLIMED_BERSERKER` `CARD.SLIMED` game+1 |
+| 4 | `LEAF_SLIME_M` `CARD.STRIKE_IRONCLAD` game-5 / `CARD.POMMEL_STRIKE` game-7 / `CARD.PERFECTED_STRIKE` game-14 / `CARD.HEMOKINESIS` game-10 |
+| 4 | `NIBBIT` `CARD.PERFECTED_STRIKE` game-12、`BOWLBUG_EGG` `CARD.PERFECTED_STRIKE` game-22、`SLITHERING_STRANGLER` `CARD.STRIKE_IRONCLAD` game-6 |
+
+従来 boss 戦 audit の top だった `QUEEN CARD.ASHEN_STRIKE +1`（43 件）・`QUEEN end_turn`（41 件）・
+`VANTOM CARD.DEFEND_IRONCLAD -1`（35 件）は **この list からは消えた** ✓ 消えた理由は未確認だが、Corrupted
+（1.5 倍）が古い trace で見えていなかった説明と整合する ✓ ただし `-12`・`-22` のように model が多い大きな
+差は Perfeected Strike の強化値か敵の HP 初期値の話で、別の原因としてはっきりしている ✓
+
+enemy data の充足度は確認した: repo の `data/enemies_*.json` は 102 monster を持ち、build-valid trace に
+出てくる 65 monster を**すべて**含んでいる ✓ 数据不足で replay できない monster は無い ✓
+
+**SlowPower を実装し直した**（commit ✓ `combat.py`）: game の `SlowPower.ModifyDamageMultiplicative` は
+`target != Owner` や非 powered attack なら 1 を返し、 otherwise `1m + 0.1m * SlowAmount` ✓ Weak（3/4）と
+Vulnerable（150/100）と同じ hook なので **1つの掛け算の鎖にして最後に1回切り捨てる** ✓ model は Slow だ
+け別の段階で切り捨てていた ✓ 固定した計算: Weak の player が Slow＋Vulnerable の敵に強化 Strike（9）を
+玩む、ramp が 1.2 のとき game は 9 x 3/4 x 1.5 x 1.2 = 12.15 → 12 ✓ 段階的に切り捨てると 6 → 9 → 10 で
+2 点損をしていた（`test_slow_ramp_rounds_once_with_the_other_damage_multipliers` ✓ 770 tests green ✓）✓
+ただし**この修正で gap は減らなかった**（build-valid でも corpus 全体でも一致件数は変わらず ✓ Slow が効く
+hit に Weak/Vulnerable が重なっていなかったため）✓ 忠実度の構造として保持する ✓ 初めに「BYGONE_EFFIGY の
++1 が消える」と code に書いたが実測が支持しなかったので書き直した ✓
+
+**次の狙い（`BYGONE_EFFIGY +1` 14 件）**: game の ramp は `DynamicVars["SlowAmount"]` ✓ `AfterCardPlayed` で
+**owner に関係無く玩札ごとに +1** ✓ リセットは `AfterSideTurnStart` で **Slow を持つ side が始まった時だけ** ✓
+observation には SlowAmount が出ない（`DisplayAmount = SlowAmount * 10` だが bridge の power `amount` は
+stack 値で ramp が見えない ✓）。model は per-player-turn の `cards_played_this_turn` を使うので、**Slow を
+持つ敵がターンを execute しなかった場面（stun 中・sleep 中・行動しない state）で game の ramp だけが
+積み上がる** ✓ これが +1 の説明になるか、次の round でその 14 件を turn 単位で並べて確認する ✓
