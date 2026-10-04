@@ -7411,3 +7411,23 @@ panel: 07:29 開始の arm 1 本目が走行中 ✓（`/tmp/counts_arm.log` は 
 → 数式は game と一致 ✓ `LOUSE_PROGENITOR CARD.PERFECTED_STRIKE game+3`（2件 ✓）は
 **game が見る `PlayerCombatState.AllCards` の中身と model の4つの pile の差**（rollout の draw 順で手札構成が
 違う ✓ 敵が combat 中に作った札 ✓）側の話で ✓ 2 件だけなので今は触らない ✓（誤った修正をしない ✓）
+
+## Round 55: census / audit に TRACE_GLOB を追加 ✓ 走行中 trace で試して seed するカウンタの届く範囲が分かった
+
+`data/boss_gap_list.py` と `data/model_match_audit.py` が `data/*_agent.jsonl` を固定で glob していたので ✓
+**`TRACE_GLOB` 环境变量で corpus を絞れるようにした** ✓（例 `TRACE_GLOB="counts_arm_*_agent.jsonl"` ✓）✓
+構文確認 ✓ 1 trace の smoke test で動作 ✓（`203 actions replayed ✓ 201 matching ✓`）✓
+（`timeout` は macOS に無い ✓ `gtimeout` ✓ 教訓 ✓）✓ files の BOM は `utf-8-sig` の読み書きで保持される ✓
+（`ast.parse(open(p).read())` は BOM で `invalid non-printable character U+FEFF` になる ✓
+  → `encoding='utf-8-sig'` で parse する ✓）✓
+
+**seed するカウンタの届く範囲** ✓ 走行中の arm trace を census にかける gaps が出た ✓
+`THE_INSATIABLE CARD.SHRUG_IT_OFF game-5` 1件 ✓（model 側だけ LetterOpener の 5 を出した ✓）と
+`game-18` 1件 ✓
+`_seed_exported_plays` は **observation の時点のカウンタ**を model state に入れる ✓
+しかし model の rollout はそのターン内で自分の play を積み上げるので ✓
+`skills_this_turn = combat.skills_played_this_turn + plays` ✓（`combat.py:2663` ✓）の `combat.skills_played_this_turn` は
+seed された値 ✓ rollout 中の加算は model の play 順 ✓ → **seed は rollout 内部のカウンタを直さない** ✓
+LetterOpener が model 側で余分に発動するケースが残るのはこの範囲の話 ✓
+`game-18` は 5 -unit が複数回 ✓（LetterOpener + Kusarigama + Pen Nib など combo relic の重複発動 ✓）の可能性 ✓
+panel 完了後に完全な trace で測り直す ✓（走行中は重い測定をしない ✓）✓

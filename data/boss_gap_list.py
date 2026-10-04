@@ -10,6 +10,7 @@ Usage: python3 data/boss_gap_list.py [max_groups]
 """
 from __future__ import annotations
 
+import os
 import collections
 import json
 import random
@@ -32,7 +33,8 @@ def main(limit: int) -> int:
     previous_action: dict | None = None
     groups: collections.Counter = collections.Counter()
     replays = mismatches = 0
-    for path in sorted(Path("data").glob("*_agent.jsonl")):
+    pattern = os.environ.get("TRACE_GLOB", "*_agent.jsonl")  # TRACE_GLOB narrows the corpus, e.g. "counts_arm_*_agent.jsonl"
+    for path in sorted(Path("data").glob(pattern)):
         if not trace_reports_enchantments(path):
             continue
         # Advance EVERY combat record, not only the ones we compare.  Skipping a record means skipping the

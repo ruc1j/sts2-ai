@@ -14,6 +14,7 @@ enemies that acted.
 
 Usage: python3 data/model_match_audit.py [pair_limit]
 """
+import os
 import json
 import random
 import sys
@@ -157,7 +158,7 @@ def main() -> int:
     mismatch = Counter()
     unplayable = Counter()
     shown = 0
-    for path in sorted(REPO.glob("data/*_agent.jsonl")):
+    for path in sorted(REPO.glob("data/" + os.environ.get("TRACE_GLOB", "*_agent.jsonl"))):  # TRACE_GLOB narrows the corpus
         records = combat_records(path)
         # Hand back the recorded action and advance EVERY record, including the ones we do not compare.
         # model_state() runs choose(), which is what advances the inferred play counters, so a record we
