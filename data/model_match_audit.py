@@ -81,11 +81,22 @@ def compact_target(record, target_id):
 
 
 def recorded_action(record, state, data):
-    """Translate the agent's recorded action into a simulator action."""
+    """Translate the agent's recorded action into a simulator action.
+
+    The simulator has its own action vocabulary: an attack it targets carries an enemy index
+    (`card:2@1`), an all-enemies attack still needs one because the simulator loops every enemy from it,
+    and potions are named (`potion:Block potion`), not indexed.  Choosing the candidate the simulator
+    itself lists as legal stops a reconstruction slip from being counted as a model error.
+    """
     card_id = record.get("card_id")
+    legal = set(combat.legal_actions(state))
     if card_id is None:
         if record.get("potion_id"):
-            return f"potion:{record['potion_index']}" if record.get("potion_index") is not None else None
+            # The simulator names potions with the game's own id (POTION.BLOCK_POTION), not by slot.
+            for candidate in (f"potion:{record['potion_id']}", f"potion:{record.get('potion_index')}"):
+                if candidate in legal:
+                    return candidate
+            return None
         return combat.END_TURN
     modelled = official_agent.CARD_NAMES.get(card_id, card_id)
     index = record.get("hand_index")
@@ -100,7 +111,13 @@ def recorded_action(record, state, data):
         return None
     target_id = record.get("target_id")
     if target_id is None:
-        return f"card:{card_index}"
+        candidates = [f"card:{card_index}"] + [
+            f"card:{card_index}@{position}" for position, enemy in enumerate(state.enemies) if enemy.alive
+        ]
+        for candidate in candidates:
+            if candidate in legal:
+                return candidate
+        return None
     target = compact_target(record, target_id)
     return f"card:{card_index}@{target}" if target is not None else None
 
@@ -123,6 +140,7 @@ def main() -> int:
     data = merged_enemy_data()
     tally = Counter()
     mismatch = Counter()
+    unplayable = Counter()
     shown = 0
     for path in sorted(REPO.glob("data/*_agent.jsonl")):
         records = combat_records(path)
@@ -138,6 +156,10 @@ def main() -> int:
                 continue
             action = recorded_action(previous, state, data)
             if action is None:
+                # The game offered this action but the model could not represent it, so the rollout
+                # never saw the choice the agent actually made.  Grouped by the card/potion id, this is
+                # a census of cards and potions the simulator cannot model.
+                unplayable[previous.get("card_id") or previous.get("potion_id") or previous.get("type") or "?"] += 1
                 tally["no_equivalent_action"] += 1
                 continue
             try:
@@ -179,6 +201,9 @@ def main() -> int:
     print("worst mismatch groups:")
     for key, value in mismatch.most_common(14):
         print(f"   {value:4d}  {key[0]}  {key[1]}")
+    print("actions the game offered but the model could not represent (census of unmodelled cards/potions):")
+    for key, value in unplayable.most_common(20):
+        print(f"   {value:4d}  {key}")
     return 0
 
 
