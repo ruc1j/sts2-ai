@@ -5858,3 +5858,8 @@ PHROG_PARASITE 4 hit 5 件、SLIMED_BERSERKER 4 hit 2 件、OWL_MAGISTRATE 6 hit
 AXEBOT 2 hit 3 件、HUNTER_KILLER 3 hit が 12 不一致 → 10 一致（2 件残る）。
 残りの不一致は hit 数 1 の別原因（TUNNELER 17 件、FROG_KNIGHT 4 件、VANTOM 1 hit 2 件）で、
 そこは次以降の対象になる。
+
+决定母数は **1,752 本 replay して 59 决定が変化・15 seed**（`data/attribution_rampart.py`、
+selector `PLAYER:POWER.FLAME_BARRIER_POWER`）。胜数への影響は `data/flamebarrier_ab.sh` で測る
+（FlameBarrier を実際に打って保持した観測が最も多い fresh seed C7N4V9P2RX 46・V7K2T9M5RH 33・
+S4QFLNDMB3 28）。
