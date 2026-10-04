@@ -7672,3 +7672,38 @@ ODDLY_SMOOTH_STONE は room 進入時の Dexterity +1 ✓（**Dexterity 1 の説
 （seed AM8C6YXHSG では决定差分 0 件も測済み ✓）✓ Act 3 完走は出なかった ✓
 THROWING_AXE の変更は pricing を変える（初手の攻撃が 2 hit になる ✓）ので ✓ **commit 前に决定母数を測る** ✓
 （arm の trace には `plays` があるので ✓ 新旧 tree の replay 差を出せる ✓）✓
+
+## Round 63: Throwing Axe を HEAD に入れた ✓ 决定母数 1,492 件中 302 件 ✓ ただし seed は 1 本だけ（panel しない ✓）
+
+attribution（arm = `.wt-proto8` ✓ control = HEAD ✓ selector `RELIC.THROWING_AXE` ✓ SIMULATIONS=1 ✓
+`/tmp/sts2-ai-enemies-merged.json` ✓）✓
+
+```
+power: RELIC.THROWING_AXE  records compared: 1492  trees: 2
+decision changed: 302  unchanged: 1190  errors: {}
+seeds with a changed decision: 1
+  D6A1F8C3E5: 302
+```
+
+**比較した 1,492 件の决定のうち 302 件（約 2 割）が変わった** ✓ 例: `arm=CARD.STRIKE_IRONCLAD` に対し
+control は `CARD.TREMBLE` ✓ `arm=CARD.BASH` に対し control は `CARD.UNREVLENTING` ✓ など ✓
+Tool の print は 25 件までで ✓ 数は summary の 302 ✓
+errors は 0 件 ✓
+**Throwing Axe を持つ trace が 1 seed（D6A1F8C3E5）にしかない** ✓ 前の Adopt 基準は
+「决定変化 3 件以上 **かつ** 3 seed 以上」✓ seed 数が届かない ✓ → **panel はしない** ✓
+忠実度修正として保持する ✓（teaching 57 ✓）✓
+
+**HEAD に適用した** ✓ commit `d43ee0f` ✓ suite **781 件 green** ✓ tree clean ✓
+Python 側だけの変更 ✓ mod の再ビルドは不要 ✓（`plays` の export は前 round までに入っている ✓）✓
+
+**relic の読み合わせで残る +5 / +6 の候補を落とす** ✓
+- `Orichalcum.cs` ✓: `BlockVar(6m, ValueProp.Unpowered)` ✓ `_shouldTrigger` ✓ → **+1 Strength ではない** ✓
+  （前 round の私の推測は誤り ✓ dump で player に Strength が出なかった理由にも合う ✓）✓
+  model は `combat.py:2299` の `if RELIC_ORICHALCUM in relics and end_block == 0:` で block 側として持っている ✓
+- `PaelsFlesh.cs` ✓: `EnergyVar(1)` ✓ `ModifyMaxEnergy` ✓ → **max energy +1** ✓ damage ではない ✓
+- `StrikeDummy.cs` ✓: `ModifyDamageAdditive` で `ExtraDamage 3` ✓ powered attack かつ `CardTag.Strike` の時だけ ✓
+  model は `combat.py:3328` の `if RELIC_STRIKE_DUMMY in combat.player_relics and card in STRIKE_TAGGED: damage += 3` ✓
+  Bash と UpperCut は Strike tag ではない ✓ ので説明にならない ✓
+- `LostWisp.cs` ✓: 私 が `CardType.Power` を play 時に全敵へ 8 unpowered damage ✓ model 済み ✓
+  今回の 2 件は Attack の play ✓ なので発動しない ✓
+→ **残る +5 / +6 は各 1 件ずつ** ✓ ここは追わない ✓（次の手がかりが見つかるまで置く ✓）✓
