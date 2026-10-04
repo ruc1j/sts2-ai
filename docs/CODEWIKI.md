@@ -7146,3 +7146,31 @@ API が全部解決しているので ✓ 型も含めて game 側に存在す�
 attribution は実行中 ✓（06:49 開始 ✓ 07:06 時点で経過 16 分 ✓ CPU 時間 0.6 秒 ✓ **停止ではなく
 trace ごとに subprocess を 1 個ずつ起動している** ✓ `attribution_rampart.py:115-119` ✓ 現在 child 50454 が稼働 ✓）✓
 完了待ちは background job `bash-811` ✓ 完了後に `data/ashen_attr.log` と `data/powercredit_attr.log` を読む ✓
+
+## Round 47: bridge が出す玩札数を agent が使う実装完了（scratch ✓ 778 件 green ✓ 検証 run を仕込み）
+
+`.wt-bridge-counts`（bridge 変更と同じ tree ✓）に agent 側を入れた ✓
+`_seed_exported_plays(observation)` を追加し ✓ `choose()` が `_advance_play_counters(observation)` の直後に呼ぶ ✓
+observation に `plays` があれば `_TURN_PLAYS`（cards / attacks / skills）と `_COMBAT_PLAYS`（attacks / skills）を
+その値で上書き ✓ 無ければ（古い mod build ✓）推定のまま ✓ `_EXPORTED_PLAYS` にどちらを使ったか残す ✓
+model state への注入点は `official_agent.py` の `attacks_played_this_turn=` 付近 ✓（`_TURN_PLAYS` を読む ✓）✓
+
+**scratch suite 778 件 green** ✓ 壊れた test は無い ✓（既存 test の observation に `plays` が無いので
+推定の経路がそのまま検査されている ✓）✓ 新規 test `test_exported_play_counts_replace_the_inferred_ones` ✓
+（`plays` あり → cards 2 / attacks 1 / skills 1 ✓ combat 側 attacks 3 ✓ `plays` 無し → False ✓）✓
+patch: `/tmp/bridge_playcounts.patch` 180 行（`CombatBridge.cs` + `official_agent.py` + test）✓
+
+**中間に壊した箇所** ✓ 前 round で捨てた上限実験の global 名をこの tree に混ぜて line 423 が
+`_TURN_SOURCE_LEFT: dict[str, int] = {...}: dict[str, int] = {...}` になり ✓ 5 test が import 失敗した ✓
+（`Ran 400 tests` は module 失敗の兆候 ✓ 777 になっていない ✓）✓ 行を直して green ✓
+
+**検証 run を仕込んだ** ✓ `/tmp/validate_bridge_counts.sh` ✓ attribution の完了
+（`/tmp/measure_after.status` ✓）を待ってから ✓ `REPO=/Users/mao/workspace/sts2-ai/.wt-bridge-counts
+sweep3.sh bcp1 AM8C6YXHSG` を実行 ✓ 出力 `/tmp/bcp1.log` ✓ 完了印 `/tmp/bcp1.status` ✓
+見るもの: (1) 実際の observation に `plays` が入っているか ✓ (2) trace の play 列と数が一致するか ✓
+(3) **推定値との差** ✓ 上の round まで推定は `unexplained` で誤っていた ✓ export された数と突き合わせれば
+**推定がどれだけ頻繁に間違っていたかを直接測れる** ✓ 例: `THE_INSATIABLE` の LetterOpener ±5 群 ✓
+`BYGONE_EFFIGY` の ±1 群 ✓ これが消えるか ✓
+
+HEAD には未適用 ✓（`.wt-bridge-counts` は HEAD + bridge/agent 変更 ✓ dll は scratch にビルド済み 235,008 bytes ✓
+sweep は REPO の dll を使う ✓）。適用する前に run で field の実在を確認する ✓
