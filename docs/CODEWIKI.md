@@ -7396,3 +7396,18 @@ model の分類（Strike は ATTACKS ✓ Defend は SKILLS ✓）は実運用と
 
 panel: 07:29 開始の arm 1 本目が走行中 ✓（`/tmp/counts_arm.log` は SWEEP START のみ ✓）✓
 完了待ち background job `bash-879` ✓
+
+## Round 54: 走行中の arm trace に `plays` が出ていることを確認 ✓ Perfected Strike の数式は game と一致（+3 群は数式ではなく札集合の問題 ✓）
+
+`counts_arm` の seed AM8C6YXHSG は 07:32 時点で trace 195 件に `plays` 字段を持っていた ✓
+**bridge の export が実際の run で機能している** ✓（control 側は同じ policy で `plays` 無し ✓）✓
+
+`PerfectedStrike` を読んだ ✓（`PerfectedStrike.cs` ✓）: `CalculationBaseVar(6m)` ✓ `ExtraDamageVar(2m)` ✓
+`CalculatedDamageVar.WithMultiplier(card.Owner.PlayerCombatState.AllCards.Count(c => c.Tags.Contains(CardTag.Strike)))` ✓
+`base(2, CardType.Attack, Common, AnyEnemy)` ✓ model は `combat.py:3292` で
+`strikes = hand + draw_pile + discard_pile + exhaust_pile` の `STRIKE_TAGGED` 数 ✓
+`damage = 6 + (upgraded ? 3 : 2) * strikes` ✓ **base 6 ✓ extra 2 ✓ 自分も含む ✓（この branch は札が hand から
+消える前に走る ✓ `STRIKE_TAGGED` に PERFECTED_STRIKE が入っている ✓ `combat.py:237` ✓）** ✓
+→ 数式は game と一致 ✓ `LOUSE_PROGENITOR CARD.PERFECTED_STRIKE game+3`（2件 ✓）は
+**game が見る `PlayerCombatState.AllCards` の中身と model の4つの pile の差**（rollout の draw 順で手札構成が
+違う ✓ 敵が combat 中に作った札 ✓）側の話で ✓ 2 件だけなので今は触らない ✓（誤った修正をしない ✓）
