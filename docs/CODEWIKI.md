@@ -6022,3 +6022,40 @@ seed H2LV6ZJ4XW の 76 件だけで、機構を狙った panel に必要な 3 se
 持つ run は多いのに决定が変わった seed が少ないのは、ターン開始の 1 ダメージ差が探索の argmax を
 滅多に揺らさないためで、**「决定 3 seed 以上」という採用基準は満たさない**。この commit を残す根拠は
 忠実度（4,794 件の一致率 84.8% → 95.6%、崩れた group の消滅）であり、胜数や决定分布の改善ではない。
+
+## Round 19: Weak と Vulnerable は「丸める前に掛ける」（boss 戦 audit 3.29% → 2.60%）
+
+QUEEN 戦の攻撃決定で game だけ 1 多く削っていた group（`CARD.STRIKE_IRONCLAD` 69 件、`CARD.ANGER` 65 件、
+`CARD.POMMEL_STRIKE` 23 件、`CARD.BYRD_SWOOP` 19 件、`CARD.HEADBUTT` 15 件、`CARD.SQUASH` 12 件）の
+原因は **掛算の丸め位置**だった。game の `ModifyDamageMultiplicative` hook は小数の係数を返して
+**掛け合わせた後に 1 度だけ丸める**のに対し、model は Weak (3/4) → Vulnerable (150/100) と
+各段で `//` で切っていた。upgraded Strike 9 に Weak 97-99（QUEEN の `YOU_ARE_MINE` が戦闘中ずっと載る）と
+Vulnerable 1 を掛けると game は 9 × 0.75 × 1.5 = 10.125 → **10**、model は 9 × 3 // 4 = 6 → 6 × 150 // 100 = **9**
+で 1 足りなかった。`WeakPower.ModifyDamageMultiplicative` は `dealer != Owner` と `!IsPoweredAttack()` のとき
+だけ 1 を返し、それ以外では常に 0.75（stack 数で変わらない）こともデコンパイルで確認した。
+
+実装（commit `d3a9608`、766 tests green）：`_apply_debuff_multipliers(combat, enemy, damage)` を増やし、
+Weak と Vulnerable（Paper Phrog の +25 と CrueltyPower の加算込み）を **単一の丸め**で適用する。
+AoE 系 3 箇所と単一対象 1 箇所にバラけていた `damage = damage * 3 // 4` を廃して全部この helper に寄せる。
+Shrink (7/10)・Pen Nib (×2)・Gigantification (×3)・Slow はこの round では触っていない（同じ問題は残る）。
+テスト `test_weak_and_vulnerable_multiply_attack_damage_before_the_rounding` は
+Weak + Vulnerable で 10、Weak だけで 6、Vulnerable だけで 13 になることを固定する。
+
+検証（攻撃カードの play で、対象が block 無し・Slippery/Intangible/Plating 等の特殊を持たない 44,883 件）：
+
+| | 修正前（`.wt-ctrl-weak` = `dd2f0f4`） | 修正後（HEAD） |
+|---|---:|---:|
+| 与ダメージ一致（全体） | 43,754 / 44,883 = 97.48% | **43,898 / 44,883 = 97.81%** |
+| weak 有り & Vulnerable 有り | 一致 263 / 不一致 170 | **一致 407 / 不一致 26** |
+| weak 有り & Vulnerable 無し | 一致 729 / 不一致 12 | 一致 729 / 不一致 12 |
+| weak 無し | 一致 42,762 / 不一致 947 | 一致 42,762 / 不一致 947 |
+
+Weak と Vulnerable が同時に載る group の不一致が 170 → 26 に減り、其它の group は完全に同一だった。
+boss 戦 audit（46,737 决定）は **3.29% → 2.60%**（1,216 件）。上位 group から `QUEEN に対する
+CARD.STRIKE_IRONCLAD -1` と `CARD.ANGER -1` が消えた。
+
+boss 戦の残る上位（次 round の対象）：`QUEEN CARD.ASHEN_STRIKE +1 43 件`（model が多い。Ashen Strike は
+複数 hit のため per-hit の丸めが疑うしい）、`QUEEN end_turn "game0" 41 件`（合計は一致し per-enemy だけ
+ずれる形で、Forgotten Soul のランダム対象の違いとして説明がつく）、`THE_INSATIABLE 戦 CARD.FEED で
+player_hp -2 35 件`、`VANTOM 戦 CARD.DEFEND_IRONCLAD -1 35 件`、`FROG_KNIGHT end_turn +3 31 件`、
+`QUEEN 戦 CARD.DEFEND_IRONCLAD で game 5 多い 23 件`。
