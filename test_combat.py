@@ -1,4 +1,4 @@
-import json
+﻿import json
 import random
 import unittest
 from dataclasses import replace
@@ -852,6 +852,19 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(_power(weak.enemies[0].powers, "WeakPower"), 3)
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
         self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
+
+    def test_feed_raises_max_hp_and_heals_when_it_kills_the_target(self) -> None:
+        # Feed.cs is a Fatal Attack: on a kill it calls CreatureCmd.GainMaxHp(Owner, MaxHp), MaxHpVar(3)
+        # (upgraded 4), which raises max HP and current HP together.  The recorded game went hp 54 -> 57
+        # with max_hp 80 -> 83 on such a kill, and the rollout scored the same play 3 HP worse.
+        victim = Enemy("MONSTER.SHRINKER_BEETLE", 9, "IDLE_MOVE", ())
+        state = Combat(54, (Card("Feed"),), (), (), (victim,), energy=2)
+        killed = step(state, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertFalse(killed.enemies[0].alive)
+        self.assertEqual((killed.player_hp, killed.player_max_hp), (57, 83))
+        survivor = Enemy("MONSTER.SHRINKER_BEETLE", 40, "IDLE_MOVE", ())
+        missed = step(Combat(54, (Card("Feed"),), (), (), (survivor,), energy=2), "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((missed.player_hp, missed.player_max_hp), (54, 80))
 
     def test_shuriken_strength_counts_from_the_attack_after_the_third(self) -> None:
         # ShurikenRelic grants its Strength in AfterCardPlayed, so the attack that reaches the 3rd attack

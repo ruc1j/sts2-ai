@@ -1,4 +1,4 @@
-"""Count card plays where the recorded game and combat.py disagree about the player's own HP.
+﻿"""Count card plays where the recorded game and combat.py disagree about the player's own HP.
 
 The boss-fight audits keep showing a group where playing an Attack costs the player HP that combat.py
 does not charge (CARD.FEED, CARD.STRIKE_IRONCLAD, CARD.CASCADE ...).  Measuring it over the whole corpus
@@ -26,6 +26,23 @@ from model_match_audit import combat_records, model_state, recorded_action, same
 ENEMY_DATA = Path("/tmp/sts2-ai-enemies-merged.json")
 
 
+def trace_reports_enchantments(path: Path) -> bool:
+    """True when this trace's combat records carry the card `enchantment` field."""
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
+        if '"hand"' not in line:
+            continue
+        try:
+            record = json.loads(line)
+        except ValueError:
+            continue
+        if record.get("phase") != "combat":
+            continue
+        hand = record.get("hand")
+        if isinstance(hand, list) and any(isinstance(card, dict) and "enchantment" in card for card in hand):
+            return True
+    return False
+
+
 def main(days: int) -> int:
     data = json.loads(ENEMY_DATA.read_text(encoding="utf-8-sig"))
     cutoff = time.time() - days * 86400
@@ -36,6 +53,13 @@ def main(days: int) -> int:
     total = 0
     for path in sorted(Path("data").glob("*_agent.jsonl")):
         if path.stat().st_mtime < cutoff:
+            continue
+        # A date is only a proxy.  What matters is whether the build that wrote this trace exported card
+        # enchantments at all: commit fe94c71 added them to the trace's hand records, and before it the
+        # agent genuinely could not see that a card carries Corrupted (x1.5 damage plus 2 unblockable
+        # damage to the owner on play), which showed up as a phantom discrepancy on every play of an
+        # enchanted card.  Only traces that carry the field can be attributed to the model.
+        if not trace_reports_enchantments(path):
             continue
         seed = path.name[: -len("_agent.jsonl")].rsplit("_", 1)[-1]
         if len(seed) != 10:

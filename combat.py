@@ -3372,6 +3372,16 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     hive = _power(enemy.powers, "PersonalHivePower")
     _apply_curl_up(before, enemies, card)
     combat = replace(combat, player_powers=player_powers, enemies=tuple(enemies))
+    if card == FEED and enemy.alive and not enemies[int(target)].alive:
+        # Feed.cs: the Attack is Fatal (shouldTriggerFatal = target.Powers.All(p => p.ShouldOwnerDeathTriggerFatal()))
+        # and a Fatal kill runs CreatureCmd.GainMaxHp(Owner, MaxHp) - MaxHpVar(3), upgraded 4 - which raises
+        # max HP and current HP by the same amount (traces show hp 54 -> 57 with max_hp 80 -> 83, and
+        # hp 63 -> 66 with max_hp 101 -> 104).  Without this the rollout prices Feed as a plain 10 damage
+        # attack and scores the kill 3 HP worse than the game values it.  The game gates the gain on the
+        # target's powers allowing a Fatal death; the model takes any kill, which is the approximation to
+        # revisit if a Fatal-immune holder shows up in a trace.
+        gained = 4 if card_was_upgraded else 3
+        combat = replace(combat, player_max_hp=combat.player_max_hp + gained, player_hp=combat.player_hp + gained)
     combat = _apply_reflected_damage(combat, reflected)
     return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
 
