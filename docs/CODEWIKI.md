@@ -5662,3 +5662,66 @@ game 側の実装は読んだ：Secret Weapon は 0コスト Skill・Exhaust で
 Secret Technique は同じく draw pile から Skill 札、Thinking Ahead は 0コスト Skill・Exhaust で 2 枚引いて
 1 枚を draw pile 一番上に戻す、Discovery は 1コスト Skill・Exhaust で生成札を選んで hand へ
 （すべて `CardPileCmd` 系で、model が既に持つ hand / draw_pile 操作で書ける）。
+
+## Round 15: Act 3 boss 戦に絞った audit で Crimson Mantle の自ダメージ抜けを見つける（2026-10-04）
+
+### 測り方を変えた
+
+これまで corpus 全体の一致率（1〜2% 残差）を見ていたが、**run が死ぬ boss 戦だけ**を切り出して
+HEAD で全决定を replay した（QUEEN・THE_INSATIABLE・VANTOM・AXEBOT・FROG_KNIGHT・THE_OBSCURA・FOGMOG、
+46,754 决定）。**不一致は 8.41%（3,934 件）**で、corpus 全体の残差率より明らかに悪い。
+模型が最も不正確なのは、まさに run が負けている場所だった。上位グループ：
+
+| グループ | 件数 |
+|---|---:|
+| VANTOM player_hp end_turn | 363 |
+| QUEEN player_hp end_turn | 238 |
+| FOGMOG enemy_hp CARD.BASH | 219 |
+| THE_INSATIABLE player_hp end_turn | 199 |
+| QUEEN enemy_hp end_turn | 192 |
+| VANTOM player_hp CARD.STRIKE_IRONCLAD | 124 |
+
+`player_hp end_turn` の上位3グループ（800 件）が **1 刻み**で game のほうが HP が低い、という形をしていた。
+
+### 原因：Crimson Mantle の自ダメージは export されない
+
+`CrimsonMantlePower` は自ダメージを DynamicVar に持つ（`CanonicalVars` の `SelfDamage` base は 0、
+`CrimsonMantle.cs` がプレイ時に `IncrementSelfDamage()` を1回呼んで 1 になる）ので、
+game が外に出す power は `POWER.CRIMSON_MANTLE_POWER` **だけ**で、自ダメージ用のマーカーは無い
+（観測 8,300 件、counter の値は 8 が 6,028・10 が 2,225・18 が 47 ＝ 通常1回 / 強化1回 / 2回プレイ）。
+`AfterPlayerTurnStart` は `CreatureCmd.Damage(Owner, SelfDamage, Unblockable|Unpowered)` してから
+`GainBlock(Owner, Amount)` する。model は `CrimsonMantleSelfDamage` を自分でプレイしたときだけ立てるため、
+**observation から組み直した rollout 状態ではマーカーが無く、ターン開始の 1 ダメージを毎回飛ばしていた**。
+
+### 実装（commit ad3fa1a、762 tests green）
+
+ターン開始時の自ダメージを counter から導出した（`max(marker, counter // 8)`：8→1、10→1、18→2 で
+実走観測のすべての値を再現する）。テスト `test_crimson_mantle_damages_itself_at_turn_start_from_the_observed_counter_alone`
+はマーカー無し状態（60 HP・mantle 8）で END_TURN 後に HP 59・block 8、10 のとき 59/10、18 のとき 58/18 を検証する。
+
+### 検証
+
+mantle を持つ player の end_turn replay 1,907 件を修正前後で比べた：
+
+| | 修正前（`.wt-ctrl-mantle` = `b46e5d9`） | 修正後（HEAD） |
+|---|---:|---:|
+| 一致 | **0 / 1,907** | **1,898 / 1,907（99.5%）** |
+| game が1低い | 1,888 件 | 0 件 |
+| game が2低い | 10 件 | 0 件 |
+
+boss 戦 audit の不一致も **8.41% → 6.67%（3,934 → 3,119 件）**に下がり、上位に並んでいた
+VANTOM 363・QUEEN 238・THE_INSATIABLE 199 の `player_hp end_turn` グループはリストから消えた。
+决定母数は **8,300 本 replay して 563 决定が変化・12 seed**（この session で最も大きい）。
+前回 round の Regen audit に残った「-1 が20件」も、対象が mantle 10 を持っていたことで説明がつく。
+
+**未測定：** panel は走らせていない。この修正は model の HP 予測を1だけ**厳しく**する（以前は楽観的だった）
+ので、胜数への影響は独立に測る必要がある。
+
+**同じ形の実装で直していないもの：** `InfernoPower` も `IncrementSelfDamage` 経由で自ダメージを持つが、
+corpus に `POWER.INFERNO_POWER` の観測が1件也无い（agent が実走で Inferno を打っていない）。
+model が自分で Inferno を打つ経路ではマーカーが立つので、observation 由来の状態でのみ問題になる。
+
+### 次に追う boss 戦の残差
+
+`FOGMOG enemy_hp CARD.BASH` 219・`QUEEN enemy_hp end_turn` 192・`VANTOM player_hp CARD.STRIKE_IRONCLAD` 124・
+`THE_INSATIABLE enemy_hp end_turn` 99・`FROG_KNIGHT enemy_hp end_turn` 76・`QUEEN enemy_hp CARD.ANGER` 68。
