@@ -392,12 +392,19 @@ _POTION_USED_ROOM: tuple[object, object] | None = None
 # unpowered damage on every 3rd Skill of a turn, Kusarigama 6 and Shuriken's Strength and Ornamental
 # Fan's block on every 3rd Attack, SlowPower raises the damage a slowed creature takes by 10% per card
 # played earlier in the turn, and Pen Nib / Nunchaku / TuningFork count plays across the combat.
-# The counters are reconstructed from the piles rather than from the actions the agent chose: a played
-# card always leaves the hand into the discard or exhaust pile, so the cards that appeared there since
-# this turn began are the cards the turn has actually played - including the ones the game played by
-# itself (Hellraiser / Pyre / Mayhem / Centennial Puzzle autoplays), which an action-derived count
-# misses and which misaligns every 3rd-play rule.
+# Two sources are combined, because neither one alone is right:
+#   * the plays we chose ourselves - exact, but blind to the cards the game plays by itself
+#     (Hellraiser / Pyre / Mayhem / Centennial Puzzle autoplays), which misaligns every 3rd-play rule;
+#   * how far the discard and exhaust piles grew this turn - counts everything, including cards that
+#     left the hand without being played (Burning Pact and Fiend Fire exhaust other cards, Dark Embrace
+#     discards them), which made the model deal 5 the game never dealt in 36 recorded plays.
+# A departure we did not choose is attributed to an effect when the card was seen in hand during this
+# turn - an effect acts on a card already in hand - and only otherwise to an autoplay, which enters
+# hand and is played inside the same resolution, so no observation ever shows it in hand.
+_PENDING_ACTION: dict | None = None
 _TURN_PILE_START: collections.Counter = collections.Counter()
+_TURN_SEEN_HAND: collections.Counter = collections.Counter()
+_TURN_OWN_PLAYS: collections.Counter = collections.Counter()
 _TURN_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0, "turn": -1}
 _COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
@@ -411,21 +418,30 @@ def _pile_contents(observation: dict) -> collections.Counter:
     )
 
 
+def _hand_contents(observation: dict) -> collections.Counter:
+    return collections.Counter(
+        CARD_NAMES.get(card.get("id"), card.get("id")) for card in observation.get("hand") or ()
+    )
+
+
 def _enemy_instance_ids(observation: dict) -> frozenset:
     return frozenset(enemy.get("combat_id") for enemy in observation.get("enemies", ()) if enemy.get("combat_id"))
 
 
 def _reset_play_counters() -> None:
-    global _COMBAT_ENEMY_IDS, _TURN_PILE_START
+    global _COMBAT_ENEMY_IDS, _TURN_PILE_START, _TURN_SEEN_HAND, _TURN_OWN_PLAYS
     _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=-1)
     _COMBAT_PLAYS.update(attacks=0, skills=0)
     _COMBAT_ENEMY_IDS = frozenset()
     _TURN_PILE_START = collections.Counter()
+    _TURN_SEEN_HAND = collections.Counter()
+    _TURN_OWN_PLAYS = collections.Counter()
 
 
 def _advance_play_counters(observation: dict) -> None:
-    """Rebuild the play counters the bridge hides from how far the discard and exhaust piles grew."""
-    global _COMBAT_ENEMY_IDS, _TURN_PILE_START
+    """Rebuild the play counters the bridge hides from our own plays plus what the piles show."""
+    global _PENDING_ACTION, _COMBAT_ENEMY_IDS, _TURN_PILE_START, _TURN_SEEN_HAND, _TURN_OWN_PLAYS
+    action, _PENDING_ACTION = _PENDING_ACTION, None
     if observation.get("phase") != "combat":
         _reset_play_counters()
         return
@@ -436,18 +452,32 @@ def _advance_play_counters(observation: dict) -> None:
     if enemy_ids:
         _COMBAT_ENEMY_IDS = enemy_ids
     piles = _pile_contents(observation)
-    if _number(observation.get("turn"), -1) != _TURN_PLAYS["turn"]:
+    turn = _number(observation.get("turn"), -1)
+    if turn != _TURN_PLAYS["turn"]:
         _TURN_PILE_START = piles
-        _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=_number(observation.get("turn"), -1))
-    grown = piles - _TURN_PILE_START
-    attacks = sum(amount for name, amount in grown.items() if name in ATTACKS)
-    skills = sum(amount for name, amount in grown.items() if name in SKILLS)
-    _TURN_PLAYS.update(attacks=attacks, skills=skills, cards=sum(grown.values()))
-    # The combat-long counters only ever grow, so the largest per-turn reading seen so far is the best
+        _TURN_SEEN_HAND = _hand_contents(observation)
+        _TURN_OWN_PLAYS = collections.Counter()
+        _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=turn)
+        if action is not None and action.get("type") == "card":
+            # The play that closed the previous turn is not part of this turn's counters.
+            action = None
+    for name, amount in _hand_contents(observation).items():
+        _TURN_SEEN_HAND[name] = max(_TURN_SEEN_HAND[name], amount)
+    if action is not None and action.get("type") == "card":
+        name = CARD_NAMES.get(action.get("card_id"), action.get("card_id"))
+        if name in ATTACKS or name in SKILLS:
+            _TURN_OWN_PLAYS[name] += 1
+    unexplained = (piles - _TURN_PILE_START) - _TURN_OWN_PLAYS
+    # A card we saw in hand that left without our choosing it was discarded or exhausted by an effect.
+    effects = unexplained & _TURN_SEEN_HAND
+    plays = _TURN_OWN_PLAYS + (unexplained - effects)
+    attacks = sum(amount for name, amount in plays.items() if name in ATTACKS)
+    skills = sum(amount for name, amount in plays.items() if name in SKILLS)
+    _TURN_PLAYS.update(attacks=attacks, skills=skills, cards=sum(plays.values()))
+    # The combat-long counters only ever grow, so the largest per-turn reading so far is the best
     # estimate available without a counter the bridge does not export.
     _COMBAT_PLAYS["attacks"] = max(_COMBAT_PLAYS["attacks"], attacks)
     _COMBAT_PLAYS["skills"] = max(_COMBAT_PLAYS["skills"], skills)
-
 ROLLOUT_POTION_IDS = {
     POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK,
     POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE,
@@ -824,9 +854,16 @@ def _tag_action(action: dict, source: str, reason: str | None = None) -> dict:
 
 
 def choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
-    """Public entry point: rebuild the play counters the bridge hides, then delegate to the policy."""
+    """Public entry point: rebuild the play counters the bridge hides, then delegate to the policy.
+
+    The action returned here is credited at the next observation of the same turn, which is how the
+    simulator learns that the Skill it is about to price is the 3rd one of the turn.
+    """
+    global _PENDING_ACTION
     _advance_play_counters(observation)
-    return _choose(observation, enemy_data, simulations)
+    action = _choose(observation, enemy_data, simulations)
+    _PENDING_ACTION = action
+    return action
 
 
 def _choose(observation: dict, enemy_data: dict | None = None, simulations: int = 0) -> dict:
