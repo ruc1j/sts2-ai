@@ -6932,3 +6932,34 @@ Perfected Strike の価値、`AfterShuffle` 系効果の有無に影響する �
 **HEAD の policy 変更は保留中 2 件** ✓（`/tmp/ashen_secondwind.patch` ✓ `/tmp/power_credit.patch` ✓）✓
 exhaust panel の arm 3 seed 目がまだ走行中 ✓ 完了後に応用して測定する顺序: panel 収集 → Ashen/Second Wind
 → Power 計上 → Stratagem ✓
+
+## Round 41: headless launch が main menu で止まり panel の 3 seed 目が空になった（sweep3.sh を用意）
+
+exhaust panel の arm 3 seed 目（EAIF2UUVCK ✓ 06:03 開始）が **25 分たっても combat record を 1 件も出していない** ✓
+bridge の temp dir は空 ✓（`observation.json` も `action.json` も無い ✓）✓ trace file も無い ✓
+game log の最後は:
+
+```
+[INFO] [AutoSlay] Action: Abandoning existing run
+[WARN] Asset not cached: res://scenes/ui/abandon_run_confirm_popup.tscn
+[INFO] Preloading 'Common' assets... count=686 vfx=92
+[INFO] [Startup] Resource stats (main menu loaded (complete)): ...
+```
+
+つまり **run を破棄する確認 popup の scene が cache されていない ✓ そこで main menu から先へ進まない** ✓
+`run_official_autoslay.ps1` は isolated appdata を作るが `APPDATA` を設定するのは `-not $IsMacOS` の時だけ ✓
+（`run_official_autoslay.ps1:101` ✓）なので macOS では実 userdata を使う ✓ sweep2.sh は seed ごとに
+`rsync -a --delete ~/.sts2/userdata-pin/ → userdata/` をやる ✓（`sweep2.sh:11,18` ✓）✓ 
+同じ復元を毎回やっているのに 3 seed 目だけ止まった ✓ **断続的な race** ✓（popup の非同期読み込みと
+AutoSlay の操作 ✓）✓ `wins=0 losses=0 exit=1` だった前回の実行と違い ✓ 今回は pwsh 側が 1800 s を
+待つので 30 分を無駄にする ✓
+
+**panel への影響** ✓ arm は AM8C6YXHSG 17 勝 1 敗 ✓ D6A1F8C3E5 15 勝 1 敗 の 2 seed しか確保できない見込み ✓
+採否基準は 3 seed 以上なので **この panel だけで採否は決めない** ✓ Exhaust 10 枚の取り消しは
+trace の pile 実測（EVIL_EYE 74 play で exhaust +0 ✓ TRUE_GRIT 47 play ✓ BURNING_PACT 37 play ✓ など ✓）で
+方向が確定している忠実度修正なので保持 ✓ 勝敗の判定が欲しければ sweep3.sh でやり直す ✓
+
+**`=sweep3.sh` を追加**（`/Users/mao/.sts2/scripts/sweep3.sh` ✓ 文法チェック済み ✓）✓ seed ごとに
+`combat_records=` を出力し ✓ **combat record が 5 件未満なら 1 度だけ再試行** ✓ して同じ file 名に戻す ✓
+空 run を 0 勝として数える誤りを防ぐ ✓（`RESULT` 行に `combat_records=` を入れた ✓）✓ 
+次の panel は sweep3.sh を使う ✓
