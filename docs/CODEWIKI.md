@@ -6103,3 +6103,23 @@ observation 側に無いことは bridge のコードで確認した（`CombatBr
 
 注意: 同じ形の `RELIC.KUSARIGAMA`（3 枚目の Attack で 6 ダメージ）は replay で +6 の差分が見えていない。
 game 側のトリガーが model の想定と違う可能性があるので、LETTER_OPENER を直した後に separately 確認する。
+
+### Weak 掛算統合の panel：**+0 胜**（31→31、3 seed）ただし測定になったのは 1 seed だけ
+
+`data/weak_ab.sh`（arm = HEAD、control = `.wt-ctrl-weak` = `dd2f0f4`、policy code の差は commit
+`d3a9608` だけ）。seed は player Weak 観測が最も多い 3 本（54・54・48 観測）を選んだ。
+
+| seed | control | arm | 差分 | trace | player Weak 観測（arm / control） | QUEEN 観測 |
+|---|---:|---:|---:|---|---|---|
+| N8CQ4ZKP2W | 5勝 | 5勝 | +0 | **byte 一致（143 / 143 record）** | 0 / 0 | 0 / 0 |
+| P3V8N5K2RX | 15勝 | 15勝 | +0 | 分岐（395 / 405 record） | 15 / 9 | 0 / 0 |
+| T5R8K2N9QP | 11勝 | 11勝 | +0 | **byte 一致（312 / 312 record）** | 24 / 24 | 0 / 0 |
+| 合計 | **31勝** | **31勝** | **+0** | | | |
+
+`compare_panel.py` の MEASURABLE 表示は「power が両 arm で出現」で判定しており、**N8CQ4ZKP2W は trace が
+完全に同一で Weak 観測も 0 件**だった（その +0 は測定ではない）。T5R8K2N9QP は Weak を 24 件見ているが
+arm と control の决定が最初から最後まで同一だった。分岐して機構も出ていた seed は P3V8N5K2RX の 1 本だけ。
+3 run はいずれも QUEEN 戦に到達しておらず（QUEEN 観測 0 件）、Weak 97-99 というこの修正の主戦場自体が
+出ていない。忠実度の実証（攻撃一致 97.48% → 97.81%、Weak+Vulnerable group の不一致 170 → 26、决定 267 件・
+27 seed）を根拠に HEAD には残す。panel については「主戦場に到達する seed では測れていない」ことが分かったので、
+次回はこの修正 dedicated ではなく他の修正と束ねて測る。
