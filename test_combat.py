@@ -262,8 +262,28 @@ class CombatTest(unittest.TestCase):
         powered = step(combat, HELLRAISER, DUMMY_DATA, random.Random(0))
         self.assertEqual((_power(powered.player_powers, "HellraiserPower"), powered.energy), (1, 1))
         after_turn = step(powered, END_TURN, DUMMY_DATA, random.Random(0))
-        self.assertEqual((after_turn.enemies[0].hp, after_turn.energy, after_turn.hand), (94, 3, (HELLRAISER,)))
+        after_turn = step(powered, END_TURN, DUMMY_DATA, random.Random(0))
+        # Hellraiser is a CardType.Power card, so playing it sends the card to PileType.None - it is not in
+        # the discard to be shuffled back and replayed.  The turn-start draw brings the Strike back, which
+        # HellraiserPower plays for free.
+        self.assertEqual(
+            (after_turn.enemies[0].hp, after_turn.energy, after_turn.hand, HELLRAISER in after_turn.discard_pile or HELLRAISER in after_turn.exhaust_pile or HELLRAISER in after_turn.hand),
+            (94, 3, (), False),
+        )
         self.assertEqual((after_turn.hellraiser_autoplays_this_turn, after_turn.free_cards), (1, ()))
+
+    def test_power_cards_leave_the_combat_when_played(self) -> None:
+        # CardModel.GetResultPileTypeForCardPlay returns PileType.None for CardType.Power cards, so a played
+        # Power is gone from the combat piles - recorded plays of Inflame (58), Stone Armor (35), Rupture (30)
+        # and Crimson Mantle (22) all show exhaust +0 and discard +0.  A spent Power must not come back into
+        # the draw cycle and be replayed later in the same fight.
+        enemy = Enemy("MONSTER.DUMMY", 60, "IDLE_MOVE", ())
+        combat = Combat(80, (INFLAME,), (DEFEND,), (STRIKE,), (enemy,), energy=3)
+        after = step(combat, INFLAME, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.hand, after.discard_pile, after.draw_pile, after.exhaust_pile), ((), (STRIKE,), (DEFEND,), ()))
+        self.assertEqual(_power(after.player_powers, "StrengthPower"), 2)
+        drawn = step(replace(after, hand=()), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertNotIn(INFLAME, drawn.hand + drawn.draw_pile + drawn.discard_pile)
 
     def test_hellraiser_autoplays_strike_drawn_by_shrug(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())

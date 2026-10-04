@@ -2887,12 +2887,22 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         else:
             hand = [GIANT_ROCK if card_name(value) in ATTACKS else value for value in hand]
     exhaust = card in EXHAUSTS
+    # CardModel.GetResultPileTypeForCardPlay sends the played card to PileType.None when it is a
+    # CardType.Power card (and the Exhaust keyword wins first), so a Power leaves the combat entirely.
+    # POWERS is already exactly the CardType.Power set the model can play - the decompile has 111 of them.
+    # Every recorded play of the Power cards this model can play shows exhaust +0 and discard +0 - Inflame
+    # 58, Stone Armor 35, Rupture 30, Crimson Mantle 22, Hellraiser 16, Unmovable 9, Vicious 4,
+    # Aggression 3, Pyre 1, Juggernaut 1, Stampede 1 - while the model used to drop them into the discard,
+    # which let a spent Power be shuffled back and replayed later in the same fight.
+    leaves_combat = not exhaust and card in POWERS
     exhaust_before = combat.exhaust_pile
     played_pile_index = len(exhaust_before if exhaust else combat.discard_pile)
     exhaust_pile = exhaust_before + ((played_value,) if exhaust else ())
     enlightened = combat.enlightened_this_turn or card == ENLIGHTENMENT
     combat = replace(
-        combat, hand=tuple(hand), discard_pile=combat.discard_pile + (() if exhaust else (played_value,)), exhaust_pile=exhaust_pile,
+        combat, hand=tuple(hand),
+        discard_pile=combat.discard_pile + (() if (exhaust or leaves_combat) else (played_value,)),
+        exhaust_pile=exhaust_pile,
         energy=energy, player_hp=player_hp, player_powers=player_powers, enlightened_this_turn=enlightened,
     )
     if card == ARMAMENTS:
