@@ -219,6 +219,7 @@ RELIC_BRILLIANT_SCARF = "RELIC.BRILLIANT_SCARF"
 # this turn, i.e. the turn's fifth card is free.
 BRILLIANT_SCARF_FREE_AFTER = 4
 RELIC_SPARKLING_ROUGE, RELIC_STONE_CALENDAR = "RELIC.SPARKLING_ROUGE", "RELIC.STONE_CALENDAR"
+RELIC_MR_STRUGGLES = "RELIC.MR_STRUGGLES"
 RELIC_HAPPY_FLOWER, RELIC_PENDULUM = "RELIC.HAPPY_FLOWER", "RELIC.PENDULUM"
 RELIC_KUNAI, RELIC_SHURIKEN, RELIC_ORNAMENTAL_FAN, RELIC_KUSARIGAMA = "RELIC.KUNAI", "RELIC.SHURIKEN", "RELIC.ORNAMENTAL_FAN", "RELIC.KUSARIGAMA"
 RELIC_LETTER_OPENER, RELIC_NUNCHAKU, RELIC_TUNING_FORK = "RELIC.LETTER_OPENER", "RELIC.NUNCHAKU", "RELIC.TUNING_FORK"
@@ -2177,6 +2178,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             enemies = [replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", 1)) if enemy.alive else enemy for enemy in enemies]
         if RELIC_MERCURY_HOURGLASS in relics:
             enemies = [_damage_enemy(enemy, 3, powered=False) if enemy.alive else enemy for enemy in enemies]
+        if RELIC_MR_STRUGGLES in relics:
+            # MrStruggles.AfterPlayerTurnStart: CreatureCmd.Damage(combatState.HittableEnemies,
+            # TurnNumber, ValueProp.Unpowered) - every enemy takes the new turn number in damage at the
+            # start of each player turn (turn 2 -> 2, turn 5 -> 5).  24 recorded runs hold the relic and
+            # 548 turn boundaries show exactly that drop, including 141 where the enemy was Vulnerable:
+            # Unpowered means Vulnerable and Strength do not amplify it.  Over a 12 turn QUEEN fight this
+            # is 78 damage per enemy, which the rollout could not see at all.
+            enemies = [_damage_enemy(enemy, new_turn, powered=False) if enemy.alive else enemy for enemy in enemies]
         if RELIC_STONE_CALENDAR in relics and new_turn == 7:
             enemies = [_damage_enemy(enemy, 52, powered=False) if enemy.alive else enemy for enemy in enemies]
         # ArtOfWar.AfterEnergyReset: +1 energy if no attack was played on the turn that just

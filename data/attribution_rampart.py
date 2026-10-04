@@ -12,7 +12,7 @@ must differ by that commit only, otherwise a difference cannot be attributed to 
 It measures the population a fix is live on.  It is not evidence about run outcomes - that needs a
 real run (`data/rampart_ab.sh` shows the panel form).
 
-Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X | MONSTER.X | PLAYER:POWER.X,POWER.Y] [enemy_data.json]
+Usage: python3 data/attribution_rampart.py [arm_dir] [control_dir] [POWER.X | MONSTER.X | RELIC.X | PLAYER:POWER.X,POWER.Y] [enemy_data.json]
 """
 
 from __future__ import annotations
@@ -54,6 +54,12 @@ for line in open(paths, encoding="utf-8-sig"):
             card.get("id") in wanted and card.get("upgrade")
             for card in record.get("hand") or ()
         ):
+            continue
+    elif power_id.startswith("RELIC."):
+        # A relic id selects the decisions where the player holds that relic, for gaps that are a
+        # relic's combat effect rather than a power (MrStruggles.AfterPlayerTurnStart deals the turn
+        # number to every enemy, which no observation reports as a power).
+        if power_id not in ((record.get("player") or {}).get("relics") or ()):
             continue
     elif power_id.startswith("MONSTER."):
         # A monster id selects the fights that monster is in (for gaps that are a move body rather
