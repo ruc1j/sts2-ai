@@ -7582,3 +7582,49 @@ play 順で進む ✓（前 round 記録 ✓）✓
 残る control 2 本（D6A1F8C3E5 ✓ EAIF2UUVCK）は走行中 ✓ 完了待ち background job `bash-879` ✓
 Act 3 完走はまだ出ていない ✓（この seed は Act 3 boss QUEEN の部屋で敗北 ✓ turn 9 で敵 HP 284/400 ✓
 前 round 記録 ✓ 13 ダメージ/ターン ✓）✓
+
+## Round 61: 新しい 2 gap の原因候補を特定 ✓ **`RELIC.THROWING_AXE` が model に無い**（combat ごとに最初の札が 2 回玩まれる ✓）
+
+faithful dump に relic 一覧・手札・pile 変化を出した ✓（`counts_arm_D6A1F8C3E5` ✓）✓
+その run の relic は BURNING_BLOOD ✓ LARGE_CAPSULE ✓ LOST_WISP ✓ LUCKY_FYSH ✓ MEAT_ON_THE_BONE ✓
+MOLTEN_EGG ✓ MUMMIFIED_HAND ✓ ODDLY_SMOOTH_STONE ✓ ORICHALCUM ✓ PAELS_FLESH ✓ STRIKE_DUMMY ✓ **THROWING_AXE** ✓
+`combat.py` を数えると **MOLTEN_EGG ✓ THROWING_AXE ✓ LARGE_CAPSULE ✓ ODDLY_SMOOTH_STONE ✓ BURNING_BLOOD は参照 0 件** ✓
+（LOST_WISP ✓ PAELS_FLESH ✓ MUMMIFIED_HAND ✓ MEAT_ON_THE_BONE ✓ ORICHALCUM ✓ STRIKE_DUMMY ✓ LUCKY_FYSH ✓ は有 ✓）✓
+
+**`ThrowingAxe.cs`** ✓（Ancient ✓）✓
+
+```csharp
+private bool _usedThisCombat;
+public override Task AfterRoomEntered(AbstractRoom room)
+{
+    if (!(room is CombatRoom)) return Task.CompletedTask;
+    UsedThisCombat = false; Status = RelicStatus.Active; return Task.CompletedTask;
+}
+public override int ModifyCardPlayCount(CardModel card, Creature? target, int playCount)
+{
+    if (UsedThisCombat) return playCount;
+    if (card.Owner != Owner) return playCount;
+    return playCount + 1;
+}
+public override Task AfterModifyingCardPlayCount(CardModel card) { UsedThisCombat = true; ... }
+public override Task AfterCombatEnd(CombatRoom _) { UsedThisCombat = false; ... }
+```
+
+→ **combat に入るごとに ✓ 私が play する 1 枚目の札が 1 回余分に玩まれる** ✓（その combat 中は 1 回だけ ✓）✓
+gap の 2 件は両方 **turn 1 の最初の札** ✓（exported plays が cards/attacks/skills すべて 0 ✓）✓
+seq 298 は upgrade 済みの Bash で game 25 / model 10 ✓（2 hit で説明の大部分が付く ✓）✓
+seq 314 は upgrade 済みの UpperCut で game 32 / model 13 ✓（LIVING_SHIELD 55 → 23 ✓ ちょうど 32 ✓）✓
+
+同じ run で combat 外に効く relic も確認した ✓ 誤って model に入れないために ✓
+- `MoltenEgg` ✓: `TryModifyCardRewardOptionsLate` ✓ `ModifyMerchantCardCreationResults` ✓ → **報酬と店の提示を変える** ✓ combat の damage ではない ✓
+- `OddlySmoothStone` ✓: `AfterRoomEntered` で `PowerCmd.Apply<DexterityPower>(... 1 ...)` ✓ → **dump に出た `DEXTERITY_POWER 1` の説明** ✓ model は observation の Dexterity を既に block に使っている ✓
+- `LargeCapsule` ✓: relic 2 枚と Strike/Defend を deck に足す ✓ combat 外 ✓
+- `BurningBlood` ✓: `AfterCombatVictory` で Heal 6 ✓ → map 側 ✓（休憩評価には効くが combat の damage ではない ✓）✓
+
+**次の実装** ✓ `RELIC_THROWING_AXE` を追加 ✓ combat 単位の消費フラグ（`ruined_helmet_used` ✓ と同じ形 ✓）✓
+`_step` で「その combat の最初の player play」なら play 回数を +1 ✓ 消費 ✓
+テスト（1 combat で最初の札だけ 2 hit ✓ 2 枚目は 1 hit ✓ 次の combat で再び効く ✓）✓
+suite と census で測る ✓（残る game+19 の差がどこまで縮むか見る ✓）✓
+
+panel: control 1 本目完了 ✓ arm と同一（17勝1敗 ✓ 354 records ✓ Act 3 Floor 15 ✓ **决定差分 0 件** ✓ 前 round ✓）✓
+control 2・3 本目は走行中 ✓ 完了待ち background job `bash-879` ✓
