@@ -7431,3 +7431,36 @@ seed された値 ✓ rollout 中の加算は model の play 順 ✓ → **seed 
 LetterOpener が model 側で余分に発動するケースが残るのはこの範囲の話 ✓
 `game-18` は 5 -unit が複数回 ✓（LetterOpener + Kusarigama + Pen Nib など combo relic の重複発動 ✓）の可能性 ✓
 panel 完了後に完全な trace で測り直す ✓（走行中は重い測定をしない ✓）✓
+
+## Round 56: boss 直前の休憩は使われている ✓「休憩を飛ばして boss に突入」は壁ではないと確認（223 件の母数 ✓）
+
+arm の結果が出始めた ✓ 新しい `depth=` が機能している ✓
+
+```
+RESULT counts_arm AM8C6YXHSG  wins=17 losses=1 combat_records=354 depth=Act 3, Floor 15
+RESULT counts_arm D6A1F8C3E5  wins=14 losses=1 combat_records=282 depth=Act 3, Floor 4
+```
+
+**2 本とも Act 3 に到達** ✓ 1 本目は Act 3 Floor 15（Act 3 boss の部屋 ✓）で死んだ ✓
+（`act3=` が空なのは敗北で result file が書かれていないから ✓ 前 round の grep 修正済み ✓）✓
+
+**休憩の壁を検証した** ✓ 713 個の mod log で Act 2 boss（Floor 16）の直前に進入した部屋を数えた ✓
+
+| 直前の部屋 | 件数 |
+|---|---:|
+| Boss (Act 2, Floor 16) | 785（同じ boss 進入が log に 2 行出る ✓ 実体は 1 件 ✓） |
+| **RestSite (Act 2, Floor 15)** | **462** |
+
+Act 2 の最終列は RestSite (Floor 15) → Boss (Floor 16) の作り ✓
+走行中の arm run（AM8C6YXHSG）も `Entering RestSite room (Act 2, Floor 15)` →
+`Entering Boss room (Act 2, Floor 16)` を通っている ✓ **agent は boss 直前の休憩を使っている** ✓
+`choose_rest` は floor 13 以降で負傷時に HEAL を優先する規則を持っており ✓（`official_agent.py` ✓）✓
+CODEWIKI には既に「休憩の回復を欠損量で足切りして SMITH に回す実験は 4 seed で上下に割れて不採用」（142 行目 ✓）と
+「HATCH 常に優先は pin 3 件を壊すので閉じた」（223 行目 ✓）が記録されている ✓
+→ **休憩の使い方は今の wall ではない** ✓ ここは触らない ✓
+
+一方 `data/*_agent.jsonl` の古い trace には `max_hp` が入っておらず ✓（`hp` はある ✓）boss 戦進入時の
+HP 割合を出せなかった ✓ また `data/*_map.json` は map の graph（`points[].type` ✓）を持つが
+**通った経路は入っていない** ✓ 経路は result file の `routes` だけで ✓ それらは 12 本しか残っていない ✓
+→ 経路の測定は mod log の `Entering ... room (Act N, Floor M)` 列から行うのが実務的で ✓
+trace と log を突き合わせる時刻情報（trace に timestamp が無い ✓）は無い ✓ 教訓として残す ✓
