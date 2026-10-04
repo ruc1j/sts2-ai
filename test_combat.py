@@ -10,8 +10,8 @@ from combat import (
     ENLIGHTENMENT, ENCHANTMENT_CORRUPTED, ENCHANTMENT_TEZCATARAS_EMBER, EVIL_EYE, EXTERMINATE, FIEND_FIRE, HEADBUTT, INFERNAL_BLADE, MANGLE, PECK, PRIMAL_FORCE, PRODUCTION, RELAX, RELIC_ART_OF_WAR, RELIC_BRIMSTONE, RELIC_CANDELABRA, RELIC_CAPTAINS_WHEEL, RELIC_CENTENNIAL_PUZZLE, RELIC_CLOAK_CLASP, SETUP_STRIKE,
     RELIC_BEATING_REMNANT, RELIC_BELLOWS, RELIC_BRILLIANT_SCARF, RELIC_BELT_BUCKLE, RELIC_DEMON_TONGUE, RELIC_LIZARD_TAIL, RELIC_KUNAI, RELIC_KUSARIGAMA, RELIC_LOST_WISP, RELIC_PAPER_PHROG, RELIC_STRIKE_DUMMY, RELIC_MERCURY_HOURGLASS, RELIC_NUNCHAKU, RELIC_PEN_NIB, RELIC_PAELS_BLOOD, RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_REPTILE_TRINKET, RELIC_RAZOR_TOOTH, RELIC_RUINED_HELMET, RELIC_SELF_FORMING_CLAY, RELIC_SCREAMING_FLAGON, RELIC_TUNGSTEN_ROD, RELIC_UNSETTLING_LAMP, RELIC_VAMBRACE, RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_FORGOTTEN_SOUL, RELIC_STONE_CALENDAR, COLOSSUS, RAGE, RUPTURE, SECOND_WIND, SHRUG, SLIMED, SPITE, STONE_ARMOR, FEEL_NO_PAIN, STARTING_DECK, STRIKE, VOLLEY,
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
-    _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
-    FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK,
+    _action_card, _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
+    FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK, ULTIMATE_STRIKE, RAMPAGE,
     MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
 )
 
@@ -520,6 +520,38 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (SETUP_STRIKE,), (), (), (enemy,), energy=1, upgraded_cards=(SETUP_STRIKE,))
         after = step(combat, "Setup Strike@0", DUMMY_DATA, random.Random(0))
         self.assertEqual((after.enemies[0].hp, _power(after.player_powers, "StrengthPower"), _power(after.player_powers, "SetupStrikePower")), (91, 3, 3))
+
+    def test_upgrade_damage_matches_each_cards_own_upgrade_value_by(self) -> None:
+        # Every pair below is (card, base damage, upgraded damage) read off the decompiled card body:
+        # DynamicVars.Damage base value and DynamicVars.Damage.UpgradeValueBy.  Before this table was
+        # filled in, most of these cards were getting combat.py's flat +3 upgrade fallback, which is
+        # wrong in both directions (Bludgeon gained 7 too little, Bolas 2 too much).
+        verified = (
+            (BLUDGEON, 32, 42), (BREAK, 20, 30), (ULTIMATE_STRIKE, 14, 20), (UNRELENTING, 14, 20),
+            (HEMOKINESIS, 15, 20), (GIANT_ROCK, 16, 20), (MOLTEN_FIST, 10, 14),
+            (NEOWS_FURY, 10, 14), (BYRD_SWOOP, 14, 18), (BREAKTHROUGH, 9, 13), (IRON_WAVE, 5, 7),
+            (ANGER, 6, 8), (FEED, 10, 12), (FISTICUFFS, 7, 9), (DISMANTLE, 8, 10), (BOLAS, 3, 4),
+            # Volley and Peck are excluded: their total damage is energy- or hit-count driven.
+            # Rampage's upgrade raises the Strength it gains per attack played, not its damage.
+            (RAMPAGE, 9, 9),
+        )
+        for card, base, upgraded in verified:
+            for wanted, was_upgraded in ((base, False), (upgraded, True)):
+                enemy = Enemy("MONSTER.DUMMY", 300, "IDLE_MOVE", ())
+                combat = Combat(
+                    80, (card, DEFEND, DEFEND), (), (), (enemy,), energy=4,
+                    upgraded_cards=(card,) if was_upgraded else (),
+                )
+                action = next(
+                    (candidate for candidate in legal_actions(combat)
+                     if card_name(_action_card(combat, candidate)) == card_name(card)),
+                    f"{card_name(card)}@0",
+                )
+                after = step(combat, action, DUMMY_DATA, random.Random(0))
+                self.assertEqual(
+                    300 - after.enemies[0].hp, wanted,
+                    f"{card_name(card)}{' upgraded' if was_upgraded else ''} should deal {wanted}",
+                )
 
     def test_queen_runtime_branch_follows_torch_head_life(self) -> None:
         with open("data/enemies_glory.json", encoding="utf-8-sig") as file:

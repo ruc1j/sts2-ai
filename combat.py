@@ -99,7 +99,16 @@ CARD_DAMAGE = {
     MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4, FIGHT_ME: 5, SALVO: 12, FLASH_OF_STEEL: 5,
 }
 CARD_HITS = {TWIN_STRIKE: 2, MAUL: 2, THRASH: 2, FIGHT_ME: 2}
-CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2, FIGHT_ME: 1, SALVO: 4, FLASH_OF_STEEL: 3}
+CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2, FIGHT_ME: 1, SALVO: 4, FLASH_OF_STEEL: 3,
+    # Every entry below is that card's DynamicVars.Damage.UpgradeValueBy in the decompiled card body.
+    # They were previously getting the flat +3 fallback, which is wrong in both directions: Bludgeon and
+    # Break gain 10, Ultimate Strike and Unrelenting 6, Hemokinesis 5, and Bolas only 1.
+    ANGER: 2, BLUDGEON: 10, BOLAS: 1, BREAK: 10, BREAKTHROUGH: 4, BYRD_SWOOP: 4, DISMANTLE: 2, FEED: 2,
+    FISTICUFFS: 2, GIANT_ROCK: 4, HEMOKINESIS: 5, IRON_WAVE: 2, MOLTEN_FIST: 4, NEOWS_FURY: 4,
+    ULTIMATE_STRIKE: 6, UNRELENTING: 6, VOLLEY: 4,
+    # Rampage's upgrade is DynamicVars["Increase"].UpgradeValueBy(4m) - the Strength it gains per attack
+    # you play, not its damage.
+    RAMPAGE: 0}
 # Damage dealt by AllEnemies attacks (looped over every alive enemy, like BREAKTHROUGH/WHIRLWIND).
 ALL_ENEMY_DAMAGE = {BREAKTHROUGH: 9, HOWL_FROM_BEYOND: 16, DRAMATIC_ENTRANCE: 11, THUNDERCLAP: 4, PACTS_END: 17, STOMP: 12, EXTERMINATE: 3, CONFLAGRATION: 2}
 ALL_ENEMY_HITS = {EXTERMINATE: 4, CONFLAGRATION: 4}
@@ -111,7 +120,9 @@ NORMALITY_CARD_CAP = 3
 PACTS_END_EXHAUST_REQUIRED = 3
 # Default +3 for upgraded AllEnemies attacks; Conflagration is the exception - its OnUpgrade only
 # raises RepeatVar, so the damage must stay at its base 2.
-ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1, CONFLAGRATION: 0}
+ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1, CONFLAGRATION: 0,
+    # Same rule as CARD_UPGRADE_DAMAGE: the card's own DynamicVars.Damage.UpgradeValueBy.
+    BREAKTHROUGH: 4, DRAMATIC_ENTRANCE: 4, HOWL_FROM_BEYOND: 5, PACTS_END: 6}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16, TORIC_TOUGHNESS: 5}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
