@@ -6715,3 +6715,38 @@ play が計上される経路（reset が先に走って `_PENDING_ACTION` が�
 札離脱が pile diff でもう一度数えられる経路 ✓（`_TURN_OWN_PLAYS` はそれを防ぐためにある ✓ HEMOKINESIS のような
 全員に damage を入れる card でなぜずれるか ✓）✓ 実測値（seq 229-238 の手札・discard・カウンタ）を
 検証用の固定データとして使う ✓
+
+## Round 34: gap census を測っていた tool 自身が毎ターン1枚カウンタを失っていた（不一致 87 → 81 件、replay 一致 99.2%）
+
+`data/boss_gap_list.py` は `same_fight` と same-turn を通る pair だけ `model_state` を呼んでいた ✓
+`model_state` は `choose` を通るので **ここでしかカウンタが進まない** ✓ つまり飛ばした record の玩札が
+カウンタから落ちていた ✓ そして飛ばされる record の典型は **そのターンの最後の决定** ✓ その次の record は
+新しいターンなので pair 条件を通らない ✓ 結果として **毎ターンほぼ1枚足りないカウンタ** で測っていた ✓
+
+直した ✓ 全 combat record を順に進め ✓（比べない record も `_advance_play_counters` で進める ✓）✓
+compare するのは条件を通る pair だけ ✓ 同じ直し方を `data/model_match_audit.py` にも入れた ✓
+
+測定の動き（build-valid trace ✓ 同じ group 定義 ✓）:
+
+| 状態 | replay | 一致 | 不一致 |
+|---|---:|---:|---:|
+| tool 修正前（HEAD の model ✓ Slimed 修正後 ✓） | 6,840 | 6,753 | 87 |
+| tool 修正後 | 6,840 | **6,759** | **81** |
+
+**`TUNNELER CARD.DEFEND_IRONCLAD game+5`（3 件）と `CARD.BATTLE_TRANCE game-5`（3 件）は消えた** ✓
+前 round で「LetterOpener の発動が1枚早い ✓ agent のカウントの取り落としと二重計上 ✓」と書いた診断は
+**この tool の欠点が作った物だった** ✓ 前 round の seq 229-231 の dump は私が `_PENDING_ACTION` を
+現在の record の玩札から入れてしまい ✓ agent の実際の順序（前の record の玩札を今の record で計上 ✓）と
+違っていた ✓ 順序を直して並べ直すと HEMOKINESIS は正しく計上され ✓ 二重計上も出ていない ✓
+**agent のカウンタ推定はこの fight では正しい** ✓ ここは撤回する ✓
+
+`data/model_match_audit.py`（別の audit ✓ 玩札後の状態比較 ✓ limit 8000 ✓）は **5,887 比較中 5,839 一致 = 99.2%** ✓
+（tool 修正前は 97.65% ✓ 97.65% はカウンタが進かない state での数値だった ✓）
+`uncomparable` 1,751 ✓ `fight_boundary` 260 ✓ `no_equivalent_action` 100 ✓ `card_enemy_hp_mismatch` 46 ✓
+`endturn_player_hp_mismatch` 2 ✓ `step_raised:ValueError` 2 ✓
+
+残る group（81 件 ✓ 上位）: `QUEEN CARD.ASHEN_STRIKE game-1` 3 件 ✓ `VANTOM CARD.BATTLE_TRANCE game+1` 3 件 ✓
+`BYGONE_EFFIGY CARD.STRIKE_IRONCLAD game+1` 3 件 ✓ `THE_INSATIABLE CARD.DEFEND_IRONCLAD game+5` 2 件と
+`CARD.SHRUG_IT_OFF game-5` 2 件 ✓（LetterOpener の ±5 が残る ✓ ここは実際の model/agent 側の问题 ✓）✓
+`QUEEN CARD.BREAKTHROUGH game-1` 2 件 ✓ `VANTOM CARD.UNRELENTING game+2` 2 件 ✓
+`LOUSE_PROGENITOR CARD.PERFECTED_STRIKE game+3` 2 件 ✓ `THE_INSATIABLE CARD.ULTIMATE_STRIKE game+3` 2 件 ✓
