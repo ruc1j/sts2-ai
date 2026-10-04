@@ -7707,3 +7707,39 @@ Python 側だけの変更 ✓ mod の再ビルドは不要 ✓（`plays` の exp
 - `LostWisp.cs` ✓: 私 が `CardType.Power` を play 時に全敵へ 8 unpowered damage ✓ model 済み ✓
   今回の 2 件は Attack の play ✓ なので発動しない ✓
 → **残る +5 / +6 は各 1 件ずつ** ✓ ここは追わない ✓（次の手がかりが見つかるまで置く ✓）✓
+
+## Round 64: `CARD.SECRET_WEAPON` が play できる札なのに agent 側に対応が無いと特定 ✓ Toxic は誤検出だった ✓
+
+「取ったのに一度も玩んでいない札」を新しい arm trace で数えた ✓（CLAUDE.md の FLame Barrier 型の調べ ✓）✓
+そのままでは energy で払えない札と混ざる ✓ また model 側の名前一覧は display name（"Strike" ✓）で ✓
+`CARD.STRIKE_IRONCLAD` のような id とは直接比較できない ✓ だから **game 側が `legal_actions` に出す札**
+だけを対象にして ✓ agent の id→名前 対応（`official_agent.CARD_NAMES` ✓ 132 件 ✓）と
+`combat.CARD_COST`（119 件 ✓）を突き合わせた ✓
+
+| 札 | 型 | legal_actions に出る record | seed | 状態 |
+|---|---|---:|---:|---|
+| **`CARD.SECRET_WEAPON`** | Skill | **4** | 1 | **CARD_NAMES にも CARD_COST にも無い** ✓ gap ✓ |
+| `CARD.TOXIC` | Status | 34 | 1 | 誤検出 ✓（後述 ✓） |
+
+**`SecretWeapon.cs`** ✓: `base(0, CardType.Skill, CardRarity.Rare, TargetType.Self)` ✓ `CardKeyword.Exhaust` ✓
+`OnPlay` は draw pile から `CardType.Attack` を 1 枚選んで hand へ入れる ✓ `OnUpgrade` で Exhaust を外す ✓
+→ **コスト 0 の Skill ✓ draw pile から攻撃札を 1 枚持ってくる ✓ 素の札は exhaust ✓ 強化版は exhaust しない** ✓
+agent は名前を知らない ✓ model は価格を知らない ✓ だから search() はこの札を評価も play もできない ✓
+
+**Toxic は gap ではない** ✓ `Toxic.cs` は `CardType.Status` ✓ `HasTurnEndInHandEffect` ✓
+`DamageVar(5m, Unpowered | Move)` ✓ で ✓ model は `combat.py:84` の `HAND_INJECTED_STATUS = {TOXIC: 5, BURN: 2, INFECTION: 3, DECAY: 2, WITHER: 3}` ✓
+と `combat.py:2236` の turn end 処理で既に持っている ✓ Status 札を play 対象から除いているのも意図的 ✓
+（`combat.py:197` ✓）✓ legal_actions に出るのは bridge が hand を列挙するからだと思われる ✓（未確認 ✓）
+**教訓**: model の集合判定は display name と id を混ぜると全件不一致になる ✓（前 round の
+`CARD_COST` 判定で Strike/Defend が「無い」が出た ✓ 同じ誤り ✓）✓
+
+**次の実装の設計**（この round では実装しない ✓ 急いで shared pile 処理を迂回する early return は
+Slimed で一度失敗している ✓ teaching 55 ✓）✓
+- `SECRET_WEAPON = "Secret Weapon"` ✓ `CARD_COST` に 0 ✓ `SKILLS` に追加 ✓（game の CardType.Skill ✓ 確認済み ✓）✓
+  `UNTARGETED` に追加 ✓（TargetType.Self ✓）✓ `official_agent.CARD_NAMES["CARD.SECRET_WEAPON"]` ✓
+- `_step` の effect: draw pile の `ATTACKS` から damage 順に 1 枚を選んで hand へ ✓ その 1 枚を draw から除く ✓
+- exhaust は共有の仕組みに乗せる ✓ `combat.py:2916` の `exhaust = card in EXHAUSTS` ✓
+  強化版は Exhaust を持たないので discard 側 ✓（名前の集合だけでは強化を区別できない ✓ played value で見る ✓）✓
+- 親札の選択は player の選び方 ✓ model は damage 最大で近似する ✓（近似である旨をコメントに残す ✓）✓
+- 母数: 新しい trace で legal_actions 4 件 / 1 seed ✓（古い corpus には 3 件 ✓）✓ 小さい ✓
+  ただし play できる札が eval 対象に入っていないこと自体が model の穴 ✓
