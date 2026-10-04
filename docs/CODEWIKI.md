@@ -6059,3 +6059,9 @@ boss 戦の残る上位（次 round の対象）：`QUEEN CARD.ASHEN_STRIKE +1 4
 ずれる形で、Forgotten Soul のランダム対象の違いとして説明がつく）、`THE_INSATIABLE 戦 CARD.FEED で
 player_hp -2 35 件`、`VANTOM 戦 CARD.DEFEND_IRONCLAD -1 35 件`、`FROG_KNIGHT end_turn +3 31 件`、
 `QUEEN 戦 CARD.DEFEND_IRONCLAD で game 5 多い 23 件`。
+
+决定母数は **8,066 本 replay して 267 决定が変化・27 seed**（`data/attribution_rampart.py` の selector
+`PLAYER:POWER.WEAK_POWER`、control `dd2f0f4`）。Toastymittens の時と違い seed が 27 本に広がっている。
+胜数への影響を見る panel は次 round に回す（この round は panel を起動する残り時間がなく、起動すると
+panel 完了まで policy code を編集できなくなるため）。panel の seed は player Weak を多く保持した
+run を持つ seed から選ぶ。
