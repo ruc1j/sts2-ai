@@ -7923,3 +7923,59 @@ seed `AM8C6YXHSG` ✓（panel arm で Act 3 Floor 15 ✓ QUEEN 戦まで到達 �
 `H2LV6ZJ4XW` ✓（**過去に Act 3 完走の記録がある seed ✓** 現在の build で再び届くか見る ✓）✓ `VTW80ZJA2G` ✓（8 seed panel の其中之一 ✓ Act 2 boss 付近で死亡 ✓）✓
 測定軸は wins ✓ 到達 depth ✓ Act 3 完走 ✓ 失敗理由 ✓（sweep3.sh の `RESULT` 行 ✓）✓
 log `/tmp/sw59.log` ✓ status `/tmp/sweep59.status` ✓ 完了待ち background job `bash-1045` ✓
+
+## Round 70: **Rampage の growth が model に無い**と特定 ✓ 記録された play 実測は 9 以上が日常 ✓（13 ✓ 19 ✓ 21 ✓ 28 ✓ 36 ✓）
+
+**きっかけ: card reward の選び方** ✓ trace の `card_reward` record には `cards`（3 枚の offer ✓ type/cost/rarity/upgrade ✓）
+と `card_id`（選んだ札 ✓）と `deck` ✓ が入っている ✓
+最高 damage の offer を避けた决定を数えた ✓
+
+- `fixafter_D6A1F8C3E5`（Act 2 boss で potential 22 ✓ 弱い deck ✓）: **Rampage を 2 回避けている** ✓
+  （Iron Wave ✓ 5 / Second Wind ✓ 0 を選んだ ✓）
+- `counts_arm_AM8C6YXHSG`（potential 80 ✓ QUEEN まで到達 ✓）: 6 件 ✓ Rampage ×2 ✓ Headbutt ×2 ✓ Breakthrough ✓ Dismantle ✓
+
+**deck の火力を測った**（3 energy で attack を greedy に並べた potential damage/ターン ✓ 近似 ✓）✓
+
+| run | Act 2 boss 時点の deck | potential | 結果 |
+|---|---|---:|---|
+| counts_arm_AM8C6YXHSG | 24 枚 | **80** ✓ | Act 3 Floor 15（QUEEN 戦）✓ |
+| fixafter_D6A1F8C3E5 | 24 枚 | **22** ✓ | Act 3 Floor 5 で死亡 ✓ |
+| counts_arm_D6A1F8C3E5 | 24 枚 | **22** ✓ | Act 3 Floor 4 で死亡 ✓ |
+
+potential は「引ける手札」と「1 combat 1 回の制限」を無視した上限 ✓（teaching 13 ✓ ad-hoc arithmetic ✓）なので
+実ダメージの予想ではない ✓ ただし **deck 間で 80 と 22 の差があり ✓ 火力が高い run だけが Act 3 boss まで行っている** ✓
+（8 seed panel 以来の一貫した傾向 ✓）✓
+
+**`Rampage.cs` を読んだ** ✓
+`base(1, CardType.Attack, CardTarity.Uncommon, TargetType.AnyEnemy)` ✓（原文は CardRarity ✓）
+`CanonicalVars`: `DamageVar(9m, Move)` ✓ **`DynamicVar("Increase", 5m)`** ✓
+`OnPlay`: `DamageCmd.Attack(DynamicVars.Damage.BaseValue)` ✓ → **`DynamicVars.Damage.BaseValue += Increase`** ✓
+`OnUpgrade`: `Increase.UpgradeValueBy(4m)` ✓ → **強化版は play ごとに +9** ✓（base damage の強化は 0 ✓
+model の `CARD_UPGRADE_DAMAGE[RAMPAGE] = 0` ✓ は正しい ✓）✓
+`_extraDamageFromPlays` は CardModel の field ✓ → **growth は combat を越えて run 中持続する** ✓
+
+**model には Rampage の growth が無い** ✓ `combat.py` には `maul_bonus: int = 0` ✓ `thrash_bonus: int = 0` ✓ があり
+`combat.py:3367` の `damage += combat.maul_bonus if card == MAUL else combat.thrash_bonus` ✓ と
+`combat.py:3421` の更新で Maul/Thrash だけ追跡している ✓ **RAMPAGE は追跡していない** ✓
+（Maul/Thrash のコメントには「growth は fight を越えて持続し、model は自分が見た growth だけ足すので
+長く持った札を過小評価する ✓」と正直に書かれている ✓ 同じ class の問題 ✓ Rampage は追跡自体が無い ✓）✓
+
+**記録された game 実測で growth が見えることを確認した** ✓（全 corpus で `CARD.RAMPAGE` の play を
+ combat_id で結んで実際の HP 減を数えた ✓）✓
+```
+dealt 9 x15   dealt 13 x10   dealt 19 x4   dealt 14 x2   dealt 11 x2   dealt 21 x1   dealt 16 x1   dealt 28 x1  dealt 36 x1
+```
+print 値 9 以上が日常 ✓ 大きい値ほど later combats ✓ → **持続する growth の証拠** ✓
+（9 が 15 件あるのは初 play ✓ または 1 combat 目 ✓）✓
+
+**実装の設計（次 round ✓）** ✓
+1. `Combat.rampage_bonus: int = 0` ✓ damage 側は Maul/Thrash の line に足す ✓ play 後に `+ (9 if 強化 else 5)` ✓
+2. **run 中で持続する部分**は model state を毎回組み直すのでは消える ✓ 観測から札の現在値は読めない
+   （combat record の hand には `id`/`cost`/`upgrade` しか無く DynamicVar の現在値が無い ✓）✓
+   → agent は process 持続型 ✓（`_COMBAT_PLAYS` ✓ と同じ global ✓）なので ✓ `_PENDING_ACTION` で credit する仕組みで
+   **自分が play した Rampage の回数を run 単位で数え** ✓ seed する ✓（teaching 38 ✓ 39 ✓）✓
+   過小評価は残る（他 source の growth は見えない ✓）が ✓ 今の 0 より正確 ✓
+3. 効果は combat pricing と card reward の両方に効く ✓ 母数を出す ✓（`attribution_rampart.py` には card selector が無い ✓
+   → census と trace 実測で測り ✓ その後 panel を考える ✓）✓
+
+sweep `sw59`（4 seed ✓ HEAD `3bdb798`）は走行中 ✓ 08:46 開始 ✓ 完了待ち `bash-1045` ✓
