@@ -4848,3 +4848,53 @@ debuff が出ていない**（B3 seq 73、SOS 193、D6 342 で player powers は
 `d67896f` 16勝 → Rampart 17勝 → Axebot・Hopper・Decimillipede 19勝 → debuff tick **20勝**。
 まだ Act 3 は踏破していない（QUEEN 400HP が残る）。SOS6XYXCNO の THE_INSATIABLE 戦では arm の方が
 **96HP 残し**で負けており（control 22HP 残し）、tick 修正が必ずしも boss 戦を有利にしていない面もある。
+
+## Round 4: debuff tick の帰属を閉じ、QUEEN 戦を監査して3つの候補を却下（2026-10-04）
+
+### 1. debuff tick 修正の同一 record replay 帰属
+
+`data/attribution_rampart.py` に `TRACE_GLOB`（replay する trace を絞る）と `SIMULATIONS` を追加し、
+A/B の control 3 run だけ replay した（enemy data は act 横断でマージした
+`/tmp/sts2-ai-enemies-merged.json`、102 monsters / 80 encounters）。
+
+`PLAYER:POWER.WEAK_POWER,POWER.VULNERABLE_POWER,POWER.FRAIL_POWER` で **298 件の决定を replay →
+决定变化 18 件・3 seed**（B3N8V5T1WQ 13、D6A1F8C3E5 4、SOS6XYXCNO 1）、例外 0。
+A/B の胜数変化（+1 / 0 / 0）と同じ seed 順で母数が乗っている。
+
+### 2. QUEEN 戦（wall 第2位）の忠実度監査：gap は見つからなかった
+
+- QUEEN 戦の record に出现する power id は **すべて `official_agent.POWER_NAMES` に映射済み**（未映射 0 件）
+- export の state には `PUPPET_STRINGS`（ChainsOfBinding 3）／`YOU_ARE_MINE`（Frail 99・Weak 99・Vulnerable 99）／
+  `BURN_BRIGHT_FOR_ME`（味方の Strength +1 と自分の block 20）／`OFF_WITH_YOUR_HEAD`（5回攻撃）／
+  `EXECUTION`（15）／`ENRAGE`（+2）が揃っており、decompile の C# 本体と一対一で対応する
+- 観測される move id に export 外の id は 1 件も無い（`TACKLE_4_MOVE` まで export 済み）
+- 敵味方の Strength 付与（`target == "item"`）も `MONSTER.QUEEN` 専用分岐で model 済み（combat.py 1581 付近）、
+  `HasAmalgamDied` 条件も combat.py 685 付近で扱っている
+- 倍率は Weak 0.75・Vulnerable 1.5・Frail 0.75 で decompile の `DamageDecrease` / `DamageIncrease` と一致
+
+壁のサイズは数値で確定した：QUEEN 400 + TORCH_HEAD_AMALGAM 199 = **599 HP**。全 corpus で QUEEN 戦 109 件の
+中央値は 8 ターン・毎ターン 33.8 ダメージ・残り敵 HP 348・デッキ 20 枚・進入 HP 81。
+最も健闘した 6 件は 9-12 ターンで 568-580 を削って **残り 14-23 HP** で落ちている。つまり壁は約 3% 足りない。
+
+### 3. 却下した3つの候補（再発防止の記録）
+
+1. **Weak の丸め（floor か ceil か）**：単一目標・block 0・敵 Vulnerable 無しの条件で card play 1 枚あたりの
+   実ダメージ 440 件を HP 差分から復元した。`floor(x*0.75)` 一致 98 件／`ceil` 一致 141 件／
+   両方で説明できない 201 件（うち raw 9 → 9、raw 6 → 6 のように**全く減っていない**ものが多い）。
+   丸めの規則を疑うより先に、Weak を打ち消す relic 側の介入を疑うべき規模。この測定だけでは
+   model の `damage * 3 // 4` を変えない。
+2. **Shackling potion の TemporaryStrength**：`TemporaryStrengthPower` は「その敵のターン終了時にstrength を戻す」
+   で、実走でも SHACKLING_POTION_POWER amount 7 は turn 1 に 179 件・turn 2 に 12 件しか続かない。
+   agent 側は既にこれを前提にしている（official_agent.py 1801 と 1906 のコメント）→ 未実装ではない。
+3. **QUEEN 戦の `rollout_exception_stop_iteration`（corpus で 240 件）**：現在の HEAD で
+   QUEEN 戦の record 106 件を `rollout_choice`（simulations=100、legal_actions は record のものを使用）に
+   通すと**例外 0 件**。この 240 は corpus 内のもっと古い code の run が混ぜられている数値で、
+   現在の gap ではない。
+
+監査中に自分で作った偽のシグナルも記録する：legal action の `type` は `"card"` なのに
+`"play_card"` で絞って card 行動を空にした結果、`_map_rollout_card_action` の `next(iter(candidates))` が
+StopIteration を出し、106 件中 83 件が失敗したかのように見えた（official_agent.py 2744）。
+監査スクリプトは `record["legal_actions"]` をそのまま渡すこと。
+
+**教訓**：corpus 集計（decision_source の件数など）は code の版を混ぜて数える。次の gap 探索は
+corpus の集計ではなく、**HEAD で全 trace を replay して今の code が落とす場所を数える**方法に切り替える。
