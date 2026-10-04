@@ -853,6 +853,18 @@ class CombatTest(unittest.TestCase):
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)
         self.assertEqual(_power(vulnerable.enemies[0].powers, "VulnerablePower"), 3)
 
+    def test_flame_barrier_reflects_once_per_hit_of_a_multi_hit_attack(self) -> None:
+        # FlameBarrierPower.AfterDamageReceived fires on every damage instance, not once per attack:
+        # `await CreatureCmd.Damage(dealer, Amount, Unpowered)` inside the hook.  The recorded
+        # HUNTER_KILLER fight (act3_pop2_T4K8M2W7QY seq 260) is the measurement - PUNCTURE_MOVE 7x3 was
+        # fully blocked by 22 block against FlameBarrier 4 + Thorns 3, and the Hunter Killer went
+        # 62 -> 41 HP, i.e. 4*3 + 3*3 = 21, where the once-per-attack model scored 4 + 9 = 13.
+        enemy = Enemy("MONSTER.DUMMY", 60, "HIT_MOVE", ())
+        combat = Combat(50, (), (), (), (enemy,), player_powers=(("FlameBarrierPower", 4), ("ThornsPower", 3)))
+        after = step(combat, END_TURN, EFFECTLESS_ATTACK_DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 60 - (4 + 3) * 2)  # a 5x2 attack reflects 2 Flame Barrier hits
+        self.assertEqual(after.player_hp, 40)  # 5 damage per hit, no block
+
     def test_crimson_mantle_damages_itself_at_turn_start_from_the_observed_counter_alone(self) -> None:
         # CrimsonMantlePower stores SelfDamage in a DynamicVar, so the game exports only
         # POWER.CRIMSON_MANTLE_POWER (8,300 observations; the counters are 8, 10 and 18).  A rollout state

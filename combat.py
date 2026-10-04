@@ -1571,6 +1571,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
             )
             if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (_power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")):
                 damage = damage * 3 // 2
+            flame_barrier = _power(player_powers, "FlameBarrierPower")
             repeats = int(attack_intent.get("repeats", 1))
             if enemy.model == TEST_SUBJECT and move_id == "MULTI_CLAW_MOVE":
                 repeats += sum(move == "MULTI_CLAW_MOVE" for move in enemy.history)
@@ -1599,6 +1600,12 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 damage_events.append(unblocked)
                 if _power(player_powers, "ThornsPower") and enemy.alive:
                     enemy = _damage_enemy(enemy, _power(player_powers, "ThornsPower"), powered=False)
+                if flame_barrier and enemy.alive:
+                    # FlameBarrierPower.AfterDamageReceived fires on every damage instance, so a 3-hit
+                    # attack reflects three times.  HUNTER_KILLER seq 260 (act3_pop2_T4K8M2W7QY):
+                    # PUNCTURE_MOVE 7x3 fully blocked by 22 block against FlameBarrier 4 + Thorns 3 cost
+                    # the Hunter Killer 4*3 + 3*3 = 21 HP, where the once-per-attack model had 4 + 9 = 13.
+                    enemy = _damage_enemy(enemy, flame_barrier, powered=False)
             if buffer_consumed := (_power(player_powers, "BufferPower") - buffer):
                 player_powers = _add_power(player_powers, "BufferPower", -buffer_consumed)
             # ImbalancedPower.AfterDamageGiven: when the owner's own attack lands with
@@ -1612,12 +1619,7 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 and all(event == 0 for event in damage_events[len(damage_events) - repeats:])
             ):
                 enemy = replace(enemy, powers=_add_power(enemy.powers, "StunnedPower", 1))
-            # FlameBarrierPower.AfterDamageReceived: reflects a flat amount back at the attacker
-            # once per attack (approximated the same way as the symmetric enemy-side ThornsPower,
-            # not per individual repeat hit).
             flame_barrier = _power(player_powers, "FlameBarrierPower")
-            if flame_barrier:
-                enemy = _damage_enemy(enemy, flame_barrier, powered=False)
         elif command == "PowerCmd.Apply":
             try:
                 amount = _amount(effect["amount"], values)
