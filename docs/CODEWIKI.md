@@ -6875,3 +6875,29 @@ skills 0 ✓ → Strike → cards 2 ✓）✓ scratch の suite は **777 件 gr
 panel 完了後 ✓（1）Ashen Strike・Second Wind の修正（`/tmp/ashen_secondwind.patch` ✓ `.wt-proto3` ✓）✓
 （2）Power 計上（`/tmp/power_credit.patch` ✓ `.wt-proto4` ✓）の順で適用し ✓ 毎回 suite と
 `data/boss_gap_list.py` と attribution を測る ✓
+
+## Round 39（診断 ✓ code 変更なし ✓ panel 走行中）: pile の増加が手札からの消失より多い transition が 7,412 中 587 ✓ 玩札推定の過大計上の母数
+
+`MONSTER.BYGONE_EFFIGY` の seq 106 で agent が cards_played を 2 と数えた理由を pile の中身まで見た ✓
+**discard には `CARD.ANGER` が 2 枚増えた ✓ 手札から出たのは 1 枚だけ ✓ draw pile は変化なし ✓** ✓
+つまり 1 枚は **どこからも来ないで discard に現れた** ✓ これが `piles - _TURN_PILE_START` 経由で
+「説明のない play」として 1 枚加算された ✓（`_LAST_PLAY_MOVES_OTHER_CARDS` が False の時は
+`unexplained` が hand に現れた札であることを確認せずに play として扱う ✓）✓
+
+出所は特定できていない ✓ 消した候補: `MONSTER.BYGONE_EFFIGY` の export には
+`DamageCmd.Attack` と `PowerCmd.Apply`（Strength）だけで card を足す効果はない ✓（export が拾っていない
+可能性は残る ✓）、`RELIC.CANDELABRA` は turn 2 の +2 energy ✓、`RELIC.FISHING_ROD` は combat 数を数える
+Ancient relic ✓、`RELIC.LEAD_PAPERWEIGHT` は取得時の card 選択だけ ✓。手札にあった `CARD.SPOILS_MAP` は
+この build で model 知らない card id ✓ 疑いはあるが証拠はない ✓
+
+母数を測った ✓ build-valid trace の same-turn transition **7,412 件のうち 587 件（7.9%）** で
+discard+exhaust の増加が hand の消失より多い ✓ 23 seed ✓ 上位 P3V8N5K2RX 115 ✓ AM8C6YXHSG 90 ✓
+L3PN5HBQ8T 79 ✓ H2LV6ZJ4XW 77 ✓ **これは上側の誤りの上限** ✓（札を引いて同じ観測幅内で玩む
+autoplay ✓ Mayhem・Hellraiser など ✓ でも同じ形になる ✓）✓
+
+次の選択肢（未決 ✓ 重たい測定が必要なので panel 終了後 ✓）: `unexplained` を
+「そのターンに hand に現れた札」に限定する ✓ 誤加算は落ちる ✓ 代償は newly-drawn 札の autoplay を
+数え損なうこと ✓ どちらが net でましかが測れないと決められない ✓
+
+Slow 側の下側（Power 札が計上されない ✓ 前 round ✓）は `.wt-proto4` に修正済み ✓
+`/tmp/power_credit.patch` ✓ scratch suite 777 件 green ✓ HEAD 未適用 ✓
