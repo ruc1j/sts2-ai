@@ -8620,3 +8620,28 @@ arm H2LV6ZJ4XW: SLIMED_BERSERKER 88 → 38 ✓（-50 ✓）✓ FROG_KNIGHT 113 �
 3. tests ✓：増援が現れる fight で rollout が敌数の増加を織り込むこと ✓
 母数 8% ✓ かつ最大损失の fight 群 ✓ なので ✓ **panel に見合う候補** ✓（teaching 32 ✓ 决定が変わらないものは panel しない ✓ → attribution で决定差分を見てから判断 ✓）✓
 control sweep は 2 本目走行中 ✓（`bash-1165` ✓）✓
+
+## Round 93: 前 round の「Fabricator の spawn は model に無い」は誤り ✓ **spawn は model 済みだった** ✓（`_summon` ✓ `combat.py:1835-1845` ✓）
+
+前 round は `grep -c "Summon\|SummonCmd" combat.py` = 0 ✓ を根拠に「model に summon の扱いが無い ✓ rollout が増援を予測できない ✓」と書いた ✓✗✗
+**実際に有ったもの** ✓
+- `combat.py:1121` `_summon(model, data, rng)` ✓（monster の `class` から Enemy を組み ✓ Parafright/EyeWithTeeth には IllusionPower ✓）✓
+- `combat.py:1835-1845` ✓ **Fabricator 専用 branch** ✓
+  `FABRICATE_MOVE` → defensive bot（GUARDBOT/NOISEBOT ✓）+ aggro bot（ZAPBOT/STABBOT ✓）✓
+  `FABRICATING_STRIKE_MOVE` → aggro bot のみ ✓ ✓ **全 bot に MinionPower ✓** ✓
+  （comment に ponytail ✓：game は最後に spawn した model を除外する ✓ model は均等 draw ✓ で ✓ bot mix が問題になったら追加する ✓と記載済み ✓）✓
+- `combat.py:1136` `_spawn_wrigglers` ✓（PhrogParasite の死で Wriggler x4 ✓ SPAWNED_MOVE ✓ 初手 stun ✓ primary ✓）✓ → 前 round が見た「PHROG_PARASITE 1 → 4 ✓」も model 済み ✓✓
+→ **「敌が増える fight が 8% ✓」は実在するが ✓ それは model の想定内 ✓ gap ではない** ✓✓（前 round の work item は立ち消え ✓）✓
+
+**process の教訓（2 回目 ✓）** ✓「X が model に無い」と書く前に ✓
+1. **grep は大小文字に敏感 ✓** ✓ `_summon`（小文字 ✓）は `Summon` に落ちない ✓ → **0 件は不在の証拠にならない** ✓✓
+2. 机制の helper 名 ✓ と nearby branch の comment ✓ を読む ✓（teaching 42 ✓ 71 ✓「decompile が支持しても既存 mechanism を確認する」✓ の失敗例 ✓）✓
+3. relic 網羅 census ✓（teaching 92 ✓ `grep -c "RELIC_<NAME>"` ✓）も同じ落としを持つ ✓ → **census 阴性は snake_case 側も見る** ✓✓
+（同じ session 内で Rampage ✓（既存 comment を読まずに「観測できる ✓」と書いた ✓）と spawn ✓（大小文字 grep ✗）✓ 2 件続いた ✓）✓
+
+**panel の現在** ✓ control 2 本 ✓
+```
+RESULT evfix_ctrl AM8C6YXHSG wins=17 losses=1 records=360 depth=Act 3, Floor 15 ✓ arm: 14 勝 ✓ Act 3 Floor  6 ✓（-3 勝 ✓ 大きく浅い ✓）
+RESULT evfix_ctrl H2LV6ZJ4XW wins=20 losses=1 records=388 depth=Act 3, Floor  6 ✓ arm: 20 勝 ✓ Act 3 Floor  6 ✓（同一 ✓）
+```
+3 本目 VTW80ZJA2G ✓ control 未完了 ✓（`bash-1165` ✓）✓ 2 seed の時点では **1 seed で悪化 ✓ 1 seed で変化なし ✓ 改善した seed は無い** ✓
