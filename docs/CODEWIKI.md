@@ -8132,3 +8132,39 @@ install された dll が build 出力と同一（235,008 B ✓ 09:15 ✓）✓
 前 round の「QUEEN 戦に 11 HP で入る ✓ 49% が 10 以下 ✓」の HP がどこで減るかを次の調べにする ✓
 
 tooling 変更なので policy は無変更 ✓ suite 783 件 green ✓
+
+## Round 75: rest  policy は既に正しかった ✓ HP 15 以下で rest が選べる局面 15 件すべて取っている ✓ 崩れは fight 内の一括損失 ✓
+
+sweep `sw64` を HEAD `3b65c2c` で開始 ✓（09:29 ✓ seed H2LV6ZJ4XW ✓ EAIF2UUVCK ✓ 9PCQMO0DAY ✓）✓ per-act の map file が出る状態での初めての sweep ✓ 完了待ち `bash-1107` ✓
+
+**fight 数に対する player HP の中央値** ✓ 136 run ✓（fight の区切りは下の教訓により `combat_end` record を使った ✓）✓
+```
+fight  1〜 8: 中央値 80 ✓  下位10% 62〜74
+fight  9: 中央値 80 ✓  四分位 65 ✓  下位10% 52
+fight 12: 中央値 68 ✓  四分位 54 ✓  下位10% 36
+fight 13: 中央値 76 ✓  四分位 45 ✓  下位10% 16 ✗
+fight 15: 中央値 73 ✓  四分位 36 ✓  下位10%  7 ✗
+fight 17: 中央値 80 ✓  四分位 27 ✓  下位10%  6 ✗
+fight 19: 中央値 81 ✓  四分位 20 ✓  下位10%  7 ✗
+fight 20: 中央値 80 ✓  四分位 10 ✓  下位10%  4 ✗
+```
+**中央値の run は fight 15 まで 80 HP を保っている** ✓ 壊れているのは下位側 ✓ = **一戦で大きく削られる run が死んでいる** ✓
+HP が均等に減るのではなく ✓ 一戦での一括損失 ✓（前の boss 進入時 HP 計測 ✓ QUEEN 戦中央値 11 HP ✓ とつながる ✓）✓
+
+**「削られた後に rest を取っているか」を Act 1 で測った** ✓（`*_map.json` は Act 1 の graph ✓ なので Act 1 だけ ✓）✓
+**最初は測れていなかった** ✗✗ trace の map record は act をまたいでおり ✓ Act 2/3 の (col,row) を Act 1 の graph と照合して
+「rest が選べるのに取らなかった 11 件」が出ていた ✓✗ **これは観測の誤り** ✓（graph に無い座標が 3,822 件 ✓）✓
+Act 1 の walk に限定して ✓ graph の children から選択可能を判定 ✓ 選択が実際に children 内にある遷移 57 件だけ使った ✓
+```
+直前の fight 後に HP 15 以下:
+   rest 選択可能 True ✓  取った True  ✓: 15 回
+   rest 選択可能 True ✓  取った False ✗: 0 回 ✓✓
+   rest 選択可能 False ✓ 取った False ✓: 42 回
+```
+→ **削られた時に rest を避ける挙動は無い** ✓ rest policy はこの限りでは正しい ✓
+（検証できた遷移が 57 件しかない ✓ sample は小さい ✓ 新しい run では per-act map が揃うので next で確認する ✓）✓
+よって HP 崩れの説明は fight 自体の被ダメージ ✓→ 次の測定は「どの fight で何 HP 失うか」の一戦単位の内訳 ✓（上の試みは monster あとの集計が n>=8 の行 1 件しか出せず失敗 ✓ 一戦の HP 損失を monster 名に紐づく形で数え直す ✓）✓
+
+**tooling の教訓 2 つ** ✓
+1. **trace 内の `combat_id` は fight を区別できない** ✓ `act3_pop2_B4J8Q1R6YK` で combat record 269 件に対し distinct combat_id は **4** ✓（スロット番号の使い回し ✓）✓ → fight の区切りは **`combat_end` record** ✓ を使う ✓
+2. `*_map.json` と trace の対応は古い artifact では信用できない ✓（座標が graph に無い ✓ 3,822 件 ✓）✓ 新しい run の per-act map 同士で照合する ✓
