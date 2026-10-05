@@ -8675,3 +8675,32 @@ legal_actions の potion entry と同じ内容 ✓（VULNERABLE ✓ FORTIFIER �
 ただし ✓ そのための火力は card reward で積む方向では無い ✓（corpus ✓ 2 通りの測り方で確認 ✓）✓ ので ✓
 **次の手は「その fight で実際に何が出ているか」の内訳** ✓（札を引けていない ✓ energy 使い切り ✓ 被 damage の内訳 ✓）✓ を ✓ act ではなく fight で見る ✓
 control 3 本目 VTW80ZJA2G ✓ 走行中 ✓（`bash-1165` ✓）✓
+
+## Round 95: event 回答の panel 完了 ✓ **棄却** ✓ control 50 勝 ✓ arm 47 勝 ✓ 改善した seed は 0 ✓（scratch tree は削除 ✓）
+
+3 seed ✓ 同一 HEAD ✓ control は `.wt-ctrl-evfix`（commit `37bb82c` ✓ policy 無変更 ✓）✓
+```
+seed          control（HEAD ✓）                       arm（event 回答 fix ✓）
+AM8C6YXHSG    17 勝 1 敗 ✓ 360 records ✓ Act 3, Floor 15 ✓   14 勝 1 敗 ✓ 276 records ✓ Act 3, Floor  6  ✗✗（-3 勝 ✓ 浅い ✓）
+H2LV6ZJ4XW    20 勝 1 敗 ✓ 388 records ✓ Act 3, Floor  6 ✓   20 勝 1 敗 ✓ 386 records ✓ Act 3, Floor  6  ✓ 同一 ✓
+VTW80ZJA2G    13 勝 1 敗 ✓ 262 records ✓ Act 2, Floor 16 ✓   13 勝 1 敗 ✓ 285 records ✓ Act 2, Floor 16  ✓ 同一 ✓
+合計          50 勝 3 敗 ✓ Act 3 完走 0                    47 勝 3 敗 ✓ Act 3 完走 0   → **-3 勝 ✓**
+event record: control accepted 20 ✓ rejected 14 ✓（41.2% ✓）✓ arm accepted 45 ✓ **rejected 0** ✓（0.0% ✓）
+```
+**採否の基準に対する判定** ✓
+- 决定が変わった件数 ✓ 十分 ✓（拒否 14 → 0 ✓）✓
+- seed 別の結末 ✓ **改善 0 件 ✓ 悪化 1 件 ✓（AM8C6YXHSG ✓ 17→14 勝 ✓ Act 3 Floor 15→6 ✓）✓ 変化なし 2 件 ✓**
+- control の AM8C6YXHSG の数字は別 commit の `sw59` ✓ でも同一 ✓（17 勝 ✓ 360 ✓ Act 3 Floor 15 ✓）✓ なので ✓ 悪化は noise では説明しにくい ✓
+→ **採用しない ✓ 棄却** ✓（teaching 17 ✓「忠実度修正が勝数を落とすことはある」✓）✓
+**理由の筋** ✓ 新しい既定は「proceed の無い event なら **最初の eligible option** ✓」という任意の選択 ✓ で ✓
+途中の event（DENSE_VEGETATION → TRUDGE_ON ✓ THE_LEGENDS_WERE_TRUE → NAB_THE_MAP ✓ など ✓）を変え ✓ ルートが分岐し ✓
+**control が取れた `HUNGRY_FOR_MUSHROOMS → RELIC.BIG_MUSHROOM` ✓ に arm は辿り着いていない** ✓✓
+scratch tree `.wt-proto12` は arm の artifact（17 件 ✓ trace ✓ map ✓ log ✓）を `data/` に写してから削除した ✓（teaching 49 ✓）✓
+pin されていた `test_unknown_event_returns_bridge_fallback` ✓ はそのまま ✓（main は無変更 ✓ 783 件 green ✓）✓
+
+**constructive な次の形** ✓「任意の first option ✓」ではなく ✓**弾かれる event に実際の得点を与える** ✓✓
+corpus で拒否の上位だった event ✓：BUGSLAYER 170 ✓ WHISPERING_HOLLOW 135 ✓ SYMBIOTE 131 ✓ BRAIN_LEECH 129 ✓ DENSE_VEGETATION 112 ✓
+TEA_MASTER 108 ✓ THE_FUTURE_OF_POTIONS 101 ✓ TINKER_TIME 90 ✓ INFESTED_AUTOMATON 85 ✓ SAPPHIRE_SEED 79 ✓ SPIRIT_GRAFTER 72 ✓
+→ `EVENT_OPTION_SCORES` ✓ に entry を足す作業 ✓（decompile から各 option の得失 ✓ HP ✓ gold ✓ 札 ✓ relic ✓ を取って価格化する ✓）✓
+**「bridge に通すためだけに選ぶ ✓」は今回の実測で有害 ✓** ✓ 得点なしで通すことと得点をつけて選ぶことは違う ✓✓（teaching 9 ✓ 決定）✓
+現在の HEAD の基準値 ✓：**50 勝 3 敗 ✓ Act 3 完走 0 ✓（seed AM8C6YXHSG ✓ H2LV6ZJ4XW ✓ VTW80ZJA2G ✓）** ✓
