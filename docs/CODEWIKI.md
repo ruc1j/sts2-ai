@@ -9113,3 +9113,27 @@ BURNING_BLOOD ✓ 11/11 ✓（初期 relic ✓）✓ **BYRDPIP ✓ 10/11 ✓** �
 LANTERN ✓ 7/11 ✓ CANDELABRA ✓ 7/11 ✓ RED_MASK ✓ 7/11 ✓ ANCHOR ✓ 7/11 ✓ VAJRA ✓ 7/11 ✓ FIDDLE ✓ 7/11 ✓ STRAWBERRY ✓ 7/11 ✓ PERMAFROST ✓ 7/11 ✓
 official_agent.py ✓ に記載が無い ✓：BYRDPIP ✓ LANTERN ✓ CANDELABRA ✓ RED_MASK ✓ ANCHOR ✓ VAJRA ✓ STRAWBERRY ✓ FIDDLE ✓（記載あり ✓：TOASTY_MITTENS ✓ CENTENNIAL_PUZZLE ✓ GOLDEN_PEARL ✓ PEN_NIB ✓ ORNAMENTAL_FAN ✓ PERMAFROST ✓）✓
 → ただし **入手が選択を伴わないもの ✓（初期 ✓/報酬 ✓/宝 ✓）もある ✓** ✓ので ✓ 先に出品の可視化 ✓ が必要 ✓
+
+## Round 112: shop の出品 trace ✓ 実装完了 ✓ そして **この run ✓ では relic 出品15種類のうち10種類 ✓ が評価表に無く ✓ gold 419 ✓ を残して relic を0個 ✓ で買った ✓**
+
+**mod 変更の検証 ✓✓**（tree main ✓ dll 245,760 B ✓ run `shopexport ✓` seed AM8C6YXHSG ✓）✓
+```
+RESULT shopexport AM8C6YXHSG wins=17 ✓ losses=1 ✓ combat_records=360 ✓ depth=Act 3, Floor 15 ✓
+control ✓ evfix_ctrl ✓ 同じ seed ✓ 17 勝 ✓ 360 records ✓ Act 3, Floor 15 ✓ → **同一 ✓**（観測追加のみ ✓ で决定は変わっていない ✓）✓
+trace ✓: shop decision 16 ✓ 全件に `offers ✓` あり ✓（kind ✓ id ✓ cost ✓ affordable ✓）✓
+```
+→ **ShopBridge の Trace に `OfferSummary(slots ✓)` を追加 ✓ する変更は verified ✓ commit ✓** ✓（`Observation()` ✓ には元々出品があった ✓ が Trace されていなかった ✓）✓
+
+**測定できたこと ✓✓✓**（この run ✓ shop 5軒 ✓ 16 decision ✓）✓
+```
+relic 出品: 48 件 ✓（1 軒に3種類 ✓ x5 ✓）✓ 種類 15 ✓ うち **評価表に無い ✓ 10 種類 ✓（67% ✓）**
+  買えた状態の出品 ✓ 6 件 ✓: STRAWBERRY ✓ 180 ✓(4) ✓ GORGET ✓ 191 ✓(4) ✓ BELT_BUCKLE ✓ 177 ✓(4) ✓ ANCHOR ✓ 155 ✓(1) ✓ BREAD ✓ 174 ✓(1)
+  買えなかった ✓ 34 件 ✓（gold 6 ✓ 22 ✓ 54 ✓ 70 ✓ 111 ✓ 143 ✓ など ✓ 価格 155-287 ✓ に対し足りない ✓）✓
+seq 228-231 ✓: gold 602 ✓→ remove ✓→ buy_card ✓ 2 件 ✓→ **gold 419 ✓ のまま STRAWBERRY ✓ GORGET ✓ BELT_BUCKLE ✓（177-191 ✓ 全て affordable ✓）を全部置いて skip ✓**✗✗
+seq 174-177 ✓: gold 221 ✓ で ANCHOR ✓ 155 ✓ affordable ✓ → remove ✓ を選び ✓ gold 143 ✓→70 ✓→ relic は買えない状態にして skip ✓✗
+→ **私たちの shop は gold を card ✓ と removal ✓ に使い ✓ relic を殆ど買わない ✓** ✓（buy_relic 0 ✓）✓
+→ 評価表 ✓: `SHOP_RELIC_SCORES ✓ 42 件 ✓` `RELIC_SCORES ✓ 27 件 ✓` ✓ 価格の無い relic ✓ は score 0 ✓ → 買わない ✓✓
+→ ** Act 3 完走 run の relic 16-17 ✓ vs 直近 run ✓ 10 ✓** の差に ✓ これで政策から届く ✓（**次 ✓：出品された10種類 ✓ の効果 decompile ✓ → 価格付け ✓ → shop panel ✓**）✓
+```
+**教訓 ✓**：「出品を測れない ✓」は bridge が持っていない ✓ のではなく ✓ **Trace していなかった ✓** ✓（teaching 76 ✓「authoritative な値は C# 側から届く ✓ export しろ ✓」の再現 ✓）✓
+**もう1つの教訓 ✓**：前の round ✓ の「shop record 118 件 ✓ で relic 出品 0 件 ✓」は **dict の legal_actions ✓ を探して全落ち ✓** だったが ✓ 実は **shop record の `legal_actions ✓` は null ✓** ✓ で ✓ 出品自体が trace に無かった ✓✓（2段の誤り ✓：フィルタのミス ✓ と ✓ 元データに無い ✓）✓
