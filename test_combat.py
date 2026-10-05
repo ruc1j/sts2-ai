@@ -32,6 +32,99 @@ EFFECTLESS_ATTACK_DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [
 
 
 class CombatTest(unittest.TestCase):
+    def test_regen_resolves_before_enemy_attacks_and_respects_hp_cap(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
+        for hp, expected in ((8, 3), (79, 70)):
+            with self.subTest(hp=hp):
+                state = Combat(hp, (), (), (), (enemy,), player_powers=(("RegenPower", 5),))
+                after = step(state, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+                self.assertEqual((after.player_hp, _power(after.player_powers, "RegenPower")), (expected, 4))
+
+    def test_fairy_revives_between_hits_and_can_be_consumed_twice(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "next": "HIT_MOVE",
+            "intents": [{"type": "MultiAttackIntent", "damage": 10, "repeats": 4}],
+        }]}]}
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
+        for count, expected in ((1, 0), (2, 24)):
+            with self.subTest(potions=count):
+                state = Combat(5, (), (), (), (enemy,), player_potions=(POTION_FAIRY_IN_A_BOTTLE,) * count)
+                after = step(state, END_TURN, data, random.Random(0))
+                self.assertEqual(max(0, after.player_hp), expected)
+                self.assertEqual(after.player_potions, ())
+
+    def test_fortifier_adds_twice_existing_block_and_triggers_juggernaut_once(self) -> None:
+        state = Combat(80, (), (), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),),
+                       player_block=9, player_potions=(POTION_FORTIFIER,),
+                       player_powers=(("JuggernautPower", 3), ("DexterityPower", 5), ("FrailPower", 1)))
+        after = step(state, f"potion:{POTION_FORTIFIER}", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_block, after.enemies[0].hp), (27, 97))
+
+    def test_replay_sources_stack_and_are_all_consumed(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        for relics, plays in (((), 3), ((RELIC_THROWING_AXE,), 4)):
+            with self.subTest(plays=plays):
+                state = Combat(80, (STRIKE,), (), (), (enemy,), energy=1, player_relics=relics,
+                               player_powers=(("DuplicationPower", 1), ("OneTwoPunchPower", 1)))
+                after = step(state, f"{STRIKE}@0", DUMMY_DATA, random.Random(0))
+                self.assertEqual((after.enemies[0].hp, after.energy), (100 - 6 * plays, 0))
+                self.assertEqual(after.discard_pile, (STRIKE,))
+                self.assertEqual(after.cards_played_this_turn, plays)
+                self.assertEqual((_power(after.player_powers, "DuplicationPower"),
+                                  _power(after.player_powers, "OneTwoPunchPower")), (0, 0))
+
+    def test_replayed_all_enemy_attack_hits_each_enemy_for_each_resolution(self) -> None:
+        enemies = (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),) * 2
+        state = Combat(80, (BREAKTHROUGH,), (), (), enemies, energy=1,
+                       player_powers=(("DuplicationPower", 1), ("OneTwoPunchPower", 1)))
+        after = step(state, f"{BREAKTHROUGH}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual([enemy.hp for enemy in after.enemies], [73, 73])
+        self.assertEqual((after.player_hp, after.energy, after.discard_pile), (77, 0, (BREAKTHROUGH,)))
+
+    def test_replayed_thunderclap_applies_vulnerable_between_resolutions(self) -> None:
+        state = Combat(80, (THUNDERCLAP,), (), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),),
+                       player_powers=(("DuplicationPower", 1),))
+        after = step(state, f"{THUNDERCLAP}@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, _power(after.enemies[0].powers, "VulnerablePower")), (90, 2))
+
+    def test_stacked_replay_applies_each_block_grant_but_not_the_next_potion(self) -> None:
+        state = Combat(80, (DEFEND,), (), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),),
+                       player_relics=(RELIC_THROWING_AXE,), player_powers=(("DuplicationPower", 1),),
+                       player_potions=(POTION_BLOCK,))
+        after = step(state, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 15)
+        after = step(after, f"potion:{POTION_BLOCK}", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 27)
+
+    def test_panache_resets_at_turn_end(self) -> None:
+        state = Combat(80, (DEFEND,) * 4, (DEFEND,) * 5, (),
+                       (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),), energy=4,
+                       player_powers=(("PanachePower", 10),))
+        for _ in range(4):
+            state = step(state, DEFEND, DUMMY_DATA, random.Random(0))
+        state = step(state, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(state.panache_cards_this_turn, 0)
+        after = step(state, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.panache_cards_this_turn), (100, 1))
+
+    def test_debuff_potions_consume_artifact_in_application_order(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", (), powers=(("ArtifactPower", 1),))
+        cases = (
+            (POTION_WEAK_POTION, "@0", (0, 0, 0)),
+            (POTION_VULNERABLE_POTION, "@0", (0, 0, 0)),
+            (POTION_POTION_OF_BINDING, "", (0, 0, 1)),
+            (POTION_SHACKLING_POTION, "", (0, 0, 0)),
+        )
+        for potion, target, expected in cases:
+            with self.subTest(potion=potion):
+                state = Combat(80, (), (), (), (enemy,), player_potions=(potion,))
+                after = step(state, f"potion:{potion}{target}", DUMMY_DATA, random.Random(0))
+                powers = after.enemies[0].powers
+                self.assertEqual(tuple(_power(powers, name) for name in
+                                       ("ArtifactPower", "WeakPower", "VulnerablePower")), expected)
+                self.assertEqual(_power(powers, "StrengthPower"), 0)
+                self.assertEqual(_power(powers, "ShacklingPotionPower"), 0)
+
     @classmethod
     def setUpClass(cls) -> None:
         with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
@@ -950,7 +1043,7 @@ class CombatTest(unittest.TestCase):
         regen = step(replace(combat, player_potions=(POTION_REGEN_POTION,)), "potion:POTION.REGEN_POTION", data, rng)
         self.assertEqual(_power(regen.player_powers, "RegenPower"), 5)
         fortified = step(replace(combat, player_potions=(POTION_FORTIFIER,), player_block=9), "potion:POTION.FORTIFIER", data, rng)
-        self.assertEqual(fortified.player_block, 18)
+        self.assertEqual(fortified.player_block, 27)
         weak = step(replace(combat, player_potions=(POTION_WEAK_POTION,)), "potion:POTION.WEAK_POTION@0", data, rng)
         self.assertEqual(_power(weak.enemies[0].powers, "WeakPower"), 3)
         vulnerable = step(replace(combat, player_potions=(POTION_VULNERABLE_POTION,)), "potion:POTION.VULNERABLE_POTION@0", data, rng)

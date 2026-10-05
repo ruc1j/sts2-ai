@@ -383,10 +383,9 @@ class Combat:
     # Enlightenment.OnPlay: caps every hand card's cost at 1 for the rest of this turn (reduceOnly
     # - never raises a cheaper card). Reset alongside the other per-turn counters.
     enlightened_this_turn: bool = False
-    # DuplicationPower / OneTwoPunchPower add one extra resolution to the play being resolved, so
-    # that play's damage or block applies twice. Set per action, cleared at the start of every
-    # action and every turn.
-    play_duplicated: bool = False
+    # Extra resolutions from Duplication, One-Two Punch and Throwing Axe stack additively.
+    # Reset for every action so a later potion never inherits the previous card's play count.
+    play_count: int = 1
     # PanachePower's CardsLeft: 5 cards played after the Panache play deal its damage to every
     # hittable enemy, then reset. The play that applied the power does not count.
     panache_cards_this_turn: int = 0
@@ -1252,7 +1251,7 @@ def _grant_block(
         # already, so nothing is subtracted here on top of them.
         base += _power(combat.player_powers, "DexterityPower")
     block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
-    plays = 2 if combat.play_duplicated else 1
+    plays = combat.play_count
     # Each resolution is its own grant, so the relic doublings apply to every resolution, not to the
     # combined total.
     per_grant = block
@@ -1263,10 +1262,12 @@ def _grant_block(
     block = per_grant * plays
     enemies = list(combat.enemies)
     juggernaut = _power(combat.player_powers, "JuggernautPower")
-    alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
     # JuggernautPower is AfterBlockGained, so each resolution that gains block triggers its own hit.
-    if block > 0 and juggernaut and alive:
+    if block > 0 and juggernaut:
         for _ in range(plays):
+            alive = [index for index, enemy in enumerate(enemies) if enemy.alive]
+            if not alive:
+                break
             target = rng.choice(alive)
             enemies[target] = _damage_enemy(enemies[target], juggernaut, powered=False)
     return replace(combat, player_block=combat.player_block + block, enemies=tuple(enemies))
@@ -1971,6 +1972,9 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
     # Resolve HP-loss modifiers once all attacks in this enemy move have respected the current
     # block.  Tungsten Rod is per damage event; Beating Remnant caps the turn-wide total.
     damage_received = combat.damage_received_this_turn
+    surviving_max_hp = max(1, combat.player_max_hp - max_hp_loss)
+    player_potions = combat.player_potions
+    lizard_tail_used = combat.lizard_tail_used
     if damage_events:
         if RELIC_TUNGSTEN_ROD in combat.player_relics:
             damage_events = [max(0, amount - 1) for amount in damage_events]
@@ -1985,12 +1989,24 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         actual_damage = sum(damage_events)
         if _power(enemy.powers, "PainfulStabsPower"):
             discard += (WOUND,) * sum(amount > 0 for amount in damage_events)
-        player_hp = combat.player_hp - actual_damage
-        if player_hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not combat.lizard_tail_used:
-            player_hp = max(1, combat.player_max_hp // 2)
-            lizard_tail_used = True
-        else:
-            lizard_tail_used = combat.lizard_tail_used
+        player_hp = combat.player_hp
+        # Death prevention resolves after each hit. Later hits can consume a second Fairy or
+        # kill the revived player; reviving once after summing the whole attack loses those hits.
+        resolved_events = []
+        for amount in damage_events:
+            if player_hp <= 0:
+                break
+            resolved_events.append(amount)
+            player_hp -= amount
+            if player_hp <= 0 and RELIC_LIZARD_TAIL in combat.player_relics and not lizard_tail_used:
+                player_hp = max(1, surviving_max_hp // 2)
+                lizard_tail_used = True
+            if player_hp <= 0:
+                player_hp, player_potions = _survive_with_fairy_in_a_bottle(
+                    replace(combat, player_potions=player_potions), player_hp, surviving_max_hp,
+                )
+        damage_events = resolved_events
+        actual_damage = sum(damage_events)
         damage_received += actual_damage
     else:
         actual_damage = 0
@@ -2010,10 +2026,8 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
         if RELIC_SELF_FORMING_CLAY in relics:
             player_powers = _add_power(player_powers, "SelfFormingClayPower", 3)
     # CreatureCmd.LoseMaxHp also pulls current HP down with the ceiling it just lowered.
-    surviving_max_hp = max(1, combat.player_max_hp - max_hp_loss) if max_hp_loss else combat.player_max_hp
     if max_hp_loss:
         player_hp = min(player_hp, surviving_max_hp)
-    player_hp, player_potions = _survive_with_fairy_in_a_bottle(combat, player_hp, surviving_max_hp)
     combat_after_damage = replace(
         combat, player_hp=player_hp, player_powers=player_powers, player_potions=player_potions,
         player_max_hp=surviving_max_hp,
@@ -2074,7 +2088,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
 def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
-    combat = _sync_belt_buckle(_sync_red_skull(combat))
+    combat = replace(_sync_belt_buckle(_sync_red_skull(combat)), play_count=1)
     if action.startswith("potion:"):
         potion, _, target = action.partition(":")[2].partition("@")
         potions = list(combat.player_potions)
@@ -2128,18 +2142,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         if potion == POTION_REGEN_POTION:
             return replace(combat, player_powers=_add_power(combat.player_powers, "RegenPower", 5))
         if potion == POTION_FORTIFIER:
-            # Fortifier.OnUse: CreatureCmd.GainBlock(target, target.Block * 2, Unpowered), i.e. it
-            # doubles the Block already held and does nothing on an empty Block.
-            return replace(combat, player_block=combat.player_block * 2)
+            # GainBlock adds to the current block: gaining twice the current block triples it.
+            return _grant_block(combat, combat.player_block * 2, rng, apply_frail=False, powered=False)
         if potion == POTION_POTION_OF_BINDING:
             # PotionOfBinding.OnUse: PowerCmd.Apply<WeakPower>(1) and Apply<VulnerablePower>(1) over
             # combatState.HittableEnemies (TargetType.AllEnemies; all 124 recorded plays carry
             # target_id None).
             enemies = [
-                replace(
-                    enemy,
-                    powers=_add_power(_add_power(enemy.powers, "WeakPower", 1), "VulnerablePower", 1),
-                )
+                _apply_enemy_debuff(_apply_enemy_debuff(enemy, "WeakPower", 1), "VulnerablePower", 1)
                 if enemy.alive
                 else enemy
                 for enemy in combat.enemies
@@ -2151,15 +2161,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             # every enemy (61 of 61 enemy observations), and the exported intent damage drops to match
             # (3 -> 0 for an Entomancer bees attack).  TemporaryStrengthPower.AfterSideTurnEnd restores
             # it once that creature's own turn ends, which _enemy_turn does below.
-            enemies = [
-                replace(
-                    enemy,
-                    powers=_add_power(_add_power(enemy.powers, "ShacklingPotionPower", 7), "StrengthPower", -7),
-                )
-                if enemy.alive
-                else enemy
-                for enemy in combat.enemies
-            ]
+            enemies = []
+            for enemy in combat.enemies:
+                if enemy.alive:
+                    before = _power(enemy.powers, "ShacklingPotionPower")
+                    enemy = _apply_enemy_debuff(enemy, "ShacklingPotionPower", 7)
+                    if _power(enemy.powers, "ShacklingPotionPower") > before:
+                        enemy = replace(enemy, powers=_add_power(enemy.powers, "StrengthPower", -7))
+                enemies.append(enemy)
             return replace(combat, enemies=tuple(enemies))
         if potion == POTION_LUCKY_TONIC:
             return replace(combat, player_powers=_add_power(combat.player_powers, "BufferPower", 1))
@@ -2194,9 +2203,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         if potion in {POTION_WEAK_POTION, POTION_VULNERABLE_POTION}:
             enemies = list(combat.enemies)
             power = "WeakPower" if potion == POTION_WEAK_POTION else "VulnerablePower"
-            enemies[int(target)] = replace(
-                enemies[int(target)], powers=_add_power(enemies[int(target)].powers, power, 3)
-            )
+            enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], power, 3)
             return replace(combat, enemies=tuple(enemies))
         enemies = list(combat.enemies)
         if potion == POTION_EXPLOSIVE:
@@ -2330,6 +2337,16 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 enemies = list(combat.enemies)
                 enemies[hit] = _damage_enemy(enemies[hit], 6, powered=False)
                 combat = replace(combat, enemies=tuple(enemies))
+        # RegenPower.AfterSideTurnEnd belongs to the owner's side: heal before enemies attack.
+        regen = _power(combat.player_powers, "RegenPower")
+        if regen and combat.player_hp > 0:
+            combat = replace(
+                combat, player_hp=min(combat.player_max_hp, combat.player_hp + regen),
+                player_powers=_add_power(combat.player_powers, "RegenPower", -1),
+            )
+        combat = replace(combat, panache_cards_this_turn=0)
+        if combat.terminal:
+            return combat
         # WeakPower / VulnerablePower / FrailPower.AfterSideTurnEnd all tick down at the end of the
         # enemy side's turn, for owners on either side (confirmed in the decompile: each gates on
         # side == CombatSide.Enemy).  A stack applied *during* that enemy turn is exempt from the same
@@ -2470,15 +2487,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         no_draw = _power(player_powers, "NoDrawPower")
         if no_draw:
             player_powers = _add_power(player_powers, "NoDrawPower", -no_draw)
-        regen = _power(player_powers, "RegenPower")
-        if regen and combat.player_hp > 0:
-            # RegenPower.AfterSideTurnEnd heals its owner by Amount at the end of the side's turn and
-            # decrements.  _enemy_turn already does this for enemies; the player side was missing, so a
-            # held Regen was invisible to the rollout.  Replaying the end_turn of every record where the
-            # player held Regen matched only 605/811 (74.6%), and the game's HP was higher by exactly the
-            # power amount in the top mismatch groups (+5 in 47, +4 in 37, +3 in 30, +2 in 19).
-            combat = replace(combat, player_hp=min(combat.player_max_hp, combat.player_hp + regen))
-            player_powers = _add_power(player_powers, "RegenPower", -1)
         if _power(player_powers, "PlatingPower") and new_turn > 1:
             player_powers = _add_power(player_powers, "PlatingPower", -1)
         if RELIC_POCKETWATCH in relics and new_turn > 1 and combat.cards_played_this_turn <= 3:
@@ -2583,7 +2591,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hellraiser_autoplays_this_turn=0, pyre_autoplays_this_turn=0,
             powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
-            play_duplicated=False,
+            play_count=1,
         )
         combat = _draw_into_combat(combat, draw_count, data, rng, from_hand_draw=True)
         # MayhemPower.AfterAutoPrePlayPhaseEntered: plays Amount cards off the draw pile before
@@ -2602,15 +2610,16 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # BeforeCardPlayed sets this before the play resolves, so the next Bound card in the same turn
         # is gated off by ShouldPlay (real runs played Bound cards 279 times).
         combat = replace(combat, bound_played_this_turn=True)
-    # Play-count powers. DuplicationPower (Duplicator potion) adds one extra resolution to the play
-    # it modifies and OneTwoPunchPower (One-Two Punch) does the same for Attacks only; the counter
-    # is consumed by that play (AfterModifyingCardPlayCount) and both powers are removed at the end
-    # of the player's turn. For an Attack the extra resolution is one more hit of the same damage,
-    # and for a block card the grant is applied twice.
-    play_duplicated = bool(
-        _power(combat.player_powers, "DuplicationPower")
-        or (card in ATTACKS and _power(combat.player_powers, "OneTwoPunchPower"))
-    )
+    # Hook.ModifyCardPlayCount visits every applicable source. Each adds one resolution and
+    # consumes one charge, even when another source already increased the same play's count.
+    plays = 1
+    for power_name in ("DuplicationPower", "OneTwoPunchPower"):
+        if _power(combat.player_powers, power_name) and (power_name == "DuplicationPower" or card in ATTACKS):
+            plays += 1
+            combat = replace(combat, player_powers=_add_power(combat.player_powers, power_name, -1))
+    if RELIC_THROWING_AXE in combat.player_relics and combat.cards_played_combat == 0:
+        plays += 1
+    combat = replace(combat, play_count=plays)
     # GigantificationPower marks the first powered Attack played on the turn and multiplies that
     # command's damage by 3, then decrements.
     gigantified = bool(
@@ -2618,25 +2627,6 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         and combat.attacks_played_this_turn == 0
         and _power(combat.player_powers, "GigantificationPower")
     )
-    if play_duplicated:
-        power_name = "DuplicationPower" if _power(combat.player_powers, "DuplicationPower") else "OneTwoPunchPower"
-        combat = replace(
-            combat,
-            player_powers=_add_power(combat.player_powers, power_name, -1),
-        )
-    # The flag describes this play only, so it is reset for every action, not just the duplicated
-    # one - a leftover True from an earlier play would double the next card's block for free.
-    combat = replace(combat, play_duplicated=play_duplicated)
-    # An increased play count re-runs the card's OnPlay, so its power applies again.
-    # ThrowingAxe.ModifyCardPlayCount hands back playCount + 1 for the first card we play each combat.
-    # The model already has a "this play happens twice" mechanism (play_duplicated), which the attack
-    # branches consume as an extra hit, so the relic rides on it.  A card that some other effect already
-    # duplicates would really play three times; the model doubles it, which is the rare case.
-    if RELIC_THROWING_AXE in combat.player_relics and combat.cards_played_combat == 0:
-        play_duplicated = True
-    combat = replace(combat, play_duplicated=play_duplicated)
-    plays = 2 if play_duplicated else 1
-    plays = 2 if play_duplicated else 1
     if gigantified:
         combat = replace(combat, player_powers=_add_power(combat.player_powers, "GigantificationPower", -1))
     hand = list(combat.hand)
@@ -2820,11 +2810,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             energy=combat.energy - (0 if card_is_free else 1),
         )
         # The play count increases how many times the card's commands resolve, so its draw runs again.
-        return _draw_into_combat(combat, 1 * (2 if play_duplicated else 1), data, rng)
+        return _draw_into_combat(combat, plays, data, rng)
     if card in CARD_DRAW:
         combat = _draw_into_combat(
             replace(combat, hand=tuple(hand), discard_pile=combat.discard_pile),
-            (CARD_DRAW[card] + (1 if card == POMMEL_STRIKE and card_was_upgraded else 0)) * (2 if play_duplicated else 1), data, rng,
+            (CARD_DRAW[card] + (1 if card == POMMEL_STRIKE and card_was_upgraded else 0)) * plays, data, rng,
         )
         hand = list(combat.hand)
     if card == IMPATIENCE and not any(card_name(value) in ATTACKS for value in hand):
@@ -2862,8 +2852,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if self_damage:
         # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
         # An increased play count re-runs OnPlay, so the self-damage happens once per resolution.
-        damaged = _apply_player_damage(combat, self_damage * (2 if play_duplicated else 1), trigger_inferno=True)
-        player_hp, combat = damaged.player_hp, damaged
+        for _ in range(plays):
+            combat = _apply_player_damage(combat, self_damage, trigger_inferno=True)
+            if combat.terminal:
+                return combat
+        player_hp = combat.player_hp
     if card == NOT_YET:
         # No max-HP tracking in this model (Combat has no companion max_hp field), so the heal is
         # uncapped - a small, safe-direction gap since it can only ever make the sim think the
@@ -3214,20 +3207,22 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             damage *= 2
         before = list(enemies)
         hits = ALL_ENEMY_HITS.get(card, 1) + (ALL_ENEMY_UPGRADE_HITS.get(card, 0) if card_was_upgraded else 0)
-        for index, enemy in enumerate(enemies):
-            if not enemy.alive:
-                continue
-            for _ in range(hits):
-                if not enemies[index].alive:
-                    break
-                target_enemy = enemies[index]
-                scaled = _apply_debuff_multipliers(combat, target_enemy, damage)
-                enemies[index] = _damage_enemy(target_enemy, scaled)
-        if card == THUNDERCLAP:
+        for _ in range(plays):
             for index, enemy in enumerate(enemies):
-                if enemy.alive:
-                    vulnerable = 2 if lamp_double else 1
-                    enemies[index] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
+                if not enemy.alive:
+                    continue
+                for _ in range(hits):
+                    if not enemies[index].alive:
+                        break
+                    target_enemy = enemies[index]
+                    scaled = _apply_debuff_multipliers(combat, target_enemy, damage)
+                    enemies[index] = _damage_enemy(target_enemy, scaled)
+            # A later resolution sees the Vulnerable applied by the previous one.
+            if card == THUNDERCLAP:
+                for index, enemy in enumerate(enemies):
+                    if enemy.alive:
+                        vulnerable = 2 if lamp_double else 1
+                        enemies[index] = _apply_enemy_debuff(enemy, "VulnerablePower", vulnerable)
         for before_index, (before_enemy, after_enemy) in enumerate(zip(before, enemies)):
             if before_enemy.model == "MONSTER.PHROG_PARASITE" and before_enemy.alive and not after_enemy.alive:
                 enemies += _spawn_wrigglers(data, rng)
@@ -3269,7 +3264,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             damage *= 2
         before = tuple(enemies)
         reflected, hive = 0, 0
-        for _ in range(4 if card_was_upgraded else 3):
+        for _ in range((4 if card_was_upgraded else 3) * plays):
             alive = [index for index, candidate in enumerate(enemies) if candidate.alive]
             if not alive:
                 break
@@ -3300,7 +3295,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             damage *= 2
         before = tuple(enemies)
         reflected, hive = 0, 0
-        for _ in range(volley_x):
+        for _ in range(volley_x * plays):
             alive = [index for index, candidate in enumerate(enemies) if candidate.alive]
             if not alive:
                 break
@@ -3339,8 +3334,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             # Dismantle.OnPlay: hitCount = target.HasPower<VulnerablePower>() ? 2 : 1 - two separate
             # attacks, each with its own rounding, block absorption, and Slippery decrement.
             hits = 2
-    if play_duplicated:
-        hits *= 2
+    hits *= plays
     if card == PERFECTED_STRIKE:
         strikes = sum(
             1 for value in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile

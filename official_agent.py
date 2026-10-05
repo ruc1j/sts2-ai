@@ -15,7 +15,7 @@ from combat import (
     POWERS, SKILLS,
     BURNING_PACT, CINDER, FIEND_FIRE, THRASH,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
-    POTION_STRENGTH, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
+    POTION_STRENGTH, POTION_FAIRY_IN_A_BOTTLE, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
 )
 
 
@@ -3021,6 +3021,11 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         compact_to_observation_index.append(observation_index)
     hand, draw_pile, discard_pile, exhaust_pile, upgraded_cards = _rollout_cards(observation)
     allowed_potions = _rollout_allowed_potions(observation, actions)
+    # Automatic potions are held combat state, even though the bridge never offers a manual action.
+    automatic_potions = tuple(
+        POTION_FAIRY_IN_A_BOTTLE for potion in observation.get("potions") or ()
+        if (potion if isinstance(potion, str) else (potion or {}).get("id")) == POTION_FAIRY_IN_A_BOTTLE
+    )
     state = Combat(
         player_hp=observation["player"]["hp"],
         hand=hand,
@@ -3060,7 +3065,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             else 0
         ),
         player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
-        player_potions=allowed_potions,
+        player_potions=allowed_potions + automatic_potions,
         # The bridge exposes Lizard Tail but not its one-shot-used flag; below half HP, assume
         # it has already fired so rollouts never count on a second resurrection.
         lizard_tail_used=(

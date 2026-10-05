@@ -11,6 +11,34 @@ from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND,
 
 
 class OfficialAgentTest(unittest.TestCase):
+    def test_rollout_keeps_automatic_fairy_without_offering_a_manual_action(self) -> None:
+        fairy = "POTION.FAIRY_IN_A_BOTTLE"
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "next": "HIT_MOVE",
+            "intents": [{"type": "SingleAttackIntent", "damage": 10, "repeats": 1}],
+        }]}]}
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1,
+            "player": {"hp": 5, "max_hp": 80, "block": 0, "energy": 0, "powers": []},
+            "hand": [], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "potions": [{"id": fairy}, None, {"id": fairy}],
+            "enemies": [{"id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [],
+                         "move": "HIT_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        def capture(state, data, simulations, seed):
+            self.assertEqual(state.player_potions, (fairy, fairy))
+            self.assertEqual(combat_legal_actions(state), (END_TURN,))
+            saved = step(state, END_TURN, data, random.Random(0))
+            self.assertEqual((saved.player_hp, saved.player_potions), (24, (fairy,)))
+            return [(END_TURN, 0.0)]
+
+        # Observations carry potion objects; saved combat traces carry their IDs instead.
+        for potions in (observation["potions"], [fairy, fairy]):
+            with self.subTest(potions=potions), patch("official_agent.search", side_effect=capture):
+                action = rollout_choice(dict(observation, potions=potions), observation["legal_actions"], data, 1)
+                self.assertEqual(action["type"], "end_turn")
+
     def test_power_card_plays_reach_the_play_counters(self) -> None:
         # CARD.INFLAME is base(1, CardType.Power): CardModel.GetResultPileTypeForCardPlay returns
         # PileType.None for Power cards, so it leaves the hand and lands in no pile at all.  Only the
