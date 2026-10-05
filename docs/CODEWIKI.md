@@ -8838,3 +8838,20 @@ model 側: CARD_COST ✓ に EXTERMINATE 1 ✓ SQUASH 1 ✓ ✓ CARD_DAMAGE ✓ 
 → 単体敵中心の fight なら SQUASH ✓（10 ✓ > 3 ✓）✓ 4 体以上の群なら EXTERMINATE ✓（3x4=12 ✓）✓
 → **batch 3 の候補 ✓ BUGSLAYER → SQUASH ✓（既定 ✓）** ✓（札を deck に足す選択 ✓ なので ✓ 単独で panel ✓ する ✓）✓
 batch 1 3本目 ✓ VTW80ZJA2G ✓ 走行中 ✓ → 終わり次第 ✓ 改訂版 `.wt-proto16` ✓ の panel ✓ を同じ3 seed ✓ で走らせる ✓
+
+## Round 101: batch 3（BUGSLAYER → SQUASH ✓）を別 tree で用意 ✓ **fight 開始時の敌数は 1 体が 91% ✓ 4 体以上は 0% ✓** なので単体 10 damage ✓ が既定として正しい ✓
+
+`.wt-proto17` ✓（HEAD から ✓ 単独 panel 用 ✓）✓ 784 件 green ✓（test 1 件 ✓）✓
+`BUGSLAYER` ✓ の option 名は `EXTERMINATION` ✓（カード名 Exterminate ✓ とは違う ✓）と `SQUASH` ✓ ✓
+→ rule ✓：`option == "SQUASH" ✓` に 100 ✓・他 None ✓（辞退は None ✓ の規則 ✓ を守った ✓）✓
+
+**敌数の実測** ✓（新しい9 trace ✓ fight 開始時 85 件 ✓ turn ごとに 1 件 ✓）✓
+```
+1 体: 77 ✓（91% ✓）✓  2 体: 4 ✓  3 体: 4 ✓  4 体以上: 0 ✓（0% ✓）✓
+```
+→ Exterminate（3 damage ✓ 全敌 ✓）が有利になるのは 4 体以上のとき ✓（3x4=12 > 10 ✓）✓ **corpus にそういう fight が無い** ✓✓
+→ **SQUASH ✓（1 energy ✓ 10 damage ✓ 単体 ✓）が既定として妥当 ✓** ✓
+（teaching 19 ✓ 近い話 ✓「群の fight が無いのに AoE ✓ を選ぶ理由が無い」✓）✓
+batch 1（未改訂 ✓）の 3 本目 ✓ VTW80ZJA2G ✓ 走行中 ✓ → 改訂版 `.wt-proto16` ✓ → batch 3 ✓ の順で panel ✓ する ✓
+**panel の順番** ✓（1 度に 1 変更 ✓）✓ 1. `.wt-proto16`（DENSE_VEGETATION の gold 評価 ✓）✓ 2. `.wt-proto17`（BUGSLAYER ✓）✓ 3. `.wt-proto15`（SAPPHIRE_SEED ✓ TEA_MASTER ✓）✓
+control は `evfix_ctrl` ✓（50 勝 ✓ 3 敗 ✓）✓ をそのまま使う ✓（HEAD 間で policy 変更が無い ✓）✓
