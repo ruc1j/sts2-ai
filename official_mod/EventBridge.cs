@@ -141,14 +141,16 @@ internal static class EventRoomHandlerPatch
         if (action.Type != "event_option" || action.OptionIndex is not int optionIndex ||
             optionIndex < 0 || optionIndex >= indexed.Length)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            // Record what we were actually asked to click: a third of our event choices are rejected, and the
+            // trace otherwise only says "rejected", which cannot tell a wrong type from an out-of-range index.
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", attempted_type = action.Type, attempted_option_index = action.OptionIndex, attempted_text_key = action.TextKey, attempted_relic_id = action.RelicId, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
         var selected = indexed[optionIndex].Button;
         if (!eligible.Any(item => item.Index == optionIndex) || selected.Option.TextKey != action.TextKey ||
             selected.Option.Relic?.Id.ToString() != action.RelicId)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", attempted_type = action.Type, attempted_option_index = action.OptionIndex, attempted_text_key = action.TextKey, attempted_relic_id = action.RelicId, eligible_text_keys = eligible.Select(item => item.Button.Option.TextKey), decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
 

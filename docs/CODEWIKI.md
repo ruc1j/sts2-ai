@@ -8331,3 +8331,32 @@ agent の `choose_event`（`official_agent.py:858`）は `{"event_option","event
 **同時に測った 2 件** ✓
 - **boss 戦で kill を取り逃していない** ✓ THE_INSATIABLE 25 fight ✓ 914 decision ✓ lethal 可能 11 件すべて実行 ✓（取り逃し 0 ✓）✓ → 「70 HP 差は kill 取り逃し」筋は無い ✓（前 round ✓）✓
 - sweep `sw64` 完了 ✓ 43 勝 ✓ combat 敗北 2 ✓ Act 3 完走 0 ✓ **3 本中 2 本が combat 以外で止まった** ✓（rewards screen 不出現 ✓ / rest を選んだ後に game が main menu に戻る ✓ `[Watchdog] No progress for 5.0s (last: Playing main menu)` ✓）✓
+
+## Round 82: event 拒否の原因を特定 ✓ agent が出ていく action の型は `event_fallback` ✓ bridge は `event_option` しか.accept しない ✓
+
+diagnostic を入れた mod ✓（`EventBridge.cs` の拒否 Trace に `attempted_type` ✓ `attempted_option_index` ✓ `attempted_text_key` ✓ `attempted_relic_id` ✓ `eligible_text_keys` ✓ を追加 ✓）✓ で 2 seed run ✓ tag `evdiag` ✓ HEAD `0cd5b43` ✓:
+```
+attempted action shape: {('event_fallback', True): 5}      # type=event_fallback ✓ option_index=None ✓ text_key=None ✓
+attempted text_key top: {('event_fallback', 'None'): 5}
+```
+**コード上の場所** ✓ `official_agent.py:919` `return {"type": "event_fallback"}` ✓
+`choose_event` は `EVENT_OPTION_SCORES` に entry の無い event で ✓
+(1) 得点のある option があればそれを取る ✓ → (2) `is_proceed` の option があれば proceed ✓ →
+**(3) どちらも無ければ `event_fallback` ✓** ← bridge が `action.Type != "event_option"` ✓ で弾く ✓ → game の AutoSlay fallback が選ぶ ✓
+**proceed ボタンが無い event ✓（選択肢が全て何かを払う/取る/戦う types ✓）で発生する** ✓
+（BUGSLAYER 170 ✓ WHISPERING_HOLLOW 135 ✓ SYMBIOTE 131 ✓ など ✓ proceeds が無い event たち ✓）✓
+
+**これは CODEWIKI line 2354 に既に記録されていた** ✓「`choose_event` は entry の無い event に `event_fallback` を返し ✓ bridge は `invalid_event_action` として game に投げる ✓ panel では 81 decision 中 26 件（6 seed）✓ **実走で測れない理由は trace の event record に選ばれた option しか残っていない** ✓」✓
+→ 今回の diagnostic がその観測穴を塞ぎ ✓ **原因の型まで確定した** ✓ ✓
+pin されている test は `test_unknown_event_returns_bridge_fallback` ✓（`test_official_agent.py` ✓ "unknown event は bridge fallback を返す" ✓）✓
+
+**同じ seed が必ずしも同じ run になるとは限らない** ✓✗（前 round の「再 run は完全一致」の訂正 ✓）✓
+seed `9PCQMO0DAY`: `sw64` では 12 勝 0 敗 ✓ 229 records ✓ Act 2 Floor 14 で main menu に戻り停止 ✓
+`evdiag` では 12 勝 1 敗 ✓ 259 records ✓ Act 2 Floor 16（boss 室）まで進んだ ✓ → **同じ seed 同じ code で結果が違う** ✓
+H2LV6ZJ4XW は 3 回一致したので ✓「一致する seed もあればしない seed もある」✓ が正しい ✓
+（Godot / AutoSlay の screen 待ち時刻などが効く筋 ✓ 未確定 ✓）✓
+
+**採る手順** ✓ policy 変更（`event_fallback` をやめ ✓ 最初の eligible option を答える ✓）は scratch `.wt-proto12` で実装 ✓ test 1 件追加 ✓ suite は 784 件中 1 件 fail ✓
+→ **その 1 件が上記の pin された test** ✓（`test_unknown_event_returns_bridge_fallback` ✓）✓「unknown event は game に委ねる」という前 round の決定を test が留めている ✓
+前 round の決定は「測れないから変えない」✓ だった ✓ 今は測れるようになった ✓ ので ✓ **arm（変更あり ✓）vs control（HEAD ✓）の panel で測ってから adopting する** ✓（teaching 9 ✓「agent が価格付けできる範囲を広げる変更は panel で測る」✓）✓
+panel 中に test を更新するのは ✓ 採用を決めたときだけ ✓
