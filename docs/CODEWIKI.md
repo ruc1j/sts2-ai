@@ -8496,3 +8496,22 @@ ranking ✓
 1. **replay は record の `simulations` を使わないと別の答えを出す** ✓（300 → SHRUG_IT_OFF ✓ 100 → end_turn ✓ で live と一致 ✓）✓ 監査ツールには `record["simulations"]` を渡す ✓
 2. **observation の card entry は `cost` を持つ ✓ 未使用札は -1 ✓** ✓ play 可能性の判定は `0 <= cost` ✓（Toxic のように play できる Status 札との区別に使える ✓）✓
 3. `combat_records()` は `Path` を取る ✓ str を渡すと `AttributeError: 'str' object has no attribute 'open'` ✓✓
+
+## Round 88: event 回答の fix を入れた arm sweep 完了 ✓ **event 45 件すべて accept ✓ 拒否 0 件 ✓**（修正前は corpus で 30.1% 拒否 ✓）
+
+tree `.wt-proto12`（HEAD `37bb82c` + event 回答 fix ✓ その tree で dll build ✓ 241,152 B ✓）✓ 3 seed ✓ 10:30〜10:46 ✓
+```
+RESULT evfix_arm AM8C6YXHSG wins=14 losses=1 records=276 depth=Act 3, Floor 6   fail=Watchdog ✓ Entering Monster room (Act 3, Floor 6)
+RESULT evfix_arm H2LV6ZJ4XW  wins=20 losses=1 records=386 depth=Act 3, Floor 6   fail=Watchdog ✓ Entering Monster room (Act 3, Floor 6)
+RESULT evfix_arm VTW80ZJA2G  wins=13 losses=1 records=285 depth=Act 2, Floor 16  fail=Watchdog ✓ Entering Boss room (Act 2, Floor 16)
+arm 合計: 47 勝 ✓ 3 敗 ✓ Act 3 完走 0 ✓
+arm tree の event record: accepted 45 ✓ **rejected 0** ✓（前の build では corpus 6,465 件中 1,948 件 = 30.1% が `invalid_event_action` ✓）✓
+```
+**fix が狙いどおり効いていることは決定的** ✓（proceed の無い unscored event に最初の eligible option を答える ✓→ bridge が accept ✓）✓
+**勝敗への影響はまだ言えない** ✓ AM8C6YXHSG は 17 勝（`sw59` ✓ commit `9bbf6a2` ✓）→ 14 勝 ✓ だが ✓
+**同じ seed でも run が分岐する** ✓（round 72 ✓ 9PCQMO0DAY が sw64 と evdiag で別々 ✓）✓ ので ✓ 1 seed の差は noise ✓
+→ **control sweep `evfix_ctrl`**（tree `.wt-ctrl-evfix` ✓ commit `37bb82c` ✓ policy 無変更 ✓ 同じ3 seed ✓）を 10:49 に開始 ✓ 完了待ち `bash-1165` ✓
+**採否は control との対比で決める** ✓（teaching 2 ✓「control は 1 つの policy commit に固定 ✓」✓ teaching 9 ✓）✓
+
+tooling の落とし ✓ arm の artifact は REPO 相対 ✓（`.wt-proto12/data/evfix_arm_*_agent.jsonl` ✓）✓ に書かれる ✓
+→ 待受け script の glob を `data/evfix_arm_*` にしていたので event 集計が `{}` になった ✓✗（teaching 6 ✓「run が実際に何を書いたか見る」✓）✓
