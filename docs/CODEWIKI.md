@@ -8298,3 +8298,36 @@ RESULT sw64 9PCQMO0DAY  wins=12 losses=0 records=229 depth=Act 2, Floor 14 fail=
   combat_end は12件 ✓ 敗北 0 ✓ で ✓ 健康な run が rest の所で消えた ✓
 → 完走測定の前に ✓ **この stop 自体が win 数を削っている** ✓（teaching 82 ✓「もっともらしい infrastructure 診断は trace の最終状態と突き合わせる」✓ を実行 ✓）✓
 次の調査: rest を選んだ後に観測が来ない経路 ✓（RestBridge ✓）と abandon 経路 ✓（open question (c) ✓「launcher が Abandoning existing run で止まる」✓）✓
+
+## Round 81: **event 决定の 30% が game 側の fallback に上書きされている**と数えた ✓ 6,465 件中 1,948 件 ✓
+
+`data/*_agent.jsonl` の `phase == "event"` record を全部数えた ✓
+```
+event records total: 6,465
+   (action=None, reason=None)                 4,517 ✓  → agent の action が受け入れられた ✓（受入側は option_index / option_id 側に出る ✓）
+   (action='fallback', reason='invalid_event_action')  1,948 ✗✗ → **30.1% が bridge に弾かれている** ✓
+弾かれた event top: BUGSLAYER 170 ✓ WHISPERING_HOLLOW 135 ✓ SYMBIOTE 131 ✓ BRAIN_LEECH 129 ✓ DENSE_VEGETATION 112 ✓
+TEA_MASTER 108 ✓ THE_FUTURE_OF_POTIONS 101 ✓ TINKER_TIME 90 ✓ INFESTED_AUTOMATON 85 ✓ SAPPHIRE_SEED 79 ✓ SPIRIT_GRAFTER 72 ✓
+```
+**events は relic ✓ 札 ✓ gold ✓ HP ✓ を配る phase なので ✓ この上書きは直接 HP 経済に影響する** ✓（前 round までで「壁は boss 進入時の HP ✓ 一戦での一括損失 ✓」と測っている ✓）✓
+
+**bridge 側の条件** ✓ `official_mod/EventBridge.cs:141-151` ✓
+```
+if (action.Type != "event_option" || action.OptionIndex is not int optionIndex || optionIndex 範囲外)
+    → Trace(reason = "invalid_event_action") ✓ Fallback
+if (!eligible.Any(Index == optionIndex) || selected.Option.TextKey != action.TextKey ||
+    selected.Option.Relic?.Id.ToString() != action.RelicId)
+    → Trace(reason = "invalid_event_action") ✓ Fallback
+```
+bridge が出す `legal_actions` は全部 `type = "event_option"` ✓（`event_relic` という type は出さない ✓）✓
+agent の `choose_event`（`official_agent.py:858`）は `{"event_option","event_relic"}` を filter し ✓ `is_locked` ✓ と text_key が `_LOCKED` のものを落とし ✓
+**空になると `ValueError("no event relic actions")` ✓ を投げる** ✓→ `_choose` の例外 tail（`official_agent.py:1765` ✓ KeyError/ValueError/… ✓）で heuristic tail に落ち ✓ ** heuristic tail が出てくる action は `event_option` ではない可能性が高い ✓** → bridge が弾く ✓ という筋 ✓
+（message の "no event relic actions" は relic 型が有った名残 ✓ で ✓ bridge は event_relic を出さない ✓）✓
+
+**確定できていない部分** ✓ trace は agent が送った action 本体を残していない ✓（fallback record には `decision_source` ✓ と `decision_reason` ✓ だけ ✓）✓
+→ **弾かれた action の `type` ✓ `option_index` ✓ `text_key` ✓ `relic_id` ✓ を trace に載せる diagnostic を bridge 側に入れる** ✓（1 行程度 ✓ map file の per-act 化 ✓ と同じ型の tooling fix ✓）✓ → 1 run でパターンが分かる ✓
+次 round: その diagnostic を入れて rebuild ✓ 1 run ✓ → 弾かれ理由の内訳を取る ✓
+
+**同時に測った 2 件** ✓
+- **boss 戦で kill を取り逃していない** ✓ THE_INSATIABLE 25 fight ✓ 914 decision ✓ lethal 可能 11 件すべて実行 ✓（取り逃し 0 ✓）✓ → 「70 HP 差は kill 取り逃し」筋は無い ✓（前 round ✓）✓
+- sweep `sw64` 完了 ✓ 43 勝 ✓ combat 敗北 2 ✓ Act 3 完走 0 ✓ **3 本中 2 本が combat 以外で止まった** ✓（rewards screen 不出現 ✓ / rest を選んだ後に game が main menu に戻る ✓ `[Watchdog] No progress for 5.0s (last: Playing main menu)` ✓）✓
