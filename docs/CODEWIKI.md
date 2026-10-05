@@ -9308,3 +9308,20 @@ N8CQ4ZKP2W    ✓  0 ✓            ✓  0 ✓           ✓ 0 ✓         ✓ 0
 → **採否 ✓**：5 本目 D6A1F8C3E5 ✓（control ✓ 15 勝 ✓ Act 3, F5 ✓）を待って ✓ 判定 ✓ ✓（改善 seed 0 ✓ のままなら ✓ **採用しない ✓**✓ が ✓**変更自体の誤りは示されていない ✓**✓）✓
 **副次的な測定 ✓✓**：shop ✓ の gold ✓ が 180-196 ✓ 台中 ✓ relic ✓（155-287 ✓）を買えない ✓ という数字は ✓ 完走 run ✓ の relic 16-17 ✓ と直近 ✓ 10 ✓ の差が ✓**gold の問題 ✓**✓ であることをもう一度支持する ✓（`buy_relic ✓` は corpus ✓ で 106 ✓/4,764 ✓ ✓ 2.2% ✓）✓
 **measurement ✓ のミス ✓**：先に `data/relic_arm_* ✓` を読んで空振り ✓ した ✓（sweep ✓ の artifact ✓ は REPO tree ✓ 配下 ✓→ rsync ✓ は panel ✓ 完了後 ✓ に走る ✓）✓（teaching 134 ✓ の再現 ✓）✓
+
+## Round 121: relic 価格付け panel ✓ 5 本完了 ✓ **arm 70 勝 5 敗 ✓ = control ✓ 70 勝 5 敗 ✓**✓ 5 seed ✓ 中 4 seed ✓ が byte 一致 ✓ → **採用しない ✓**（改善 seed 0 ✓）✓ ただし ✓ 変更の誤りは示されていない ✓✓
+
+```
+seed          control ✓ (evfix_ctrl ✓ + base_ctrl ✓)          arm ✓ relic_arm ✓（`.wt-proto19 ✓` ✓）
+AM8C6YXHSG    ✓ 17 ✓/360 ✓ Act 3, F15 ✓                      ✓ 17 ✓/391 ✓ Act 3, F15 ✓  （records ✓ +31 ✓ ✓ relic 2 個 ✓ 買った ✓）✓
+H2LV6ZJ4XW    ✓ 20 ✓/388 ✓ Act 3, F6  ✓                      ✓ 20 ✓/388 ✓ Act 3, F6  ✓  ✓ 完全一致 ✓ ✓ inert ✓ ✓
+VTW80ZJA2G    ✓ 13 ✓/262 ✓ Act 2, F16 ✓                      ✓ 13 ✓/262 ✓ Act 2, F16 ✓  ✓ 完全一致 ✓ ✓ inert ✓ ✓
+N8CQ4ZKP2W    ✓  5 ✓/111 ✓ Act 1, F14 ✓                      ✓  5 ✓/111 ✓ Act 1, F14 ✓  ✓ 完全一致 ✓ ✓ inert ✓ ✓
+D6A1F8C3E5    ✓ 15 ✓/302 ✓ Act 3, F5  ✓                      ✓ 15 ✓/302 ✓ Act 3, F5  ✓  ✓ 完全一致 ✓ ✓ inert ✓ ✓
+合計          ✓ 70 ✓勝 ✓ 5 ✓敗 ✓                              ✓ 70 ✓勝 ✓ 5 ✓敗 ✓ ✓ 胜ち数 ✓ 深度 ✓ 全て同じ ✓ ✓
+```
+**判定 ✓**：採否基準 ✓（3 seed ✓ 以上で改善 ✓）を ✓ 満たさない ✓ → **main にいれない ✓** ✓（`.wt-proto19 ✓` は artifact ✓ を保存 ✓ して削除 ✓）✓
+**ただし ✓ 前 round ✓ の測定 ✓（買える ✓ 価格付き relic ✓ の出品 ✓ 4 seed ✓ で 0 件 ✓）が示す通り ✓**✓ これは ✓**未測定 ✓**✓ であって ✓ 誤りの証明 ✓ ではない ✓✓
+→ **gold ✓ が足枷 ✓**✓：relic ✓ 155-287 ✓ に対し shop ✓ 時点の gold ✓ 中央値 180 ✓/196 ✓ ✓（relic を買えた run ✓ は gold 411 ✓ の AM8C6YXHSG ✓ だけ ✓）✓
+→ **gold を増やす筋 ✓（イベント ✓/室の選び方 ✓/売却 ✓）を測らない限り ✓ relic ✓ 購入政策 ✓ は試す場 ✓ に届かない ✓**✓ ✓→ **次の仕事 ✓ は shop ✓ の側 ✓ でなく ✓ gold ✓ の流れ ✓ の測定 ✓**✓（teaching 119 ✓「資源をどこで失うか ✓ を先に locate ✓ しろ ✓」✓ の再現 ✓）✓
+**同時に ✓ EventBridge ✓ の `options ✓` export ✓ 検証 run ✓（evoptexport ✓ AM8C6YXHSG ✓）を連鎖 ✓ 起動 ✓**✓（12:50 ✓ 時点 ✓ 起動 ✓ 確認 ✓ 待ち ✓）✓
