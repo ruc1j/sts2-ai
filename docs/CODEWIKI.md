@@ -8814,3 +8814,27 @@ arm の event 10 件 ✓ 拒否 4 ✓ うち価格付けした event に当た�
 - BRAIN_LEECH ✓：SHARE_KNOWLEDGE ✓（RIP は None ✓）✓ WHISPERING_HOLLOW ✓：gold >= 70 ✓ のとき GOLD ✓ そうで None ✓
 - seq 92 の状況（hp 55/80 ✓）では改訂版は **TRUDGE_ON ✓** を選ぶ ✓（47 HP ✓ + gold ✓）✓ → **今の panel とも違う選択なので ✓ 改訂版 panel が必要 ✓** ✓
 sweep の 3 本目 ✓ 走行中 ✓ → 終わったら `.wt-proto16` ✓ の panel を同じ3 seed ✓ で走らせる ✓
+
+## Round 100: 価格付けした event の母数 ✓ run の 18〜22% ✓ に現れ ✓ ほぼ全て game に委ねられていた ✓（BUGSLAYER ✓ が単一 event では最大の 170 件 ✓）
+
+corpus ✓（trace 615 ✓ event record 6,530 ✓）✓
+```
+DENSE_VEGETATION ✓: record 115 ✓ うち拒否 112 ✓ これを含む run 113/615 = 18% ✓
+BRAIN_LEECH       ✓: record 136 ✓ うち拒否 130 ✓ これを含む run 133/615 = 22% ✓
+WHISPERING_HOLLOW ✓: record 137 ✓ うち拒否 135 ✓ これを含む run 136/615 = 22% ✓
+event record 上位: NEOW 1081（拒否 0 ✓）✓ TEZCATARA 632（0 ✓）✓ PAEL 392（0 ✓）✓ SELF_HELP_BOOK 330（0 ✓）✓ BYRDONIS_NEST 312（0 ✓）✓
+                ROOM_FULL_OF_CHEESE 216（0 ✓）✓ AROMA_OF_CHAOS 214（0 ✓）✓ **BUGSLAYER 178（拒否 170 ✓）** ✓ SUNKEN_STATUE 162（0 ✓）✓
+```
+→ 既に価格を付けた3件は ✓ **hit した run のほぼ全てで game 側の决定だった** ✓（112/115 ✓ 130/136 ✓ 135/137 ✓）✓
+→ 各 event は run の 2 割程度 ✓ 3 件合わせれば 4〜5 割の run に触点 ✓（panel の信号は希釈されるがゼロではない ✓）✓
+**get 点済みの event（拒否 0 ✓）は上位に並んでいる** ✓ ✓ 拒否上位は **未価格の event だけ** ✓ ✓
+
+**BUGSLAYER は価格付けできる ✓ と確認** ✓（単一 event 最大の母数 170 ✓）✓
+```
+Exterminate ✓: base(1, CardType.Attack, CardRarity.Event, TargetType.AllEnemies ✓) ✓ DamageVar(3, Move ✓) → **1 energy ✓ 3 ダメージ ✓ 全敌 ✓**
+Squash ✓     ✓: base(1, CardType.Attack, CardRarity.Event, TargetType.AnyEnemy ✓) ✓ DamageVar(10, Move ✓) → **1 energy ✓ 10 ダメージ ✓ 単体 ✓**
+model 側: CARD_COST ✓ に EXTERMINATE 1 ✓ SQUASH 1 ✓ ✓ CARD_DAMAGE ✓ に SQUASH 10 ✓（= decompile ✓ と一致 ✓）✓
+```
+→ 単体敵中心の fight なら SQUASH ✓（10 ✓ > 3 ✓）✓ 4 体以上の群なら EXTERMINATE ✓（3x4=12 ✓）✓
+→ **batch 3 の候補 ✓ BUGSLAYER → SQUASH ✓（既定 ✓）** ✓（札を deck に足す選択 ✓ なので ✓ 単独で panel ✓ する ✓）✓
+batch 1 3本目 ✓ VTW80ZJA2G ✓ 走行中 ✓ → 終わり次第 ✓ 改訂版 `.wt-proto16` ✓ の panel ✓ を同じ3 seed ✓ で走らせる ✓
