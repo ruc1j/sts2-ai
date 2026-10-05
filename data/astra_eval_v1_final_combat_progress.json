@@ -91,5 +91,36 @@
       }
     },
     "delta_percentage_points": -30.057803468208093
+  },
+  {
+    "seed": "AED850BE3B",
+    "enemy": "MONSTER.THE_INSATIABLE",
+    "group": "new_metric_confirmation",
+    "basis": "last combat observation before the terminal death record",
+    "arms": {
+      "control": {
+        "trace": "data/astra_eval_v1_control_AED850BE3B_agent.jsonl",
+        "player_start_hp": 39,
+        "enemy_max_hp": 321,
+        "remaining_hp": 167,
+        "removed_percent": 47.975077881619946,
+        "seq": 417,
+        "turn": 6,
+        "action": "end_turn",
+        "terminal_seq": 418
+      },
+      "candidate": {
+        "trace": "data/astra_eval_v1_candidate_AED850BE3B_agent.jsonl",
+        "player_start_hp": 68,
+        "enemy_max_hp": 321,
+        "remaining_hp": 140,
+        "removed_percent": 56.38629283489096,
+        "seq": 331,
+        "turn": 7,
+        "action": "end_turn",
+        "terminal_seq": 332
+      }
+    },
+    "delta_percentage_points": 8.411214953271013
   }
 ]
