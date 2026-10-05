@@ -106,6 +106,10 @@ def recorded_action(record, state, data):
     if card_id is None:
         if record.get("potion_id"):
             # The simulator names potions with the game's own id (POTION.BLOCK_POTION), not by slot.
+            if record.get("target_id") is not None:
+                target = compact_target(record, record["target_id"])
+                candidate = f"potion:{record['potion_id']}@{target}"
+                return candidate if target is not None and candidate in legal else None
             candidates = [f"potion:{record['potion_id']}"] + [
                 f"potion:{record['potion_id']}@{position}" for position, enemy in enumerate(state.enemies) if enemy.alive
             ]
@@ -209,7 +213,7 @@ def main() -> int:
                 target_id = previous.get("target_id")
                 expected = next((e["hp"] for e in following["enemies"] if e["combat_id"] == target_id), None)
                 modelled_index = compact_target(previous, target_id)
-                got = after.enemies[modelled_index].hp if modelled_index is not None and modelled_index < len(after.enemies) else None
+                got = max(0, after.enemies[modelled_index].hp) if modelled_index is not None and modelled_index < len(after.enemies) else None
                 if expected is None or got is None:
                     tally["uncomparable"] += 1
                     continue
