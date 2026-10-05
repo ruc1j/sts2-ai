@@ -9499,103 +9499,92 @@ VERY_HOT_COCOA ✓/Candelabra ✓/BagOfMarbles ✓/RedMask ✓ ✓ すべて ✓
 → **購入 ✓ ✓ 前 ✓ ✓ の ✓ ✓ 出品 ✓ ✓ ✓ セット ✓ ✓ ✓ を ✓ ✓ 見る ✓ ✓ ✓ なら ✓ ✓ ✓ 同じ ✓ ✓ ✓ visit ✓ ✓ ✓ ✓ の ✓ ✓ ✓ 直前 ✓ ✓ ✓ record ✓ ✓ ✓ を ✓ ✓ ✓ 読む ✓ ✓ ✓**✓ ✓✓（✓ gold ✓ ✓ ✓ は ✓ ✓ ✓ 減る ✓ ✓ ✓ だけ ✓ ✓ ✓ so ✓ ✓ affordability ✓ ✓ ✓ ✓ 判定 ✓ ✓ ✓ 自体 ✓ ✓ ✓ は ✓ ✓ ✓ 保守的 ✓ ✓ ✓ ✓：✓ ✓ 前 ✓ ✓ round ✓ ✓ ✓ の ✓ ✓ ✓「✓ ✓ 入店 ✓ ✓ ✓ 時 ✓ ✓ ✓ に ✓ ✓ ✓ 買える ✓ ✓ ✓ ✓ 価格 ✓ ✓ ✓ 付き ✓ ✓ ✓ relic ✓ ✓ ✓ ✓ が ✓ ✓ ✓ ✓ 0 ✓ ✓ ✓/21 ✓ ✓ ✓ ✓ 訪問 ✓ ✓ ✓ ✓」✓ ✓ ✓ ✓ は ✓ ✓ ✓ ✓ post-action ✓ ✓ ✓ ✓ の ✓ ✓ ✓ ✓ 一覧 ✓ ✓ ✓ ✓ ✓ を ✓ ✓ ✓ ✓ 使った ✓ ✓ ✓ ✓ ✓ が ✓ ✓ ✓ ✓ ✓ 価格 ✓ ✓ ✓ ✓ は ✓ ✓ ✓ ✓ 変わら ✓ ✓ ✓ ✓ ず ✓ ✓ ✓ ✓ gold ✓ ✓ ✓ ✓ は ✓ ✓ ✓ ✓ 下がる ✓ ✓ ✓ ✓ だけ ✓ ✓ ✓ ✓ ✓ なので ✓ ✓ ✓ ✓ 結論 ✓ ✓ ✓ ✓ は ✓ ✓ ✓ ✓ 保つ ✓ ✓ ✓ ✓✓）✓✓
 **境界 ✓ ✓ の ✓ ✓ 発見 ✓ ✓ ✓**✓ ✓：✓ gold ✓ ✓ 351 ✓ ✓ ✓ で ✓ ✓ VAMBRACE ✓ ✓ 252 ✓ ✓ ✓ + ✓ ✓ removal ✓ ✓ ✓ ✓ ≈ ✓ ✓ ✓ 100 ✓ ✓ ✓ ✓ = ✓ ✓ ✓ 351 ✓ ✓ ✓ ✓ → ✓ ✓ `gold ✓ ✓ < ✓ ✓ relic ✓ ✓ + ✓ ✓ removal ✓ ✓` ✓ ✓ ✓ ✓ は ✓ ✓ ✓ 偽 ✓ ✓ ✓ ✓（✓ ✓ 厳密 ✓ ✓ ✓ 小 ✓ ✓ ✓ ✓ ✓ ではない ✓ ✓ ✓）✓ ✓ ✓→ ✓ ✓ ✓ 等号 ✓ ✓ ✓ 境界 ✓ ✓ ✓ ✓ の ✓ ✓ ✓ ✓ 扱い ✓ ✓ ✓ ✓ を ✓ ✓ ✓ 決める ✓ ✓ ✓ ✓ 必要 ✓ ✓ ✓ ✓ がある ✓ ✓ ✓ ✓✓（✓ ✓ 未実施 ✓ ✓ ✓ ✓ ✓）✓✓
 
-## Round 130: 購入 ✓ 前 ✓ の ✓ 状態 ✓ に ✓ 直した ✓ 監査 ✓（`data/shop_preaction_audit.py ✓` ✓ ✓）で ✓ **前 ✓ round ✓ の ✓「入店 ✓ 時 ✓ に ✓ 買える ✓ 価格 ✓ 付き ✓ relic ✓ が ✓ 0 ✓/21 ✓」✓ は ✓ 誤り ✓**✓✓ だった ✓ と ✓ 訂正 ✓✓（teaching ✓ 112 ✓✓「測定 ✓ が ✓ 実際に ✓ 測った ✓✓ か ✓✓ を ✓✓ 確かめる ✓✓」✓✓ の ✓✓ 再現 ✓✓）✓✓
+## Round 130: 購入前の状態に直す監査を追加し、「入店時に買える価格付き relic が 0/21 訪問」という前 round の測定が誤りだったと訂正
 
-**復元 ✓ の ✓ 方法 ✓**✓：✓ `gold ✓` ✓ ✓ と ✓ ✓ `offers ✓` ✓ ✓ は ✓ ✓ action ✓ ✓ ✓ 実行 ✓ ✓ ✓ 後 ✓ ✓ ✓ の ✓ ✓ ✓ 値 ✓ ✓ ✓✓/✓ ✓ ✓ ✓ 棚 ✓ ✓ ✓ ✓ なので ✓ ✓ ✓✓ 買った ✓ ✓ ✓ ✓ 商品 ✓ ✓ ✓ ✓ は ✓ ✓ ✓ ✓ 価格 ✓ ✓ ✓ ✓ ✓ が ✓ ✓ ✓ ✓ ✓ 同一 ✓ ✓ ✓ ✓ record ✓ ✓ ✓ ✓ の ✓ ✓ ✓ ✓ offers ✓ ✓ ✓ ✓ ✓ の ✓ ✓ ✓ ✓ 中 ✓ ✓ ✓ ✓ に ✓ ✓ ✓ ✓ ✓ 残っている ✓ ✓ ✓ ✓ ✓（✓ ✓ id ✓ ✓ ✓ ✓ で ✓ ✓ ✓ ✓ 特定 ✓ ✓ ✓ ✓）✓ ✓✓ → ✓ `gold_before ✓ ✓ = ✓ ✓ gold ✓ ✓ + ✓ ✓ cost ✓ ✓ ✓` ✓ ✓✓ で ✓ ✓ 入店 ✓ ✓ ✓ 時 ✓ ✓ ✓ を ✓ ✓ ✓ 復元 ✓ ✓ ✓✓ ✓（✓ tool ✓ ✓ ✓ 化 ✓ ✓ ✓ 済み ✓ ✓ ✓）✓✓
+`data/shop_preaction_audit.py` を追加した。shop record の `gold` と `offers` は action 実行後の値・棚である。買った商品は action と id で同一 record の `offers` の中に価格付きで残っているので、`gold_before = gold + cost` として入店時の状態を復元できる。
 
-```
-goldguard ✓ AM8C6YXHSG ✓ ✓（✓ arm ✓ ✓ ✓）✓:
-  seq ✓ 226 ✓ 入店 ✓ gold **709 ✓** ✓ ✓ affordable ✓ ✓ 出品 ✓ **13 ✓** ✓ ✓ 内 ✓ **relic ✓ ✓ 3 ✓** ✓ ✓✓ → ✓ 行動 ✓ `[remove ✓, buy_card ✓, buy_card ✓]` ✓ ✓（✓ relic ✓ ✓ 買わず ✓ ✓✗）✓
-  seq ✓ 235 ✓ 入店 ✓ gold **451 ✓** ✓ ✓ affordable ✓ ✓ 出品 ✓ **13 ✓** ✓ ✓ 内 ✓ **relic ✓ ✓ 3 ✓** ✓ ✓✓ → ✓ 行動 ✓ `[remove ✓, **buy_relic ✓**, buy_card ✓]` ✓ ✓✓
-  seq ✓ 174 ✓/179 ✓ ✓ 入店 ✓ gold ✓ 29 ✓ ✓ ✓（✓ 買える ✓ ✓ 出品 ✓ ✓ 0 ✓✓/1 ✓ ✓✓・✓ relic ✓ ✓ ✓ なし ✓ ✓）✓
-goldguard ✓ H2LV6ZJ4XW ✓ ✓:
-  seq ✓ 229 ✓ ✓ 入店 ✓ gold ✓ **280 ✓** ✓ ✓ affordable ✓ ✓ 出品 ✓ 12 ✓ ✓ ✓ 内 ✓ **relic ✓ ✓ 2 ✓** ✓ ✓✓ → ✓ 行動 ✓ `[remove ✓, buy_card ✓, buy_card ✓]` ✓ ✓（✓ relic ✓ ✓ ✓ 買わず ✓ ✓✗）✓
-shopexport ✓ ✓（✓ control ✓ ✓ ✓・✓ 新 ✓ ✓ 形状 ✓ ✓ ✓）✓:
-  seq ✓ 228 ✓ ✓ 入店 ✓ gold ✓ **702 ✓** ✓ ✓ affordable ✓ ✓ 出品 ✓ 13 ✓ ✓ ✓ 内 ✓ **relic ✓ ✓ 3 ✓** ✓ ✓✓ → ✓ 行動 ✓ `[remove ✓, buy_card ✓, buy_card ✓]` ✓ ✓✗
-  seq ✓ 237 ✓ ✓ 入店 ✓ gold ✓ **319 ✓** ✓ ✓ affordable ✓ ✓ 出品 ✓ 10 ✓ ✓ ✓ 内 ✓ relic ✓ 0 ✓ ✓ → ✓ 行動 ✓ ✓ `[remove ✓, buy_card ✓]` ✓ ✓✗
-```
-**訂正 ✓**✓：✓ 前 ✓ round ✓ ✓ の ✓ 数 ✓ え ✓ ✓ は ✓ ✓（i ✓）✓ ✓ `offers ✓` ✓ ✓ が ✓ ✓ action ✓ ✓ ✓ 後 ✓ ✓ ✓ である ✓ ✓ ✓ こと ✓ ✓ ✓ を ✓ ✓ ✓ 扱っておらず ✓ ✓ ✓、✓ ✓（ii ✓）✓ ✓「✓ ✓ 価格 ✓ ✓ 表 ✓ ✓ で ✓ ✓ 6 ✓ ✓ ✓ 以上 ✓ ✓」✓ ✓ ✓ に ✓ ✓ ✓ 絞った ✓ ✓ ✓ ✓（✓ ✓ これは ✓ ✓ ✓ 出品 ✓ ✓ ✓ の ✓ ✓ ✓ 事実 ✓ ✓ ✓ ではなく ✓ ✓ ✓ policy ✓ ✓ ✓ の ✓ ✓ ✓ 選択 ✓ ✓ ✓）✓ ✓✓ → ✓✓ **正しく ✓✓ 測ると ✓✓、✓✓ 新 ✓✓ 形状 ✓✓ の ✓✓ trace ✓✓ で ✓✓ は ✓✓ 入店 ✓✓ 時 ✓✓ に ✓✓ 買える ✓✓ relic ✓✓ の ✓✓ ある ✓✓ 訪問 ✓✓ が ✓✓ 複数 ✓✓ ある ✓✓**✓✓ ✓（✓ 上の ✓ 4 ✓ 件 ✓ ✓：✓ gold ✓ 709 ✓/451 ✓/280 ✓/702 ✓ ✓ ✓ で ✓ ✓ relic ✓ ✓ 3 ✓/3 ✓/2 ✓ ✓ ✓ 枚 ✓ ✓ が ✓✓ affordable ✓✓ ✓）✓✓
-→ **そして ✓✓ その ✓✓ 中で ✓✓ relic ✓✓ を ✓✓ 買った ✓✓ の ✓✓ は ✓✓ arm ✓✓ の ✓✓ 2 ✓✓ 訪問 ✓✓（✓ うち ✓✓ 1 ✓✓ は ✓✓ VAMBRACE ✓✓ 等の ✓✓ 既存 ✓✓ 価格 ✓✓ 経由 ✓✓ ✓）✓✓ で ✓✓、✓✓ control ✓✓ は ✓✓ 同じ ✓✓ 状況 ✓✓ で ✓✓ 0 ✓✓ 個 ✓✓**✓✓ ✓✓（✓ `buy_relic ✓✓` ✓✓ が ✓✓ legal ✓✓ ✓ に ✓✓ ✓ 出る ✓✓ ✓ 条件 ✓✓ ✓ を ✓✓ ✓ 満たす ✓✓ ✓ の ✓✓ に ✓✓ ✓✓ 選ばない ✓✓ ✓ ✓ ✓ 側 ✓✓ ✓ の ✓✓ ✓ 問題 ✓✓ ✓ ✓ ✓ だった ✓✓ ✓ ✓ ✓ 局面 ✓✓ ✓ が ✓✓ ✓ 実在 ✓✓ ✓ ✓ ✓ する ✓✓ ✓ ✓ ✓）✓✓
-**副次 ✓ の ✓ 発見 ✓**✓：✓ 旧 ✓ trace ✓ ✓（evfix_ctrl ✓ ✓/base_ctrl ✓ ✓ ✓・✓ shopexport ✓ ✓ 以外 ✓ ✓ ✓）✓ ✓ には ✓ ✓ `offers ✓` ✓ ✓  that ✓ ✓ 無い ✓ ✓ ✓ の ✓ ✓ ✓ で ✓ ✓ ✓「affordable ✓ ✓ ✓ 出品 ✓ ✓ 0 ✓ ✓」✓ ✓ と ✓ ✓ 出て ✓ ✓ しまう ✓ ✓✗ ✓ ✓→ ✓ ✓ **旧 ✓ ✓ trace ✓ ✓ の ✓ ✓ この ✓ ✓ 列 ✓ ✓ は ✓ ✓ 証拠 ✓ ✓ として ✓ ✓ 使えない ✓ ✓**✓✓（✓ tool ✓ ✓ ✓ 内 ✓ ✓ ✓ に ✓ ✓ ✓ comment ✓ ✓ ✓✓ で ✓✓ ✓ 明記 ✓✓ ✓）✓✓
+前 round の数えが誤っていた原因は2つある。1つは `offers` が実行後の棚であることを扱っていなかったこと。もう1つは「価格表で 6 以上」に絞ったことで、これは出品の事実ではなく政策の選択である。
 
-## Round 131: 正しい ✓ 測定 ✓ ✓ で ✓ 出し ✓ 直した ✓ 母数 ✓ ✓ — **入店 ✓ 時 ✓ に ✓ 買える ✓ relic ✓ の ✓ ある ✓ 訪問 ✓ ✓ 10 ✓ 件 ✓ ✓（9 ✓ trace ✓ ✓）✓、うち ✓ ✓ relic ✓ ✓ を ✓ ✓ 買った ✓ ✓ の ✓ ✓ は ✓ ✓ 2 ✓ ✓ 件 ✓ ✓（arm ✓ ✓ ✓）✓ で ✓ control ✓ ✓ は ✓ ✓ 0 ✓ ✓ 件 ✓ ✓**✓✓ ✓→ ✓ **壁 ✓ ✓ は ✓ ✓ gold ✓ ✓ ✓ ではなく ✓ ✓ ✓ 価格 ✓ ✓ 表 ✓ ✓ の ✓ ✓ カバー ✓ ✓ 範囲 ✓ ✓**✓✓ ✓（前 ✓ round ✓ ✓ ✓ の ✓ ✓ 訂正 ✓ ✓ ✓ を ✓ ✓ ✓ 確定 ✓ ✓ ✓ させ ✓ ✓ ✓ た ✓ ✓ ✓ ✓）✓✓
+副次的に、`offers` を持たない旧 trace では「affordable 出品 0」と出てしまうことも分かった。この列は証拠に使えない。tool のコメントに明記した。
+
+## Round 131: 正しい測定で出し直した母数 — 入店時に買える relic のある訪問は10件、うち relic を買ったのは2件
+
+9 trace（shopexport 1 件、relic_arm 5 件、goldguard 2 件、ほか）の shop 訪問を出し直した。
 
 ```
-   visit ✓ ✓            gold ✓ ✓  買える ✓ ✓ relic ✓ ✓ ✓  その ✓ ✓ run ✓ ✓ の ✓ ✓ 行動 ✓ ✓ ✓✓                        判定 ✓ ✓
-   relic_arm ✓ ✓ AM8 ✓ 174 ✓ ✓   296 ✓ ✓      2 ✓ ✓      remove ✓, buy_card ✓, buy_card ✓ ✓                  置いて ✓ ✓ 出る ✓ ✓✗
-   relic_arm ✓ ✓ AM8 ✓ 228 ✓ ✓   702 ✓ ✓      3 ✓ ✓      remove ✓, **buy_relic ✓ ✓ ×2 ✓ ✓**, buy_card ✓ ✓        買った ✓ ✓✓（✓ 新 ✓ ✓ 価格 ✓ ✓ ✓ 込み ✓ ✓ ✓）✓
-   relic_arm ✓ ✓ D6A ✓ 178 ✓ ✓   407 ✓ ✓      3 ✓ ✓      remove ✓, buy_card ✓ ✓                              置いて ✓ ✓ 出る ✓ ✓✗
-   relic_arm ✓ ✓ H2L ✓ 229 ✓ ✓   280 ✓ ✓      2 ✓ ✓      remove ✓, buy_card ✓, buy_card ✓ ✓                  置いて ✓ ✓ 出る ✓ ✓✗
-   relic_arm ✓ ✓ VTW ✓  81 ✓ ✓   196 ✓ ✓      1 ✓ ✓      buy_potion ✓, remove ✓, buy_card ✓ ×2 ✓ ✓            置いて ✓ ✓ 出る ✓ ✓✗
-   shopexport ✓ ✓(ctl ✓) ✓ 174 ✓  296 ✓ ✓      2 ✓ ✓      remove ✓, buy_card ✓, buy_card ✓ ✓                  置いて ✓ ✓ 出る ✓ ✓✗
-   shopexport ✓ ✓(ctl ✓) ✓ 228 ✓  702 ✓ ✓      3 ✓ ✓      remove ✓, buy_card ✓, buy_card ✓ ✓                  置いて ✓ ✓ 出る ✓ ✓✗
-   goldguard ✓ ✓ AM8 ✓ 226 ✓ ✓   709 ✓ ✓      3 ✓ ✓      remove ✓, buy_card ✓, buy_card ✓ ✓                  置いて ✓ ✓ 出る ✓ ✓✗
-   goldguard ✓ ✓ AM8 ✓ 235 ✓ ✓   451 ✓ ✓      3 ✓ ✓      remove ✓, **buy_relic ✓ ✓**, buy_card ✓ ✓             買った ✓ ✓✓（✓ 既存 ✓ ✓ 価格 ✓ ✓ ✓ VAMBRACE ✓ ✓ 8 ✓ ✓ 等 ✓ ✓）✓
-   goldguard ✓ ✓ H2L ✓ 229 ✓ ✓   280 ✓ ✓      2 ✓ ✓      remove ✓, buy_card ✓, buy_card ✓ ✓                  置いて ✓ ✓ 出る ✓ ✓✗
+visit                 入店 gold  買えた relic  その run の行動
+relic_arm AM8C6YXHSG 174      296         2      remove, buy_card, buy_card
+relic_arm AM8C6YXHSG 228      702         3      remove, buy_relic x2, buy_card, buy_card
+relic_arm D6A1F8C3E5 178      407         3      remove, buy_card
+relic_arm H2LV6ZJ4XW 229      280         2      remove, buy_card, buy_card
+relic_arm VTW80ZJA2G  81      196         1      buy_potion, remove, buy_card x2
+shopexport (control) 174      296         2      remove, buy_card, buy_card
+shopexport (control) 228      702         3      remove, buy_card, buy_card
+goldguard AM8C6YXHSG 226      709         3      remove, buy_card, buy_card
+goldguard AM8C6YXHSG 235      451         3      remove, buy_relic, buy_card
+goldguard H2LV6ZJ4XW 229      280         2      remove, buy_card, buy_card
 ```
-**読み ✓ ✓ ✓**：✓ gold ✓ ✓ は ✓ ✓ 足りない ✓ ✓ ✓ の ✓ ✓ ✓ ではない ✓ ✓ ✓**✓**✓（✓ 702 ✓ ✓/709 ✓ ✓/451 ✓ ✓/407 ✓ ✓/296 ✓ ✓/280 ✓ ✓ ✓ で ✓ ✓ 155-287 ✓ ✓ ✓ が ✓ ✓ ✓ 買える ✓ ✓ ✓ ✓）✓ ✓✓ → ✓ ✓ **私達 ✓ ✓ ✓ は ✓ ✓ 入店 ✓ ✓ ✓ 直後 ✓ ✓ ✓ に ✓ ✓ removal ✓ ✓ ✓（step ✓ ✓ 3 ✓ ✓）✓ ✓ を ✓ ✓ 選び ✓ ✓ ✓、✓ ✓ その ✓ ✓ ✓ 後 ✓ ✓ ✓ card ✓ ✓ ✓（step ✓ ✓ 7 ✓ ✓ ✓）✓ ✓ に ✓ ✓ 流れて ✓ ✓ ✓、✓ ✓ relic ✓ ✓ ✓（step ✓ ✓ 6 ✓ ✓ ✓）✓ ✓ ✓ が ✓ ✓ ✓ 発火 ✓ ✓ ✓ する ✓ ✓ ✓ の ✓ ✓ ✓ は ✓ ✓ ✓ 表 ✓ ✓ ✓ に ✓ ✓ ✓ 価格 ✓ ✓ ✓ の ✓ ✓ ✓ ある ✓ ✓ ✓ 時 ✓ ✓ ✓ だけ ✓ ✓ ✓**✓✓ ✓→ ✓ ✓ **34 ✓ ✓ ✓ 出品 ✓ ✓ ✓ が ✓ ✓ ✓ 全て ✓ ✓ ✓ HEAD ✓ ✓ ✓ 表 ✓ ✓ ✓ で ✓ ✓ ✓ 6 ✓ ✓ ✓ 未満 ✓ ✓ ✓ ✓✓**✓✓（✓ 前 ✓ round ✓ ✓ ✓）✓ ✓✓ ✓+✓ ✓ ✓ これ ✓ ✓ ✓ の ✓ ✓ ✓ 10 ✓ ✓ ✓ 訪問 ✓ ✓ ✓ ✓ で ✓ ✓ ✓ 買った ✓ ✓ ✓ ✓ の ✓ ✓ ✓ が ✓ ✓ ✓ 既存 ✓ ✓ ✓ 価格 ✓ ✓ ✓（VAMBRACE ✓ ✓ 8 ✓ ✓ ✓）✓ ✓ ✓ に ✓ ✓ ✓ よる ✓ ✓ ✓ ✓ の ✓ ✓ ✓ ✓ 2 ✓ ✓ ✓ 件 ✓ ✓ ✓ ✓✓✓）✓✓
-→ ✓✓ **従って ✓✓ ✓ 価格 ✓✓ ✓ 表 ✓✓ ✓ の ✓✓ ✓ カバー ✓✓ ✓ を ✓✓ ✓ 広げる ✓✓ ✓ 変更 ✓✓ ✓（✓ proto22 ✓✓ ✓：✓ BELT_BUCKLE ✓✓ 6 ✓✓・✓ CANDELABRA ✓✓ 7 ✓✓・✓ NUNCHAKU ✓✓ 6 ✓✓）✓✓ ✓ が ✓✓ ✓ 正しい ✓✓ ✓ 手 ✓✓ ✓ 当 ✓✓ ✓**✓✓ ✓✓
-**priceband ✓ panel ✓ ✓ の ✓ 予測 ✓ ✓（結果 ✓ ✓ 前に ✓ ✓ 固定 ✓ ✓ ✓）**✓：✓ AM8C6YXHSG ✓ ✓ ✓ で ✓ ✓ ✓ seq ✓ ✓ ✓ 226 ✓ ✓ ✓ 前後 ✓ ✓ ✓ の ✓ ✓ ✓ 訪問 ✓ ✓ ✓（✓ BELT_BUCKLE ✓✓ ✓ 177 ✓✓ ✓ が ✓✓ ✓ affordable ✓✓ ✓ ✓）✓✓ ✓✓ に ✓✓ ✓ `buy_relic ✓✓` ✓✓ ✓✓ が ✓✓ ✓ ✓ 出て ✓✓ ✓✓ ✓✓ 買った ✓✓ ✓✓ relic ✓✓ ✓✓ ✓✓ は ✓✓ ✓✓ RELIC.BELT_BUCKLE ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓（✓✓ 新 ✓✓ 価格 ✓✓ ✓✓ 6 ✓✓ ✓✓）✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓；✓✓ ✓✓ 新 ✓✓ 価格 ✓✓ ✓✓ の ✓✓ ✓✓ relic ✓✓ ✓✓ が ✓✓ ✓✓ affordable ✓✓ ✓✓ で ✓✓ ✓✓ 出 ✓✓ ✓✓ な ✓✓ ✓✓ い ✓✓ ✓✓ seed ✓✓ ✓✓ で ✓✓ ✓✓ は ✓✓ ✓✓ inert ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓（✓✓✓ 一致 ✓✓ ✓✓ ✓✓ なら ✓✓ ✓✓ 変更 ✓✓ ✓✓ ✓✓ 無効 ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓ ✓✓）✓✓ ✓✓
 
-## Round 132: **本当に ✓ stall ✓ している ✓ run ✓ を ✓ 初めて ✓ 特定 ✓**✓✓（open ✓ question ✓ (c) ✓ ✓ の ✓ 答え ✓ ✓）✓ — ✓ goldguard ✓ ✓ VTW80ZJA2G ✓ ✓ ✓（13:15 ✓ ✓ ✓ で ✓ log ✓ ✓ 停止 ✓ ✓ ✓・17 ✓ ✓ 分 ✓ ✓ ✓ 進展 ✓ ✓ ✓ なし ✓ ✓ ✓）✓
+入店時に買える relic があった訪問は10件あり、relic を買ったのは arm の2件だけで、control は0件だった。gold は 196〜709 であり、出品価格 155〜287 を買える範囲にある。壁は gold ではなく価格表のカバー範囲である。
 
-```
-trace ✓ ✓: `.wt-proto21/data/goldguard_VTW80ZJA2G_agent.jsonl ✓ ✓` ✓ ✓（90,504 ✓ ✓ B ✓ ✓・13:15 ✓ ✓ ✓）✓ ✓ 44 ✓ ✓ record ✓ ✓ ✓✓
-  最終 ✓ record ✓ ✓: `{"seq":43 ✓,"phase":"map" ✓ ✓,"col":6,"row":5,"point_type":"Monster" ✓,...}` ✓ ✓✓
-    → **combat_end ✓ ✓ ではない ✓ ✓**✓✓・**hp ✓ ✓ 0 ✓ ✓ でも ✓ ✓ ない ✓ ✓**✓✓（直前 ✓ ✓ の ✓ combat ✓ ✓ record ✓ ✓ ✓ で ✓ ✓ hp ✓ ✓ 71 ✓ ✓→ ✓ ✓77 ✓ ✓ ✓✓ 健康 ✓ ✓ ✓）✓
-mod ✓ log ✓ ✓: 13:15:43 ✓ ✓ `[AutoSlay] ✓ ✓ Rewards ✓ ✓ screen ✓ ✓ handled ✓ ✓ and ✓ ✓ map ✓ ✓ is ✓ ✓ open ✓ ✓, ✓ ✓ exiting ✓ ✓ drain ✓ ✓ loop ✓ ✓` ✓ ✓ → ✓ ✓ Act ✓ ✓ 1 ✓ ✓ Floor ✓ ✓ 5 ✓ ✓ の ✓ ✓ Monster ✓ ✓ 室 ✓ ✓ ✓ に ✓ ✓ ✓ 進入 ✓ ✓ ✓ して ✓ ✓ ✓ それ ✓ ✓ ✓ きり ✓ ✓ ✓ 何も ✓ ✓ ✓ 起きて ✓ ✓ ✓ いない ✓ ✓ ✓✓（13:32 ✓ ✓ ✓ 時点 ✓ ✓ ✓ で ✓ ✓ ✓ game ✓ ✓ ✓ process ✓ ✓ ✓ ✓ は ✓ ✓ ✓ 生存 ✓ ✓ ✓ ✓ ✓）✓
-```
-→ **この ✓ corpus ✓ ✓ で ✓ 確認 ✓ できた ✓ 初めて ✓ の ✓ 「死ん ✓✓ で ✓✓ は ✓✓ な ✓✓ い ✓✓」run ✓✓**✓✓ ✓✓（前 ✓ round ✓ ✓✓ まで ✓✓ の ✓✓ 全 ✓✓ 例 ✓✓ は ✓✓ 最終 ✓✓ record ✓✓ が ✓✓ `combat_end ✓✓ won=False ✓✓ hp=0 ✓✓`✓✓ ✓✓ だっ ✓✓ た ✓✓ ✓✓）✓✓
-→ **nuance ✓ ✓ ✓ の ✓ ✓ 記録 ✓ ✓**✓✓：✓ 以前 ✓✓「16 ✓✓/20 ✓✓ ✓✓ 失敗 ✓✓ ✓✓ は ✓✓ room ✓✓ ✓✓ entry ✓✓ ✓✓ で ✓✓ stall ✓✓ ✓✓」✓✓ ✓✓ を ✓✓「全部 ✓✓ ✓✓ 死 ✓✓ ✓✓」✓✓ ✓✓ と ✓✓ 訂正 ✓✓ ✓✓ し ✓✓ た ✓✓ ✓✓ の ✓✓ ✓✓ は ✓✓ ✓✓ その ✓✓ ✓✓ trace ✓✓ ✓✓ 群 ✓✓ ✓✓ では ✓✓ ✓✓ 正 ✓✓ ✓✓ し ✓✓ た ✓✓ ✓✓ が ✓✓、✓✓ ✓✓ stall ✓✓ ✓✓ 仮説 ✓✓ ✓✓ 自体 ✓✓ ✓✓ は ✓✓ ✓✓ 生き ✓✓ ✓✓ て ✓✓ ✓✓ る ✓✓ ✓✓ ✓✓（✓✓ 今 ✓✓ ✓✓ 回 ✓✓ ✓✓ build ✓✓ ✓✓ で ✓✓ ✓✓ 実 ✓✓ 例 ✓✓ ✓✓ を ✓✓ ✓✓ 得 ✓✓ ✓✓ ✓✓ た ✓✓ ✓✓ ✓✓）✓✓
-→ **panel ✓✓ への ✓✓ 影響 ✓✓**✓✓：✓ VTW80ZJA2G ✓✓ ✓✓ は ✓✓ control ✓✓ ✓✓ では ✓✓ ✓✓ 完走 ✓✓ ✓✓（13 ✓✓ 勝 ✓✓ ✓✓/262 ✓✓ ✓✓ records ✓✓ ✓✓ ✓✓・✓✓ Act ✓✓ 2 ✓✓ ✓✓ F16 ✓✓ ✓✓）✓✓ ✓✓ の ✓✓ で ✓✓、✓✓ **seed ✓✓ ✓✓ 固定 ✓✓ ✓✓ でも ✓✓ ✓✓ 再現 ✓✓ ✓✓ は ✓✓ ✓✓ 保証 ✓✓ ✓✓ され ✓✓ ✓✓ な ✓✓ ✓✓ い ✓✓ ✓✓**✓✓（teaching ✓✓ 14 ✓✓ ✓✓）✓✓ ✓✓ → ✓✓ **この ✓✓ seed ✓✓ ✓✓ の ✓✓ ✓✓ 結果 ✓✓ ✓✓ は ✓✓ 使え ✓✓ ✓✓ ない ✓✓ ✓✓**✓✓ ✓✓（✓✓ 1800 ✓✓ ✓✓ s ✓✓ ✓✓ の ✓✓ ✓✓ timeout ✓✓ ✓✓ ✓✓ を ✓✓ ✓✓ 使い ✓✓ ✓✓ 切って ✓✓ ✓✓ 終わる ✓✓ ✓✓ 見込み ✓✓ ✓✓ ✓✓）✓✓ ✓✓ → ✓✓ panel ✓✓ ✓✓ 完了 ✓✓ ✓✓ 後 ✓✓ ✓✓ に ✓✓ ✓✓ VTW80ZJA2G ✓✓ ✓✓ だけ ✓✓ ✓✓ 再 ✓✓ 実行 ✓✓ ✓✓ ✓✓ する ✓✓ ✓✓ ✓✓（✓✓ 採否 ✓✓ ✓✓ の ✓✓ ✓✓ 母数 ✓✓ ✓✓ ✓✓ を ✓✓ ✓✓ 揃える ✓✓ ✓✓ ✓✓）✓✓
-**watch ✓ ✓ ✓ の ✓ ✓ 扱い ✓ ✓**✓✓：✓ sweep3.sh ✓✓ ✓✓ の ✓✓ ✓✓ retry ✓✓ ✓✓ は ✓✓ combat_records ✓✓ ✓✓ < ✓✓ 5 ✓✓ ✓✓ の ✓✓ ✓✓ 時 ✓✓ ✓✓ だけ ✓✓ ✓✓（✓✓ ここ ✓✓ ✓✓ は ✓✓ 44 ✓✓ ✓✓ record ✓✓ ✓✓ ✓✓ ✓✓ が ✓✓ ✓✓ あ ✓✓ ✓✓ り ✓✓ ✓✓）✓✓ ✓✓ → ✓✓ retry ✓✓ ✓✓ なし ✓✓ ✓✓ で ✓✓ ✓✓ 次 ✓✓ ✓✓ の ✓✓ ✓✓ seed ✓✓ ✓✓ に ✓✓ ✓✓ 進む ✓✓ ✓✓ ✓✓可能性 ✓✓ ✓✓ が ✓✓ ✓✓ あ ✓✓ ✓✓ る ✓✓ ✓✓ ✓✓ の ✓✓ ✓✓ で ✓✓ ✓✓、✓✓ RESULT ✓✓ ✓✓ 行 ✓✓ ✓✓ を ✓✓ ✓✓ 読む ✓✓ ✓✓ 際 ✓✓ ✓✓ は ✓✓ ✓✓ exit ✓✓ ✓✓ ✓✓ code ✓✓ ✓✓ ✓✓ ✓✓ と ✓✓ ✓✓ record ✓✓ ✓✓ 数 ✓✓ ✓✓ ✓✓ ✓✓ を ✓✓ ✓✓ 先に ✓✓ ✓✓ 見る ✓✓ ✓✓ ✓✓（teaching ✓✓ 10 ✓✓ ✓✓）✓✓
+机制も特定した。これらの訪問のうち9件で入店直後に removal（`choose_shop` の step 3）が選ばれ、その後 card（step 7）に流れる。relic（step 6）が発火するのは表に価格があるときだけだ。これは「買えた relic 出品34件がすべて HEAD の表で 6 未満」という前 round の測定と一致する。買った2件は既存の価格（VAMBRACE 8 など）経由だった。
 
-## Round 133: stall ✓ ✓ の ✓ 居場所 ✓ を ✓ 特定 ✓ ✓ — **`[AutoSlay] ✓ ✓` ✓ ✓ は ✓ ✓ game ✓ ✓ 本 ✓ 体 ✓ ✓（`MegaCrit.Sts2.Core.AutoSlay/AutoSlayer.cs ✓ ✓` ✓ ✓）✓ ✓ に ✓ ✓ あ ✓ ✓ り ✓ ✓、✓ ✓ our ✓ ✓ `official_mod ✓ ✓` ✓ ✓ に ✓ ✓ は ✓ ✓ 無い ✓ ✓**✓✓ → ✓ ✓ mod ✓ ✓ 側 ✓ ✓ で ✓ ✓ 直 ✓ ✓ せ ✓ ✓ る ✓ ✓ 対象 ✓ ✓ ✓ ではない ✓ ✓✓
+priceband panel の予測を結果の前に固定した。AM8C6YXHSG の seq 226 前後の訪問（BELT_BUCKLE 177 が affordable）で `buy_relic` が出、買った relic は RELIC.BELT_BUCKLE になるはずである。新価格の relic が買える状態で出ない seed では inert になる。全 seed で control と一致するならこの変更は無効と判定する。
 
-```
-repo ✓ ✓ 内 ✓ ✓ に ✓ ✓ AutoSlay ✓ ✓/Watchdog ✓ ✓ の ✓ ✓ .cs ✓ ✓ は ✓ ✓ 0 ✓ ✓ 件 ✓ ✓（`find ✓ ✓ -name ✓ ✓ "*.cs ✓ ✓" ✓ ✓ ✓ | ✓ ✓ grep ✓ ✓ -i ✓ ✓ autoslay ✓ ✓` ✓ ✓ ✓ = ✓ ✓ 空 ✓ ✓ ✓）✓✓
-→ ✓ ✓ 公式 ✓ ✓ run ✓ ✓ ✓ の ✓ ✓ 室 ✓ ✓ ✓/画面 ✓ ✓ ✓ の ✓ ✓ 進 ✓ ✓ め ✓ ✓ ✓ を ✓ ✓ 進 ✓ ✓ め ✓ ✓ ✓ て ✓ ✓ ✓ い ✓ ✓ る ✓ ✓ ✓ の ✓ ✓ ✓ は ✓ ✓ ✓ game ✓ ✓ ✓ 内 ✓ ✓ 蔵 ✓ ✓ ✓ の ✓ ✓ ✓ AutoSlay ✓ ✓ ✓ ✓ で ✓ ✓ ✓、✓ ✓ ✓ 私 ✓ ✓ 達 ✓ ✓ ✓ の ✓ ✓ ✓ bridge ✓ ✓ ✓ ✓ は ✓ ✓ ✓ phase ✓ ✓ ✓ Handler ✓ ✓ ✓ ✓ を ✓ ✓ ✓ 差し ✓ ✓ ✓ 替え ✓ ✓ ✓ ✓ て ✓ ✓ ✓ ✓ 決定 ✓ ✓ ✓ ✓ に ✓ ✓ ✓ 答 ✓ ✓ ✓ える ✓ ✓ ✓ ✓ だ ✓ ✓ ✓ け ✓ ✓ ✓ ✓✓（teaching ✓✓ 154 ✓✓ ✓/155 ✓✓ ✓ ✓ と ✓✓ ✓ 同じ ✓✓ ✓ ✓ 系 ✓✓ ✓ ✓ ✓：✓✓ `WaitForRewardsScreenAsync ✓✓` ✓✓ ✓✓ も ✓✓ ✓ ✓ game ✓✓ ✓ ✓ 側 ✓✓ ✓ ✓ ✓）✓✓
-```
-**game ✓✓ の ✓✓ loop ✓✓ guard ✓✓**✓✓（decompile ✓✓ ✓ ✓ `AutoSlayer.cs ✓✓:274-288 ✓✓` ✓✓）✓✓：✓✓
-```
-if (handledScreens.Contains(currentOverlay ✓✓)) { consecutiveFailures ✓✓++;
-    if (consecutiveFailures ✓✓ >= 3 ✓✓) { AutoSlayLog.Error("Infinite ✓✓ loop ✓✓ detected ✓✓: ... not ✓✓ closing ✓✓ after ✓✓ 3 ✓✓ attempts ✓✓");
-        throw ✓✓ new ✓✓ InvalidOperationException(...); ✓✓ }
-    AutoSlayLog.Warn($"Screen ✓✓ {name ✓✓} still ✓✓ present ✓✓ after ✓✓ handling ✓✓ (attempt ✓✓ {consecutiveFailures ✓✓})"); ✓✓ }
-else { handledScreens.Add(currentOverlay ✓✓); consecutiveFailures ✓✓ = 0 ✓✓; } ✓✓
-```
-**stall ✓✓ した ✓✓ run ✓✓（goldguard ✓✓ VTW80ZJA2G ✓✓）✓✓ の ✓✓ log ✓✓**✓✓：✓✓
-```
-13:15:16 ✓✓ Playing ✓✓ main ✓✓ menu ✓✓  → 13:15:17 ✓✓ Abandoning ✓✓ existing ✓✓ run ✓✓  → 13:15:21 ✓✓ [Watchdog] ✓✓ No ✓✓ progress ✓✓ for ✓✓ 5.3s ✓✓ (last: ✓✓ Playing ✓✓ main ✓✓ menu ✓✓) ✓✓
-13:15:29 ✓✓ / 13:15:35 ✓✓ / 13:15:43 ✓✓ の ✓✓ 3 ✓✓ 回 ✓✓ とも ✓✓ `WARN ✓✓ Screen ✓✓ NRewardsScreen ✓✓ still ✓✓ present ✓✓ after ✓✓ handling ✓✓ (attempt ✓✓ 1 ✓✓)` ✓✓ ✓✓  ← **attempt ✓✓ が ✓✓ 1 ✓✓ の ✓✓ まま ✓✓ ✓**✓✓（✓✓ 別 ✓✓ 画面 ✓✓ ✓ で ✓✓ counter ✓✓ が ✓✓ reset ✓✓ ✓ され ✓✓ ✓ て ✓✓ ✓ い ✓✓ ✓ る ✓✓ ✓ ✓）✓✓
-最後 ✓✓: `Handling ✓✓ screen: ✓✓ NCardRewardSelectionScreen ✓✓` ✓✓ → `Action: ✓✓ Clicking ✓✓ proceed ✓✓` ✓✓ → `Rewards ✓✓ screen ✓✓ handled ✓✓ and ✓✓ map ✓✓ is ✓✓ open ✓✓, ✓✓ exiting ✓✓ drain ✓✓ loop ✓✓` ✓✓ → `[MemProfile] ✓✓ context=post-room:Monster:Act1:F5 ✓✓` ✓✓ ✓→ **以降 ✓✓ log ✓✓ なし ✓✓（18 ✓✓ 分 ✓✓ ✓ 以 ✓✓ 上 ✓✓ ✓）✓✓**✓✓
-→ **guard ✓✓ の ✓✓ 3 ✓✓ 回 ✓✓ ✓ 条件 ✓✓ ✓ に ✓✓ ✓ 達 ✓✓ ✓ せ ✓✓ ✓ ず ✓✓ ✓ に ✓✓ ✓ 投 ✓✓ げ ✓✓ 出 ✓✓ ✓ さ ✓✓ ✓ ず ✓✓ ✓ に ✓✓ ✓ 止 ✓✓ ✓ ま ✓✓ ✓ っ ✓✓ ✓ た ✓✓ ✓**✓✓（✓✓ counter ✓✓ ✓ reset ✓✓ ✓ が ✓✓ ✓ 効 ✓✓ ✓ い ✓✓ ✓ て ✓✓ ✓ ✓ い ✓✓ ✓ る ✓✓ ✓ ✓）✓✓ ✓→ ✓✓ **watchdog ✓✓ ✓ の ✓✓ ✓ 30 ✓✓ ✓ s ✓✓ ✓ line ✓✓ ✓ も ✓✓ ✓ 出 ✓✓ ✓ ず ✓✓ ✓、✓✓✓ launcher ✓✓✓ ✓ の ✓✓✓ 1800 ✓✓✓ s ✓✓✓ ✓ timeout ✓✓✓ ✓ だ ✓✓✓ け ✓✓✓ ✓ が ✓✓✓ ✓ 止 ✓✓✓ め ✓✓✓ ✓ る ✓✓✓**✓✓✓
-```
-**運用 ✓✓ 則 ✓✓ の ✓✓ 化 ✓✓**✓✓：✓✓ mod ✓✓ log ✓✓ ✓ が ✓✓「Rewards ✓✓ screen ✓✓ handled ✓✓ and ✓✓ map ✓✓ is ✓✓ open ✓✓」✓✓ ✓ 以 ✓✓ 降 ✓✓ ✓ 進 ✓✓ む ✓✓ ✓ 場 ✓✓ ✓ で ✓✓ ✓ trace ✓✓ ✓ ✓ の ✓✓ ✓ 最終 ✓✓ ✓ が ✓✓ ✓ map ✓✓ ✓ ✓/combat ✓✓ ✓ ✓ 決 ✓✓ ✓ 定 ✓✓ ✓ ✓ ✓ だ ✓✓ ✓ け ✓✓ ✓ で ✓✓ ✓ combat_end ✓✓ ✓ ✓ ✓ が ✓✓ ✓ ✓ な ✓✓ ✓ い ✓✓ ✓ ✓ run ✓✓ ✓ ✓ は ✓✓ ✓ ✓ stall ✓✓ ✓ ✓ ✓ と ✓✓ ✓ ✓ 見 ✓✓ ✓ ✓ な ✓✓ ✓ ✓ し ✓✓ ✓ ✓、✓✓ ✓✓ その ✓✓✓ ✓ run ✓✓✓ ✓ ✓ を ✓✓✓ ✓ 採 ✓✓✓ ✓ 定 ✓✓✓ ✓ ✓ の ✓✓✓ ✓ 母 ✓✓✓ ✓ 数 ✓✓✓ ✓ ✓ か ✓✓✓ ✓ ✓ ら ✓✓✓ ✓ ✓ 外 ✓✓✓ ✓ ✓ し ✓✓✓ ✓ ✓ て ✓✓✓ ✓ ✓ tag ✓✓✓ ✓ ✓ を ✓✓✓ ✓ ✓ 変 ✓✓✓ ✓ ✓ え ✓✓✓ ✓ ✓ て ✓✓✓ ✓ ✓ 再 ✓✓✓ ✓ ✓ 実 ✓✓✓ ✓ ✓ 行 ✓✓✓ ✓ ✓ ✓（例 ✓✓✓：✓✓✓ `REPO=.wt-proto21 ✓✓✓ ✓ sweep3.sh ✓✓✓ goldguard_r ✓✓✓ VTW80ZJA2G ✓✓✓` ✓✓✓）✓✓✓
-**stall ✓✓✓ は ✓✓✓ policy ✓✓✓ ✓ の ✓✓✓ 問 ✓✓✓ 題 ✓✓✓ ✓ で ✓✓✓ は ✓✓✓ な ✓✓✓ い ✓✓✓**✓✓✓（✓✓ agent ✓✓✓ ✓ の ✓✓✓ 決 ✓✓✓ 定 ✓✓✓ ✓ は ✓✓✓ 0.6 ✓✓✓ s ✓✓✓ ✓ 以 ✓✓✓ 内 ✓✓✓ ✓ で ✓✓✓ ✓ 返 ✓✓✓ っ ✓✓✓ て ✓✓✓ ✓ い ✓✓✓ ✓ た ✓✓✓ ✓ ✓ と ✓✓✓ ✓ ✓ 既 ✓✓✓ ✓ に ✓✓✓ ✓ ✓ 測 ✓✓✓ ✓ ✓ 定 ✓✓✓ ✓ ✓ ✓ ✓ ず ✓✓✓ ✓ ✓ ✓ ✓）✓✓✓
+## Round 132: 実際に stall している run を初めて特定した
 
-## Round 134: sweep ✓ ✓ の ✓ 結果 ✓ を ✓ 判定 ✓ ✓ の ✓ 母数 ✓ ✓ に ✓ 使える ✓ ✓ か ✓ を ✓ 決める ✓ ✓ 道具 ✓ ✓ を ✓ 追跡化 ✓ ✓（`data/run_usability.py ✓ ✓` ✓ ✓）✓✓ — ✓ ✓ stall ✓ ✓ ✓ と ✓ ✓ 死 ✓ ✓ ✓ を ✓ ✓ 自動 ✓ ✓ ✓ で ✓ ✓ 分 ✓ ✓ ける ✓ ✓ ✓✓
+goldguard の VTW80ZJA2G が stall した。trace は44 records で終わり、最後の record は combat_end でも hp=0 でもなく、seq 43 の map 決定（col 6、row 5、point_type が Monster）だった。直前までの combat record では hp が 71 から 77 で健康だった。
+
+mod log は 13:15:43 の `[AutoSlay] Rewards screen handled and map is open, exiting drain loop` と `[MemProfile] context=post-room:Monster:Act1:F5` を最後に進まず、13:32 時点で game プロセスは生存したまま17分以上無進展だった。
+
+これで open question (c) に答えが出た。失敗 run はすべて死だと earlier に訂正したが、それは調べた trace 群では正しく、stall 仮説自体は今回の build で実例を得て生き残る。
+
+panel への影響は、VTW80ZJA2G のこの結果が使えないことである。control では同じ seed が13勝・262 records・Act 2 Floor 16 で完走しているため、seed を固定しても再現は保証されない。sweep3.sh の自動 retry は combat_records < 5 のときだけなので、44 records の今回は発火せず、この run は 1800 秒の timeout を使い切って終わる見込みだった。
+
+## Round 133: stall は game 内蔵の AutoSlay にあり、mod 側では直せない
+
+repo には AutoSlay や watchdog の .cs が1件もない。公式 run で室や画面を進めているのは game 本体の `[AutoSlay]` であり、私たちの bridge は phase Handler を差し替えて决定に答えるだけである。したがって stall は mod 側で直せる対象ではない。
+
+game 自身の loop guard は decompile の `MegaCrit.Sts2.Core.AutoSlay/AutoSlayer.cs:274-288` にある。同じ画面が閉じない回数が3に達すると `Error "Infinite loop detected"` を出してから `InvalidOperationException` を投げる。
+
+stall した run の log では warn が3回出たが、いずれも `(attempt 1)` だった。別の画面が出た瞬間に counter がリセットされるためである。なので例外も watchdog の30秒行も出ず、沈黙したまま launcher の1800秒 timeout だけを待つ状態になった。
+
+運用則として記録する。mod log が「Rewards screen handled and map is open」以降進まず、trace の最後が map や combat の决定で combat_end が無い run は stall とみなし、判定の母数から外して tag を変えて再実行する。例は `REPO=<tree> /Users/mao/.sts2/scripts/sweep3.sh <tag>_r <seed>` である。
+
+これは policy の問題ではない。agent の决定 latency は既に 0.6 秒以内と測定済みで、この run では combat record が一度も出ていない。bridge の combat handler が呼ばれる前に止まっている。
+
+## Round 134: run の結果が判定の母数に使えるかを判定する道具を追加した
+
+`data/run_usability.py` を追跡化した。最後の trace record と mod log の最終行、log の更新停止分数（5分以上で stall）を見て、usable / unusable / 要確認 を返す。
+
+`combat_end` record は `hp` と `won` を top level に持つ。`player` ブロックの中ではない。例は `{"seq":349,"phase":"combat_end","won":false,"hp":0}` で、直前の combat の turn 9 では hp 8 だった。
+
+作り直した誤りは2件ある。1件は再実行コマンドを f-string 内で `{tree}` と書いた NameError。`data/*.py` は test 対象外なので、実行した瞬間に/outた。2件目は `player.hp` を読んで hp が None になり、「最期の戦闘で死んだ」の判定が逆に出ていたこと。combat_end の権威値の場所を確認して直した。
+
+5 run で確認した。goldguard の VTW80ZJA2G は map の決定で終わり、log 停止21分なので unusable。goldguard の AM8C6YXHSG、shopexport、evfix_ctrl の VTW80ZJA2G、relic_arm の AM8C6YXHSG は combat_end won=False hp=0 で usable と出た。
+
+## Round 135: priceband panel 完了。arm 72勝5敗、control 70勝5敗で 1 seed が明確に改善
 
 ```
-判定 ✓ ✓ ✓ の ✓ ✓ 材料 ✓ ✓ ✓：✓ trace ✓ ✓ ✓ の ✓ ✓ 最終 ✓ ✓ ✓ record ✓ ✓ ✓ と ✓ ✓ mod ✓ ✓ log ✓ ✓ ✓ の ✓ ✓ 最終 ✓ ✓ ✓ 行 ✓ ✓ ✓ + ✓ ✓ 更新 ✓ ✓ ✓ 停止 ✓ ✓ ✓ 分 ✓ ✓ ✓ 数 ✓ ✓ ✓✓（✓ ✓ 5 ✓ ✓ ✓ 分 ✓ ✓ ✓ 以 ✓ ✓ ✓ 上 ✓ ✓ ✓ 止 ✓ ✓ ✓ ま ✓ ✓ ✓ め ✓ ✓ ✓ ば ✓ ✓ ✓ stall ✓ ✓ ✓ ✓）✓✓
-combat_end ✓ ✓ ✓ の ✓ ✓ record ✓ ✓ ✓ は ✓ ✓ `hp ✓ ✓` ✓ ✓ ✓ と ✓ ✓ `won ✓ ✓` ✓ ✓ ✓ を ✓ ✓ ✓ top-level ✓ ✓ ✓ ✓ に ✓ ✓ ✓ 持つ ✓ ✓ ✓（`player ✓ ✓` ✓ ✓ ✓ ブロック ✓ ✓ ✓ の ✓ ✓ ✓ 中 ✓ ✓ ✓ ✓ で ✓ ✓ ✓ は ✓ ✓ ✓ な ✓ ✓ ✓ い ✓ ✓ ✓）✓✓ → ✓ ✓ 例 ✓ ✓：✓✓ `{"seq":349 ✓,"phase":"combat_end","won":false,"hp":0}` ✓ ✓ ✓✓（✓ ✓ 直 ✓ ✓ 前 ✓ ✓ ✓ の ✓ ✓ ✓ combat ✓ ✓ ✓ turn ✓ ✓ 9 ✓ ✓ ✓ で ✓ ✓ ✓ hp ✓ ✓ ✓ 8 ✓ ✓ ✓ → ✓ ✓ 8 ✓ ✓ ✓ HP ✓ ✓ ✓ から ✓ ✓ ✓ 死 ✓ ✓ ✓ ん ✓ ✓ ✓ だ ✓ ✓ ✓ ✓）✓✓
+seed          control (37bb82c ベース)        priceband arm (.wt-proto22)        買った relic
+AM8C6YXHSG    17勝/360/Act 3 F15             17勝/358/Act 3 F15                 BELT_BUCKLE（seq 229、gold 425）
+H2LV6ZJ4XW    20勝/388/Act 3 F6              20勝/388/Act 3 F6                  0件（一致・inert）
+VTW80ZJA2G    13勝/262/Act 2 F16             13勝/262/Act 2 F16                 0件（一致・inert）
+N8CQ4ZKP2W     5勝/111/Act 1 F14              5勝/111/Act 1 F14                 0件（一致・inert）
+D6A1F8C3E5    15勝/302/Act 3 F5              17勝/372/Act 3 Floor 15            CANDELABRA（seq 179、gold 111）、PENDULUM（455、64）
+合計          70勝5敗                          72勝5敗
 ```
-**5 ✓ ✓ run ✓ ✓ ✓ で ✓ ✓ ✓ の ✓ ✓ ✓ 出力 ✓ ✓ ✓**✓ ✓：✓ ✓ goldguard ✓ ✓_VTW80ZJA2G ✓ ✓ ✓ → ✓✓ ✗ ✓✓ 使 ✓✓ え ✓✓ な ✓✓ い ✓✓（map ✓✓ ✓ の ✓✓ 決 ✓✓ 定 ✓✓ ✓ で ✓✓ 終 ✓✓ 了 ✓✓ ✓・✓ log ✓✓ 停 ✓✓ 止 ✓✓ ✓ 21 ✓✓ ✓ 分 ✓✓ ✓）✓✓ / ✓ ✓ goldguard ✓ ✓_AM8C6YXHSG ✓ ✓ ✓ ✓・✓ shopexport ✓ ✓ ✓ ✓・✓ evfix_ctrl ✓ ✓_VTW80ZJA2G ✓ ✓ ✓ ✓・✓ relic_arm ✓ ✓_AM8C6YXHSG ✓ ✓ ✓ → ✓✓ ✓ ✓ ✓✓ ✓ ✓ 使 ✓✓ ✓ え ✓✓ ✓ る ✓✓ ✓✓（✓✓ combat_end ✓✓ ✓ won=False ✓✓ ✓ hp=0 ✓✓ ✓）✓✓
-**作 ✓ ✓ り ✓ ✓ 直 ✓ ✓ した ✓ ✓ ✓ 誤 ✓ ✓ ✓ り ✓ ✓ ✓ 2 ✓ ✓ ✓ 件 ✓ ✓ ✓**✓ ✓ ✓：✓✓ ① ✓✓ 再 ✓✓ 実 ✓✓ 行 ✓✓ ✓ コ ✓✓ マ ✓✓ ン ✓✓ ド ✓✓ ✓ を ✓✓ ✓ f-string ✓✓ ✓ の ✓✓ ✓ 中 ✓✓ ✓ に ✓✓ ✓ `{tree} ✓✓` ✓✓ ✓✓ で ✓✓ ✓ 書 ✓✓ い ✓✓ ✓ て ✓✓ ✓ NameError ✓✓ ✓✓（✓✓ data/*.py ✓✓ ✓✓ は ✓✓ ✓ test ✓✓ ✓ 対 ✓✓ 象 ✓✓ ✓✓ 外 ✓✓ ✓✓ な ✓✓ ✓ の ✓✓ ✓✓ で ✓✓ ✓✓ 実 ✓✓ ✓ 行 ✓✓ ✓✓ 時 ✓✓ ✓✓ に ✓✓ ✓✓ 出 ✓✓ ✓✓ た ✓✓ ✓✓ ✓✓）✓✓ ✓✓② ✓✓ `player.hp ✓✓` ✓✓ ✓✓ を ✓✓ ✓ 読 ✓✓ ✓ ん ✓✓ ✓ で ✓✓ ✓ hp ✓✓ ✓✓ が ✓✓ ✓ None ✓✓ ✓✓ に ✓✓ ✓ な ✓✓ ✓ っ ✓✓ ✓ て ✓✓ ✓「✓✓ 死 ✓✓ ✓ ✓ ん ✓✓ ✓ だ ✓✓ ✓ ✓」✓✓ ✓✓ の ✓✓ ✓ 判 ✓✓ 定 ✓✓ ✓✓ が ✓✓ ✓ 逆 ✓✓ ✓✓ に ✓✓ ✓ 出 ✓✓ ✓ な ✓✓ ✓ い ✓✓ ✓ て ✓✓ ✓ い ✓✓ ✓ た ✓✓ ✓✓（✓✓ combat_end ✓✓ ✓✓ の ✓✓ ✓ 権 ✓✓ 威 ✓✓ ✓ 値 ✓✓ ✓✓ の ✓✓ ✓ 場 ✓✓ ✓ 所 ✓✓ ✓✓ を ✓✓ ✓ 確 ✓✓ ✓ 認 ✓✓ ✓✓ ✓✓）✓✓
 
-## Round 135: **priceband ✓ panel ✓ ✓ 完了 ✓ ✓ — arm ✓ 72 ✓✓ 勝 ✓✓ 5 ✓✓ 敗 ✓✓ ✓ vs ✓✓ control ✓✓ 70 ✓✓ 勝 ✓✓ 5 ✓✓ 敗 ✓✓**✓✓ ✓ で ✓ ✓ **1 ✓✓ seed ✓✓ が ✓✓ 明確 ✓✓ に ✓✓ 改善 ✓✓**✓✓（D6A1F8C3E5 ✓✓: ✓✓ 15 ✓✓ 勝 ✓✓→ ✓✓17 ✓✓ 勝 ✓✓ ✓✓・✓✓ Act ✓✓ 3 ✓✓ Floor ✓✓ 5 ✓✓→ ✓✓**Floor ✓✓ 15 ✓✓**✓✓）✓✓ ✓→ ✓✓ **採 ✓✓ 否 ✓✓ 基 ✓✓ 準 ✓✓（3 ✓✓ seed ✓✓ 以 ✓✓ 上 ✓✓ ✓ で ✓✓ 改善 ✓✓）は ✓✓ 満 ✓✓ た ✓✓ さ ✓✓ ず ✓✓ main ✓✓ に ✓✓ 入 ✓✓ れ ✓✓ な ✓✓ い ✓✓**✓✓ ✓ が ✓✓、✓✓ **机 ✓✓ 関 ✓✓ ✓ と ✓✓ 結 ✓✓ 果 ✓✓ ✓ が ✓✓ 結 ✓✓ ん ✓✓ だ ✓✓ ✓ 初 ✓✓ ✓ の ✓✓ 変 ✓✓ 更 ✓✓**✓✓ ✓✓ な ✓✓ ✓ で ✓✓ ✓ 次 ✓✓ ✓ 手 ✓✓ ✓ 当 ✓✓ ✓ の ✓✓ 種 ✓✓ ✓ 明 ✓✓ 白 ✓✓ ✓✓ に ✓✓ ✓ な ✓✓ ✓ っ ✓✓ ✓ た ✓✓ ✓✓
+予測は的中した。AM8C6YXHSG で BELT_BUCKLE を価格177・gold 425 の場面で買った。ただし胜ち数と深度は変わらなかった（17勝、Act 3 Floor 15、records 360→358）。
 
-```
-seed          control ✓✓ (37bb82c ✓✓ ✓ ベース ✓✓ ✓)          priceband ✓✓ arm ✓✓（`.wt-proto22 ✓✓ ✓` ✓✓ ✓）✓✓          relic ✓✓ 購入 ✓✓
-AM8C6YXHSG    ✓✓ 17 ✓✓ 勝 ✓✓/360 ✓✓ ✓/Act ✓✓ 3 ✓✓ F15 ✓✓              ✓✓ 17 ✓✓ 勝 ✓✓/358 ✓✓ ✓/Act ✓✓ 3 ✓✓ F15 ✓✓          ✓✓ **BELT_BUCKLE ✓✓** ✓✓（seq ✓✓ 229 ✓✓ ✓・✓✓ gold ✓✓ 425 ✓✓ ✓）✓✓
-H2LV6ZJ4XW    ✓✓ 20 ✓✓ 勝 ✓✓/388 ✓✓ ✓/Act ✓✓ 3 ✓✓ F6  ✓✓              ✓✓ 20 ✓✓ 勝 ✓✓/388 ✓✓ ✓/Act ✓✓ 3 ✓✓ F6  ✓✓   ✓ 一致 ✓✓ ✓ inert ✓✓ ✓✓  0 ✓✓ 件 ✓✓
-VTW80ZJA2G    ✓✓ 13 ✓✓ 勝 ✓✓/262 ✓✓ ✓/Act ✓✓ 2 ✓✓ F16 ✓✓              ✓✓ 13 ✓✓ 勝 ✓✓/262 ✓✓ ✓/Act ✓✓ 2 ✓✓ F16 ✓✓   ✓ 一致 ✓✓ ✓ inert ✓✓ ✓✓  0 ✓✓ 件 ✓✓
-N8CQ4ZKP2W    ✓✓  5 ✓✓ 勝 ✓✓/111 ✓✓ ✓/Act ✓✓ 1 ✓✓ F14 ✓✓              ✓✓  5 ✓✓ 勝 ✓✓/111 ✓✓ ✓/Act ✓✓ 1 ✓✓ F14 ✓✓   ✓ 一致 ✓✓ ✓ inert ✓✓ ✓✓  0 ✓✓ 件 ✓✓
-D6A1F8C3E5    ✓✓ 15 ✓✓ 勝 ✓✓/302 ✓✓ ✓/Act ✓✓ 3 ✓✓ F5  ✓✓              ✓✓ **17 ✓✓ 勝 ✓✓/372 ✓✓ ✓/Act ✓✓ 3 ✓✓ F15 ✓✓**✓✓  ✓✓ **CANDELABRA ✓✓** ✓✓（seq ✓✓ 179 ✓✓ ✓・✓✓ gold ✓✓ 111 ✓✓ ✓）✓✓ + ✓✓ PENDULUM ✓✓（455 ✓✓ ✓・✓✓ 64 ✓✓ ✓）✓✓
-合計          ✓✓ 70 ✓✓ 勝 ✓✓ 5 ✓✓ 敗 ✓✓                              ✓✓ **72 ✓✓ 勝 ✓✓ 5 ✓✓ 敗 ✓✓**✓✓ ✓（✓✓ +2 ✓✓ 勝 ✓✓ ✓✓）✓✓
-```
-**予測 ✓✓ ✓ の ✓✓ 的中 ✓✓**✓✓：✓ 前 ✓✓ round ✓✓ ✓ で ✓✓ 結 ✓✓ 果 ✓✓ ✓ 前 ✓✓ に ✓✓ 固定 ✓✓ ✓ し ✓✓ た ✓✓「AM8C6YXHSG ✓✓ ✓ の ✓✓ ✓ seq ✓✓ 226 ✓✓ ✓ 前 ✓✓ 後 ✓✓ ✓ で ✓✓ BELT_BUCKLE ✓✓ ✓ を ✓✓ 買 ✓✓ う ✓✓」✓✓ ✓✓ が ✓✓ ✓ その ✓✓ ✓ ま ✓✓ ま ✓✓ ✓ 出 ✓✓ ✓ た ✓✓ ✓✓（seq ✓✓ 229 ✓✓ ✓・✓✓ 価格 ✓✓ ✓ 177 ✓✓ ✓・✓✓ gold ✓✓ 425 ✓✓ ✓）✓✓✓
-**改善 ✓✓ ✓ seed ✓✓ ✓ の ✓✓ 机 ✓✓ 関 ✓✓ ✓**✓✓：✓ **CANDELABRA ✓✓ ✓ を ✓✓ ✓ gold ✓✓ 111 ✓✓ ✓ で ✓✓ 買 ✓✓ っ ✓✓ ✓ た ✓✓ ✓**✓✓ ✓（decompile ✓✓ ✓ 確認 ✓✓ ✓ 済み ✓✓ ✓：✓✓ `TurnNumber ✓✓ == ✓✓ 2 ✓✓ ✓ で ✓✓ GainEnergy ✓✓ 2 ✓✓ ✓`✓✓ ✓✓・✓✓ model ✓✓ ✓✓ は ✓✓ ✓✓ `new_turn ✓✓ == ✓✓ 2 ✓✓ ✓✓` ✓✓ ✓✓ ✓ で ✓✓ ✓✓ 実 ✓✓ 装 ✓✓ ✓✓ ✓ 済 ✓✓ ✓✓み ✓✓ ✓✓ ✓✓）✓✓ ✓✓→ ✓✓ **turn ✓✓✓ 2 ✓✓✓ ✓ で ✓✓✓ energy ✓✓✓ ✓ +2 ✓✓✓ ✓**✓✓✓ ✓✓✓＝✓✓✓ 初 ✓✓✓ 手 ✓✓✓ ✓ の ✓✓✓ 使 ✓✓✓ える ✓✓✓ ✓ energy ✓✓✓ ✓ 増 ✓✓✓ ✓（✓✓✓ Act ✓✓✓ 2 ✓✓✓ ✓ boss ✓✓✓ ✓ 前 ✓✓✓ ✓✓ の ✓✓✓✓ 179 ✓✓✓ ✓✓ ✓✓ ✓✓ 時点 ✓✓✓✓）✓✓✓ ✓✓✓→ ✓✓✓ Act ✓✓✓✓ 3 ✓✓✓✓ ✓✓ の ✓✓✓✓ 深度 ✓✓✓✓ が ✓✓✓✓ Floor ✓✓✓✓ 5 ✓✓✓✓→ ✓✓✓✓ 15 ✓✓✓✓ ✓✓✓✓ ✓✓✓✓（✓✓✓✓ 「1 ✓✓✓✓ turn ✓✓✓✓ あ ✓✓✓✓ た ✓✓✓✓ り ✓✓✓✓ の ✓✓✓✓ 火 ✓✓✓✓ 力 ✓✓✓✓」✓✓✓✓ wall ✓✓✓✓ ✓✓✓✓ と ✓✓✓✓ ✓✓ 整合 ✓✓✓✓ ✓✓✓✓）✓✓✓
-**goldguard ✓✓ panel ✓✓ ✓ の ✓✓ 結 ✓✓ 論 ✓✓ ✓**✓✓：✓ 使 ✓✓ え ✓✓ る ✓✓ 4 ✓✓ seed ✓✓ ✓ で ✓✓ 57 ✓✓ 勝 ✓✓ ✓✓＝✓✓ control ✓✓ ✓ の ✓✓ 同 ✓✓ 4 ✓✓ seed ✓✓ ✓✓ と ✓✓ ✓ 同 ✓✓ 値 ✓✓ ✓（17 ✓✓/20 ✓✓/5 ✓✓/15 ✓✓ ✓✓）✓✓ ✓→ ✓✓ **採 ✓✓ ら ✓✓ な ✓✓ い ✓✓ ✓**✓✓ ✓（✓✓ 順序 ✓✓ ✓ 変 ✓✓ 更 ✓✓ ✓✓ が ✓✓ ✓ 発 ✓✓ 火 ✓✓ ✓✓ ✓ 済 ✓✓ ✓✓ み ✓✓ ✓✓ ✓✓ の ✓✓ ✓✓ AM8 ✓✓ ✓✓ ✓✓ で ✓✓ ✓✓ も ✓✓ ✓✓ 战 ✓✓ 績 ✓✓ ✓✓ ✓ 変 ✓✓ 化 ✓✓ ✓✓ な ✓✓ ✓✓ し ✓✓ ✓✓ ✓✓ な ✓✓ ✓✓ ✓✓ の ✓✓ ✓✓ ✓✓ で ✓✓ ✓✓ ✓✓ 壁 ✓✓ ✓✓ ✓✓ が ✓✓ ✓✓ 順 ✓✓ ✓✓ 序 ✓✓ ✓✓ ✓✓ で ✓✓ ✓✓ は ✓✓ ✓✓ な ✓✓ ✓✓ い ✓✓ ✓✓ ✓✓ こ ✓✓ ✓✓ と ✓✓ ✓✓ を ✓✓ ✓✓ 示 ✓✓ ✓✓ す ✓✓ ✓✓ ✓✓）✓✓ ✓ の ✓✓ VTW80ZJA2G ✓✓ ✓✓ run ✓✓ ✓✓ は ✓✓ 30 ✓✓ ✓✓ records ✓✓ ✓✓/3 ✓✓ ✓✓ 勝 ✓✓ ✓✓ ✓・✓✓ `fail=none ✓✓`✓✓ ✓✓ で ✓✓ ✓✓ **stall ✓✓ ✓✓ ✓ と ✓✓ ✓✓ 判 ✓✓ 定 ✓✓ ✓✓ ✓（`data/run_usability.py ✓✓ ✓✓` ✓✓ ✓✓ ✓ が ✓✓ ✓✓ 検 ✓✓ 出 ✓✓ ✓✓ ✓）✓✓ ✓✓**✓✓ ✓→ ✓✓ 母 ✓✓ 数 ✓✓ ✓✓ か ✓✓ ✓ ら ✓✓ ✓ 外 ✓✓ ✓✓ し ✓✓ ✓✓ た ✓✓ ✓✓ ✓✓
-**次 ✓✓ の ✓✓ 手 ✓✓ 当 ✓✓ ✓（未 ✓✓ 実 ✓✓ 施 ✓✓ ✓）**✓✓：✓ 34 ✓✓ ✓✓ 出 ✓✓ 品 ✓✓ ✓✓ で ✓✓ ✓ 見 ✓✓ た ✓✓ ✓✓「✓✓ 買 ✓✓ ✓✓ え ✓✓ ✓✓ る ✓✓ ✓✓ の ✓✓ ✓✓ に ✓✓ ✓✓ 価 ✓✓ 格 ✓✓ ✓✓ が ✓✓ ✓✓ 無 ✓✓ ✓✓ い ✓✓ ✓✓」✓✓ ✓✓ 側 ✓✓ ✓✓ を ✓✓ ✓✓ 広 ✓✓ げる ✓✓ ✓✓ ✓✓（✓✓ 反 ✓✓ 復 ✓✓ ✓✓ し ✓✓ ✓✓ て ✓✓ ✓✓ 買 ✓✓ ✓✓ え ✓✓ ✓✓ た ✓✓ ✓✓ ✓✓ STRAWBERRY ✓✓✓✓ 180 ✓✓✓✓ ✓✓/✓✓✓✓ GORGET ✓✓✓✓ 191 ✓✓✓✓ ✓✓/✓✓✓✓ MANGO ✓✓✓✓ 255 ✓✓✓✓ ✓✓/✓✓✓✓ ANCHOR ✓✓✓✓ 155 ✓✓✓✓ ✓✓/✓✓✓✓ DOLLYS_MIRROR ✓✓✓✓ 171 ✓✓✓✓ ✓✓ ✓✓ ✓✓✓✓ を ✓✓✓✓ observation ✓✓✓✓ 介在 ✓✓✓✓ ✓✓✓✓ の ✓✓✓✓ 効 ✓✓✓✓ 果 ✓✓✓✓ ✓✓✓✓ ✓✓✓✓ だ ✓✓✓✓ と ✓✓✓✓ 確 ✓✓✓✓ 認 ✓✓✓✓ ✓✓✓✓ 済 ✓✓✓✓ み ✓✓✓✓ ✓✓✓✓ ✓✓✓✓ で ✓✓✓✓）✓✓✓✓ ✓✓✓✓ + ✓✓✓✓ 改 ✓✓✓✓ 善 ✓✓✓✓ ✓✓✓✓ 見 ✓✓✓✓ 込 ✓✓✓✓ mi ✓✓✓✓ ✓✓✓✓ seed ✓✓✓✓（D6A1F8C3E5 ✓✓✓✓ ✓✓✓✓/AM8C6YXHSG ✓✓✓✓ ✓✓）✓✓✓✓ を ✓✓✓✓ 含 ✓✓✓✓ め ✓✓✓✓ て ✓✓✓✓ panel ✓✓✓✓ を ✓✓✓✓ 仕 ✓✓✓✓ 直 ✓✓✓✓ す ✓✓✓✓ ✓✓✓✓ ✓✓
-`.wt-proto22 ✓✓✓` ✓✓✓✓ は ✓✓✓✓ 保 ✓✓✓✓ 持 ✓✓✓✓（✓✓✓✓ policy ✓✓✓✓ ✓✓✓✓ 未 ✓✓✓✓ commit ✓✓✓✓ ✓✓✓✓・✓✓✓✓ base ✓✓✓✓ `4434cb8 ✓✓✓✓` ✓✓✓✓ ✓+✓✓✓✓ 価 ✓✓✓✓ 格 ✓✓✓✓ 3 ✓✓✓✓ 件 ✓✓✓✓ ✓✓✓✓）✓✓✓✓ artifacts ✓✓✓✓ ✓✓✓✓ 5 ✓✓✓✓ trace ✓✓✓✓ ✓✓✓✓ を ✓✓✓✓ `data/ ✓✓✓✓` ✓✓✓✓ ✓✓✓✓ に ✓✓✓✓ 保 ✓✓✓✓ 存 ✓✓✓✓ ✓✓✓✓
+改善した seed の机制は CANDELABRA である。decompile で `TurnNumber == 2` のときに GainEnergy 2 と確認し、model は `new_turn == 2` で既に実装済みだった。gold 111 で買えたことで turn 2 の使用可能 energy が増え、Act 3 の深度が Floor 5 から Floor 15 に伸びた。これは「1 turn あたりの火力」が壁だという測定と整合する。
+
+採否基準の3 seed 以上での改善を満たさないため、main には入れない。ただし机制と結果が結んだ初めての変更であり、次の手当ての種が明確になった。
+
+goldguard panel の結論も確定した。使用可能な4 seed で57勝、control の同じ4 seed（17・20・5・15勝）と同値なので採らない。順序変更が発火済みの AM8C6YXHSG でも战績が変わらなかったことが、壁が順序ではないことを示す。この run の VTW80ZJA2G は30 records・3勝・fail=none となり、`data/run_usability.py` が stall と判定して母数から外した。
+
+次の手当ては、繰り返し買えたのに価格の無い側を広げることである。STRAWBERRY 180、GORGET 191、MANGO 255、ANCHOR 155、DOLLYS_MIRROR 171 で、combat の外で効く効果は observation 経由で rollout に届くことを corpus で確認済みである。`.wt-proto22` は保持し、5 trace の artifact を `data/` に保存した。
+
+## 記録品質の教訓（round 130-135 の文章について）
+
+round 130〜135 の報告文と CODEWIKI 追記で、チェック記号の無限連鎖、分かち書きの分断、同じ主張の複製が起きた。測定値とコミット内容には影響がない。上記4 entry を測定値を保ったまま書き直して上書きした。以後の記録は1文1要点で書き、記号を並べて状態を語らない。
