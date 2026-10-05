@@ -8271,3 +8271,30 @@ debuff 札を売る価値が高いと判断した結果 ✓ で ✓ 火力だけ
 **残る hypothesis** ✓ shop の relic 購入（106/4,764 ✓ options が trace に出ないので frequency 側が不明 ✓）✓
 Act 2 boss 時点で火力 deck が弱い run が何が足りないのか ✓（札の枚数 ✓ 強化 ✓ relic ✓）を ✓ potential 以外の物差しで見る ✓
 sweep `sw64` は 3 本目 9PCQMO0DAY が走行中 ✓（H2LV6ZJ4XW ✓ EAIF2UUVCK ✓ は前 round と同じ結果 ✓ 完了待ち `bash-1107` ✓）✓
+
+## Round 80: boss 戦で kill を取り逃していない ✓ 25 fight ✓ 914 decision ✓ **lethal 可能 11 件すべて取っている** ✓
+
+`/tmp/lethal_audit.py` ✓（tree を引数で受け ✓ 生 run 中は sample を絞る ✓）✓ 監査の形:
+boss 戦の各 decision で observation から model state を組み ✓ **legal actions を全部 step して全敌が死ぬ手があるか** ✓を ✓
+record された play と突き合わせた ✓（credit 順は `_PENDING_ACTION` で再現 ✓ teaching 59 ✓）✓
+```
+MONSTER.THE_INSATIABLE fights audited: 25
+{'decisions': 914, 'lethal available': 11, 'lethal taken': 11}      # missed は 0 ✓✓
+```
+**取り逃し 0 件** ✓「kill できる手を取っていれば 70 HP 差が埋まった」という筋は無い ✓
+（前 round の THE_INSATIABLE 戦の中央値: 251 削って残り 70 ✓）✓
+lethal が立った 11 件はすべて実際に取られている ✓（agent の lethal short-circuit ✓が効いている ✓）✓
+
+**sweep `sw64` 完了** ✓ HEAD `3b65c2c` ✓ 3 seed ✓ 合計 **43 勝 ✓ combat 敗北 2 ✓ Act 3 完走 0** ✓
+```
+RESULT sw64 H2LV6ZJ4XW  wins=20 losses=1 records=388 depth=Act 3, Floor 6  fail=Watchdog ✓ Entering Monster room (Act 3, Floor 6)
+RESULT sw64 EAIF2UUVCK  wins=11 losses=1 records=225 depth=Act 2, Floor 10 fail=Rewards screen did not appear after combat
+RESULT sw64 9PCQMO0DAY  wins=12 losses=0 records=229 depth=Act 2, Floor 14 fail=none ✓（combat 敗北無し ✓）
+```
+**3 本中 2 本は combat で負けていない run が infrastructure で止まっている** ✓✗✗
+- EAIF2UUVCK ✓ combat 後の rewards screen が出ない ✓
+- 9PCQMO0DAY ✓ trace の最後は `map RestSite` ✓（seq 315 ✓ Act 2 Floor 15 の rest を選んだ ✓）✓ その後 record が無い ✓
+  mod log の最後は `post-room:Event:Act2:F14` ✓ stdout には `[Watchdog] No progress for 5.0s (last: Playing main menu)` ✓✓ → **game が main menu に戻っている** ✓（run が abandon される ✓known な挙動 ✓）✓
+  combat_end は12件 ✓ 敗北 0 ✓ で ✓ 健康な run が rest の所で消えた ✓
+→ 完走測定の前に ✓ **この stop 自体が win 数を削っている** ✓（teaching 82 ✓「もっともらしい infrastructure 診断は trace の最終状態と突き合わせる」✓ を実行 ✓）✓
+次の調査: rest を選んだ後に観測が来ない経路 ✓（RestBridge ✓）と abandon 経路 ✓（open question (c) ✓「launcher が Abandoning existing run で止まる」✓）✓
