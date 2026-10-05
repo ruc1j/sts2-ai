@@ -9452,3 +9452,30 @@ BAG_OF_MARBLES ✓ 所持後の ✓ fight ✓ 毎 ✓ の ✓ enemy ✓ Vulnerab
 - **model ✓✓ 実装 ✓✓ として ✓✓ 必要 ✓✓ だった ✓✓ のは ✓✓ RED_MASK ✓✓ だけ ✓✓**✓✓ という ✓✓ 前 ✓✓ round ✓✓ の ✓✓ 結論 ✓✓ も ✓✓ 取り下げ ✓✓✓：✓ turn ✓✓ 1 ✓✓ の ✓✓ Weak ✓✓/Vulnerable ✓✓ は ✓✓ observation ✓✓ が ✓✓ 既に ✓✓ 運ぶ ✓✓✓（ANCHOR ✓✓ の ✓✓ corpus ✓✓ test ✓✓ ✓✓ と ✓✓ 同じ ✓✓ ✓✓ 理屈 ✓✓ ✓✓）✓✓ → ✓✓ **どの ✓✓ 価格 ✓✓ 付け ✓✓ 済み ✓✓ relic ✓✓ にも ✓✓ model ✓✓ 側の ✓✓ 追加 ✓✓ は ✓✓ 要らない ✓✓**✓✓✓
 - 同じ ✓ guard ✓✓ 家族 ✓✓ で ✓✓ 既に ✓✓ 正しかった ✓✓ の ✓✓: ✓ Candelabra ✓✓ は ✓✓ `TurnNumber ✓✓ == ✓✓ 2 ✓✓`✓✓ ✓✓→ ✓✓ model ✓✓ の ✓✓ `new_turn ✓✓ == ✓✓ 2 ✓✓ → ✓✓ +2 ✓✓ energy ✓✓`✓✓ ✓✓✓（combat.py ✓✓ 2441 ✓✓）✓✓✓ と ✓✓ 完全 ✓✓ 一致 ✓✓✓
 **教訓 ✓✓**：✓ hook ✓✓ 名 ✓✓（`BeforeSideTurnStart ✓✓`✓✓）✓✓ から ✓✓ 効果 ✓✓ の ✓✓ 頻度 ✓✓ を ✓✓ 推定 ✓✓ した ✓✓ の ✓✓ だが ✓✓、✓✓ **guard ✓✓（✓✓ 本体 ✓✓ の ✓✓ if ✓✓ 条件 ✓✓）✓✓ を ✓✓ 読む ✓✓ まで ✓✓ 頻度 ✓✓ は ✓✓ 分からない ✓✓**✓✓✓（teaching ✓✓ 42 ✓✓✓ の ✓✓ 深化 ✓✓✓：✓✓ 本体 ✓✓ を ✓✓ 読む ✓✓ ✓✓ だけでは ✓✓ ✓✓ 不十分 ✓✓✓ で ✓✓✓、✓✓✓  enclosing ✓✓✓ の ✓✓✓ 条件 ✓✓✓ を ✓✓✓ 読む ✓✓✓）✓✓
+
+## Round 128: 実装 ✓ 済み ✓ relic ✓ の ✓ hook ✓ 条件 ✓ を ✓ 28 ✓ 件 ✓ 一斉 ✓ 検査 ✓ ✓（`data/relic_hook_audit.py ✓` ✓ ✓）✓ → ✓ **実際の ✓ 誤りは ✓ 前 ✓ round ✓ の ✓ RED_MASK ✓ ✓（撤回 ✓ 済み ✓ ✓）だけ ✓**✓ ✓ で ✓ ✓ 追加 ✓ の ✓ gap ✓ ✓ は ✓ 見つからなかった ✓✓
+
+```
+combat.py ✓ が ✓ 名前 ✓ を ✓ 持つ ✓ relic ✓ 定数 ✓: **28 ✓ 件 ✓**✓ ✓（`RELIC_* ✓ = ✓ "RELIC.X ✓"` ✓ ✓ の ✓ 形 ✓ ✓）✓✓
+各 ✓ 定数 ✓ について ✓ decompile ✓ の ✓ hook ✓ 名 ✓ + ✓ その ✓ 直後 ✓ の ✓ if ✓ 条件 ✓ ✓ を ✓ 抜き出す ✓ ✓（検査 ✓ 本体 ✓ ✓ は ✓ data/ ✓ ✓ に ✓ 追跡化 ✓ ✓）✓✓
+```
+**検査 ✓ で ✓ 出た ✓ 主 ✓ な ✓ 条件 ✓**✓ ✓ と ✓ model ✓ ✓ の ✓ 対応 ✓ ✓：
+```
+CHANDELIER ✓        : `AfterSideTurnStart ✓` ✓ → `if (participants.Contains(Owner.Creature)) { if (TurnNumber ✓ == 3 ✓) GainEnergy(3 ✓) }` ✓✓（✓ guard ✓ が ✓ 1 ✓ 段 ✓ 深い ✓ ✓ので ✓ 4 ✓ 行 ✓ 窓 ✓ の ✓ 検査 ✓ では ✓ 1 ✓ 件 ✓ 目 ✓ だけ ✓ 表示 ✓ ✓）✓
+                      model ✓ `new_turn ✓ == 3 ✓ → ✓ +3 ✓ energy ✓`（combat.py ✓ 2443 ✓ ✓）✓ → **一致 ✓**✓✓
+VERY_HOT_COCOA ✓    : `AfterSideTurnStart ✓` ✓ → `if (... && TurnNumber ✓ <= 1 ✓)` ✓ + `EnergyVar(4 ✓)` ✓ ✓✓（✓ turn ✓ 1 ✓ ✓ だけ ✓ ✓ +4 ✓ ✓）✓
+                      model ✓ 側 ✓ は ✓ 定数 ✓ の ✓ 宣言 ✓ ✓（284 ✓ ✓）✓ だけ ✓ で ✓ 規則 ✓ 無い ✓ ✓ → **しかし ✓ corpus ✓ test ✓ ✓ で ✓ gap ✓ ✓ では ✓ ない ✓ ✓ と ✓ 確定 ✓ ✓✓**✓（✓ 下記 ✓ ✓）✓
+GAME_PIECE ✓        : `AfterCardPlayed ✓` ✓ → `if (card ✓.Owner ✓ == ✓ Owner ✓ && ... && card ✓.Type ✓ == ✓ CardType.Power ✓...)` ✓✓
+PARRYING_SHIELD ✓   : `AfterSideTurnEnd ✓` ✓ → `if (... && !((decimal)Owner.Creature.Block ✓ < ✓ DynamicVars.Block ✓))` ✓✓
+VENERABLE_TEA_SET ✓ : `AfterEnergyReset ✓` ✓ → `if (Owner ✓ == ✓ player ✓ && ✓ GainEnergyInNextCombat ✓)` ✓✓（✓「次の ✓ combat ✓ ✓ で ✓ ✓」フラグ ✓ ✓）✓
+BELT_BUCKLE ✓       : `AfterObtained ✓` ✓ → `if (CombatManager.Instance.IsInProgress ✓ && ✓ !Owner.Potions.Any() ✓)` ✓✓ → model ✓ `_sync_belt_buckle ✓` ✓ ✓ と ✓ 一致 ✓ ✓✓
+VERY_HOT_COCOA ✓/Candelabra ✓/BagOfMarbles ✓/RedMask ✓ ✓ すべて ✓**TurnNumber ✓ ✓ で ✓ turn ✓ を ✓ 絞る ✓ ✓ 型 ✓**✓✓ ✓（✓ 同じ ✓ 家族 ✓ ✓）✓✓
+```
+**VERY_HOT_COCOA ✓ ✓ の ✓ corpus ✓ test ✓ ✓✓**（✓ 「規則 ✓ が ✓ 無い ✓ ✓＝gap ✓ ✓」では ✓ ない ✓ ✓ こと ✓ の ✓ 確認 ✓ ✓✓）✓
+```
+所持 ✓ している ✓ 4 ✓ trace ✓ ✓（rupture_NFH3RMVJ6D ✓ ✓/candidate_sandtrance_P3V8N5K2RX ✓ ✓/currentbase_Z6MK8PGN4S ✓ ✓/control_sim100_P3V8N5K2RX ✓ ✓）✓ の ✓✓ 取得 ✓ 後 ✓ 最初の ✓ combat ✓ ✓ turn ✓ 1 ✓ ✓ record ✓ ✓ の ✓ `player.energy ✓`: **7 ✓ ✓ が ✓ 4/4 ✓ ✓**✓✓
+→ Ironclad ✓ ✓ の ✓ 基準 ✓ energy ✓ ✓ 3 ✓ ✓ + ✓✓ relic ✓ ✓ の ✓ 4 ✓ ✓ = ✓ 7 ✓ ✓ が ✓ ✓ 既に ✓ observation ✓ ✓ に ✓ 乗っている ✓ ✓✓（CombatBridge ✓ ✓ 121 ✓ ✓/300 ✓ ✓ が ✓ `PlayerCombatState.Energy ✓ ✓` ✓ ✓ を ✓ export ✓ ✓ ✓）✓
+→ **model ✓ ✓ が ✓ 未来 ✓ ✓ turn ✓ ✓ で ✓ ✓ 再適用 ✓ ✓ する ✓ ✓ 効果 ✓ ✓ では ✓ ✓ ない ✓ ✓ の ✓ ✓ で ✓ ✓ 規則 ✓ ✓ 追加 ✓ ✓ は ✓ ✓ 不要 ✓ ✓**✓✓ ✓（ANCHOR ✓ ✓/GORGET ✓ ✓ ✓ と ✓ ✓ 同じ ✓ ✓ ✓ 理屈 ✓ ✓ ✓）✓✓
+```
+**この ✓ 検査 ✓ ✓ の ✓ 意義 ✓ ✓**：✓ RED_MASK ✓ ✓ の ✓ 誤り ✓ ✓（✓ 前 ✓ round ✓ ✓ ✓）✓ は ✓ ✓ hook ✓ ✓ 名 ✓ ✓ からの ✓ ✓ 推定 ✓ ✓ が ✓ ✓ 原因 ✓ ✓ ✓ だった ✓ ✓ ✓ が ✓ ✓✓、✓ ✓ 同じ ✓ ✓ ✓ 型 ✓ ✓ ✓ の ✓ ✓ 残り ✓ ✓ 27 ✓ ✓ 件 ✓ ✓ を ✓ ✓ 機械的に ✓ ✓ ✓ 見た ✓ ✓ ✓ ところ ✓ ✓ ✓ 該当 ✓ ✓ ✓ は ✓ ✓ 無し ✓ ✓ ✓✓ → ✓✓ **teaching ✓ ✓ 42 ✓ ✓ ✓ の ✓ ✓ ✓ 拡張 ✓ ✓ ✓（✓✓ hook ✓ ✓ ✓ の ✓✓✓ enclosing ✓✓✓ な ✓✓✓ 条件 ✓✓✓ を ✓✓✓ 機械 ✓✓✓ 検査 ✓✓✓ ✓）**✓✓
+**panel ✓ ✓ ✓**：✓ goldguard ✓ ✓ ✓ 2 ✓ ✓/5 ✓ ✓ ✓（AM8C6YXHSG ✓ ✓ 17 ✓✓ 勝 ✓ ✓ ✓/324 ✓ ✓ ✓/Act ✓✓ 3 ✓✓ ✓ F15 ✓ ✓ ✓ ✓、H2LV6ZJ4XW ✓ ✓ ✓ 20 ✓✓ 勝 ✓✓ ✓/388 ✓ ✓/Act ✓✓ 3 ✓✓ ✓ F6 ✓ ✓ ✓=control ✓ ✓ ✓ 一致 ✓ ✓ ✓）✓ ✓ 3 ✓ ✓ 本 ✓ ✓ 目 ✓ ✓ 走行中 ✓ ✓ ✓ → ✓✓ 完了 ✓ ✓ ✓ 後 ✓ ✓ ✓ priceband ✓ ✓ ✓（✓✓ `.wt-proto22 ✓ ✓ ✓` ✓ ✓ ✓）✓✓ 起動 ✓ ✓ ✓
