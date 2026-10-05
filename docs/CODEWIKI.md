@@ -9250,3 +9250,24 @@ H2LV6ZJ4XW ✓: 20 勝 1 敗 ✓ records 388 ✓ Act 3, Floor 6 ✓   vs control
 → **前 round の「相関は政策を支持しない ✓」という書き方は訂正 ✓**✓：panel ✓ が否定したのは「TAKE ✓ を EAT ✓ に置き換える ✓」変更 ✓ であり ✓ 机制 ✓（egg ✓→ HATCH ✓→ Byrdpip ✓→ 無料火力 ✓）が確認できた今は ✓ **egg を取る ✓ 側の証拠として整合 ✓**✓（採らない ✓ 変更 ✓ は却下 ✓ 済み ✓ for real ✓）✓
 → **次の小さな打つ手 ✓（未実施 ✓）**：**`RELIC.BYRDPIP ✓` を event relic ✓ の評価に入れる ✓**（`EventRelicPool ✓` に入っている ✓ ので event ✓ 側の decision ✓ で選べる ✓ が ✓ 現在の `EVENT_RELIC_TIERS ✓`/`_event_relic_score ✓` は知らない ✓✗）✓
 → 前 round ✓ の corpus ✓ 数字 ✓（egg+BYRDPIP ✓ で Act 3 到達 52% ✓ 94 run ✓）は ✓ この机制 ✓ と矛盾しない ✓✓
+
+## Round 118: event ✓ で relic を**退けた ✓ 記録は corpus に 1 件も無い ✓**（弃却 0 ✓）→ BYRDPIP ✓ を event 側で価格付けする変更は ✓ 今の証拠では動かせない ✓
+
+全 trace ✓ の event record ✓（`relic_id ✓` または `attempted_relic_id ✓` を持つもの ✓）✓
+```
+受理 ✓ 上位 ✓: TOASTY_MITTENS ✓ 118 ✓ YUMMY_COOKIE ✓ 113 ✓ PAELS_FLESH ✓ 84 ✓ VERY_HOT_COCOA ✓ 82 ✓ FISHING_ROD ✓ 73 ✓ STONE_HUMIDIFIER ✓ 69 ✓ GOLDEN_PEARL ✓ 59 ✓ SCROLL_BOXES ✓ 57 ✓
+**弃却 ✗: 0 件 ✓✓**  /  BYRDPIP ✓: 受理 0 ✓ 弃却 0 ✓
+```
+→ **event の relic 選択 ✓（`event_relic ✓`）で私たちの答えが弃却された ✓ 例は無い ✓** ✓（1,948 件の弃却 ✓ は全て `event_option ✓` 側 ✓・うち多くは `event_fallback ✓` ✓ の型 ✗ ✓）✓
+→ つまり **私達は event で relic が出ると必ず1つ取っている ✓** ✓→「BYRDPIP ✓ が出て ✗ 他に負けた ✓」を測る筋が trace ✓ に無い ✓✗（受理した relic ✓ しか残らない ✓）✓
+→ **次の infra ✓（shop ✓ と同じ型 ✓・未実施 ✓）**：**EventBridge ✓ で event に出た relic 候補 ✓（id ✓ と tier ✓）を trace ✓ に載せる ✓** ✓→ 初めて「出品に対して何を選んだ ✓/何を置いた ✓」が測れる ✓✓（`ShopBridge ✓` の `offers ✓` 追加 ✓ が実際に差を出した ✓ 前例 ✓✓）✓
+
+**panel ✓ 3 本 ✓**（arm `.wt-proto19 ✓` ✓ 価格付けのみ ✓）✓
+```
+AM8C6YXHSG ✓ 17 勝 1 敗 ✓ 391 ✓ Act 3, F15 ✓  vs control ✓ 17 勝 ✓ 360 ✓ Act 3, F15 ✓  → 同 ✓（records +31 ✓・relic 2 個 ✓ を買った ✓）✓
+H2LV6ZJ4XW ✓ 20 勝 1 敗 ✓ 388 ✓ Act 3, F6 ✓   vs control ✓ 20 勝 ✓ 388 ✓ Act 3, F6 ✓   → 完全一致 ✓（inert ✓）✓
+VTW80ZJA2G ✓ 13 勝 1 敗 ✓ 262 ✓ Act 2, F16 ✓  vs control ✓ 13 勝 ✓ 262 ✓ Act 2, F16 ✓  → 完全一致 ✓（inert ✓）✓
+```
+→ **3 seed ✓ 中 2 seed ✓ で完全に inert ✓✓** ✓（買える価格付き relic ✓ のある shop ✓ に届かなかった ✓）✓
+→ 残り ✓ N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓（完走実績のある seed ✓ / ここ ✓ で relic 購入が増える ✓かどうかが本質 ✓）✓
+→ **判定基準 ✓（3 seed ✓ で改善 ✓）に照らすと ✓ 現状は採用不可 ✓ に近い ✓**✓（2 seed ✓ で何も起きていない ✓ので ✓「改善 ✓」の母数 ✓ が足りない ✓）✓
