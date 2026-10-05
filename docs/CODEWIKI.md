@@ -8985,3 +8985,23 @@ egg ✗ + BYRDPIP ✗  : 448 run ✓ Act 到達 中央値 2 ✓   Act 3 到達 1
 **BYRDPIP の入手元** ✓：101 trace ✓ で **直前が map record ✓ の combat record ✓ で初出 ✓**（Treasure ✓ や敌 drop ✓ など decision を伴わない経路 ✓）✓ → **policy で「取りに行く ✓」対象にはしにくい ✓** ✓ 測定の筋は egg ✓ 側 ✓
 
 panel ✓（改訂版 `evdense_arm` ✓）: AM8C6YXHSG 14 勝 ✗（control 17 ✓）✓ H2LV6ZJ4XW 20 勝 ✓（同一 ✓）✓ VTW80ZJA2G 走行中 ✓
+
+## Round 107: 改訂版 event 得点の panel 完了 ✓ **50 勝 3 敗 ✓ = control と同一 ✓**（seed 別 -3 ✓ 0 ✓ +3 ✓）→ 採らない ✓
+
+```
+seed          control（evfix_ctrl ✓ 50 勝 ✓）      未改訂 batch1 ✓          改訂版 ✓ evdense_arm ✓
+AM8C6YXHSG    17 勝 ✓ 360 ✓ Act 3, Floor 15 ✓      11 勝 ✓ 191 ✓ Act 2, F16 ✗   14 勝 ✓ 305 ✓ Act 3, F6  ✗ -3 ✓
+H2LV6ZJ4XW    20 勝 ✓ 388 ✓ Act 3, Floor  6 ✓      20 勝 ✓ 388 ✓ Act 3, F6 ✓    20 勝 ✓ 388 ✓ Act 3, F6  ✓ 0 ✓
+VTW80ZJA2G    13 勝 ✓ 262 ✓ Act 2, Floor 16 ✓      16 勝 ✓ 325 ✓ Act 3, F6 ✓✓   16 勝 ✓ 325 ✓ Act 3, F6  ✓✓ +3 ✓
+合計          50 勝 3 敗 ✓                         47 勝 3 敗 ✓               **50 勝 3 敗 ✓ = control ✓**
+改訂版の event ✓: accepted 24 ✓ rejected 12 ✓ ✓ 実際に選んだもの ✓ BRAIN_LEECH → SHARE_KNOWLEDGE ✓ ✓ DENSE_VEGETATION → TRUDGE_ON ✓（gold ✓ を取った ✓）
+```
+**gold を price したことで未改訂版の損失（47 勝 ✓）は消えた ✓** ✓ が ✓ **control との合計は同値 ✓** ✓ seed 別で 1 増 1 減 ✓
+→ **採用基準（3 seed ✓ で改善 ✓）を満たさない ✓ 採らない ✓** ✓
+→ **教訓 ✓**：得点のない event を game に委ねる ✓ のは損失だと思っていた ✓ が ✓ **実測では委ねるのと同等 ✓** ✓（game の AutoSlay も悪くない ✓）✓
+→ **event 得点の仕事はここ为止 ✓** ✓（残る未価格 event ✓ に追加実装しない ✓：改善が見えない ✓）✓
+→ ただし **egg ✓ の変更は別種 ✓** ✓（これは「選ぶ/選ばない ✓」でなく ✓**有害な札を deck に入れない ✓** の変更 ✓）✓
+
+**egg の変更は実装済み ✓**（`.wt-proto18 ✓` ✓ 785 件 green ✓）✓：BYRDONIS_NEST ✓ で `RELIC.BYRDPIP ✓` を持っていれば TAKE ✓（egg ✓→ ByrdSwoop ✓）✓ 無ければ **EAT ✓（+7 max HP ✓・decompile `CreatureCmd.GainMaxHp(MaxHpVar 7m ✓)`）** ✓
+`test_event_option_table_preserves_hardcoded_choices ✓` は player を持たない observation ✓ で `BYRDONIS_NEST.LEAVE/TAKE ✓`（実在しない key ✓）を使い TAKE ✓ を固定していた ✓ → **実測に合わせて relic 保持 ✓ 条件で TAKE ✓** に更新 ✓（test の目的である「hardcoded の選択 ✓」は relic あり ✓ で保持 ✓）✓
+→ **panel の対応 ✓**：control `base_ctrl ✓`（N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓ で走行中 ✓）と同じ2 seed ✓ で arm `egg_arm ✓` ✓ を走る ✓（Act 3 完走が観測できる seed ✓ で測る ✓）✓
