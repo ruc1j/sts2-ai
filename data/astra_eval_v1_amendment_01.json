@@ -1,0 +1,25 @@
+{
+  "id": "astra_eval_v1_amendment_01",
+  "original_plan_sha256": "5e23f7dc81bb5909081abdb5a2b92ad26745f8839cdd6e52cba06c7fc4bffba1",
+  "recorded_at": 1791214804.1041338,
+  "reason": "User requested damage/progress evaluation when depth is tied: どれくらい削れたかも評価すべきじゃないか？ 到達点が同値なら",
+  "known_results_at_amendment": [
+    "candidate N8: Act 3 win",
+    "control N8: Act 1 Floor 17 death",
+    "control D6: Act 3 Floor 15 death",
+    "candidate D6: Act 3 Floor 15 death",
+    "candidate A972EACCB8: Act 1 Floor 15 death"
+  ],
+  "added_metric": "After tied higher-level metrics, compare progress in the same final encounter/phase for same-depth deaths. Use required-enemy HP reduction fraction; equal seed weights. Report optional minions separately. Mark last-observed vs terminal HP. See EVALUATION.md 2026-10-06.",
+  "scope": "Also compute on completed runs; keep original metrics and acceptance result. If post-hoc metric alone changes acceptance, require a fresh confirmation set precommitted to the amended metric.",
+  "frozen_conditions_unchanged": [
+    "versions",
+    "source hashes",
+    "Mod",
+    "seed sets",
+    "run order",
+    "repeat count",
+    "planned run count",
+    "timeout"
+  ]
+}
