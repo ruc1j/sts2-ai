@@ -8558,3 +8558,27 @@ Act 2 walk は rest を boss 直前に取れている ✓（(4,14) ✓ (1,14) �
 → 次の測定 ✓ Act 3 の fight で何をされたか（その fight の敌 id ✓ 被 damage の内訳 ✓ 取れた block/回避 ✓）✓
 **elite を多く取り rest を多く取って boss を越えた run が ✓ Act 3 で死ぬ ✓ という形が定量的に取れた** ✓ ✓（Act 3 rest 8 ✓ 回の graph ✓ を持ちながら ✓ 入口で殺される ✓）✓
 control sweep `evfix_ctrl` は走行中 ✓（10:49 ✓ seed 1 ✓）✓ 完了待ち `bash-1165` ✓
+
+## Round 91: 中間結果 ✓ event 回答の fix は seed AM8C6YXHSG で **悪化した** ✓ 17 勝 → 14 勝 ✓ Act 3 Floor 15 → Floor 6 ✓
+
+control sweep `evfix_ctrl`（`.wt-ctrl-evfix` ✓ commit `37bb82c` ✓ policy 無変更 ✓）の 1 本目 ✓
+```
+RESULT evfix_ctrl AM8C6YXHSG wins=17 losses=1 records=360 depth=Act 3, Floor 15
+RESULT evfix_arm  AM8C6YXHSG wins=14 losses=1 records=276 depth=Act 3, Floor  6
+```
+**control のこの seed の数字は commit を越えて再現している** ✓（`sw59` ✓ commit `9bbf6a2` ✓ でも 17 勝 ✓ 360 records ✓ Act 3 Floor 15 ✓）✓ に対して arm は 14 勝 ✓ 276 records ✓ Act 3 Floor 6 ✓ ✓
+
+**同じ seed の event record を並べた** ✓
+```
+control 17 件 ✓ うち 7 件が `invalid_event_action`（THE_LEGENDS_WERE_TRUE ✓ DENSE_VEGETATION ✓ INFESTED_AUTOMATON ✓ WELCOME_TO_WONGOS ✓ TINKER_TIME ✓ POTION_COURIER ✓ GRAVE_OF_THE_FORGOTTEN ✓）✓
+arm     21 件 ✓ 拒否 0 ✓（DENSE_VEGETATION → TRUDGE_ON ✓ THE_LEGENDS_WERE_TRUE → NAB_THE_MAP ✓ INFESTED_AUTOMATON → STUDY ✓ WELCOME_TO_WONGOS → BARGAIN_BIN ✓ POTION_COURIER → GRAB_POTIONS ✓ など ✓ 全て option_index 0 ✓）✓
+```
+**control は `HUNGRY_FOR_MUSHROOMS → RELIC.BIG_MUSHROOM` ✓ を取っている ✓ arm にはその event 自体が現れない** ✓✗✗
+→ 新しい既定（proceed の無い event に最初の eligible option ✓）が ✓ 途中の event の選び方を変えて ✓ **ルートと状態が分岐し ✓ 後の良い event に辿り着けていない** ✓✓
+game 側の fallback に委ねていた control の方が ✓ この seed では良い event を拾えている ✓
+
+**途中の判断** ✓ 採用の基準（决定差分が 3 件以上 ✓ かつ 3 seed ✓で改善 ✓）に対して ✓
+- 决定が変わった件数 ✓ 十分 ✓（event 45 件 accept ✓ 0 拒否 ✓）✓
+- 結末 ✓ 1 本目の seed で悪化 ✓ 17→14 勝 ✓ Act 3 Floor 15→6 ✓（control は 2 回の commit で同一数字 ✓ なので noise とは言いにくい ✓）✓
+→ **現時点では採用しない方向** ✓ 残り 2 seed ✓（control 2 本目走行中 ✓）を揃えて確定する ✓
+**棄却が確定したら `.wt-proto12` を削除し ✓ negative result として記録する** ✓（teaching 17 ✓「忠実度修正が勝数を落とすことはある」✓ の実例 ✓）✓
