@@ -8726,3 +8726,33 @@ INFESTED_AUTOMATON ✓：STUDY ✓ / TOUCH_CORE ✓ **両方 CardPileCmd.Add(dec
 **INFESTED_AUTOMATON ✓ SYMBIOTE ✓（Corrupted enchant ✓ の得失 ✓）は観測が足りず保留 ✓** ✓
 batch 1（DENSE_VEGETATION ✓ BRAIN_LEECH ✓ WHISPERING_HOLLOW ✓）の panel `evscore_arm` ✓ 11:14 開始 ✓ 走行中 ✓（`bash-1241` ✓）✓
 **batch 2 を batch 1 と混ぜて走らせない** ✓（1 commit で1変更の測定 ✓ teaching 2 ✓）✓
+
+## Round 97: batch 2（SAPPHIRE_SEED ✓ TEA_MASTER ✓）を別 tree で用意 ✓ **negative score は辞退にならない ✓ 辞退は None ✓** という机制の事实 ✓
+
+`.wt-proto15`（HEAD から ✓ batch 1 と混ぜない ✓）✓ 785 件 green ✓（new test 2 件 ✓）✓
+- SAPPHIRE_SEED ✓ HP < max なら EAT ✓（回復 ✓）✓ 満タンなら None ✓（Sown の価値を model は price していない ✓→ 委ねる ✓）✓
+- TEA_MASTER ✓ EMBER_TEA（hover tip が StrengthPower ✓）を **gold >= 150 ✓ のときだけ** 100 ✓
+  BONE_TEA は decompile から効果を読み取れない ✓ ので None ✓ TEA_OF_DISCOURTESY は free だが hover tip が Dazed ✓（corpus で Dazed は play されず deck に残る ✓）→ **選ばない ✓**
+
+**机制の事实（test が捕えた ✓✗）** ✓ `choose_event` の `known = [(score, action) ✓ score is not None]` ✓ は
+**score が全部マイナスでも最大値を選ぶ** ✓ → **`TEA_OF_DISCOURTESY: -100` ✓ と書いても ✓ それが唯一の known ならそれを選ぶ ✓✗✗** ✓
+→ **「その option を選ばない」ことは negative score では実現できない ✓ 辞退は `None` ✓ を返す ✓** ✓✓
+（teaching 61 ✓「agent の heuristic と rollout model は別の gate ✓」と同型 ✓ 得点表の语义を読み違えない ✓）✓
+
+**同じ落としの 2 回目 ✓** ✓ `.wt-proto14` で直した `option_score` の並び ✓
+（`scores = EVENT_OPTION_SCORES.get(...)` ✓ の早期 return より下に new event を置く ✓と ✓ **未登録 event はそこに到達しない ✓**）✓ を
+`.wt-proto15` で再現した ✓✗（KeyError: 'option_index' ✓ 2 件 ✓）✓ → **new tree を作るときは fixed 形の後に置く ✓** ✓
+必要な並び ✓
+```
+text_key / option を先に取る ✓ →  event 固有の条件 ✓  →  scores = EVENT_OPTION_SCORES.get(event_id) ✓  →  scores が無ければ None ✓
+```
+
+**batch 1 の panel 1 本目 ✓ 悪化 ✓**
+```
+RESULT evscore_arm AM8C6YXHSG wins=11 ✓ losses=1 ✓ records=191 ✓ depth=Act 2, Floor 16
+control（evfix_ctrl ✓ 同じ seed ✓） wins=17 ✓ records=360 ✓ depth=Act 3, Floor 15
+```
+**-6 勝 ✓ Act 3 に入れず Act 2 boss 室で停止 ✓ records 191 ✓（短い run ✓）** ✗✗
+候補 ✓ WHISPERING_HOLLOW の GOLD が gold を70以上使って shop を枯らした筋 ✓（SAPPHIRE_SEED/BRAIN_LEECH は得になる選択 ✓）✓
+→ **残り 2 seed ✓ を揃えてから判断する ✓**（1 seed の差は分岐と混ざる ✓ が ✓ control は 2 commit で同一数字 ✓ なので重い ✓）✓
+`bash-1241` ✓ が完了待ち ✓
