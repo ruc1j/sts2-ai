@@ -8786,3 +8786,31 @@ ctrl の event: 17 件 ✓（HUNGRY_FOR_MUSHROOMS → RELIC.BIG_MUSHROOM ✓ を
 - そうでなければ **TRUDGE_ON ✓（8 HP を払って gold ✓ → shop で relic ✓）** ✓
 **HP が低いときだけ REST ✓** に絞る ✓ のが実測に沿う ✓（今の rule は HP が中位でも REST ✓ を選んでいた ✓✗）✓
 sweep の残り 2 seed ✓（`bash-1241` ✓）を揃えてから ✓ rule を書き直して再 panel ✓ する ✓
+
+## Round 99: 前 round の「gold を捨てたことが败因 ✓」は過剰な結論だった ✓ arm は gold を得て HP も満タンだった ✓（11 勝の败因は未解決 ✓）
+
+`evscore_arm_AM8C6YXHSG` の DENSE_VEGETATION ✓ seq 92 ✓ の前後 ✓
+```
+seq 87  card_reward ✓ hp 55/80 ✓ gold 70
+seq 92  event DENSE_VEGETATION ✓ REST を選択 ✓（受理 ✓）
+seq 93  event DENSE_VEGETATION ✓ 続きの page ✓→ `event_fallback` ✓→ 弃却 ✓（game の fallback が処理 ✓）
+seq 94  card_reward ✓ hp 80/80 ✓ gold 135   ← **回復済み ✓ gold +65 ✓**
+```
+→ **arm は回復も gold も得ていた** ✓✓（55 → 80 HP ✓ 70 → 135 gold ✓）✓
+→ 前 round で書いた「REST 選択が 61〜99 gold を捨てていた ✓」は ✓ **終了時点の gold 比較（222 ✓ vs 373 ✓）から逆算した推測で ✓ 决定の直後の値を見ていなかった** ✓✗✗
+→ **11 勝にとどまった原因は特定できていない** ✓（HP も gold も arm の方が良好 ✓ なのに act 2 boss 室で停止 ✓）✓
+新しい教訓 ✓「**决定の直後の値を trace から読んでから ✓ 败因だと書く** ✓（末端の差から逆算しない ✓）」✓（teaching 112 ✓「測定が実際に測ったか検証する ✓」の続報 ✓）✓
+
+**batch 1 の panel 2 本目 ✓ seed H2LV6ZJ4XW ✓** ✓
+```
+RESULT evscore_arm H2LV6ZJ4XW wins=20 losses=1 records=388 depth=Act 3, Floor 6   ← control ✓ 20 勝 ✓ 388 ✓ Act 3 Floor 6 ✓ と同一 ✓
+arm の event 10 件 ✓ 拒否 4 ✓ うち価格付けした event に当たったのは **0 件** ✓（TEA_MASTER ✓ は batch 1 で未価格 ✓ 弃却 ✓）✓
+```
+→ **価格付けした event に当たらない run では変化が無い ✓** ✓（変更が inert ✓ であることの確認 ✓ teaching 94 ✓）✓
+**batch 1 の現時点** ✓ AM8C6YXHSG **11 勝（control 17 勝 ✗）** ✓ H2LV6ZJ4XW **同一 ✓** ✓ VTW80ZJA2G 未完了 ✓
+
+**改訂版は用意済み ✓**（`.wt-proto16` ✓ 787 件 green ✓ 4 test 追加 ✓）✓
+- DENSE_VEGETATION ✓：`hp <= max(12, max_hp // 4)` ✓ のとき REST ✓ そうでなければ TRUDGE_ON ✓（8 ダメージが死に至る水準でなければ gold ✓ を取る ✓）✓
+- BRAIN_LEECH ✓：SHARE_KNOWLEDGE ✓（RIP は None ✓）✓ WHISPERING_HOLLOW ✓：gold >= 70 ✓ のとき GOLD ✓ そうで None ✓
+- seq 92 の状況（hp 55/80 ✓）では改訂版は **TRUDGE_ON ✓** を選ぶ ✓（47 HP ✓ + gold ✓）✓ → **今の panel とも違う選択なので ✓ 改訂版 panel が必要 ✓** ✓
+sweep の 3 本目 ✓ 走行中 ✓ → 終わったら `.wt-proto16` ✓ の panel を同じ3 seed ✓ で走らせる ✓
