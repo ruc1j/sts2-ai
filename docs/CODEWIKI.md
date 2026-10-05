@@ -9325,3 +9325,20 @@ D6A1F8C3E5    ✓ 15 ✓/302 ✓ Act 3, F5  ✓                      ✓ 15 ✓/
 → **gold ✓ が足枷 ✓**✓：relic ✓ 155-287 ✓ に対し shop ✓ 時点の gold ✓ 中央値 180 ✓/196 ✓ ✓（relic を買えた run ✓ は gold 411 ✓ の AM8C6YXHSG ✓ だけ ✓）✓
 → **gold を増やす筋 ✓（イベント ✓/室の選び方 ✓/売却 ✓）を測らない限り ✓ relic ✓ 購入政策 ✓ は試す場 ✓ に届かない ✓**✓ ✓→ **次の仕事 ✓ は shop ✓ の側 ✓ でなく ✓ gold ✓ の流れ ✓ の測定 ✓**✓（teaching 119 ✓「資源をどこで失うか ✓ を先に locate ✓ しろ ✓」✓ の再現 ✓）✓
 **同時に ✓ EventBridge ✓ の `options ✓` export ✓ 検証 run ✓（evoptexport ✓ AM8C6YXHSG ✓）を連鎖 ✓ 起動 ✓**✓（12:50 ✓ 時点 ✓ 起動 ✓ 確認 ✓ 待ち ✓）✓
+
+## Round 122: **run は shop に入れる gold を持っていた ✓**（5 run ✓ の peak 196-628 ✓・中央値 407 ✓・**最安 relic 155 ✓ に届かなかった run は 0/5 ✓**）✓ が ✓**shop 時点の gold 中央値は 73 ✓**✓ — 店内で先に使い切っている ✓✓
+
+新しい監査 ✓ `data/gold_flow_audit.py ✓`（gold ✓ は shop record ✓ と card_reward record ✓ に出る ✓）✓
+```
+seed AM8C6YXHSG ✓(shopexport ✓): peak 602 ✓ → seq 228 `remove ✓` ✓(602 ✓ の時点 ✓) → 456 ✓ → `buy_card ✓` → 419 ✓ → `buy_card ✓` → `skip ✓` ✓（relic ✓ 155-287 ✓ は全部 affordable ✓ だった ✓ のに ✓ 買ってない ✓）✓
+seed H2LV6ZJ4XW ✓          : peak 349 ✓ → seq 229 `remove ✓`(180 ✓) → 103 ✓ → `buy_card ✓` → 51 ✓ → `skip ✓` ✓
+seed VTW80ZJA2G ✓          : peak 196 ✓ → seq  81 `buy_potion ✓`(196 ✓) → `remove ✓` → 121 ✓ → `buy_card ✓` → 73 ✓ → 22 ✓ → `skip ✓` ✓
+seed D6A1F8C3E5 ✓          : peak 407 ✓ → seq 178 `remove ✓`(307 ✓) → 296 ✓ → `buy_card ✓` → 186 ✓→150 ✓→113 ✓ → `skip ✓` ✓
+seed AM8C6YXHSG ✓(evdense_arm ✓): peak 628 ✓ → seq 228 `remove ✓`(628 ✓) → **229 `buy_relic ✓`(448 ✓)** → 230 `buy_potion ✓`(398 ✓) → 231 `buy_card ✓`(325 ✓) ✓
+集計 ✓: shop 時点の gold ✓ 中央値 73 ✓（最小 6 ✓ 最大 628 ✓）✓ / run 中の peak ✓ 中央値 407 ✓（最小 196 ✓ 最大 628 ✓）✓
+       **peak ✓ が relic 最安値 155 ✓ に届かなかった run ✓: 0 ✓ / 5 ✓**✓
+```
+**読み ✓**：
+- **gold 不足 ✓ ではなく ✓「店内の順序 ✓」が壁 ✓**✓ ✓→ `choose_shop ✓` は 1) core 札 ✓ 2) potion ✓ 3) **remove ✓（relic ✓ より前 ✓）** ✓ 4) defense 札 ✓ 5) draw 札 ✓ 6) **relic ✓（>= 6 ✓）** ✓ 7) 通常の札 ✓ ✓ので ✓ 入店直後の decision ✓ で remove ✓ と card ✓ が gold ✓ を削る ✓ ✓→ relic ✓ の分岐 ✓ が回る頃には ✓ 買えない ✓✓（`relic ✓ が買えるのに skip ✓ 0 件 ✓` ✓ とも整合 ✓✓：skip ✓ 時点で ✓ もう affordable ✓ な relic ✓ が無い ✓✓）✓
+- **evdense_arm ✓ の run ✓ では remove ✓ の後に relic ✓ を買った ✓ 例がある ✓**（448 ✓ gold ✓ の時点で ✓）✓ → 順序 ✓ が裏目 ✓ に出る ✓ことも ✓ 表目 ✓ に出る ✓ことも ✓ある ✓ ✓→ **測るべき問い ✓：同じ gold ✓ の場で relic ✓ と card/remove ✓ のどちらを選ぶ ✓べきか ✓**（前 panel ✓ が inert ✓ だった理由 ✓ がここ ✓ にある ✓）✓
+- **remove ✓ の優先 ✓ は記録済みの fix ✓（deck を減らす ✓, astra_goal_cards1 ✓ の 28 枚化 ✓）✓なので ✓ 一方的に外さない ✓**✓ ✓→ 次 ✓ のテスト ✓は「core 札でない ✓ card ✓ に対して ✓ 買える価格付き relic ✓ を優位にする ✓」✓ の形 ✓ で ✓ panel ✓ にとる ✓（未実施 ✓）✓
