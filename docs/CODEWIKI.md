@@ -8582,3 +8582,41 @@ game 側の fallback に委ねていた control の方が ✓ この seed では
 - 結末 ✓ 1 本目の seed で悪化 ✓ 17→14 勝 ✓ Act 3 Floor 15→6 ✓（control は 2 回の commit で同一数字 ✓ なので noise とは言いにくい ✓）✓
 → **現時点では採用しない方向** ✓ 残り 2 seed ✓（control 2 本目走行中 ✓）を揃えて確定する ✓
 **棄却が確定したら `.wt-proto12` を削除し ✓ negative result として記録する** ✓（teaching 17 ✓「忠実度修正が勝数を落とすことはある」✓ の実例 ✓）✓
+
+## Round 92: **敌が途中で増える fight が 8% ✓ fabricator 戦は 1 体 → 4〜5 体 ✓** ✓ model には summon の扱いが 0 件 ✓✗✗
+
+`Fabricator.cs` ✓
+```
+aggroSpawns   = { Zapbot ✓ Stabbot ✓ }
+defenseSpawns = { Guardbot ✓ Noisebot ✓ }
+CanFabricate => 生存する team member が 4 体未満 ✓
+MinInitialHp 150（ToughEnemies で 155 ✓）✓ FabricatingStrikeDamage 18（DeadlyEnemies で 21 ✓）✓ DisintegrateDamage 11（13 ✓）
+```
+**`grep -c "Summon\|SummonCmd" combat.py` は 0** ✓✗✗ → rollout は **新しい敌が現れることを予測できない** ✓（その fight の观测上の敌数は chaque decision で正しく読める ✓ が ✓ 未来の被 damage と攻击の価値が楽観になる ✓✗）✓
+
+**生 run 5 本 ✓ fight 79 件で測った** ✓（combat record ごとに敌の combat_id 集合を進め ✓ `combat_end` で閉じた ✓）✓
+```
+途中で敌が増えた fight: 6 / 79 ✓（8%）✓
+  FABRICATOR 単独スタート → 4 体 ✓（arm ✓ 5 turn ✓）/ → 5 体 ✓（control ✓ 9 turn ✓）
+  PHROG_PARASITE + WRIGGLER → 4 体 ✓（両 tree ✓ 7 turn ✓）
+  EYE_WITH_TEETH + FOGMOG → 2 体 ✓（両 tree ✓ 5 turn ✓）
+増えた fight に出現した monster: EYE_WITH_TEETH 2 ✓ FOGMOG 2 ✓ STABBOT 2 ✓ GUARDBOT 2 ✓ ZAPBOT 2 ✓ FABRICATOR 2 ✓ PHROG_PARASITE 2 ✓ WRIGGLER 2 ✓ NOISEBOT 1 ✓
+```
+**この fight 群が Act で最大の损失を出している** ✓（前 round ✓ の 35 以上削った fight ✓）✓
+```
+arm AM8C6YXHSG: FABRICATOR+GUARDBOT+STABBOT+ZAPBOT ✓ 76 → 16 ✓（-60 ✓）
+ctrl AM8C6YXHSG: 同じ bot 群 ✓ 72 → 36 ✓（-36 ✓）
+arm H2LV6ZJ4XW: SLIMED_BERSERKER 88 → 38 ✓（-50 ✓）✓ FROG_KNIGHT 113 → 77 ✓（-36 ✓）
+```
+
+**前 round の act 数えの訂正** ✓ walk script は map の Boss record で act を進めていた ✓ので ✓ **boss 戦自体は1 act 遅いラベルが付いていた** ✓✗
+→ 「Act 3 で 68〜78 削った THE_INSATIABLE」は **Act 2 boss 戦** ✓✓（arm: 78→10 ✓ 98→29 ✓ 80→2 ✓ ✓ **Act 2 boss を 2〜29 HP で突破している** ✓✗✗）✓
+→ non-boss fight のラベルは正しい ✓（ increment が boss  entry の時だけ ✓）✓
+**形として見えた壁** ✓ Act 2 boss を瀕死で突破 ✓ → Act 3 は入口が連続 Monster ✓（前 round ✓）で ✓ 最初の rest に辿り着けず ✓ 増援 fight で死ぬ ✓✓
+
+**次の work item（忠実度 ✓）** ✓ 増援（spawn ✓）を model に入れる ✓
+1. decompile から spawn 規則を取る ✓（Fabricator の aggro/defense spawns ✓ と `fabricate` trigger ✓ の move machine ✓、WRIGGLER の PHROG_PARASITE 産卵 ✓）✓
+2. 导出 JSON の `effects` には spawn が入っていない ✓（FABRICATOR の effects は attack のみ ✓ 2 件 ✓）✓ → **model 側に spawn を教える必要がある** ✓（CLAUDE.md ✓「敌の挙動の追加は JSON 再生成 + `_enemy_turn` に command を教える」✓）✓
+3. tests ✓：増援が現れる fight で rollout が敌数の増加を織り込むこと ✓
+母数 8% ✓ かつ最大损失の fight 群 ✓ なので ✓ **panel に見合う候補** ✓（teaching 32 ✓ 决定が変わらないものは panel しない ✓ → attribution で决定差分を見てから判断 ✓）✓
+control sweep は 2 本目走行中 ✓（`bash-1165` ✓）✓
