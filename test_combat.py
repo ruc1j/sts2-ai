@@ -32,6 +32,26 @@ EFFECTLESS_ATTACK_DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [
 
 
 class CombatTest(unittest.TestCase):
+    def test_enemy_multi_hit_rounds_weak_and_vulnerable_once_per_hit(self) -> None:
+        # QUEEN in astra_goal_r2 seq473: (3 + 2) * .75 * 1.5 floors to 5, five times.
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
+            "id": "HIT_MOVE", "type": "MoveState", "next": "HIT_MOVE",
+            "intents": [{"type": "MultiAttackIntent", "damage": 3, "repeats": 5}],
+        }]}]}
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", (),
+                      powers=(("StrengthPower", 2), ("WeakPower", 1)))
+        state = Combat(30, (), (STRIKE,) * 10, (), (enemy,), player_block=9,
+                       player_powers=(("VulnerablePower", 95),))
+        self.assertEqual(_enemy_attack_damage(enemy, data, state.player_powers), 25)
+        after = step(state, END_TURN, data, random.Random(0))
+        self.assertEqual(after.player_hp, 14)
+
+    def test_negative_enemy_strength_cannot_add_block_during_a_hit(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", (), powers=(("StrengthPower", -12),))
+        state = Combat(30, (), (), (), (enemy,))
+        after = _enemy_turn(state, 0, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual((after.player_hp, after.player_block), (30, 0))
+
     def test_regen_resolves_before_enemy_attacks_and_respects_hp_cap(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ())
         for hp, expected in ((8, 3), (79, 70)):

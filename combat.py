@@ -1399,6 +1399,27 @@ def _attack_base_damage(enemy: Enemy, attack_intent: dict) -> int:
     return int(attack_intent.get("damage") or 0)
 
 
+def _enemy_damage_after_multipliers(
+    enemy: Enemy, player_powers: tuple[tuple[str, int], ...], damage: int,
+) -> int:
+    """Round a hit once, after all powered-attack multipliers have been applied."""
+    numerator, denominator = 1, 1
+    if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (
+        _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")
+    ):
+        numerator *= 3
+        denominator *= 2
+    if _power(enemy.powers, "WeakPower"):
+        numerator *= 3
+        denominator *= 4
+    if _power(player_powers, "VulnerablePower"):
+        numerator *= 3
+        denominator *= 2
+    if _power(player_powers, "ColossusPower") and _power(enemy.powers, "VulnerablePower"):
+        denominator *= 2
+    return max(0, damage * numerator // denominator)
+
+
 def _enemy_attack_damage(
     enemy: Enemy,
     data: dict,
@@ -1428,16 +1449,7 @@ def _enemy_attack_damage(
         + _power(enemy.powers, "StrengthPower")
         + _power(player_powers, "TaintedPower")
     )
-    if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (
-        _power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")
-    ):
-        damage = damage * 3 // 2
-    if _power(enemy.powers, "WeakPower"):
-        damage = damage * 3 // 4
-    if _power(player_powers, "VulnerablePower"):
-        damage = damage * 3 // 2
-    if _power(player_powers, "ColossusPower") and _power(enemy.powers, "VulnerablePower"):
-        damage //= 2
+    damage = _enemy_damage_after_multipliers(enemy, player_powers, damage)
     repeats = int(attack.get("repeats", 1))
     if enemy.model == TEST_SUBJECT and enemy.move == "MULTI_CLAW_MOVE":
         repeats += sum(move_id == "MULTI_CLAW_MOVE" for move_id in enemy.history)
@@ -1686,18 +1698,11 @@ def _enemy_turn(combat: Combat, index: int, data: dict, rng: random.Random) -> C
                 + _power(enemy.powers, "StrengthPower")
                 + _power(player_powers, "TaintedPower")
             )
-            if (_power(player_powers, "SurroundedRight") and _power(enemy.powers, "BackAttackLeftPower")) or (_power(player_powers, "SurroundedLeft") and _power(enemy.powers, "BackAttackRightPower")):
-                damage = damage * 3 // 2
+            damage = _enemy_damage_after_multipliers(enemy, player_powers, damage)
             flame_barrier = _power(player_powers, "FlameBarrierPower")
             repeats = int(attack_intent.get("repeats", 1))
             if enemy.model == TEST_SUBJECT and move_id == "MULTI_CLAW_MOVE":
                 repeats += sum(move == "MULTI_CLAW_MOVE" for move in enemy.history)
-            if _power(enemy.powers, "WeakPower"):
-                damage = damage * 3 // 4
-            if _power(player_powers, "VulnerablePower"):
-                damage = damage * 3 // 2
-            if _power(player_powers, "ColossusPower") and _power(enemy.powers, "VulnerablePower"):
-                damage //= 2
             buffer = _power(player_powers, "BufferPower")
             for _ in range(repeats):
                 blocked = min(player_block, damage)
