@@ -9137,3 +9137,35 @@ seq 174-177 ✓: gold 221 ✓ で ANCHOR ✓ 155 ✓ affordable ✓ → remove �
 ```
 **教訓 ✓**：「出品を測れない ✓」は bridge が持っていない ✓ のではなく ✓ **Trace していなかった ✓** ✓（teaching 76 ✓「authoritative な値は C# 側から届く ✓ export しろ ✓」の再現 ✓）✓
 **もう1つの教訓 ✓**：前の round ✓ の「shop record 118 件 ✓ で relic 出品 0 件 ✓」は **dict の legal_actions ✓ を探して全落ち ✓** だったが ✓ 実は **shop record の `legal_actions ✓` は null ✓** ✓ で ✓ 出品自体が trace に無かった ✓✓（2段の誤り ✓：フィルタのミス ✓ と ✓ 元データに無い ✓）✓
+
+## Round 113: shop の relic を8種類価格付け ✓ **未価格の relic は `_shop_relic_score ✓` が -1 ✓ で `choose_shop ✓` は relic を relic_score >= 6 ✓ でしか買わない ✓** → 買われる筋が無い ✓✓
+
+`choose_shop ✓`（official_agent.py ✓ 2310-2370 ✓）の実際の順序 ✓
+```
+1. card_key ✓ の第1要素が 4 ✓ の core 札 ✓ → buy_card ✓
+2. potion ✓（potion_score >= SHOP_POTION_MIN_SCORE ✓ かつ **relic_score < 8 ✓**）✓
+3. **remove ✓（deck を減らす ✓）✓ ← relic より前に来る ✓✗** ✓（「Basic removal outranks the starvation-driven buys ✓」の記録済み fix ✓ 2330-2339 ✓）✓
+4. defense_needed ✓ のとき strong block ✓ 札（**relic_score < 8 ✓**）✓
+5. draw_starved ✓ のとき DRAW_CARDS ✓ 札（**relic_score < 7 ✓**）✓
+6. **`if best_relic is not None and relic_score >= 6 ✓: return best_relic ✓`** ✓← relic が買われるのはここ ✓
+7. そうでなければ通常の札 ✓→ skip ✓
+`_shop_relic_score ✓`（840 ✓）= `SHOP_RELIC_SCORES.get(relic, -1 ✓)` ✓ + axis ✓ tier ✓
+→ **表に無い relic ✓ は -1 ✓ → 6 ✓ に届かず ✓ 一度も買われない ✓✓**（前 round ✓ の run ✓ で gold 419 ✓ と affordable ✓ な relic 3枚 ✓ を置き去りにした理由 ✓）✓
+```
+**追加した価格 ✓**（`.wt-proto19 ✓` ✓ decompile ✓ の hook ✓ を根拠に ✓ 既存の 5-9 ✓ 刻度 ✓ に揃える ✓）✓
+```
+RELIC.RED_MASK ✓ 9 ✓  BeforeSideTurnStart ✓ で hittable ✓ な全敌に Weak 1 ✓（毎 turn ✓）✓
+RELIC.UNCEASING_TOP ✓ 8 ✓  AfterHandEmptied ✓ で追加 draw ✓
+RELIC.MANGO ✓ 8 ✓         AfterObtained ✓ で GainMaxHp 14 ✓
+RELIC.GORGET ✓ 8 ✓        AfterRoomEntered ✓ で PlatingPower 4 ✓
+RELIC.STRAWBERRY ✓ 7 ✓    AfterObtained ✓ で GainMaxHp 7 ✓
+RELIC.ANCHOR ✓ 7 ✓        BeforeCombatStart ✓ で GainBlock 10 ✓
+RELIC.DOLLYS_MIRROR ✓ 6 ✓ AfterObtained ✓ で deck ✓ から1枚 clone ✓
+RELIC.GNARLED_HAMMER ✓ 6 ✓ AfterObtained ✓（CardsVar 3 ✓ SharpAmount 3 ✓）✓
+**価格を付けず残した ✓**：BREAD ✓（EnergyVar GainEnergy 1 ✓ / LoseEnergy 2 ✓ の意味が読み切れない ✓）✓ DINGY_RUG ✓（ModifyCardRewardCreationOptions ✓ の効果 ✓ 不明 ✓）✓
+```
+test ✓ 2 件 ✓ green ✓（785 ✓ 件 ✓）：`test_shop_buys_the_weak_relic_over_an_extra_basic_card ✓`（RED_MASK ✓ 172 ✓ を gold 419 ✓ で買う ✓）✓ `test_shop_still_ignores_a_relic_it_cannot_price ✓`（BREAD ✓ → skip ✓）✓
+**panel 起動 ✓**：arm `.wt-proto19 ✓` ✓ 5 seed ✓（AM8C6YXHSG ✓ H2LV6ZJ4XW ✓ VTW80ZJA2G ✓ N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓）✓ 12:22 ✓ 開始 ✓
+control ✓ 基準 ✓（同じ commit ✓ の policy ✓ で測った ✓）✓：evfix_ctrl ✓ 17 勝 ✓ / 20 勝 ✓ / 13 勝 ✓ = 50 勝 3 敗 ✓ ✓ base_ctrl ✓ 5 勝 ✓ / 15 勝 ✓ = 20 勝 2 敗 ✓ ✓ **合計 70 勝 5 敗 ✓**
+arm ✓ の trace ✓ には `offers ✓` が入るので ✓ **何枚の relic をいくらで買ったか ✓ が直接測れる ✓** ✓（待受け → `/tmp/relic_watch.log ✓`）✓
+**remove ✓ が relic より前 ✓ の順番は変えない ✓**（記録済みの fix ✓ を壊さない ✓ 1 commit 1 変更 ✓）✓
