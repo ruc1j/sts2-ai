@@ -42,6 +42,8 @@ After changing Serena configuration, restart Codex before relying on the MCP ser
 
 ## Testing Guidelines
 
+変更の採否・実験計画は [docs/EVALUATION.md](docs/EVALUATION.md) に従う。正しさの修正と戦略変更を分け、Act 3踏破率を主指標とする。過去の「3 seed以上で改善」や合計戦闘勝数による採否は履歴であり、現行基準ではない。
+
 Tests use `unittest`; name files `test_<module>.py` and methods `test_<behavior>`. Add the smallest regression test, run its module, then the full suite. Replace pinned artifacts only after a real run with the recorded seed and version.
 
 ## Commit & Pull Request Guidelines

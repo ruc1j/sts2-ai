@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Compare the control and arm panel traces for the 2026-10-04 measurement.
+"""Inspect raw control and arm panel traces; see docs/EVALUATION.md for acceptance.
 
 Per panel seed this reports wins/losses from the decision trace, whether the newly modeled
-mechanics appear in that run, and the first decision where the two arms differ. A seed with no
-occurrence of any mechanic cannot show an effect, so a +/-0 there is "unmeasurable", not "no
-effect". Control artifacts live in the control worktree's data/ directory.
+mechanics appear in that run, and the first paired combat row with a different card id.
+Presence is not activation or causal evidence. All planned seeds belong in the overall comparison,
+including seeds without the target mechanic. Control artifacts live in the control worktree.
+Totals are raw combat wins, not run wins; completion and artifact validity need separate review.
 
 Usage: python3 data/compare_panel.py <arm_tag> <control_tag> [arm_dir] [control_dir] [seed ...]
 
@@ -62,8 +63,8 @@ def scan(tag: str, seed: str, directory: str) -> dict:
                         record["losses"] += 1
                 if entry.get("phase") == "combat":
                     record["rows"].append((entry.get("seq"), entry.get("card_id"), entry.get("decision_source")))
-                # Presence must mean the mechanism is in the observed combat state; a card_reward
-                # line that merely lists an offered card is not a firing.
+                # This is a text presence hint, not proof that the effect activated.
+                # Exclude card_reward lines that merely list offered cards.
                 if entry.get("phase") == "combat":
                     for key in MECHANICS:
                         if key in line:
@@ -79,7 +80,9 @@ def main() -> None:
     control_dir = sys.argv[4] if len(sys.argv) > 4 else ".wt-ctrl-e808bdf"
     seeds = sys.argv[5:] or PANEL
     arm_total = control_total = 0
-    measurable_seeds = measurable_arm = measurable_control = 0
+    shared_seeds = shared_arm = shared_control = 0
+    print("RAW DIAGNOSTICS ONLY: combat wins are not run wins. "
+          "Review completion, manifests and logs using docs/EVALUATION.md before acceptance.")
     for seed in seeds:
         arm, control = scan(arm_tag, seed, arm_dir), scan(control_tag, seed, control_dir)
         arm_total += arm["wins"]
@@ -88,25 +91,25 @@ def main() -> None:
             ((a, b) for a, b in zip(arm["rows"], control["rows"]) if a[1] != b[1]),
             None,
         )
-        # A run-level A/B only measures a mechanism when the mechanism is present in BOTH arms:
-        # relic acquisition is path-dependent, so one arm can simply never encounter it.
+        # Shared presence helps locate replay candidates; it does not establish causal attribution.
+        # Keep one-sided acquisition and absent mechanics in the full panel comparison.
         shared = sorted(set(arm["fired"]) & set(control["fired"]))
         if shared:
-            measurable_seeds += 1
-            measurable_arm += arm["wins"]
-            measurable_control += control["wins"]
+            shared_seeds += 1
+            shared_arm += arm["wins"]
+            shared_control += control["wins"]
         print(
-            f"{seed}: control {control['wins']}W/{control['losses']}L "
+            f"{seed}: combats control {control['wins']}W/{control['losses']}L "
             f"arm {arm['wins']}W/{arm['losses']}L "
             f"delta {arm['wins'] - control['wins']:+d} "
             f"pair={shared or 'none'} "
-            f"arm_fired={dict(arm['fired']) or 'none'} control_fired={dict(control['fired']) or 'none'} "
-            f"first_divergence={divergence} "
-            f"act3 arm={arm['act3']} control={control['act3']}"
+            f"arm_present={dict(arm['fired']) or 'none'} control_present={dict(control['fired']) or 'none'} "
+            f"first_card_id_difference={divergence} "
+            f"raw_act3_result arm={arm['act3']} control={control['act3']}"
         )
-    print(f"TOTAL control {control_total} arm {arm_total} delta {arm_total - control_total:+d}")
-    print(f"MEASURABLE (mechanism seen by both arms) {measurable_seeds} seeds: "
-          f"control {measurable_control} arm {measurable_arm} delta {measurable_arm - measurable_control:+d}")
+    print(f"RAW COMBAT WINS control {control_total} arm {arm_total} delta {arm_total - control_total:+d}")
+    print(f"SHARED PRESENCE (not activation or an acceptance subset) {shared_seeds} seeds: "
+          f"combat wins control {shared_control} arm {shared_arm} delta {shared_arm - shared_control:+d}")
 
 
 if __name__ == "__main__":
