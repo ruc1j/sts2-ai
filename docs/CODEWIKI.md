@@ -9365,3 +9365,24 @@ if best_relic ✓ is not None ✓ and relic_score ✓ >= 6 ✓:
 → remove ✓ 優先 ✓（deck ✓ を減らす ✓ 記録済み ✓ fix ✓）は ✓ 両方 ✓ 買える ✓ 場合 ✓そのまま ✓ 残す ✓✓（test ✓ 2 件 ✓で ✓ 両方向 ✓ 固定 ✓：221 ✓ gold ✓で 155 ✓ relic ✓→ buy_relic ✓ ✓/ 400 ✓ gold ✓→ remove ✓ ✓）✓
 → test ✓ 当初 ✓ RELIC.ANCHOR ✓ で書いて ✓ 落ちた ✓✗：ANCHOR ✓ の価格 ✓ は scratch tree ✓ 側にしか無い ✓（HEAD ✓ の SHOP_RELIC_SCORES ✓ 42 件 ✓ に ✓ 無い ✓✓）✓→ **HEAD ✓ で ✓ 8 ✓ の価格 ✓を持つ ✓ RELIC.SHURIKEN ✓**✓ に置き ✓直した ✓✓（teaching 53 ✓「落ちた test ✓ の前提 ✓を読む ✓」✓ の再現 ✓）✓
 → panel ✓ 待ち ✓：`.wt-proto21 ✓` ✓（gold ✓ 条件 ✓のみ ✓の新規 ✓変更 ✓）✓ の arm ✓ vs control ✓（70 ✓勝 ✓ 5 ✓敗 ✓ 基準 ✓✓）✓
+
+## Round 124: shop ✓ 21 訪問 ✓を数えて ✓**goldguard ✓ panel ✓ は inert ✓ になる ✓と予測 ✓**✓（予測 ✓なので ✓ 結果 ✓で ✓否定 ✓されれば ✓やり直す ✓）✓ 壁は ✓ 順序 ✓でなく ✓**gold ✓そのもの ✓**✓
+
+**(a) 新 trace ✓ 6 本 ✓（shopexport ✓ + relic_arm ✓ 5 ✓）の shop ✓ 訪問 ✓ 21 件 ✓**✓ 入店時点 ✓（その visit ✓ の最初の record ✓）で ✓ 見た ✓
+```
+入店時 gold ✓: 22 ✓ 26 ✓ 35 ✓ 40 ✓ 48 ✓ 50 ✓ 54 ✓ 115 ✓ 137 ✓ 180 ✓ 186 ✓ 194 ✓ 196 ✓ 221 ✓ 307 ✓ 602 ✓ など ✓（中央値 ✓ 73 ✓）✓
+価格 ✓>= 6 ✓の relic ✓ 出品 ✓があった ✓訪問 ✓: 8 ✓ / 21 ✓
+   ✓のうち ✓「入店時 ✓の gold ✓で買えた ✓」: **0 ✓ / 21 ✓**✓✗✗（出品価格 ✓ 155-287 ✓ > gold ✓）✓
+実際の ✓ relic ✓購入 ✓があった ✓訪問 ✓: 1 ✓ / 21 ✓（それ ✓は arm ✓ run ✓で ✓ GORGET ✓ 191 ✓・STRAWBERRY ✓ 180 ✓を ✓買った ✓もの ✓= ✓new ✓価格 ✓があった ✓から ✓✓）✓
+→ **HEAD ✓ 現在の ✓価格表 ✓（42 件 ✓）のままなら ✓ buy_relic ✓ の ✓ legal action ✓ 自体 ✓が ✓ ほぼ ✓出ない ✓**✓（bridge ✓は ✓ affordable ✓なもの ✓だけ ✓ legal ✓に ✓する ✓✓）✓
+```
+**(b) corpus ✓ 全体 ✓の ✓購入 ✓実績 ✓**（shop ✓ record ✓ 从 ✓`action ✓` ✓で ✓数えた ✓）✓
+```
+buy_relic ✓ record ✓ 112 ✓件 ✓   購入 ✓時の gold ✓: 中央値 **109 ✓** ✓（最小 ✓ 3 ✓ 最大 ✓ 467 ✓）✓
+  買った ✓ relic ✓: CENTENNIAL_PUZZLE ✓ 64 ✓・VAMBRACE ✓ 24 ✓・BURNING_STICKS ✓ 6 ✓・HAPPY_FLOWER ✓ 5 ✓・PENDULUM ✓ 5 ✓・KUNAI ✓ 2 ✓・ORNAMENTAL_FAN ✓ 2 ✓・PARRYING_SHIELD ✓ 2 ✓・GORGET ✓ 1 ✓・STRAWBERRY ✓ 1 ✓
+skip ✓ record ✓ 1,539 ✓件 ✓   skip ✓ 時点の gold ✓ 中央値 ✓ **30 ✓**✓✗（＝ ✓店は ✓ gold ✓を使い切って ✓ 出ている ✓✓）✓
+```
+→ **私達の ✓ relic ✓購入は ✓「安い ✓ 時 ✓だけ ✓」**✓ ✓（中央値 ✓ 109 ✓ gold ✓）✓ ✓→ ✓ 典型的な ✓出品価格 ✓ 155-287 ✓より ✓ 下 ✓✓
+→ **(a)(b) ✓から ✓導かれる ✓結論 ✓**：✓ `goldguard ✓`（buy_relic ✓が ✓legal ✓で ✓ある ✓時の ✓ 順序 ✓変更 ✓）は ✓ **この ✓5 seed ✓では ✓発火 ✓しない ✓可能性 ✓が高い ✓**✓ ✓→ ✓ 結果 ✓が ✓全 seed ✓一致 ✓なら ✓「変更 ✓が ✓悪い ✓」ではなく ✓**「試す ✓ 場 ✓に ✓届かない ✓」**✓と ✓読む ✓✓（teaching 147 ✓）✓
+→ **次の ✓仕事 ✓（未実施 ✓）**：✓ 順序 ✓でなく ✓**shop ✓に入る ✓ gold ✓ を ✓増やす ✓/ 使う ✓順番 ✓を ✓決める ✓**✓ ✓= ✓ 訪問 ✓毎に ✓「card ✓購入 ✓を ✓ 抑えれば ✓ 155 ✓ 以上 ✓残って ✓ relic ✓が ✓買えた ✓か ✓」✓ を ✓ 検算 ✓ する ✓監査 ✓✓（offers ✓の ✓価格 ✓と ✓選んだ ✓ action ✓の ✓ 価格 ✓が ✓ new ✓ trace ✓には ✓ある ✓✓）✓
+**goldguard ✓ panel ✓ 走行中 ✓**（13:02 ✓開始 ✓・5 seed ✓・基準 ✓ control ✓ 70 ✓勝 ✓ 5 ✓敗 ✓）✓ 待受け ✓ → `/tmp/goldguard_watch.log ✓` ✓
