@@ -2175,6 +2175,12 @@ def _core_priority(deck_ids: set[str], available: set[str] | None = None) -> dic
     axis = _axis(deck_ids)
     if axis == "strike":
         cards = ["CARD.HELLRAISER"] if "CARD.PERFECTED_STRIKE" in deck_ids and "CARD.HELLRAISER" not in deck_ids else []
+        # Perfected Strike is an early damage source, not a reason to stop acquiring
+        # Strength. D6A1F8C3E5 passed up Inflame in a shop and two rewards, then lost
+        # to Owl Magistrate with no Strength source. Seed one without encouraging
+        # duplicates or displacing an existing Rupture/Demon Form engine.
+        if not (STRENGTH_CARDS | {"CARD.RUPTURE", "CARD.DEMON_FORM"}) & deck_ids:
+            cards.append("CARD.INFLAME")
     elif axis == "self_damage":
         cards = [card for card in ("CARD.TEAR_ASUNDER", "CARD.OFFERING") if card not in deck_ids]
     elif axis == "vulnerable":

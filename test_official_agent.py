@@ -1693,6 +1693,44 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.INFLAME")
 
+    def test_strike_deck_seeds_strength_before_another_attack(self) -> None:
+        observation = {
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 6 + ["CARD.DEFEND_IRONCLAD"] * 4
+                    + ["CARD.BASH", "CARD.PERFECTED_STRIKE"],
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.UPPERCUT"},
+                {"type": "card_reward", "card_id": "CARD.INFLAME"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.INFLAME")
+
+    def test_strike_deck_buys_first_strength_source_before_basic_removal(self) -> None:
+        observation = {
+            "deck": ["CARD.STRIKE_IRONCLAD"] * 6 + ["CARD.DEFEND_IRONCLAD"] * 5
+                    + ["CARD.BASH", "CARD.PERFECTED_STRIKE"],
+            "legal_actions": [
+                {"type": "remove_card", "card_id": "CARD.DEFEND_IRONCLAD"},
+                {"type": "buy_card", "card_id": "CARD.INFLAME"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["type"], "buy_card")
+
+    def test_strike_deck_with_strength_engine_still_fills_defense_shortage(self) -> None:
+        for engine in ("CARD.INFLAME", "CARD.RUPTURE", "CARD.DEMON_FORM"):
+            with self.subTest(engine=engine):
+                observation = {
+                    "deck": ["CARD.STRIKE_IRONCLAD"] * 6 + ["CARD.DEFEND_IRONCLAD"] * 4
+                            + ["CARD.BASH", "CARD.PERFECTED_STRIKE", engine],
+                    "legal_actions": [
+                        {"type": "card_reward", "card_id": "CARD.INFLAME"},
+                        {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                        {"type": "card_reward_alternative", "option_id": "Skip"},
+                    ],
+                }
+                self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+
     def test_reward_seeds_self_damage_axis_from_one_offer(self) -> None:
         # Neither half of the Rupture engine could enter first: the enabler is docked priority
         # until Rupture is in the deck, and Rupture was a seed only once an enabler was. An offer
