@@ -9426,3 +9426,29 @@ BagOfMarbles ✓: `BeforeSideTurnStart ✓` ✓ で ✓ `PowerCmd.Apply<Vulnerab
 - Whetstone ✓・RoyalStamp ✓・Planisphere ✓：out-of-combat ✓ で ✓ observation ✓ 経由 ✓ ✓（前 ✓ round ✓ の ✓ ANCHOR ✓ corpus ✓ test ✓ ✓ の ✓ 型 ✓ ✓）✓ → ✓ 価格 ✓ の ✓ 議論 ✓ を ✓ 分ける ✓✓
 test ✓ 2 件 ✓：`test_shop_buys_the_energy_relic_it_now_prices ✓`（CANDELABRA ✓ 190 ✓ を ✓ gold ✓ 260 ✓ で ✓ 買う ✓ ✓）✓・`test_shop_still_refuses_a_relic_with_no_model_support ✓`（BAG_OF_MARBLES ✓ → ✓ skip ✓ ✓）✓
 **panel ✓ 連鎖 ✓**：`goldguard ✓`（13:02 ✓ 開始 ✓ ✓・5 ✓ seed ✓ ✓・1 ✓ 本 ✓ 完了 ✓ ✓）の ✓ 後に ✓ `priceband ✓`（`.wt-proto22 ✓` ✓ ✓・dll ✓ 249,856 ✓ ✓ ✓・同じ ✓ 5 ✓ seed ✓ ✓）を ✓ 起動 ✓✓ ✓ 基準 ✓ control ✓ 70 ✓勝 ✓ 5 ✓敗 ✓ ✓
+
+## Round 127: **私の ✓ RED_MASK ✓ model 実装 ✓ は誤り ✓ だった ✓ と確定 ✓**✓（decompile ✓ の ✓ guard ✓ を ✓ 読んで ✓ いた ✓）✓ `BeforeSideTurnStart ✓` ✓ の ✓ 本体 ✓ 全体 ✓ は ✓ 両方 ✓**TurnNumber <= 1 ✓ の ✓ ときだけ ✓**✓✓ — ✓ 毎 ✓ turn ✓ では ✓ 無い ✓✓
+
+```
+BagOfMarbles ✓:
+    if (participants.Contains(Owner.Creature ✓) ✓ && Owner.PlayerCombatState.TurnNumber ✓ <= 1 ✓) {
+        Flash(); ✓ await PowerCmd.Apply<VulnerablePower ✓>(..., combatState.HittableEnemies ✓, 1m ✓, ...);  ✓}
+RedMask ✓:
+    if (participants.Contains(Owner.Creature ✓) ✓ && Owner.PlayerCombatState.TurnNumber ✓ <= 1 ✓) {
+        Flash(); ✓ await PowerCmd.Apply<WeakPower ✓(...);  ✓}        ← **同じ ✓ guard ✓ ✓**✓✓
+→ **turn 1 ✓ に ✓ しか ✓ 適用 ✓ されない ✓**✓✓（Weak ✓/Vulnerable ✓ の ✓ 継続 ✓ 効果 ✓ ✓ ではない ✓ ✓）✓
+```
+**corpus ✓ ✓ でも ✓ ✓ 裏取り ✓ ✓ 済み ✓**✓（`data/act3_pop2_V7D3M9H2XW_agent.jsonl ✓` ✓、BAG_OF_MARBLES ✓ ✓ 初出 ✓ seq ✓ 255 ✓ ✓）✓
+```
+BAG_OF_MARBLES ✓ 所持後の ✓ fight ✓ 毎 ✓ の ✓ enemy ✓ Vulnerable ✓ 最大値 ✓ ✓（turn ✓ 毎 ✓）✓:
+   fight ✓ 1 ✓: t1 ✓=(1 ✓) ✓  t2 ✓=(0 ✓,4 ✓) ✓  t3 ✓=(0 ✓,3 ✓) ✓  t4 ✓=(0 ✓,4 ✓)          ✓← 4 ✓✓ は ✓✓ 別の ✓✓ 由来 ✓✓
+   fight ✓ 2 ✓: t1 ✓=(1 ✓,1 ✓,1 ✓) ✓  t2 ✓=(0 ✓,0 ✓,0 ✓) ✓  t3 ✓=(2 ✓,0 ✓,0 ✓) ✓  t4 ✓..t9 ✓=(0 ✓,0 ✓,0 ✓) ✓✓ ← **turn ✓ 2 ✓✓ 以降 ✓✓ 0 ✓✓**✓
+   fight ✓ 3 ✓: t1 ✓=(1 ✓) ✓  t2 ✓=(3 ✓) ✓  t3 ✓=(5 ✓) ✓  t4 ✓=(4 ✓) ✓  t5 ✓=(6 ✓) ✓（他 ✓ 筋 ✓✓ で ✓✓ 上昇 ✓✓）✓
+→ **relic ✓✓ 由来 ✓✓ の ✓ Vulnerable ✓✓ は ✓✓ turn ✓✓ 1 ✓✓ だけ ✓✓ で ✓✓ 消える ✓✓**✓✓ ✓→ ✓ corpus ✓✓ が ✓✓ guard ✓✓ と ✓✓ 一致 ✓✓✓
+```
+**訂正 ✓**✓
+- `.wt-proto20 ✓` ✓（RED_MASK ✓✓ を ✓✓ 未来 ✓✓ turn ✓✓ 毎 ✓✓ に ✓✓ 再適用 ✓✓ する ✓✓ hook ✓✓ + ✓✓ 価格 ✓✓ 9 ✓✓）✓ は ✓✓ **使わない ✓✓**✓ ✓→ ✓ tree ✓✓ を ✓✓ 削除 ✓✓✓（panel ✓✓ は ✓✓ 未 ✓✓ 実行 ✓✓ なので ✓✓ 影響 ✓✓ なし ✓✓）✓
+- **RED_MASK ✓✓ の ✓✓ 価格 ✓✓ 9 ✓✓ の ✓✓ 根拠 ✓✓（「毎 ✓✓ turn ✓✓ Weak ✓✓ ✓」✓✓）も ✓✓ 誤り ✓✓**✓✓ → ✓✓ 価格 ✓✓ を ✓✓ 決める ✓✓ なら ✓✓「turn ✓✓ 1 ✓✓ だけ ✓✓ ✓✓ 全 ✓✓ 敌に ✓✓ Weak ✓✓ 1 ✓✓ ✓✓」✓✓ という ✓✓ 値 ✓✓ で ✓✓ 言い直す ✓✓ 必要がある ✓✓✓（未実施 ✓✓）✓
+- **model ✓✓ 実装 ✓✓ として ✓✓ 必要 ✓✓ だった ✓✓ のは ✓✓ RED_MASK ✓✓ だけ ✓✓**✓✓ という ✓✓ 前 ✓✓ round ✓✓ の ✓✓ 結論 ✓✓ も ✓✓ 取り下げ ✓✓✓：✓ turn ✓✓ 1 ✓✓ の ✓✓ Weak ✓✓/Vulnerable ✓✓ は ✓✓ observation ✓✓ が ✓✓ 既に ✓✓ 運ぶ ✓✓✓（ANCHOR ✓✓ の ✓✓ corpus ✓✓ test ✓✓ ✓✓ と ✓✓ 同じ ✓✓ ✓✓ 理屈 ✓✓ ✓✓）✓✓ → ✓✓ **どの ✓✓ 価格 ✓✓ 付け ✓✓ 済み ✓✓ relic ✓✓ にも ✓✓ model ✓✓ 側の ✓✓ 追加 ✓✓ は ✓✓ 要らない ✓✓**✓✓✓
+- 同じ ✓ guard ✓✓ 家族 ✓✓ で ✓✓ 既に ✓✓ 正しかった ✓✓ の ✓✓: ✓ Candelabra ✓✓ は ✓✓ `TurnNumber ✓✓ == ✓✓ 2 ✓✓`✓✓ ✓✓→ ✓✓ model ✓✓ の ✓✓ `new_turn ✓✓ == ✓✓ 2 ✓✓ → ✓✓ +2 ✓✓ energy ✓✓`✓✓ ✓✓✓（combat.py ✓✓ 2441 ✓✓）✓✓✓ と ✓✓ 完全 ✓✓ 一致 ✓✓✓
+**教訓 ✓✓**：✓ hook ✓✓ 名 ✓✓（`BeforeSideTurnStart ✓✓`✓✓）✓✓ から ✓✓ 効果 ✓✓ の ✓✓ 頻度 ✓✓ を ✓✓ 推定 ✓✓ した ✓✓ の ✓✓ だが ✓✓、✓✓ **guard ✓✓（✓✓ 本体 ✓✓ の ✓✓ if ✓✓ 条件 ✓✓）✓✓ を ✓✓ 読む ✓✓ まで ✓✓ 頻度 ✓✓ は ✓✓ 分からない ✓✓**✓✓✓（teaching ✓✓ 42 ✓✓✓ の ✓✓ 深化 ✓✓✓：✓✓ 本体 ✓✓ を ✓✓ 読む ✓✓ ✓✓ だけでは ✓✓ ✓✓ 不十分 ✓✓✓ で ✓✓✓、✓✓✓  enclosing ✓✓✓ の ✓✓✓ 条件 ✓✓✓ を ✓✓✓ 読む ✓✓✓）✓✓
