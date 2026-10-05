@@ -330,6 +330,8 @@ class Card:
     variant: str | None = None
     rider: str | None = None
     variant_value: int = 0
+    # Distinguish an observed discounted copy from otherwise identical cards in hand.
+    instance_id: int | None = None
 
 
 CardValue = str | Card

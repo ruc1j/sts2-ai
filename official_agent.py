@@ -15,7 +15,7 @@ from combat import (
     POWERS, SKILLS,
     BURNING_PACT, CINDER, FIEND_FIRE, THRASH,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
-    POTION_STRENGTH, POTION_FAIRY_IN_A_BOTTLE, SELF_DAMAGE, STUNNED_MOVE, _resolve_move, card_name, search,
+    POTION_STRENGTH, POTION_FAIRY_IN_A_BOTTLE, SELF_DAMAGE, STUNNED_MOVE, _effective_cost, _resolve_move, card_name, search,
 )
 
 
@@ -3075,7 +3075,8 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         cards_played_this_turn=max(
             _TURN_PLAYS["cards"],
             BRILLIANT_SCARF_FREE_AFTER
-            if "RELIC.BRILLIANT_SCARF" in observation["player"].get("relics", ())
+            if "cards_this_turn" not in (observation.get("plays") or {})
+            and "RELIC.BRILLIANT_SCARF" in observation["player"].get("relics", ())
             and any(
                 _number(card.get("cost"), -1) == 0 and CARD_COST.get(CARD_NAMES.get(card.get("id"), ""), 0) > 0
                 for card in observation.get("hand") or ()
@@ -3120,6 +3121,20 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             if power["id"] == "POWER.TORIC_TOUGHNESS_POWER" and _number(power["amount"]) > 0
         ),
     )
+    # Mummified Hand and generated cards use SetThisTurnOrUntilPlayed(0). The
+    # discount survives observations, but rebuilding Combat used to lose it. Keep
+    # per-copy identity so a free Bash does not also make the other Bash free.
+    # Known global discounts (FreeAttack, Brilliant Scarf, etc.) already have the
+    # correct modeled cost and must keep their own consumption rules instead.
+    modeled_hand = list(state.hand)
+    observed_free = []
+    for index, (card, observed) in enumerate(zip(state.hand, observation.get("hand") or ())):
+        if (isinstance(card, Card) and isinstance(observed, dict)
+                and _number(observed.get("cost"), -1) == 0 and _effective_cost(state, card) > 0):
+            modeled_hand[index] = replace(card, instance_id=index)
+            observed_free.append(modeled_hand[index])
+    if observed_free:
+        state = replace(state, hand=tuple(modeled_hand), free_cards=tuple(observed_free))
     best, value = search(state, data, simulations, observation["seq"])[0]
     if best == "End turn":
         selected = next(action for action in actions if action["type"] == "end_turn")

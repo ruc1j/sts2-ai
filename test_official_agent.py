@@ -11,6 +11,71 @@ from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND,
 
 
 class OfficialAgentTest(unittest.TestCase):
+    def test_rollout_keeps_a_free_copy_without_discounting_the_other_copy(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1,
+            "plays": {"cards_this_turn": 2},
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 2, "powers": [],
+                       "relics": ["RELIC.MUMMIFIED_HAND", "RELIC.BRILLIANT_SCARF"]},
+            "hand": [{"index": 0, "id": "CARD.BASH", "cost": 0},
+                     {"index": 1, "id": "CARD.BASH", "cost": 2}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{"id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [],
+                         "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.BASH", "hand_index": i, "target_id": 1}
+                              for i in (0, 1)] + [{"type": "end_turn"}],
+        }
+        def capture(state, data, simulations, seed):
+            self.assertEqual(state.cards_played_this_turn, 2)
+            self.assertIn("card:0@0", combat_legal_actions(state))
+            self.assertIn("card:1@0", combat_legal_actions(state))
+            # Paying for the normal copy leaves the discounted copy playable at zero energy.
+            paid = step(state, "card:1@0", data, random.Random(0))
+            self.assertEqual(paid.energy, 0)
+            self.assertIn("card:0@0", combat_legal_actions(paid))
+            free = step(state, "card:0@0", data, random.Random(0))
+            self.assertEqual(free.energy, 2)
+            self.assertEqual(free.free_cards, ())
+            # A held discount expires at the next turn, even when the card is redrawn.
+            next_turn = step(state, END_TURN, data, random.Random(0))
+            self.assertEqual(next_turn.free_cards, ())
+            self.assertTrue(all(official_agent._effective_cost(next_turn, c) == 2 for c in next_turn.hand))
+            return [(END_TURN, 0.0)]
+        official_agent._reset_play_counters()
+        official_agent._seed_exported_plays(observation)
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+
+    def test_observed_scarf_discount_still_ends_after_the_fifth_card(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1, "plays": {"cards_this_turn": 4},
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 0, "powers": [],
+                       "relics": ["RELIC.BRILLIANT_SCARF"]},
+            "hand": [{"index": 0, "id": "CARD.BASH", "cost": 0},
+                     {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "cost": 0}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{"id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [],
+                         "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.BASH", "hand_index": 0, "target_id": 1},
+                              {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                              {"type": "end_turn"}],
+        }
+        def capture(state, data, simulations, seed):
+            self.assertEqual(state.free_cards, ())
+            after = step(state, "card:0@0", data, random.Random(0))
+            self.assertEqual(combat_legal_actions(after), (END_TURN,))
+            return [(END_TURN, 0.0)]
+        official_agent._reset_play_counters()
+        official_agent._seed_exported_plays(observation)
+        with patch("official_agent.search", side_effect=capture):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+
     def test_rollout_keeps_automatic_fairy_without_offering_a_manual_action(self) -> None:
         fairy = "POTION.FAIRY_IN_A_BOTTLE"
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
