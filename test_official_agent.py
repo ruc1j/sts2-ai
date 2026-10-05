@@ -679,6 +679,36 @@ class OfficialAgentTest(unittest.TestCase):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.INFLAME", "free_inflame_direct"))
 
+    def test_paid_inflame_precedes_queen_focus_without_spending_kill_or_survival_energy(self) -> None:
+        observation = {
+            "player": {"hp": 70, "max_hp": 77, "block": 0, "energy": 4, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.INFLAME", "cost": 1, "type": "Power"},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 3, "id": "CARD.FLAME_BARRIER", "cost": 2, "type": "Skill", "vars": [{"id": "Block", "value": 17}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.TORCH_HEAD_AMALGAM", "hp": 91, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 18, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.QUEEN", "hp": 394, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 1},
+                {"type": "card", "card_id": "CARD.FLAME_BARRIER", "hand_index": 3, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["decision_source"], "inflame_before_queen_focus")
+        # Two Strikes can already kill the minion, so do not insert a setup play.
+        observation["enemies"][0]["hp"] = 18
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+        # On a lethal incoming turn, keep the block that can save the player.
+        observation["enemies"][0]["hp"] = 91
+        observation["player"]["hp"] = 10
+        self.assertEqual(choose(observation)["card_id"], "CARD.FLAME_BARRIER")
+
     def test_rage_yields_to_stronger_defense_when_incoming_exceeds_rage_block(self) -> None:
         for incoming, hp, expected in (
             (0, 30, "CARD.RAGE"),

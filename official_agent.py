@@ -1264,6 +1264,17 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
             rupture = next((action for action in cards if action.get("card_id") == "CARD.RUPTURE"), None)
             if rupture:
                 return _tag_action(rupture, "rupture_before_queen_focus")
+        # This shortcut bypasses rollout, so it must leave time to play the Strength
+        # source too. Otherwise two Strikes spend the energy before Inflame can buff
+        # them (astra_goal_r2 seq448). Keep immediate kills and emergency defense first.
+        inflame = next((action for action in cards if action.get("card_id") == "CARD.INFLAME"), None)
+        if inflame and incoming < hp + current_block:
+            energy_after = _number(player.get("energy")) - _number(hand[inflame["hand_index"]].get("cost"))
+            cheapest_attack = min(_number(hand[action["hand_index"]].get("cost")) for action in queen_focusable)
+            minion_hp = sum(_number(enemy_by_id[target].get("hp")) + _number(enemy_by_id[target].get("block")) for target in queen_minion_ids)
+            attack_damage = sum(damage(action, enemy_by_id[action["target_id"]]) for action in queen_focusable)
+            if energy_after >= cheapest_attack and attack_damage < minion_hp:
+                return _tag_action(inflame, "inflame_before_queen_focus")
         bloodletting = next((action for action in cards if action.get("card_id") == "CARD.BLOODLETTING"), None)
         if bloodletting and _self_damage_value(bloodletting, hand) + max(0, incoming - current_block) < hp:
             return _tag_action(bloodletting, "queen_focus_energy")
@@ -1271,7 +1282,8 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         defenses = [action for action in cards if card_value(action, "block") > 0]
         remaining = max(0, incoming - _number(player.get("block")))
         best_block = max((card_value(action, "block") for action in defenses), default=0)
-        if not urgent or best_block < remaining:
+        # Partial block can still save a lethal turn; it need not absorb the whole hit.
+        if (not urgent or best_block < remaining) and not (remaining >= hp and defense_can_survive):
             return _tag_action(max(queen_focusable, key=lambda action: card_value(action, "damage")), "queen_minion_direct")
 
     ovicopter = next((enemy for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.OVICOPTER"), None)
