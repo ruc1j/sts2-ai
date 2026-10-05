@@ -9169,3 +9169,24 @@ test ✓ 2 件 ✓ green ✓（785 ✓ 件 ✓）：`test_shop_buys_the_weak_rel
 control ✓ 基準 ✓（同じ commit ✓ の policy ✓ で測った ✓）✓：evfix_ctrl ✓ 17 勝 ✓ / 20 勝 ✓ / 13 勝 ✓ = 50 勝 3 敗 ✓ ✓ base_ctrl ✓ 5 勝 ✓ / 15 勝 ✓ = 20 勝 2 敗 ✓ ✓ **合計 70 勝 5 敗 ✓**
 arm ✓ の trace ✓ には `offers ✓` が入るので ✓ **何枚の relic をいくらで買ったか ✓ が直接測れる ✓** ✓（待受け → `/tmp/relic_watch.log ✓`）✓
 **remove ✓ が relic より前 ✓ の順番は変えない ✓**（記録済みの fix ✓ を壊さない ✓ 1 commit 1 変更 ✓）✓
+
+## Round 114:ANCHOR ✓ は model 側の実装が要らない ✓ corpus test ✓（ANCHOR ✓ 保有 combat ✓ の turn 1 ✓ で player block = 10 ✓ が observation ✓ に出ている ✓ 4/4 ✓）
+
+`data/act3_recheck_2675e82_N8CQ4ZKP2W_agent.jsonl ✓`（完走 run ✓ relic 16 ✓ に ANCHOR ✓ を含む ✓）✓
+```
+ANCHOR ✓ を持つ combat ✓ の turn 1 ✓ record ✓ 4 件 ✓: player block = 10 ✓ 10 ✓ 10 ✓ 10 ✓（hp 80 ✓ / enemy block 0 ✓）
+→ game ✓ は `BeforeCombatStart ✓` の relic ✓ 効果 ✓ を最初の observation ✓ より前に適用 ✓ している ✓✓
+→ **model ✓ は export 済みの block ✓ を通じて既に受け取っている ✓ → ANCHOR ✓ の model 実装は不要 ✓** ✓
+```
+（teaching 22 ✓「observation ✓ が権威値を持つ ✓」を corpus ✓ で確認 ✓✓ 教訓 ✓：「relic ✓ を model に足す前に ✓ observation ✓ に出ている ✓ を確かめる ✓」✓）
+
+**価格付けた8 relic ✓ の model 側の状態 ✓** ✓（combat.py ✓ の `RELIC_* ✓` 定数表 ✓ 256-285 ✓ に照合 ✓）✓
+```
+UNCEASING_TOP ✓: 実装済み ✓（combat.py:2069 ✓ `if RELIC_UNCEASING_TOP ✓ in relics ✓ and not after.hand ✓ and not after.terminal ✓:` → draw ✓）✓
+BELT_BUCKLE ✓（出品 ✓ 済み ✓ 既存価格 ✓）: 実装済み ✓（276 ✓）✓
+RED_MASK ✓ / MANGO ✓ / GORGET ✓ / STRAWBERRY ✓ / ANCHOR ✓ / DOLLYS_MIRROR ✓ / GNARLED_HAMMER ✓: 定数表に無し ✓
+  → STRAWBERRY ✓ MANGO ✓（max HP ✓）と DOLLYS_MIRROR ✓ GNARLED_HAMMER ✓（deck ✓ に札を足す ✓）と ANCHOR ✓（上の corpus test ✓）は **observation ✓ 経由で model ✓ に届く ✓** ✓ 追加実装不要 ✓✓
+  → **本当に要るかも知れない ✓のは RED_MASK ✓（`BeforeSideTurnStart ✓` で毎 turn ✓ 全敌に Weak 1 ✓）と GORGET ✓（`AfterRoomEntered ✓` で Plating 4 ✓）✓** ✓
+  → **実装する前に ✓ arm trace ✓ で observation ✓ に出ている ✓ を確かめる ✓**（RED_MASK ✓ を買った run ✓ の enemy powers ✓ が毎 turn ✓ WEAK ✓ を保つか ✓ / GORGET ✓ を買った run ✓ の turn 1 ✓ player powers ✓ に Plating ✓ が出るか ✓）✓
+  → rollout ✓ は turn を未来へ進める ✓ ので ✓**毎 turn 適用される power ✓ を model が再適用しないと ✓ 未来の被害 ✓ を過大評価 ✓**✓（precedent ✓: UNCEASING_TOP ✓ の per-event hook ✓ ✓ combo relic ✓ を AfterCardPlayed ✓ で適用 ✓ した実績 ✓）✓
+panel ✓：arm `.wt-proto19 ✓` ✓ 5 seed ✓ 12:22 ✓ 開始 ✓ 1 本目 ✓ 走行中 ✓（12:29 ✓ 時点で RESULT 0 ✓）✓ 待受け → `/tmp/relic_watch.log ✓` ✓
