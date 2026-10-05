@@ -8427,3 +8427,25 @@ model 側は Toxic を play できない札として扱い ✓ rollout は価格
 母数 ✓ 新しい 9 trace で **`legal_actions` に model の play できない札として出るのは `CARD.TOXIC` だけ ✓ 17 record** ✓（combat decision 約 2,600 件の 0.7% ✓）✓
 → **play できる選択肢を増やす変更なので panel 対象 ✓ だが ✓ 17 件では win panel の信号が出ない** ✓（teaching 32 ✓「决定が変わらないのに win panel を走らせない」✓）✓
 **既知の小さな gap として記録し ✓ panel には回さない** ✓（決定の変わらない変更で win を動かさない ✓）✓
+
+## Round 85: `rollout_disabled_no_playable_card` は「札が尽きている」証拠ではなかった ✓ end_turn と同じ状態 ✓（前 round の解釈を訂正 ✓）
+
+9 trace ✓ end_turn で終わった 608 turn を energy と hand から分類した ✓
+```
+energy 0 ✓ hand に札残り ✓        : 480 (79%)  ← 普通 ✓ energy を使い切って終わる ✓
+turn 終了時に hand 空 ✓            :  71 (12%)  ← draw を使い切る ✓
+energy 残り ✓ play できる札があったのに終了 ✓:  51 ( 8%)  ← policy の選択 ✓（狙った終了 ✓ 対象が無い等 ✓）
+energy 残り ✓ だが一番安い札が高い ✓ ordering で stranded ✓:   6 ( 1%)  ✗
+```
+→ **play の順番で energy を無駄にしている案件は 6 件（1%）だけ** ✓✓ ordering の改善は lever ではない ✓
+→ **前 round で「play できる札が無い decision 485 件は hand 不足の另一側」と書いたのは不適切** ✓
+   `rollout_disabled_no_playable_card` は energy を使い切った end_turn の状態 ✓ すなわち通常の終了 ✓ ✓
+   （hand が空の案件は 52 件 ✓ そのものが問題というより ✓ turn 末の通常の姿 ✓）✓
+**败北の瞬間に legal actions が potion と end_turn だけだった** ✓（前々 round ✓）観察は ✓
+「その turn の energy を使い切った ✓ 残った敵を削りきれない ✓」という読み方に直す ✓ ✓
+**火力不足の本体は energy 経済でも ordering でもなく ✓ 1 turn に出せる damage の総量** ✓（前 round までで測った potential ✓ 中央値と下位側の差 ✓ に残る ✓）✓
+
+**trace の key について ✓ 測定を 2 回空振りさせた落とし** ✓
+- JSON は compact ✓（`{"seq":0,"phase":"combat",...}` ✓ space 無し ✓）✓
+- **combat record の action 分類は `type` ✓（`card` 2,009 ✓ `end_turn` 608 ✓ `potion` 58 ✓）** ✓ で ✓ `action_type` ✓ という key は無い ✓
+  → `record.get('action_type')` ✓ を使った監査（lethal audit ✓）は end_turn を 1 件も credit していなかった ✓✗（結果の lethal 判定には影響しなかった ✓ credit 順の再現としては不完全 ✓ だった ✓）✓
