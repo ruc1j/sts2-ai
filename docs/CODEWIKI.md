@@ -9291,3 +9291,20 @@ AM8C6YXHSG ✓ 17 ✓/391 ✓ Act 3 F15 ✓（control ✓ 17 ✓/360 ✓ Act 3 F
 VTW80ZJA2G ✓ 13 ✓/262 ✓ Act 2 F16 ✓（一致 ✓）✓  + 4 本目 ✓（N8CQ4ZKP2W ✓ か D6A1F8C3E5 ✓）✓ 5 本目 ✓ 走行中 ✓
 ```
 → 3 seed ✓ で胜ち数は control ✓ と同一 ✓（1 ✓ seed ✓ で relic 2 個 ✓ を買った ✓が战績は同じ ✓）✓→ **採否は残り 2 seed ✓（完走実績 ✓ の方 ✓）次第 ✓**✓
+
+## Round 120: relic 価格付けが 3 seed ✓ で inert ✓だった理由が測れた ✓ **価格付き relic が「買える状態 ✓」で一度も出なかった ✓**（buy_relic 0 ✓・買えるのに skip ✓ も 0 ✓）→ **棄却ではなく未測定 ✓**✓
+
+arm ✓ の trace ✓（`.wt-proto19/data/relic_arm_* ✓` ✓・`offers ✓` 込み ✓）✓ を `data/shop_offer_audit.py ✓` で読んだ ✓
+```
+seed          shop decision ✓  relic 出品あり ✓  buy_relic ✓  買えるのに skip ✓  出品時の gold 中央値 ✓  割高で買えなかった ✓
+AM8C6YXHSG    ✓ 16 ✓            ✓ 16 ✓           ✓ 2 ✓         ✓ 0 ✓             ✓ 411 ✓             ✓ 0 ✓
+H2LV6ZJ4XW    ✓  8 ✓            ✓  8 ✓           ✓ 0 ✓         ✓ 0 ✓ ✓           ✓ 180 ✓             ✓ 2 ✓ ✗
+VTW80ZJA2G    ✓ 14 ✓            ✓ 14 ✓           ✓ 0 ✓         ✓ 0 ✓ ✓           ✓ 196 ✓             ✓ 1 ✓ ✗
+N8CQ4ZKP2W    ✓  0 ✓            ✓  0 ✓           ✓ 0 ✓         ✓ 0 ✓             ✓ —               ✓ —   ✓（shop ✓ に到達せず ✗✗ ✓ Act 1 ✓ で死んだ ✓）✓
+```
+→ **「買える価格付き relic ✓ を置いていた ✓」ケースは 4 seed ✓ で 0 件 ✓**✓ → 変更は正しく動き ✓ 機会がなかっただけ ✓✓
+→ **inert ✓ の原因 ✓**：relic の価格 155-287 ✓ に対し ✓ shop 時点の gold 中央値が 180 ✓ / 196 ✓ ✓（AM8C6YXHSG ✓ だけ 411 ✓）✓
+→ **つまりこの変更の判定には ✓「relic を買える gold ✓ を持つ run ✓」が必要 ✓**✓（teaching 147 ✓「トリガー ✓ が起きなかった seed ✓ で inert ✓ は証拠ではない ✓」✓）✓
+→ **採否 ✓**：5 本目 D6A1F8C3E5 ✓（control ✓ 15 勝 ✓ Act 3, F5 ✓）を待って ✓ 判定 ✓ ✓（改善 seed 0 ✓ のままなら ✓ **採用しない ✓**✓ が ✓**変更自体の誤りは示されていない ✓**✓）✓
+**副次的な測定 ✓✓**：shop ✓ の gold ✓ が 180-196 ✓ 台中 ✓ relic ✓（155-287 ✓）を買えない ✓ という数字は ✓ 完走 run ✓ の relic 16-17 ✓ と直近 ✓ 10 ✓ の差が ✓**gold の問題 ✓**✓ であることをもう一度支持する ✓（`buy_relic ✓` は corpus ✓ で 106 ✓/4,764 ✓ ✓ 2.2% ✓）✓
+**measurement ✓ のミス ✓**：先に `data/relic_arm_* ✓` を読んで空振り ✓ した ✓（sweep ✓ の artifact ✓ は REPO tree ✓ 配下 ✓→ rsync ✓ は panel ✓ 完了後 ✓ に走る ✓）✓（teaching 134 ✓ の再現 ✓）✓
