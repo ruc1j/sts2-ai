@@ -8756,3 +8756,33 @@ control（evfix_ctrl ✓ 同じ seed ✓） wins=17 ✓ records=360 ✓ depth=Ac
 候補 ✓ WHISPERING_HOLLOW の GOLD が gold を70以上使って shop を枯らした筋 ✓（SAPPHIRE_SEED/BRAIN_LEECH は得になる選択 ✓）✓
 → **残り 2 seed ✓ を揃えてから判断する ✓**（1 seed の差は分岐と混ざる ✓ が ✓ control は 2 commit で同一数字 ✓ なので重い ✓）✓
 `bash-1241` ✓ が完了待ち ✓
+
+## Round 98: batch 1 の悪化の原因を特定 ✓ **DENSE_VEGETATION の TRUDGE_ON は「8 ダメージと引き換えに 61〜99 gold ✓」で ✓ REST 選択はその gold を捨てていた** ✓
+
+`DenseVegetation.cs` ✓ の option 本体 ✓
+```
+TrudgeOn():  CreatureCmd.Damage(..., HpLoss.BaseValue, Unblockable | Unpowered) ✓  →  PlayerCmd.GainGold(DynamicVars.Gold.BaseValue) ✓  （Gold = Rng.NextInt(61,100) ✓）✓
+Rest():      PlayerCmd.MimicRestSiteHeal(Owner) ✓（rest site と同じ回復 ✓）✓
+```
+**TRUDGE_ON = −8 HP ✓ と引き換えに 61〜99 gold ✓✓** ✓ REST = 回復 ✓ で gold は無い ✓
+batch 1 の rule（HP が満タンでなければ REST ✓）は ✓ **gold 側を見ていなかった** ✓✗✗
+→ **回復で約 24 HP を得て ✓ gold で relic を買う筋を捨てた ✓** 可能性がある ✓
+（**深い run ほど relic が多い ✓ Act 2 boss 時点で 10 ✓ vs 7 ✓** ✓ 前 round まで ✓ の測定と整合 ✓✓）✓
+
+**trace での実際の差分** ✓（同じ seed ✓ AM8C6YXHSG ✓）✓
+```
+arm  seq 92: option_index 1 ✓ REST を選択 ✓（accept ✓）→ seq 93: `event_fallback` ✓→ `invalid_event_action` ✓（REST で回復した後に続きの page ✓ があり ✓ そこでは回復済み ✓ rule が None ✓→委ねた ✓）
+ctrl seq 92: `event_fallback` ✓→ 弃却 ✓（1 page だけで game の fallback が処理 ✓）
+arm  gold: 24..296 ✓ 終了付近 37 ✓ 57 ✓ 222 ✓ / ctrl gold: 24..373 ✓ 終了付近 255 ✓ 267 ✓ 358 ✓ 373 ✓
+arm  の event: 11 件 ✓（VAKUU ✓ TINKER_TIME ✓ POTION_COURIER ✓ HUNGRY_FOR_MUSHROOMS ✓ GRAVE_OF_THE_FORGOTTEN ✓ に到達しない ✓）
+ctrl の event: 17 件 ✓（HUNGRY_FOR_MUSHROOMS → RELIC.BIG_MUSHROOM ✓ を取る ✓）
+```
+**WHISPERING_HOLLOW ✓ は両 trace に出ていない** ✓ → 前 round で疑った「gold を70以上使って shop を枯らす ✓」は起きていない ✓✓
+**BRAIN_LEECH ✓ も出ていない** ✓ ✓ 実際に効いた rule は **DENSE_VEGETATION の REST ✓ 1 件だけ** ✓✓
+→ 11 勝 vs 17 勝 ✓ records 191 vs 360 ✓ の差は ✓ **その 1 件の gold/HP 交換と ✓ その後のルート分岐 ✓** に集中する ✓
+
+**rule の直し方** ✓（gold と HP の両方を price する ✓）✓
+- HP が危険域（例：max の 4 分の一以下 ✓ など ✓ 8 ダメージで死ぬリスク ✓）なら REST ✓
+- そうでなければ **TRUDGE_ON ✓（8 HP を払って gold ✓ → shop で relic ✓）** ✓
+**HP が低いときだけ REST ✓** に絞る ✓ のが実測に沿う ✓（今の rule は HP が中位でも REST ✓ を選んでいた ✓✗）✓
+sweep の残り 2 seed ✓（`bash-1241` ✓）を揃えてから ✓ rule を書き直して再 panel ✓ する ✓
