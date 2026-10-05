@@ -8922,3 +8922,28 @@ turn 4..10: 99→98 ✓ 97 ✓ … 92 ✓（1 turn に 1 ✓ ずつしか減ら�
 → control 17 勝 ✓（委ねる ✓） > 改訂版 14 勝 ✓（gold ✓ を取る ✓） > 未改訂 11 勝 ✓（回復 ✓ を取る ✓） ✓ この seed では **委ねるのが最良 ✓** ✓✗
 `ChainsOfBindingPower ✓` は combat.py に 1 件 ✓（扱いあり ✓）✓
 残りの seed ✓（H2LV6ZJ4XW ✓ VTW80ZJA2G ✓）を揃えて採否を決める ✓（`bash-1270` ✓）✓
+
+## Round 104: Act 3 完走の実績は 3 seed に集中 ✓ **N8CQ4ZKP2W ✓ 6 run ✓ D6A1F8C3E5 ✓ 3 run ✓ H2LV6ZJ4XW ✓ 1 run ✓** ✓ 完走 panel の seed を変えるべき ✓
+
+`data/*_result.json` ✓ で `act_3_complete: true` ✓ の 11 件 ✓
+```
+N8CQ4ZKP2W ✓: act3_recheck_2675e82 ✓ codex_goal_20260919 ✓ current_commit_known_seeds ✓ wide_base ✓ wide_sblock ✓ candidate_rupture2 ✓ candidate_vulnlethal ✓ candidate_last_hp…（H2LV6ZJ4XW ✓）
+  deck 31-33 ✓✓  **relic 16-17 ✓✓**  max HP 81-87 ✓  gold 15-70 ✓
+D6A1F8C3E5 ✓: astra_base ✓ astra_seed2 ✓ astra_goal_intangible1 ✓   deck 29 ✓  **relic 16 ✓**  **max HP 98 ✓**  gold 75 ✓
+H2LV6ZJ4XW ✓: candidate_last_hp_selfdamage ✓            deck 28 ✓  relic 14 ✓  **max HP 130 ✓✓**  gold 59 ✓
+```
+現在の panel の3 seed ✓（AM8C6YXHSG ✓ H2LV6ZJ4XW ✓ VTW80ZJA2G ✓）での直近の実績 ✓：relic 10 ✓ max HP 85-116 ✓ **Act 3 完走 0 ✓**
+→ **panel の seed 構成が Act 3 完走を測れない ✓**（一度も完走していない seed ✓ だけで測っている ✓✗✗）✓
+→ **次の sweep から N8CQ4ZKP2W ✓ と D6A1F8C3E5 ✓ を入れる ✓** ✓（完走が観測できる seed ✓ で測る ✓）✓
+
+**QUEEN は倒せる ✓ と確認** ✓（完走 run の trace ✓ `act3_recheck_2675e82_N8CQ4ZKP2W_agent.jsonl` ✓）✓
+```
+QUEEN 戦 **12 turn ✓** ✓ boss HP **400 ✓→ 17 ✓**（383 削った ✓✓）✓ player は同じ FRAIL 99 ✓ WEAK 99 ✓ VULNERABLE 99 ✓ を乗っていた ✓
+```
+→ **debuff 下でも 12 turn で 383 ✓（約 32/turn ✓）出せばQUEEN は勝てる ✓** ✓
+→ 败けた run ✓（QUEEN 戦 8-10 turn ✓ 77 削っただけ ✓ = 約 9.6/turn ✓✗✗）との差は **1 turn あたりの damage が 3 倍以上** ✓✓
+→ **Act 3 完走への道の定量 ✓**：Weak 下で 32/turn ✓ 相当の火力 ✓ + relic 14-17 ✓ + max HP 98-130 ✓ ✓
+（前 round の「Act 3 boss 完走 0 ✓」は seed の選び方も一因 ✓✓：完走実績のある seed ✓ を panel に入れていなかった ✓）✓
+
+`PowerCmd.Remove ✓` は combat.py:1786 ✓ で handling 済み ✓（export された 6 件は全て敌が自分の power を消すもの ✓：OWL_MAGISTRATE の Soar ✓ TEST_SUBJECT ✓ WATERFALL_GIANT の SteamEruption ✓ TOUGH_EGG の Hatch ✓）✓ → gap ではない ✓
+`Expose ✓`（0 cost ✓ Uncommon ✓ Skill ✓）は敌の power を2つ消す card ✓（ArtifactPower ✓ 分岐あり ✓）✓ **player 側の debuff を消す効果ではない ✓** → QUEEN の 99 スタック ✓ を消す筋は見つかっていない ✓
