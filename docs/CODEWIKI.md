@@ -9214,3 +9214,22 @@ precedent ✓: combat.py ✓ 2445-2454 ✓ に「周期性の relic ✓ 効果 �
 - `if RELIC_SELF_FORMING_CLAY in relics: ✓` は combat.py ✓ に **2箇所 ✓（2010 ✓ と 2455 ✓）** あって `count==1 ✓` が落ちた ✓ → SPARKLING_ROUGE ✓ の 2行 ✓ と組にして一意化 ✓✓
 - `RELIC_CLOAK_CLASP, ✓` は test_combat.py ✓ に **2箇所 ✓（import ✓ と 1142 ✓ の使用箇所 ✓）** ✓ → import 行の `RELIC_CLOAK_CLASP, SETUP_STRIKE, ✓` ✓ で一意化 ✓✓
 panel ✓：arm `.wt-proto19 ✓` ✓ 5 seed ✓ の 1 本目 ✓ 走行中 ✓（12:33 ✓ 時点で RESULT 1 ✓ 件）✓ 次 ✓：paired ✓ 版 `.wt-proto20 ✓` ✓ の panel ✓（19 ✓ の結果を見てから ✓ 起動 ✓）✓
+
+## Round 116:GORGET ✓ は model 側の実装で足りている ✓ corpus test ✓（買った run ✓ の player Plating ✓ が turn 1→4 ✓ で 4 ✓→3 ✓→2 ✓→1 ✓→消える ✓＝model ✓ の decrement ✓ と一致 ✓）
+
+arm ✓ が GORGET ✓ を買った run ✓（`.wt-proto19/data/relic_arm_AM8C6YXHSG ✓` ✓ seq 229 ✓ で 191 ✓ gold ✓ で購入 ✓）✓ その後 ✓ 各 combat ✓ の turn ごとの (player block ✓, PLATING ✓)✓
+```
+fight seq 354 ✓: (t1 ✓ 0 ✓,4 ✓) (t2 ✓ 0 ✓,3 ✓) (t3 ✓ 0 ✓,2 ✓) (t4 ✓ 0 ✓,1 ✓) (t5 ✓以降 0 ✓,無し ✓)
+fight seq 407 ✓: (t1 ✓ 0 ✓,4 ✓) (t2 ✓ 0 ✓,3 ✓) (t3 ✓ 8 ✓,2 ✓) (t4 ✓ 8 ✓,1 ✓) …
+fight seq 451 ✓: (1 ✓,4 ✓) (2 ✓,3 ✓) (3 ✓,2 ✓)      fight seq 469 ✓: 4 ✓→3 ✓→2 ✓→1 ✓→無し ✓
+→ **game ✓ は GORGET ✓ の Plating ✓ を 1 turn に 1 ✓ ずつ減らす ✓** ✓ → **model ✓ の `if _power(player_powers ✓, "PlatingPower ✓") ✓ and new_turn ✓ > 1 ✓: -1 ✓`（combat.py ✓ 2482 ✓）と一致 ✓**✓
+→ player ✓ 側は turn 終了時に `player_block += plating ✓`（combat.py ✓ 2294-2296 ✓）も入っている ✓ → **GORGET ✓ の model 実装は追加不要 ✓**✓
+→ **価格付けた8種で model 側に実際に足すのは RED_MASK ✓ だけ ✓**（`.wt-proto20 ✓` ✓ で実装済み ✓ 787 件 green ✓）✓
+```
+**panel ✓ 2 本 ✓**（arm `.wt-proto19 ✓` ✓ 5 seed ✓）✓
+```
+AM8C6YXHSG ✓: 17 勝 1 敗 ✓ records 391 ✓ Act 3, Floor 15 ✓  vs control ✓ 17 勝 1 敗 ✓ 360 ✓ Act 3, Floor 15 ✓ → 同勝同深度 ✓ records +31 ✓
+H2LV6ZJ4XW ✓: 20 勝 1 敗 ✓ records 388 ✓ Act 3, Floor 6 ✓   vs control ✓ 20 勝 1 敗 ✓ 388 ✓ Act 3, Floor 6 ✓  → **完全一致 ✓（この seed ✓ では inert ✓：買える価格付き relic ✓ が無かった可能性 ✓ 大 ✓）**
+```
+→ seed 1 ✓ では GORGET ✓ + STRAWBERRY ✓ を実際に買った ✓（control ✓ は同じ店で gold 419 ✓ を残して skip ✓）✓
+→ 残り 3 seed ✓（VTW80ZJA2G ✓ N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓）✓ 採否は 5 seed ✓ 揃えて判定 ✓
