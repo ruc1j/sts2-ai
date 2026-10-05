@@ -9005,3 +9005,34 @@ VTW80ZJA2G    13 勝 ✓ 262 ✓ Act 2, Floor 16 ✓      16 勝 ✓ 325 ✓ Act
 **egg の変更は実装済み ✓**（`.wt-proto18 ✓` ✓ 785 件 green ✓）✓：BYRDONIS_NEST ✓ で `RELIC.BYRDPIP ✓` を持っていれば TAKE ✓（egg ✓→ ByrdSwoop ✓）✓ 無ければ **EAT ✓（+7 max HP ✓・decompile `CreatureCmd.GainMaxHp(MaxHpVar 7m ✓)`）** ✓
 `test_event_option_table_preserves_hardcoded_choices ✓` は player を持たない observation ✓ で `BYRDONIS_NEST.LEAVE/TAKE ✓`（実在しない key ✓）を使い TAKE ✓ を固定していた ✓ → **実測に合わせて relic 保持 ✓ 条件で TAKE ✓** に更新 ✓（test の目的である「hardcoded の選択 ✓」は relic あり ✓ で保持 ✓）✓
 → **panel の対応 ✓**：control `base_ctrl ✓`（N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓ で走行中 ✓）と同じ2 seed ✓ で arm `egg_arm ✓` ✓ を走る ✓（Act 3 完走が観測できる seed ✓ で測る ✓）✓
+
+## Round 108: run が止まる原因は agent の decision 時間では無い ✓（1 decision 最大 0.6 s ✓）✓ 停まり方は game 側 ✓「rewards screen を待つ ✓」で timeout ✓
+
+**decision 時間の実測** ✓（`choose(observation, enemy_data ✓ 104 monster ✓, simulations=100 ✓)` ✓ を各 fight の turn 1 ✓ で呼んだ ✓）✓
+```
+evdense_arm_AM8C6YXHSG seq 3 ✓ 敌 3 ✓ 手数 12 ✓ → 0.55 s ✓ (rollout_success ✓)
+evdense_arm_AM8C6YXHSG seq 5 ✓ 敌 2 ✓ 手数 5  ✓ → 0.37 s ✓
+evdense_arm_H2LV6ZJ4XW seq 3-5 ✓ → 0.26 ✓ 0.24 ✓ 0.21 s ✓
+base_ctrl_N8CQ4ZKP2W seq 17 ✓ 敌 3 ✓ 手数 15 ✓ → 0.60 s ✓
+最大 0.6 s ✓✓ → **game の watchdog 30 s ✓ に agent は届いていない ✓** ✓
+```
+**初測定の失敗 ✓** ✓ 1 回目は `enemy_data` を渡せず None ✓→ rollout が走る前に heuristic tail ✓ に落ちて全 decision 0.00 s ✓✗（teaching 46 ✓ と同じ ✓ 正しい状態を渡さない測定は 0 が出る ✓）✓ 104 monster ✓ をロードして測り直した ✓✓
+
+**停まり方の内訳** ✓（直近 sweep の `fail=` ✓ 20 件 ✓）✓
+```
+「Entering Monster room ✓ (Act 3 ✓)」で 30 s 無 progress ✓：9 ✓（最多 ✓）✓
+「Entering Boss room ✓ (Act 2 ✓)」：4 ✓   「Entering Boss room ✓ (Act 3 ✓)」：2 ✓   「Entering Elite room ✓ (Act 1 ✓)」：1 ✓
+  → **room に入った直後に停まる ✓ 合計 16 ✓/20 ✓** ✓
+"Rewards screen did not appear after combat ✓"：3 ✓   fail=none ✓：1 ✓
+```
+`base_ctrl_N8CQ4ZKP2W` ✓ の mod.log ✓ の末尾 ✓：`AutoSlayer.WaitForRewardsScreenAsync ✓` → `PlayRunAsync ✓` → `WithTimeout ✓` ✓ の exception ✓ ✓ trace ✓ の最後は seq 142 ✓ combat_end ✓（= 战斗は終わり ✓ 報酬画面が出ず ✓ timeout ✓）✓ agent の decision ✓ は seq 140 `lethal_direct ✓` ✓ 141 `heuristic_fallback / rollout_disabled_no_playable_card ✓` ✓ まで正常 ✓
+→ **stall は combat 終了後の報酬画面への遷移 ✓ で起きており ✓ agent の応答時間 ✓ は無関係 ✓** ✓（次の調査：card_reward bridge ✓ が画面より先に answer ✓ していないか ✓）✓
+
+**完走 seed の control 基準 ✓（commit `37bb82c` ✓ tree `.wt-ctrl-evfix ✓`）✓**
+```
+RESULT base_ctrl N8CQ4ZKP2W   wins= 5 ✓ losses=1 ✓ records=111 ✓ depth=Act 1, Floor 14 ✗（Elite 室进入 ✓ で stall ✓）
+RESULT base_ctrl D6A1F8C3E5   wins=15 ✓ losses=1 ✓ records=302 ✓ depth=Act 3, Floor  5 ✓（Monster 室进入 ✓ で stall ✓）
+SWEEP DONE base_ctrl ✓
+```
+→ かつて Act 3 を完走した seed ✓（`act3_recheck_2675e82 ✓` などの commit ✓）でも ✓ **今の commit ✓ は Act 3 には入るが ✓ 完走していない ✓**✓（D6A1F8C3E5 ✓ では Act 3 到達 ✓）✓
+→ **egg 条件付き変更の arm `egg_arm ✓`（tree `.wt-proto18 ✓` ✓ 同じ2 seed ✓）は base_ctrl 完了を受けて起動 ✓** ✓（連鎖 ✓）✓
