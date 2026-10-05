@@ -8360,3 +8360,43 @@ H2LV6ZJ4XW は 3 回一致したので ✓「一致する seed もあればし�
 → **その 1 件が上記の pin された test** ✓（`test_unknown_event_returns_bridge_fallback` ✓）✓「unknown event は game に委ねる」という前 round の決定を test が留めている ✓
 前 round の決定は「測れないから変えない」✓ だった ✓ 今は測れるようになった ✓ ので ✓ **arm（変更あり ✓）vs control（HEAD ✓）の panel で測ってから adopting する** ✓（teaching 9 ✓「agent が価格付けできる範囲を広げる変更は panel で測る」✓）✓
 panel 中に test を更新するのは ✓ 採用を決めたときだけ ✓
+
+## Round 83: **hand の札は `vars` で現在の DynamicVar を出している** ✓ 2,144/2,144 件 ✓（前 round の「観測できない」は誤り ✓）
+
+`CombatBridge.cs` の observation 部 ✓
+```
+vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
+```
+trace で combat record の hand entry を数えた ✓ **`vars` を持つ hand entry 2,144 ✓ 持たない 0 ✓** ✓ 例 ✓
+`CARD.STRIKE_IRONCLAD` (upgrade 0) → `[{"id": "Damage", "value": 6}]` ✓（print 値 5 ではない ✓ 現在の修正込みの値 ✓）✓
+**draw_pile / discard_pile / exhaust_pile の entry には `vars` が無い** ✓（`id` ✓ `upgrade` ✓ `enchantment` ✓ のみ ✓）✓
+
+**前 round の Rampage 棄却の一部は前提が違った** ✓✗✗ 私は「札の現在の Damage BaseValue は観測から読めない」と書いた ✓
+それは **pile 側の entry を見た結果** ✓ で ✓ **hand 側は出ていた** ✓ ✓
+→ **Rampage の growth を忠実に seed する道はある** ✓：play しようとしている copy の `vars` の `Damage` を読めば ✓
+その copy が実際に何ダメージを出すかが分かる ✓（run 中の持続 ✓ combat を跨いでも ✓ 観測される ✓）✓
+「自分で玩んだ数を数える」方式（過大評価 ✓ 一致 43/52 → 18/52 ✓）を棄却した判断はそのまま ✓✓ が ✓
+**代替案として export 値を使う方式が残る** ✓（次 round ✓）✓
+
+**agent 側は既に export 値を使っている所がある** ✓ `official_agent.py:605` `_card_value(action, hand, metric)` ✓
+`card.get("vars")` を読み ✓ "calculated" を含む名前は `calculated` 側に分け ✓ max を取り ✓ 無ければ KNOWN_CARD_DAMAGE / KNOWN_CARD BLOCK に倒す ✓（× `_card_hit_count` ✓）✓
+`_is_self_damage` ✓（626）✓ `_self_damage_value` ✓（637）✓ Whirlwind の X 扱い ✓（600）✓ Battle Trance の `Cards` var ✓（1206 ✓ 1564 ✓ 1807）✓ 1959 の Block 判定 ✓ 2861 ✓ 3089 ✓
+**一方 rollout（`combat.py`）は `CARD_DAMAGE[card] + CARD_UPGRADE_DAMAGE + maul_bonus/thrash_bonus` で組み直す** ✓（`combat.py:3366-3369` ✓）✓
+→ 同じ札の火力を ✓ agent の即決側は観測値 ✓ rollout は再計算 ✓ で見ている ✓（census が 612/614 ✓ なので再計算は大体合っている ✓）✓
+
+**Status 札は game 側で play できる** ✓ `Toxic.cs` は `base(1, CardType.Status, CardRarity.Status, TargetType.None)` ✓
+`HasTurnEndInHandEffect` ✓（hand に残ったまま turn end で owner に 5 damage ✓）✓ `CardModel.cs:792` に `protected virtual bool IsPlayable => true;` ✓
+**Toxic は IsPlayable を override していない ✓ → play できる ✓**（1 energy ✓ 消費 ✓ turn end の self damage を回避 ✓）✓
+model は Toxic を play できない札として扱い ✓ rollout は price しない ✓
+corpus の新しい 9 trace では **`legal_actions` に model が play できない札として出るのは `CARD.TOXIC` だけ ✓ 17 record ✓** ✓
+→ 小さいが実在する gap ✓（次 round で測る ✓：17 件で実際に play されていたか ✓ 取っていれば何を守れたか ✓）✓
+
+**combat decision の fallback 内訳** ✓ 新しい 9 trace ✓
+```
+decision_reason: None 2136 ✓ rollout_disabled_no_playable_card 485 ✓ rollout_rejected_unsafe 26 ✓ rollout_rejected_self_damage 26 ✓ obscura_focus 2
+```
+**「play できる札が無いので rollout を使わなかった」decision が 485 件** ✓（全体の約 2 割 ✓）✓
+前 round までに見た「败北の瞬間 legal actions が potion と end_turn だけ ✓」と同じ形 ✓
+→ 火力が続かない問題の另一側 ✓（札が尽きる ✓）✓ policy 変更の候補ではなく ✓ まず card reward / 枚数経済の測定に残す ✓
+
+panel の panel（event policy ✓）は arm 1 本目が走行中 ✓ 0 件の event 拒否 ✓（4 件 accepted ✓ 0 rejected ✓）✓ 完了待ち `bash-1165` ✓
