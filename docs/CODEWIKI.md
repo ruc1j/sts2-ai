@@ -8515,3 +8515,23 @@ arm tree の event record: accepted 45 ✓ **rejected 0** ✓（前の build で
 
 tooling の落とし ✓ arm の artifact は REPO 相対 ✓（`.wt-proto12/data/evfix_arm_*_agent.jsonl` ✓）✓ に書かれる ✓
 → 待受け script の glob を `data/evfix_arm_*` にしていたので event 集計が `{}` になった ✓✗（teaching 6 ✓「run が実際に何を書いたか見る」✓）✓
+
+## Round 89: card reward で「高 damage を積む」は深さと無関係 ✓ むしろ深く行った run の方が高 damage offer を避けている ✓
+
+前々 round（boss 直前の 1 手 ✓ 96% が最高 damage を取っていた ✓）の累積版 ✓ 全 card_reward decision を足した ✓（587 run ✓）✓
+**「回避」の定義** ✓ その decision で最高 damage の offer があり ✓ 選んだ札の damage がそれより低い ✓場合 ✓
+**火力の累積損失** ✓ 選んだ札を最高 damage の offer と入れ替えたときの potential 増分 ✓（同じ greedy 近似 ✓ 0 cost 札で水増しされる ✓ 比較専用 ✓ teaching 13 ✓）✓
+```
+Act 1 止まり 100 run: 回避 中央値 4 ✓ 75%  4 ✓ 回避ゼロ 14 run ✓ 累積損失 中央値 16 ✓ 75%  57 ✓ 最大 168
+Act 2 止まり 331 run: 回避 中央値 4 ✓ 75%  5 ✓ 回避ゼロ  0 run ✓ 累積損失 中央値 16 ✓ 75%  33 ✓ 最大 176
+Act 3 止まり 156 run: 回避 中央値 6 ✓ 75% 10 ✓ 回避ゼロ  0 run ✓ 累積損失 中央値 13 ✓ 75%  31 ✓ 最大 187
+```
+**Act 3 まで行った run の方が高 damage offer を避けていた** ✓（中央値 6 ✓ vs 4 ✓）✓ **損失した火力は少ない** ✓（13 ✓ vs 16 ✓）✓
+→ **「reward で火力札を積むほど深くなる」は corpus で支持されない** ✓✓（Elite を多く取る run が深い ✓ 前 round ✓ と同じ形 ✓）✓
+**現在の reward policy（debuff ✓ block ✓ 強化 ✓ relic 価値 ✓ を価格に入れ ✓ 高 cost 札の上限 ✓ block-starved ✓ 40% ✓ の gate ✓）は ✓ 深い run の振る舞いと同じ方向** ✓ ✓
+→ **この筋（card reward で火力を増やす ✓）は lever ではない ✓ 閉じる** ✓
+（「damage を積め」という直感に反する ✓ ので ✓ 両方の測り方 ✓ 直前 ✓ と累積 ✓ で確認した ✓）✓
+
+**boss 進入時の火力不足の説明として残る** ✓ potential の下位側の差 ✓（Act 2 止まりの 25 パーセント 30 ✓ vs Act 3 到達 79 ✓）✓ は ✓
+**札の選択の質ではなく ✓ その seed が配った札と強化 ✓ の差** ✓（agent が選べる範囲は offer まで ✓ 選んでいない ✓）✓ に寄っている ✓
+次の測定候補 ✓ 強化（upgrade ✓）の状態 ✓ 枚数 ✓ relic の火力寄与 ✓ を potential から分離して見る ✓
