@@ -8017,3 +8017,43 @@ sweep `sw59` の途中結果 ✓ 4 seed 中 3 本完了 ✓
 - D6A1F8C3E5 ✓ 15 勝 1 敗 ✓ 302 records ✓ Act 3, Floor 5 ✓（fixafter と同じ ✓）
 - **H2LV6ZJ4XW ✓ 20 勝 1 敗 ✓ 388 records ✓ Act 3, Floor 6** ✓（この seed には過去の Act 3 完走の記録がある ✓ 現状の build では Floor 6 の monster 戦で敗北 ✓）
 4 本目 VTW80ZJA2G は走行中 ✓ 完了待ち `bash-1045` ✓
+
+## Round 72: 4 seed sweep `sw59` 完了 ✓ 65 勝 4 敗 ✓ **Act 3 完走 0/4** ✓ hypotheses 2 件は corpus で測って棄却 ✓
+
+HEAD `9bbf6a2`（Throwing Axe ✓ Secret Weapon ✓ 多重 play の debuff 順序 ✓ が入った状態 ✓）✓ 08:46〜09:08 ✓
+
+```
+RESULT sw59 AM8C6YXHSG wins=17 losses=1 records=360 depth=Act 3, Floor 15  fail=Watchdog 30.0s at Entering Boss room (Act 3, Floor 15)
+RESULT sw59 D6A1F8C3E5 wins=15 losses=1 records=302 depth=Act 3, Floor 5   fail=Watchdog 30.0s at Entering Monster room (Act 3, Floor 5)
+RESULT sw59 H2LV6ZJ4XW wins=20 losses=1 records=388 depth=Act 3, Floor 6   fail=Watchdog 30.1s at Entering Monster room (Act 3, Floor 6)
+RESULT sw59 VTW80ZJA2G wins=13 losses=1 records=262 depth=Act 2, Floor 16  fail=Watchdog 30.1s at Entering Boss room (Act 2, Floor 16)
+```
+
+前の panel（`cb226c5` ✓ 3 seed ✓）と同じ seed では AM8C6YXHSG が 17 勝のまま records 354→360 ✓
+D6A1F8C3E5 は 14 勝 → **15 勝 ✓ Act 3 Floor 4 → Floor 5 ✓** ✓ Act 3 完走は両 panel で 0 ✓
+**H2LV6ZJ4XW は 20 勝 28 records まで進んだが Act 3 Floor 6 で敗北** ✓ この seed には過去の完走記録（result file ✓ HP 7 ✓）があるので ✓
+現在の build ではそのルートに届いていない ✓（teaching 17 ✓ 忠実度修正が勝数を落とすことはある ✓）✓
+
+**敗北の瞬間の形が 4 本とも同じ** ✓ 最後の combat record を見た ✓
+- AM8C6YXHSG vs `MONSTER.QUEEN`: 敌 171/400 ✓ player **1 HP ✓ block 0** ✓ turn 10 ✓ FRAIL 92 ✓ VULNERABLE 92 ✓ WEAK 92 ✓ STRENGTH 4 ✓
+  legal actions は **potion 3 個と end_turn だけ** ✓（play できる札が無い ✓）
+- H2LV6ZJ4XW vs `MONSTER.SLIMED_BERSERKER`: 敌 141/261 ✓ player **18 HP ✓ block 6** ✓ turn 6 ✓ STRENGTH 6 ✓ RUPTURE 1 ✓ WEAK 1 ✓
+  legal actions は **potion と end_turn だけ** ✓
+→ **手札が尽きて火力が続かないまま敌を殺しきれない** ✓ という形 ✓（model の食い違いではなく火力の経済 ✓）✓
+
+**棄却した hypothesis 1: Status 札の掃除が足りない** ✓ 全 corpus の shop record 4,764 件で agent の action を数えた ✓
+`buy_card 1445 ✓ skip 1433 ✓ remove 1039 ✓ buy_potion 741 ✓ buy_relic 106 ✓` ✓
+`choose_shop` は remove を持っていて Curse を消している ✓ **Status/Curse が deck に残っていた shop は 4,764 件中 84 件だけ** ✓（1 枚 49 件 ✓ 2 枚 35 件 ✓）✓
+→ 掃除は既に使われていて ✓ Status 汚染は corpus レベルでは薄い ✓ **lever ではない** ✓
+（H2LV6ZJ4XW の run で DECAY が hand に出たのは 1 run の観察 ✓ 一般化しなかった ✓ teaching: 1 run から結論しない ✓）✓
+
+**棄却できないが測れない hypothesis: Act 3 で RestSite を取らない路線** ✓ ルートを選ぶ札を trace から復元した ✓
+- H2LV6ZJ4XW Act 1: Monster 5 ✓ Elite 3 ✓ **RestSite 4** ✓ / Act 2: Monster 4 ✓ RestSite 3 ✓ / **Act 3: Ancient ✓ Monster ✓ Unknown ✓ Monster ✓ Monster ✓ Unknown ✓（RestSite 0 ✓）** ✓
+- AM8C6YXHSG Act 3: Monster 4 ✓ **RestSite 3 ✓** Treasure ✓ Elite ✓ Boss に到達 ✓
+Act 3 で rest を 1 も取らなかった run が Floor 6 で死んでいる ✓ 示唆的だが ✓
+**Act 2・Act 3 の map graph が disk に残っていない** ✓（`data/sw59_*_map.json` は `act: ACT.OVERGROWTH` の 1 act 分だけ ✓ 64 points ✓）✓
+→ rest がそもそも選択可能だったかを検証できない ✓ **現状の artifact では測定不能** ✓（teaching 80 ✓ 記録された artifact が記録した範囲を見る ✓）✓
+次の run では act ごとの map file を残す方法を考える ✓
+
+**combat model の忠実度側は動いていない** ✓ 前 round の census で arm corpus 614 中 612 ✓ 新しい run 218 中 218 ✓
+Rampage growth は採用せず ✓（一致 43/52 → 18/52 ✓ 前 round ✓）✓
