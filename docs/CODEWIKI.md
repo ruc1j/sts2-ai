@@ -8449,3 +8449,16 @@ energy 残り ✓ だが一番安い札が高い ✓ ordering で stranded ✓: 
 - JSON は compact ✓（`{"seq":0,"phase":"combat",...}` ✓ space 無し ✓）✓
 - **combat record の action 分類は `type` ✓（`card` 2,009 ✓ `end_turn` 608 ✓ `potion` 58 ✓）** ✓ で ✓ `action_type` ✓ という key は無い ✓
   → `record.get('action_type')` ✓ を使った監査（lethal audit ✓）は end_turn を 1 件も credit していなかった ✓✗（結果の lethal 判定には影響しなかった ✓ credit 順の再現としては不完全 ✓ だった ✓）✓
+
+## Round 86: potion 経済は wall ではない ✓ run 中 4〜10 個を使っており ✓ 終了時に持有したままでも火力差は埋まらない ✓
+
+9 run ✓（`sw59` ✓ `sw64` ✓ `evdiag` ✓）✓ potion の流れを数えた ✓
+```
+run 中の potion 使用数: 4 個 x3 run ✓ 5 x1 ✓ 7 x3 ✓ 10 x2 ✓
+run 中の potion 購入数: 0 x1 ✓ 1 x4 ✓ 3 x4 ✓（使用数は購入数を越える ✓ event / 敌 drop 由来分が有る ✓）✓
+败北・終了時点の potion 所持数: 0 x4 run ✓ 1 x3 ✓ 2 x1 ✓ 3 x1 ✓  → 9 run 中 5 run が 1 個以上持ったまま終わっている ✓
+```
+**溜めて使っていないのではなく ✓ 使い切っても足りない** ✓✓
+（QUEEN 戦の最后で legal actions に potion が3個並び ✓ それらを使っても 171/400 を削り切れなかった ✓ 前 round まで ✓）✓
+→ potion を「より良い時に使う」改善は ✓ counterfactual が取れないので 지금은 対象にしない ✓
+（holding が敗因かどうかを測る物差しが無い ✓ 測れないものには panel を使わない ✓ teaching 32 ✓）✓
