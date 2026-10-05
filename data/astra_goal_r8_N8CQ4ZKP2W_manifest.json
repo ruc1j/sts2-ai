@@ -1,0 +1,25 @@
+{
+  "seed": "N8CQ4ZKP2W",
+  "simulations": 100,
+  "head": "f6dd939c2405b58a5006d9b58088f0d9a010f462",
+  "started": 1791209420.800344,
+  "sha256": {
+    "official_agent.py": "74517789b46cf59e4e0640e09995c5a04e69bc2e3189a4b805add043ea2bca4f",
+    "combat.py": "9e66d157a63a1b8e98f8c8cfb0836486b40645d2deaa9d61981b529072070af6",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "da95390c2e467eff10ee78f8a59e48b2a2ee1089dc6de4523fb57bda08879ffa"
+  },
+  "source_commit": "f6dd939c2405b58a5006d9b58088f0d9a010f462",
+  "outcome": {
+    "status": "incomplete",
+    "act_3_complete": null,
+    "reason": "User interruption; process handle and game absent; no terminal combat or fresh result",
+    "last_seq": 380,
+    "combat_wins": 13,
+    "combat_losses": 0
+  },
+  "artifacts_sha256": {
+    "agent.jsonl": "f5e47ad5c0b85e71ee8a5429848f5ea9c0664711598b48b3d25013a5e750c73c",
+    "mod.log": "0fbd98274a84e811e0bb6978bb6b2a746c018722c4c766ce7aaeed6523d6914b",
+    "map.json": "f93d53542759400009c4adce97de29bd4d9473dace58bb9434b081fd3838e9ca"
+  }
+}
