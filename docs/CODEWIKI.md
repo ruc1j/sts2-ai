@@ -9036,3 +9036,28 @@ SWEEP DONE base_ctrl ✓
 ```
 → かつて Act 3 を完走した seed ✓（`act3_recheck_2675e82 ✓` などの commit ✓）でも ✓ **今の commit ✓ は Act 3 には入るが ✓ 完走していない ✓**✓（D6A1F8C3E5 ✓ では Act 3 到達 ✓）✓
 → **egg 条件付き変更の arm `egg_arm ✓`（tree `.wt-proto18 ✓` ✓ 同じ2 seed ✓）は base_ctrl 完了を受けて起動 ✓** ✓（連鎖 ✓）✓
+
+## Round 109: **「launcher が停まっている ✓」は誤読だった ✓ 9 run 全て最後の fight で死んでいる ✓**（`combat_end ✓: won=False ✓ hp=0 ✓`）✓ fail= の文言は死後の AutoSlay の混乱 ✓
+
+`AutoSlayer.WaitForRewardsScreenAsync ✓` の中身 ✓（decompile ✓）✓
+```
+await WaitHelper.Until(() => NOverlayStack.Instance?.Peek() is NRewardsScreen ✓ || (NMapScreen.Instance?.IsOpen ?? false ✓), ct, TimeSpan.FromSeconds(10 ✓), "Rewards screen did not appear after combat ✓");
+```
+→ **戦闘終了後 ✓ 10 s のうちに「報酬画面 ✓」か「map ✓ が開いている ✓」が必要 ✓** ✓
+→ **player が死んだ ✓ 戦闘では報酬画面も map も開かない ✓** ✓ → 10 s で timeout ✓ → 自動で "Rewards screen did not appear ✓" 系の fail ✓ が出る ✓
+
+**panel 9 run ✓ 全ての trace 末尾 ✓** ✓
+```
+evdense_arm_AM8C6YXHSG ✓ last phase combat_end ✓ 最後の combat_end = (won False ✓, hp 0 ✓) ✓ combat_end 15 ✓（= 14 勝 + 1 死 ✓）
+evdense_arm_H2LV6ZJ4XW ✓ (False ✓, 0 ✓) ✓ combat_end 21 ✓（20 勝 ✓）✓ evdense_arm_VTW80ZJA2G ✓ (False ✓, 0 ✓) ✓ 17 ✓（16 勝 ✓）
+evscore_arm ✓ 3 本 ✓ 全て (False ✓, 0 ✓) ✓   evfix_ctrl ✓ 3 本 ✓ 全て (False ✓, 0 ✓) ✓
+```
+→ **全ての run は最後の fight で死んで終わっている ✓✓** ✓（`losses=1 ✓` ✓ と一致 ✓）✓
+→ **sweep の `fail= ✓` の "Last activity: Entering Monster room ✓" 等は死の直前の room 進入 ✓ を示すだけで ✓ stall ✓ では無い ✓**✗✗
+→ 前 round で「room 進入直後に停まる ✓ 16/20 ✓」と数えたのは **死の signature ✓ を stall ✓ と読み違えていた** ✓✓（teaching 83 ✓「lost run は result ファイルを書かない ✓」の続き ✓：**fail 文言をそのまま信用しない ✓**）✓
+→ **残っている本当の調査先 ✓**：`112.7 s ✓ no progress ✓` のような長い停止 ✓ は fight 中の play ✓（agent が無 log ✓ で 112 s ✓ 試行 ✓）と AutoSlay の log ✓ の更新が噛み合わないケース ✓ があり得る ✓ → **死んだ run ✓ と区別するには trace 末尾の `combat_end.won ✓` を見る ✓** ✓（今回の 9 run ✓ は全て死亡 ✓）✓
+
+**測定の読み方の更新 ✓**
+- `depth=Act N, Floor M ✓` = **そこで死んだ ✓** ✓（Act 3 Floor 6 ✓ = Act 3 の fight で死亡 ✓✓）✓
+- Act 3 到達 run が完走しない ✓ 理由は **Act 3 の fight に勝てない ✓** ✓（前々 round ✓ の QUEEN ✓ の 1 turn 火力 ✓ と同じ結論 ✓に収束 ✓）✓
+- 完走 seed の control 基準 ✓（`37bb82c ✓`）✓：N8CQ4ZKP2W ✓ 5 勝 ✓ Act 1 Floor 14 ✓ で死亡 ✓ / D6A1F8C3E5 ✓ 15 勝 ✓ Act 3 Floor 5 ✓ で死亡 ✓
