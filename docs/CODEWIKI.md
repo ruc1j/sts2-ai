@@ -8535,3 +8535,26 @@ Act 3 止まり 156 run: 回避 中央値 6 ✓ 75% 10 ✓ 回避ゼロ  0 run �
 **boss 進入時の火力不足の説明として残る** ✓ potential の下位側の差 ✓（Act 2 止まりの 25 パーセント 30 ✓ vs Act 3 到達 79 ✓）✓ は ✓
 **札の選択の質ではなく ✓ その seed が配った札と強化 ✓ の差** ✓（agent が選べる範囲は offer まで ✓ 選んでいない ✓）✓ に寄っている ✓
 次の測定候補 ✓ 強化（upgrade ✓）の状態 ✓ 枚数 ✓ relic の火力寄与 ✓ を potential から分離して見る ✓
+
+## Round 90: **Act 3 の入口は Ancient ✓ から全て Monster の連続 ✓** ✓ 一戦で 30〜54 HP 失って崩れる ✓
+
+per-act の map file ✓（arm tree ✓ `.wt-proto12/data/evfix_arm_*_map_ACT.GLORY.json` ✓）✓ と trace の walk ✓ を突き合わせた ✓
+**Act 3 の最初の node は Ancient ✓（選べない ✓）で ✓ その children は全て Monster** ✓✓
+```
+AM8C6YXHSG Act 3: Ancient → children ['Monster','Monster','Monster','Monster'] ✓ → 選んだ walk: Monster hp 66 → Unknown → Unknown → Monster 70 → **Monster 16 ✓ そこで死亡** ✓（その node の children: ['Monster','RestSite' ✓] ✓ map 全体の RestSite 8 ✓）
+H2LV6ZJ4XW Act 3: Ancient → children ['Monster','Monster','Monster'] ✓ → Monster 116 → Unknown → Monster 107 → Monster 77 → **Unknown 38 ✓ 死亡** ✓（唯一の children: ['RestSite' ✓] ✓ RestSite 8 ✓）
+```
+**Act 3 の fight で失う HP** ✓（同じ act の連続 node の hp_after ✓）✓
+- AM8C6YXHSG: 70 → 16 ✓ **一戦で 54** ✓
+- H2LV6ZJ4XW: 116 → 107 ✓ → 77 ✓（**-30 ✓**）→ 38 ✓（**-39 ✓**）
+corpus の一戦の损失 中央値 17 ✓（前 round ✓）に対し ✓ **Act 3 の入口の fight は 30〜54** ✓✗✗
+**しかも入口が連続 Monster ✓ なので最初の RestSite に辿り着く前に削り切られる** ✓✓（死んだ node の次が RestSite ✓ だった ✓ 前 round の H2LV6ZJ4XW と同じ形 ✓）
+
+**arm run は boss 時点で健全だった** ✓（Act 2 boss 進入 HP 78 ✓ 98 ✓ 80 ✓ corpus 中央値 17 ✓ とは違う ✓）✓
+→ **これらの seed の壁は「HP を持たず boss を迎える」ではなく ✓「Act 3 入口の連続 fight で 80 HP 前後を失う」こと** ✓✓
+Act 2 walk は rest を boss 直前に取れている ✓（(4,14) ✓ (1,14) ✓）✓ Act 2 boss を越えても ✓ Act 3 の rest なしの連続 fight で死ぬ ✓
+
+**残る仮説の形** ✓ routing（入口が強制 ✓ 選択肢が狭い ✓）ではなく ✓ **Act 3 の fight 自体での被ダメージ** ✓ ✓
+→ 次の測定 ✓ Act 3 の fight で何をされたか（その fight の敌 id ✓ 被 damage の内訳 ✓ 取れた block/回避 ✓）✓
+**elite を多く取り rest を多く取って boss を越えた run が ✓ Act 3 で死ぬ ✓ という形が定量的に取れた** ✓ ✓（Act 3 rest 8 ✓ 回の graph ✓ を持ちながら ✓ 入口で殺される ✓）✓
+control sweep `evfix_ctrl` は走行中 ✓（10:49 ✓ seed 1 ✓）✓ 完了待ち `bash-1165` ✓
