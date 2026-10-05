@@ -9084,3 +9084,32 @@ WRIGGLER の hp 19-20 ✓・STRENGTH 2 ✓・intents Attack ✓/Buff+StatusCard 
 → `generic_multi_primary_focus_direct ✓` は 14 件 ✓/3,283 ✓（0.4% ✓）✓ → **swarm が dumb fallback ✓ で処理されている ✓ という仮説は却下 ✓** ✓
 → 残る筋 ✓：**Act 1 のこの fight を HP 54 ✓ で受けた ✓ こと ✓**（map の選び方 ✓）と ✓ **Wriggler 群の被 damage 総量 ✓** ✓ の方 ✓
 `egg_arm ✓` 1 本目 N8CQ4ZKP2W ✓ = 5 勝 ✓ 111 records ✓ Act 1 Floor 14 ✓ で control ✓ と完全一致 ✓（この seed ✓ では変更が inert ✓）✓ 2 本目走行中 ✓
+
+## Round 111: egg の relic 条件付き ✓ **棄却 ✓**（arm ✓ 5 勝 Act 1 ✓ / 11 勝 Act 2 ✗✗ ✓ control ✓ 5 勝 Act 1 ✓ / 15 勝 Act 3 ✓）✓ そして **shop record に `legal_actions ✓` は無い ✓**という測定ミスの訂正 ✓
+
+```
+seed          control ✓ base_ctrl ✓（`37bb82c ✓` ✓）        arm ✓ egg_arm ✓（`.wt-proto18 ✓` ✓）
+N8CQ4ZKP2W    5 勝 1 敗 ✓ 111 ✓ Act 1, Floor 14 ✓         5 勝 1 敗 ✓ 111 ✓ Act 1, Floor 14  ✓ 完全一致 ✓（inert ✓）
+D6A1F8C3E5    15 勝 1 敗 ✓ 302 ✓ Act 3, Floor  5 ✓         11 勝 1 敗 ✓ 224 ✓ Act 2, Floor 16  ✗✗ -4 勝 ✓ Act 3 に入れない ✓
+→ **改善 0 件 ✓ 悪化 1 件 ✓ 一致 1 件 ✓ → 採らない ✓** ✓（`.wt-proto18 ✓` は artifact を写して削除 ✓）✓
+```
+→ **egg を EAT ✓ に回す変更は有害だった ✓** ✓（+7 max HP ✓ の方が egg ✓→ ByrdSwoop ✓ より悪い ✓）✓
+→ **前 round の相関測定 ✓（egg ✓ 無し群の Act 3 到達 23% ✓ vs egg+relic ✓ 52% ✓）は ✓ 「egg を取らない ✓」を支持しない ✓** ✓：相関 ✓ を政策に落とすには panel ✓ が必要 ✓ for real ✓✓（teaching 1 ✓ の再現 ✓ gap-filling ✓ ≠ 勝つ ✓）✓
+
+**測定の訂正 ✓✗** ✓ shop record の中身 ✓（`evfix_ctrl_H2LV6ZJ4XW ✓` seq 103 ✓）✓
+```
+keys: action ✓ deck ✓ gold ✓ phase ✓ potion_id ✓ purchased ✓ seq ✓ slot_index ✓ decision_* ✓
+legal_actions: **null ✓** ✗✗ ✓   action: `buy_potion ✓` ✓ potion_id: POTION.FYSH_OIL ✓ slot_index ✓ gold ✓
+```
+→ **shop では bridge が `legal_actions ✓` を出していない ✓** ✓ 選んだ `action ✓` だけ ✓
+→ 私が「直近 118 shop record ✓ で relic 出品は 0 件 ✓」と数えたのは **dict の legal_actions ✓ を探して全件落ちた ✓ 測定ミス ✓**✓✗（teaching 112 ✓）✓
+→ 正しく数えられるのは action ✓ の側 ✓（corpus ✓ 4,764 件 ✓：buy_card 1445 ✓ skip 1433 ✓ remove 1039 ✓ buy_potion 741 ✓ **buy_relic 106 ✓** ✓）✓
+→ **つまり「relic が出たのに買わなかった ✓」は今の trace では測れない ✓**（出品情報が無い ✓）✓
+→ **constructive な次 ✓**：**shop の出品一覧 ✓（relic ✓ card ✓ potion ✓ と price ✓）を export する ✓**（`plays ✓` を export した前例 ✓ teaching 76 ✓ と同じ ✓ bridge 側変更 ✓ build ✓ 要 ✓）✓
+
+**完走 run の relic 一覧 ✓（11 件中 7 件以上に出現 ✓）** ✓
+```
+BURNING_BLOOD ✓ 11/11 ✓（初期 relic ✓）✓ **BYRDPIP ✓ 10/11 ✓** ✓ TOASTY_MITTENS ✓ 8/11 ✓ CENTENNIAL_PUZZLE ✓ 8/11 ✓ GOLDEN_PEARL ✓ 7/11 ✓ PEN_NIB ✓ 7/11 ✓ ORNAMENTAL_FAN ✓ 7/11 ✓
+LANTERN ✓ 7/11 ✓ CANDELABRA ✓ 7/11 ✓ RED_MASK ✓ 7/11 ✓ ANCHOR ✓ 7/11 ✓ VAJRA ✓ 7/11 ✓ FIDDLE ✓ 7/11 ✓ STRAWBERRY ✓ 7/11 ✓ PERMAFROST ✓ 7/11 ✓
+official_agent.py ✓ に記載が無い ✓：BYRDPIP ✓ LANTERN ✓ CANDELABRA ✓ RED_MASK ✓ ANCHOR ✓ VAJRA ✓ STRAWBERRY ✓ FIDDLE ✓（記載あり ✓：TOASTY_MITTENS ✓ CENTENNIAL_PUZZLE ✓ GOLDEN_PEARL ✓ PEN_NIB ✓ ORNAMENTAL_FAN ✓ PERMAFROST ✓）✓
+→ ただし **入手が選択を伴わないもの ✓（初期 ✓/報酬 ✓/宝 ✓）もある ✓** ✓ので ✓ 先に出品の可視化 ✓ が必要 ✓
