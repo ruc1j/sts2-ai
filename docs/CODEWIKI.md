@@ -8897,3 +8897,28 @@ Monster 4.6 ✓ Elite 0.3-0.4 ✓ RestSite 3.1-3.2 ✓ Shop 1.2 ✓ Unknown 3.7 
 ```
 → Act 2 の通り道の種類は boss 進入 HP の高低と無関係 ✓ ✓（进入 HP の差は fight の中身 ✓ の側 ✓）✓
 改訂版 panel `evdense_arm` ✓ は 11:29 時点で batch 1 完了を受けて起動 ✓（`bash-1270` ✓）✓
+
+## Round 103: QUEEN 戦の形を特定 ✓ **turn 3 から player に FRAIL 99 ✓ WEAK 99 ✓ VULNERABLE 99 ✓ が乗り ✓ 1 turn に 1 ずつしか減らない ✓** ので 400 HP を削り切れない ✓
+
+`data/enemies_glory.json` ✓ の QUEEN ✓（`MinInitialHp 400 ✓`）✓
+```
+YOU_ARE_MINE_MOVE ✓ intent [Debuff ✓] ✓ effects: PowerCmd.Apply FrailPower `99m ✓` ✓ WeakPower `99m ✓` ✓ VulnerablePower `99m ✓` ✓   ← player へ ✓
+PUPPET_STRINGS_MOVE ✓ intent [CardDebuffIntent ✓] ✓ effects: PowerCmd.Apply ChainsOfBindingPower `3m ✓` ✓
+BURN_BRIGHT_FOR_ME_MOVE ✓ intents [Buff ✓, Defend ✓] ✓ effects: StrengthPower `strengthAmount ✓` ✓ + CreatureCmd.GainBlock `20m ✓` ✓
+```
+実 trace ✓（`evfix_ctrl_AM8C6YXHSG` ✓ QUEEN 戦 ✓ turn ごとの player powers ✓）✓
+```
+turn 1: hp 99 ✓ powers: THORNS 3 ✓
+turn 2: hp 87 ✓  + CHAINS_OF_BINDING 3 ✓（PUPPET_STRINGS ✓）
+turn 3: hp 80 ✓  + **FRAIL 99 ✓ WEAK 99 ✓ VULNERABLE 99 ✓** RUPTURE 1 ✓
+turn 4..10: 99→98 ✓ 97 ✓ … 92 ✓（1 turn に 1 ✓ ずつしか減らない ✓✗）✓ turn 9-10 で player hp 1 ✓
+```
+→ **QUEEN 戦は「 Weak ✓ でこちらの damage が半減 ✓ Vulnerable ✓ で 1.5 倍 ✓ 受ける ✓」が 9 turn 続く戦い** ✓✓
+→ 前 round までに見た「QUEEN に 8 turn で 77 しか削れていない ✓」の説明 ✓：**Weak 99 ✓ が原因 ✓** ✓（STRIKE の exported Damage が 6.75 ✓ と小かった ✓ のも整合 ✓）✓
+→ **Act 3 boss で止まる runs の壁の正体** ✓（50 勝 panel ✓ で Act 3 完走 0 ✓ の最大要因 ✓）✓
+→ 次の打ち手の候補 ✓（**まだ測っていない ✓ 推測 ✓**）✓：QUEEN 戦に入る前に Weak/Frail/Vulnerable を消す手段 ✓（Purification ✓ 等の解除 ✓ の有無 ✓）✓ または **Weak で減る前に削る ✓ turn 1-2 の総量 ✓** ✓（QUEEN は turn 2 で Debuff ✓ を打つ ✓ ので ✓ その前にどれだけ入れられるか ✓）✓
+
+**panel ✓ 改訂版 1 本目 ✓**：`evdense_arm AM8C6YXHSG wins=14 ✓ losses=1 ✓ records=305 ✓ depth=Act 3, Floor 6 ✓`
+→ control 17 勝 ✓（委ねる ✓） > 改訂版 14 勝 ✓（gold ✓ を取る ✓） > 未改訂 11 勝 ✓（回復 ✓ を取る ✓） ✓ この seed では **委ねるのが最良 ✓** ✓✗
+`ChainsOfBindingPower ✓` は combat.py に 1 件 ✓（扱いあり ✓）✓
+残りの seed ✓（H2LV6ZJ4XW ✓ VTW80ZJA2G ✓）を揃えて採否を決める ✓（`bash-1270` ✓）✓
