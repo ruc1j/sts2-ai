@@ -8192,3 +8192,30 @@ boss と同数の fight で削られている ✓ = 削られ方は boss だけ�
 ** Elite / 戦いを選んだ node の数と ✓ その時に他により安い選択肢があったか ** ✓を ✓ act 単位の graph ✓（`..._map_ACT.HIVE.json` ✓ `..._map_ACT.GLORY.json` ✓）✓ と trace の route ✓ から測る ✓
 前 round の rest 検証では Act 1 の graph しか無く検証できる遷移が 57 件だった ✓ 新しい run では 3 act 分揃う ✓ので ✓ 同じ検証を act 全部でやる ✓
 sweep `sw64`（HEAD `3b65c2c` ✓ 09:29 ✓ H2LV6ZJ4XW ✓ EAIF2UUVCK ✓ 9PCQMO0DAY ✓）は走行中 ✓ 完了待ち `bash-1107` ✓
+
+## Round 77: 「Elite を避けて HP を守る」は lever でないと測った ✓ Act 3 まで行った run の方が Elite を多い ✓
+
+**matched artifact で検証できる形にした** ✓ tag `mapfix_H2LV6ZJ4XW` は trace ✓ と 3 act の graph ✓ が対応する ✓
+→ **座標の不一致 0 件 ✓ walk 38 段すべて graph 上で解決 ✓** ✓（前 round の 3,822 件の不一致は古い trace と map の取り違えだった ✓）✓
+その run で **HP 20 以下で次に移動した局面は 2 件だけ** ✓
+- Act 1 の (6,6) Elite 戦後に **9 HP** ✓ options は Shop のみ ✓（rest は無かった ✓）✓
+- Act 3 の (3,5) Unknown 後に 18 HP ✓ options は RestSite のみ ✓ → **rest へ移動する前に Floor 6 の fight で死んでいる** ✓（移動先は rest ✓）✓
+Act 3 の walk はほぼ強制 ✓（前 round ✓）✓
+
+**corpus で Elite / RestSite / Monster・Unknown の選択数を最終到達別に数えた** ✓（mod log が有る 582 run ✓ trace の map record の point_type ✓ boss で act 区切り ✓）✓
+```
+最終 Act 1 で止まった  99 run: Act1 Elite 中央値 0 ✓ 合計  33 ✓ RestSite 中央値 3 ✓ Monster/Unknown 中央値 9
+最終 Act 2 で止まった 327 run: Act1 Elite 中央値 0 ✓ 合計 124 ✓ Act2 Elite 中央値 0 ✓ 合計  98 ✓ RestSite 3〜4 ✓ Monster/Unknown 8〜9
+Act 3 まで行った      156 run: Act1 Elite 中央値 2 ✓ 合計 268 ✓ Act2 Elite 中央値 1 ✓ 合計  84 ✓ Act3 Elite 中央値 0 ✓ 合計  52 ✓ RestSite 3 ✓ Monster/Unknown 7〜8
+```
+**深く進んだ run の方が Act 1 で Elite を 2 倍近く取っている** ✓（1 run あたり 1.7 ✓ vs 0.38 ✓）✓
+→ **Elite を避けて HP を温存する方針は深さと負の相関 ✓ 逆方向** ✓
+Elite は relic ✓ と札の報酬 ✓ 来源で ✓ その成長が次の act を持たせている ✓（Act 3 死の relic 一覧は12個 ✓）✓
+Monster/Unknown の数は Act 3 到達 run の方が少ない ✓（中央値 7 ✓ vs 9 ✓）✓ = **道中の雑戦を減らし Elite を取っている** ✓ という形 ✓
+現在の map policy（relic 価値で Elite を好む ✓ fewest-combats ✓）はこの相関と矛盾しない ✓
+「HP を守るために node を選ぶ」仮説は ✓ rest 検証 ✓（前 round ✓ 選択可能 15/15 ✓）と合わせて ✓ **棄却** ✓
+
+残る hypotheses（次）✓
+- shop の relic 購入が 4,764 decisions 中 106 件 ✓（buy_card 1,445 ✓）✓ → **relic が shop に出る頻度**を確認する ✓ 出ていないなら policy の問題ではない ✓
+- card reward の選択 ✓（前々 round で potential 80 / 22 の差を見た ✓）✓ を到達と関連づけて測る ✓
+sweep `sw64` は走行中 ✓（09:34 時点で seed 1 が Act 2 ✓ `..._map_ACT.HIVE.json` まで出力 ✓）✓ 完了待ち `bash-1107` ✓
