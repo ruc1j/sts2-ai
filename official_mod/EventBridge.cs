@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Godot;
 using HarmonyLib;
 using MegaCrit.Sts2.Core.AutoSlay.Handlers.Rooms;
@@ -127,6 +127,16 @@ internal static class EventRoomHandlerPatch
             }),
         });
 
+        // The trace otherwise records only the option we clicked, so "an event offered relic X ✓ and we ✓
+        // took something else ✓" is invisible.  Record the offered options alongside every event decision ✓.
+        var offerList = indexed.Select(item => new
+        {
+            option_index = item.Index,
+            text_key = item.Button.Option.TextKey,
+            is_proceed = item.Button.Option.IsProceed,
+            relic_id = item.Button.Option.Relic?.Id.ToString(),
+        }).ToArray();
+
         EventAction action;
         try
         {
@@ -134,7 +144,7 @@ internal static class EventRoomHandlerPatch
         }
         catch (TimeoutException)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "agent_timeout", decision_source = (string?)null, decision_reason = (string?)null });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "agent_timeout", options = offerList, decision_source = (string?)null, decision_reason = (string?)null });
             return EventChoiceResult.Fallback;
         }
 
@@ -143,14 +153,14 @@ internal static class EventRoomHandlerPatch
         {
             // Record what we were actually asked to click: a third of our event choices are rejected, and the
             // trace otherwise only says "rejected", which cannot tell a wrong type from an out-of-range index.
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", attempted_type = action.Type, attempted_option_index = action.OptionIndex, attempted_text_key = action.TextKey, attempted_relic_id = action.RelicId, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", attempted_type = action.Type, attempted_option_index = action.OptionIndex, attempted_text_key = action.TextKey, attempted_relic_id = action.RelicId, options = offerList, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
         var selected = indexed[optionIndex].Button;
         if (!eligible.Any(item => item.Index == optionIndex) || selected.Option.TextKey != action.TextKey ||
             selected.Option.Relic?.Id.ToString() != action.RelicId)
         {
-            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", attempted_type = action.Type, attempted_option_index = action.OptionIndex, attempted_text_key = action.TextKey, attempted_relic_id = action.RelicId, eligible_text_keys = eligible.Select(item => item.Button.Option.TextKey), decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            AgentIo.Trace(new { seq, phase = "event", event_id = eventId, action = "fallback", reason = "invalid_event_action", attempted_type = action.Type, attempted_option_index = action.OptionIndex, attempted_text_key = action.TextKey, attempted_relic_id = action.RelicId, eligible_text_keys = eligible.Select(item => item.Button.Option.TextKey), options = offerList, decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
             return EventChoiceResult.Fallback;
         }
 
@@ -162,6 +172,7 @@ internal static class EventRoomHandlerPatch
             option_index = optionIndex,
             text_key = selected.Option.TextKey,
             relic_id = selected.Option.Relic?.Id.ToString(),
+            options = offerList,
             decision_source = action.DecisionSource,
             decision_reason = action.DecisionReason,
         });

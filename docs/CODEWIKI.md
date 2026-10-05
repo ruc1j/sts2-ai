@@ -9342,3 +9342,26 @@ seed AM8C6YXHSG ✓(evdense_arm ✓): peak 628 ✓ → seq 228 `remove ✓`(628 
 - **gold 不足 ✓ ではなく ✓「店内の順序 ✓」が壁 ✓**✓ ✓→ `choose_shop ✓` は 1) core 札 ✓ 2) potion ✓ 3) **remove ✓（relic ✓ より前 ✓）** ✓ 4) defense 札 ✓ 5) draw 札 ✓ 6) **relic ✓（>= 6 ✓）** ✓ 7) 通常の札 ✓ ✓ので ✓ 入店直後の decision ✓ で remove ✓ と card ✓ が gold ✓ を削る ✓ ✓→ relic ✓ の分岐 ✓ が回る頃には ✓ 買えない ✓✓（`relic ✓ が買えるのに skip ✓ 0 件 ✓` ✓ とも整合 ✓✓：skip ✓ 時点で ✓ もう affordable ✓ な relic ✓ が無い ✓✓）✓
 - **evdense_arm ✓ の run ✓ では remove ✓ の後に relic ✓ を買った ✓ 例がある ✓**（448 ✓ gold ✓ の時点で ✓）✓ → 順序 ✓ が裏目 ✓ に出る ✓ことも ✓ 表目 ✓ に出る ✓ことも ✓ある ✓ ✓→ **測るべき問い ✓：同じ gold ✓ の場で relic ✓ と card/remove ✓ のどちらを選ぶ ✓べきか ✓**（前 panel ✓ が inert ✓ だった理由 ✓ がここ ✓ にある ✓）✓
 - **remove ✓ の優先 ✓ は記録済みの fix ✓（deck を減らす ✓, astra_goal_cards1 ✓ の 28 枚化 ✓）✓なので ✓ 一方的に外さない ✓**✓ ✓→ 次 ✓ のテスト ✓は「core 札でない ✓ card ✓ に対して ✓ 買える価格付き relic ✓ を優位にする ✓」✓ の形 ✓ で ✓ panel ✓ にとる ✓（未実施 ✓）✓
+
+## Round 123: EventBridge ✓ の `options ✓` export ✓ 検証 ✓ 合格 ✓ commit ✓（**17/17 ✓ の event record ✓ に出た ✓**✓ 战績 ✓ は control ✓ と byte 一致 ✓）✓ 直ちに ✓「何が出て ✓ 何を置いたか ✓」が見える ✓ようになった ✓
+
+`RESULT evoptexport ✓ AM8C6YXHSG ✓ wins=17 ✓ losses=1 ✓ combat_records=360 ✓ depth=Act 3, Floor 15 ✓` ✓ = control ✓（evfix_ctrl ✓ 17 ✓/360 ✓ Act 3 F15 ✓）✓ → **决定 ✓ は変わっていない ✓**✓
+
+```
+event record 17 ✓ 件 ✓ 全てに options ✓ あり ✓ ✓（combat record 360 ✓）✓
+relic ✓ を出す event ✓ と私たちの選択 ✓:
+  NEOW ✓                  → 出品 [FISHING_ROD ✓ ARCANE_SCROLL ✓ LEAFY_POULTICE ✓] ✓ → 選んだ ✓ FISHING_ROD ✓
+  TEZCATARA ✓            → 出品 [YUMMY_COOKIE ✓ STORYBOOK ✓ PUMPKIN_CANDLE ✓] ✓   → 選んだ ✓ YUMMY_COOKIE ✓
+  VAKUU ✓                → 出品 [FIDDLE ✓ DISTINGUISHED_CAPE ✓ JEWELED_MASK ✓] ✓  → 選んだ ✓ FIDDLE ✓
+  HUNGRY_FOR_MUSHROOMS ✓ → 出品 [BIG_MUSHROOM ✓ FRAGRANT_MUSHROOM ✓] ✓            → 選んだ ✓ BIG_MUSHROOM ✓
+→ **BYRDPIP ✓ は event ✓ で一度も出ていない ✓**✓（この run ✓ 17 event ✓ 中 ✓ 0 ✓ 件 ✓）✓ → **BYRDPIP ✓ の入手筋 ✓は Rest ✓ の HATCH ✓（前 round ✓ 確定 ✓）だけ ✓**✓という裏取り ✓✓
+→ これ ✓ で「event ✓ が relic ✓ を2つ以上出した ✓のに ✓私達は1つしか選ばない ✓」時の ✓ 比較 ✓ が測れる ✓✓（teaching 76 ✓/134 ✓ の系 ✓✓）✓
+```
+**shop ✓ の側 ✓にも ✓ 1 件 ✓追加 ✓**（`.wt-proto21 ✓` ✓ 785 件 ✓ green ✓）✓：`choose_shop ✓` は **gold ✓ を全く見ていない ✓**✓（コード ✓中に ✓ gold ✓ 参照 ✓ 0 ✓）✓ので ✓「価格付き relic ✓ と remove ✓ を ✓両方 ✓ 買えない gold ✓のとき ✓ relic ✓ を先に取る ✓」✓ 条件 ✓ を追加 ✓✓
+```
+if best_relic ✓ is not None ✓ and relic_score ✓ >= 6 ✓:
+    gold ✓ = observation ✓.get("gold" ✓) ✓        # ShopBridge ✓ 269 ✓ が top-level ✓ で gold ✓ を出している ✓✓
+    relic_cost ✓ / removal_cost ✓ を observation ✓ から取り ✓、gold ✓ < relic_cost ✓ + removal_cost ✓ なら ✓ return best_relic ✓
+→ remove ✓ 優先 ✓（deck ✓ を減らす ✓ 記録済み ✓ fix ✓）は ✓ 両方 ✓ 買える ✓ 場合 ✓そのまま ✓ 残す ✓✓（test ✓ 2 件 ✓で ✓ 両方向 ✓ 固定 ✓：221 ✓ gold ✓で 155 ✓ relic ✓→ buy_relic ✓ ✓/ 400 ✓ gold ✓→ remove ✓ ✓）✓
+→ test ✓ 当初 ✓ RELIC.ANCHOR ✓ で書いて ✓ 落ちた ✓✗：ANCHOR ✓ の価格 ✓ は scratch tree ✓ 側にしか無い ✓（HEAD ✓ の SHOP_RELIC_SCORES ✓ 42 件 ✓ に ✓ 無い ✓✓）✓→ **HEAD ✓ で ✓ 8 ✓ の価格 ✓を持つ ✓ RELIC.SHURIKEN ✓**✓ に置き ✓直した ✓✓（teaching 53 ✓「落ちた test ✓ の前提 ✓を読む ✓」✓ の再現 ✓）✓
+→ panel ✓ 待ち ✓：`.wt-proto21 ✓` ✓（gold ✓ 条件 ✓のみ ✓の新規 ✓変更 ✓）✓ の arm ✓ vs control ✓（70 ✓勝 ✓ 5 ✓敗 ✓ 基準 ✓✓）✓
