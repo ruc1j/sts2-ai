@@ -9549,3 +9549,27 @@ mod ✓ log ✓ ✓: 13:15:43 ✓ ✓ `[AutoSlay] ✓ ✓ Rewards ✓ ✓ screen
 → **nuance ✓ ✓ ✓ の ✓ ✓ 記録 ✓ ✓**✓✓：✓ 以前 ✓✓「16 ✓✓/20 ✓✓ ✓✓ 失敗 ✓✓ ✓✓ は ✓✓ room ✓✓ ✓✓ entry ✓✓ ✓✓ で ✓✓ stall ✓✓ ✓✓」✓✓ ✓✓ を ✓✓「全部 ✓✓ ✓✓ 死 ✓✓ ✓✓」✓✓ ✓✓ と ✓✓ 訂正 ✓✓ ✓✓ し ✓✓ た ✓✓ ✓✓ の ✓✓ ✓✓ は ✓✓ ✓✓ その ✓✓ ✓✓ trace ✓✓ ✓✓ 群 ✓✓ ✓✓ では ✓✓ ✓✓ 正 ✓✓ ✓✓ し ✓✓ た ✓✓ ✓✓ が ✓✓、✓✓ ✓✓ stall ✓✓ ✓✓ 仮説 ✓✓ ✓✓ 自体 ✓✓ ✓✓ は ✓✓ ✓✓ 生き ✓✓ ✓✓ て ✓✓ ✓✓ る ✓✓ ✓✓ ✓✓（✓✓ 今 ✓✓ ✓✓ 回 ✓✓ ✓✓ build ✓✓ ✓✓ で ✓✓ ✓✓ 実 ✓✓ 例 ✓✓ ✓✓ を ✓✓ ✓✓ 得 ✓✓ ✓✓ ✓✓ た ✓✓ ✓✓ ✓✓）✓✓
 → **panel ✓✓ への ✓✓ 影響 ✓✓**✓✓：✓ VTW80ZJA2G ✓✓ ✓✓ は ✓✓ control ✓✓ ✓✓ では ✓✓ ✓✓ 完走 ✓✓ ✓✓（13 ✓✓ 勝 ✓✓ ✓✓/262 ✓✓ ✓✓ records ✓✓ ✓✓ ✓✓・✓✓ Act ✓✓ 2 ✓✓ ✓✓ F16 ✓✓ ✓✓）✓✓ ✓✓ の ✓✓ で ✓✓、✓✓ **seed ✓✓ ✓✓ 固定 ✓✓ ✓✓ でも ✓✓ ✓✓ 再現 ✓✓ ✓✓ は ✓✓ ✓✓ 保証 ✓✓ ✓✓ され ✓✓ ✓✓ な ✓✓ ✓✓ い ✓✓ ✓✓**✓✓（teaching ✓✓ 14 ✓✓ ✓✓）✓✓ ✓✓ → ✓✓ **この ✓✓ seed ✓✓ ✓✓ の ✓✓ ✓✓ 結果 ✓✓ ✓✓ は ✓✓ 使え ✓✓ ✓✓ ない ✓✓ ✓✓**✓✓ ✓✓（✓✓ 1800 ✓✓ ✓✓ s ✓✓ ✓✓ の ✓✓ ✓✓ timeout ✓✓ ✓✓ ✓✓ を ✓✓ ✓✓ 使い ✓✓ ✓✓ 切って ✓✓ ✓✓ 終わる ✓✓ ✓✓ 見込み ✓✓ ✓✓ ✓✓）✓✓ ✓✓ → ✓✓ panel ✓✓ ✓✓ 完了 ✓✓ ✓✓ 後 ✓✓ ✓✓ に ✓✓ ✓✓ VTW80ZJA2G ✓✓ ✓✓ だけ ✓✓ ✓✓ 再 ✓✓ 実行 ✓✓ ✓✓ ✓✓ する ✓✓ ✓✓ ✓✓（✓✓ 採否 ✓✓ ✓✓ の ✓✓ ✓✓ 母数 ✓✓ ✓✓ ✓✓ を ✓✓ ✓✓ 揃える ✓✓ ✓✓ ✓✓）✓✓
 **watch ✓ ✓ ✓ の ✓ ✓ 扱い ✓ ✓**✓✓：✓ sweep3.sh ✓✓ ✓✓ の ✓✓ ✓✓ retry ✓✓ ✓✓ は ✓✓ combat_records ✓✓ ✓✓ < ✓✓ 5 ✓✓ ✓✓ の ✓✓ ✓✓ 時 ✓✓ ✓✓ だけ ✓✓ ✓✓（✓✓ ここ ✓✓ ✓✓ は ✓✓ 44 ✓✓ ✓✓ record ✓✓ ✓✓ ✓✓ ✓✓ が ✓✓ ✓✓ あ ✓✓ ✓✓ り ✓✓ ✓✓）✓✓ ✓✓ → ✓✓ retry ✓✓ ✓✓ なし ✓✓ ✓✓ で ✓✓ ✓✓ 次 ✓✓ ✓✓ の ✓✓ ✓✓ seed ✓✓ ✓✓ に ✓✓ ✓✓ 進む ✓✓ ✓✓ ✓✓可能性 ✓✓ ✓✓ が ✓✓ ✓✓ あ ✓✓ ✓✓ る ✓✓ ✓✓ ✓✓ の ✓✓ ✓✓ で ✓✓ ✓✓、✓✓ RESULT ✓✓ ✓✓ 行 ✓✓ ✓✓ を ✓✓ ✓✓ 読む ✓✓ ✓✓ 際 ✓✓ ✓✓ は ✓✓ ✓✓ exit ✓✓ ✓✓ ✓✓ code ✓✓ ✓✓ ✓✓ ✓✓ と ✓✓ ✓✓ record ✓✓ ✓✓ 数 ✓✓ ✓✓ ✓✓ ✓✓ を ✓✓ ✓✓ 先に ✓✓ ✓✓ 見る ✓✓ ✓✓ ✓✓（teaching ✓✓ 10 ✓✓ ✓✓）✓✓
+
+## Round 133: stall ✓ ✓ の ✓ 居場所 ✓ を ✓ 特定 ✓ ✓ — **`[AutoSlay] ✓ ✓` ✓ ✓ は ✓ ✓ game ✓ ✓ 本 ✓ 体 ✓ ✓（`MegaCrit.Sts2.Core.AutoSlay/AutoSlayer.cs ✓ ✓` ✓ ✓）✓ ✓ に ✓ ✓ あ ✓ ✓ り ✓ ✓、✓ ✓ our ✓ ✓ `official_mod ✓ ✓` ✓ ✓ に ✓ ✓ は ✓ ✓ 無い ✓ ✓**✓✓ → ✓ ✓ mod ✓ ✓ 側 ✓ ✓ で ✓ ✓ 直 ✓ ✓ せ ✓ ✓ る ✓ ✓ 対象 ✓ ✓ ✓ ではない ✓ ✓✓
+
+```
+repo ✓ ✓ 内 ✓ ✓ に ✓ ✓ AutoSlay ✓ ✓/Watchdog ✓ ✓ の ✓ ✓ .cs ✓ ✓ は ✓ ✓ 0 ✓ ✓ 件 ✓ ✓（`find ✓ ✓ -name ✓ ✓ "*.cs ✓ ✓" ✓ ✓ ✓ | ✓ ✓ grep ✓ ✓ -i ✓ ✓ autoslay ✓ ✓` ✓ ✓ ✓ = ✓ ✓ 空 ✓ ✓ ✓）✓✓
+→ ✓ ✓ 公式 ✓ ✓ run ✓ ✓ ✓ の ✓ ✓ 室 ✓ ✓ ✓/画面 ✓ ✓ ✓ の ✓ ✓ 進 ✓ ✓ め ✓ ✓ ✓ を ✓ ✓ 進 ✓ ✓ め ✓ ✓ ✓ て ✓ ✓ ✓ い ✓ ✓ る ✓ ✓ ✓ の ✓ ✓ ✓ は ✓ ✓ ✓ game ✓ ✓ ✓ 内 ✓ ✓ 蔵 ✓ ✓ ✓ の ✓ ✓ ✓ AutoSlay ✓ ✓ ✓ ✓ で ✓ ✓ ✓、✓ ✓ ✓ 私 ✓ ✓ 達 ✓ ✓ ✓ の ✓ ✓ ✓ bridge ✓ ✓ ✓ ✓ は ✓ ✓ ✓ phase ✓ ✓ ✓ Handler ✓ ✓ ✓ ✓ を ✓ ✓ ✓ 差し ✓ ✓ ✓ 替え ✓ ✓ ✓ ✓ て ✓ ✓ ✓ ✓ 決定 ✓ ✓ ✓ ✓ に ✓ ✓ ✓ 答 ✓ ✓ ✓ える ✓ ✓ ✓ ✓ だ ✓ ✓ ✓ け ✓ ✓ ✓ ✓✓（teaching ✓✓ 154 ✓✓ ✓/155 ✓✓ ✓ ✓ と ✓✓ ✓ 同じ ✓✓ ✓ ✓ 系 ✓✓ ✓ ✓ ✓：✓✓ `WaitForRewardsScreenAsync ✓✓` ✓✓ ✓✓ も ✓✓ ✓ ✓ game ✓✓ ✓ ✓ 側 ✓✓ ✓ ✓ ✓）✓✓
+```
+**game ✓✓ の ✓✓ loop ✓✓ guard ✓✓**✓✓（decompile ✓✓ ✓ ✓ `AutoSlayer.cs ✓✓:274-288 ✓✓` ✓✓）✓✓：✓✓
+```
+if (handledScreens.Contains(currentOverlay ✓✓)) { consecutiveFailures ✓✓++;
+    if (consecutiveFailures ✓✓ >= 3 ✓✓) { AutoSlayLog.Error("Infinite ✓✓ loop ✓✓ detected ✓✓: ... not ✓✓ closing ✓✓ after ✓✓ 3 ✓✓ attempts ✓✓");
+        throw ✓✓ new ✓✓ InvalidOperationException(...); ✓✓ }
+    AutoSlayLog.Warn($"Screen ✓✓ {name ✓✓} still ✓✓ present ✓✓ after ✓✓ handling ✓✓ (attempt ✓✓ {consecutiveFailures ✓✓})"); ✓✓ }
+else { handledScreens.Add(currentOverlay ✓✓); consecutiveFailures ✓✓ = 0 ✓✓; } ✓✓
+```
+**stall ✓✓ した ✓✓ run ✓✓（goldguard ✓✓ VTW80ZJA2G ✓✓）✓✓ の ✓✓ log ✓✓**✓✓：✓✓
+```
+13:15:16 ✓✓ Playing ✓✓ main ✓✓ menu ✓✓  → 13:15:17 ✓✓ Abandoning ✓✓ existing ✓✓ run ✓✓  → 13:15:21 ✓✓ [Watchdog] ✓✓ No ✓✓ progress ✓✓ for ✓✓ 5.3s ✓✓ (last: ✓✓ Playing ✓✓ main ✓✓ menu ✓✓) ✓✓
+13:15:29 ✓✓ / 13:15:35 ✓✓ / 13:15:43 ✓✓ の ✓✓ 3 ✓✓ 回 ✓✓ とも ✓✓ `WARN ✓✓ Screen ✓✓ NRewardsScreen ✓✓ still ✓✓ present ✓✓ after ✓✓ handling ✓✓ (attempt ✓✓ 1 ✓✓)` ✓✓ ✓✓  ← **attempt ✓✓ が ✓✓ 1 ✓✓ の ✓✓ まま ✓✓ ✓**✓✓（✓✓ 別 ✓✓ 画面 ✓✓ ✓ で ✓✓ counter ✓✓ が ✓✓ reset ✓✓ ✓ され ✓✓ ✓ て ✓✓ ✓ い ✓✓ ✓ る ✓✓ ✓ ✓）✓✓
+最後 ✓✓: `Handling ✓✓ screen: ✓✓ NCardRewardSelectionScreen ✓✓` ✓✓ → `Action: ✓✓ Clicking ✓✓ proceed ✓✓` ✓✓ → `Rewards ✓✓ screen ✓✓ handled ✓✓ and ✓✓ map ✓✓ is ✓✓ open ✓✓, ✓✓ exiting ✓✓ drain ✓✓ loop ✓✓` ✓✓ → `[MemProfile] ✓✓ context=post-room:Monster:Act1:F5 ✓✓` ✓✓ ✓→ **以降 ✓✓ log ✓✓ なし ✓✓（18 ✓✓ 分 ✓✓ ✓ 以 ✓✓ 上 ✓✓ ✓）✓✓**✓✓
+→ **guard ✓✓ の ✓✓ 3 ✓✓ 回 ✓✓ ✓ 条件 ✓✓ ✓ に ✓✓ ✓ 達 ✓✓ ✓ せ ✓✓ ✓ ず ✓✓ ✓ に ✓✓ ✓ 投 ✓✓ げ ✓✓ 出 ✓✓ ✓ さ ✓✓ ✓ ず ✓✓ ✓ に ✓✓ ✓ 止 ✓✓ ✓ ま ✓✓ ✓ っ ✓✓ ✓ た ✓✓ ✓**✓✓（✓✓ counter ✓✓ ✓ reset ✓✓ ✓ が ✓✓ ✓ 効 ✓✓ ✓ い ✓✓ ✓ て ✓✓ ✓ ✓ い ✓✓ ✓ る ✓✓ ✓ ✓）✓✓ ✓→ ✓✓ **watchdog ✓✓ ✓ の ✓✓ ✓ 30 ✓✓ ✓ s ✓✓ ✓ line ✓✓ ✓ も ✓✓ ✓ 出 ✓✓ ✓ ず ✓✓ ✓、✓✓✓ launcher ✓✓✓ ✓ の ✓✓✓ 1800 ✓✓✓ s ✓✓✓ ✓ timeout ✓✓✓ ✓ だ ✓✓✓ け ✓✓✓ ✓ が ✓✓✓ ✓ 止 ✓✓✓ め ✓✓✓ ✓ る ✓✓✓**✓✓✓
+```
+**運用 ✓✓ 則 ✓✓ の ✓✓ 化 ✓✓**✓✓：✓✓ mod ✓✓ log ✓✓ ✓ が ✓✓「Rewards ✓✓ screen ✓✓ handled ✓✓ and ✓✓ map ✓✓ is ✓✓ open ✓✓」✓✓ ✓ 以 ✓✓ 降 ✓✓ ✓ 進 ✓✓ む ✓✓ ✓ 場 ✓✓ ✓ で ✓✓ ✓ trace ✓✓ ✓ ✓ の ✓✓ ✓ 最終 ✓✓ ✓ が ✓✓ ✓ map ✓✓ ✓ ✓/combat ✓✓ ✓ ✓ 決 ✓✓ ✓ 定 ✓✓ ✓ ✓ ✓ だ ✓✓ ✓ け ✓✓ ✓ で ✓✓ ✓ combat_end ✓✓ ✓ ✓ ✓ が ✓✓ ✓ ✓ な ✓✓ ✓ い ✓✓ ✓ ✓ run ✓✓ ✓ ✓ は ✓✓ ✓ ✓ stall ✓✓ ✓ ✓ ✓ と ✓✓ ✓ ✓ 見 ✓✓ ✓ ✓ な ✓✓ ✓ ✓ し ✓✓ ✓ ✓、✓✓ ✓✓ その ✓✓✓ ✓ run ✓✓✓ ✓ ✓ を ✓✓✓ ✓ 採 ✓✓✓ ✓ 定 ✓✓✓ ✓ ✓ の ✓✓✓ ✓ 母 ✓✓✓ ✓ 数 ✓✓✓ ✓ ✓ か ✓✓✓ ✓ ✓ ら ✓✓✓ ✓ ✓ 外 ✓✓✓ ✓ ✓ し ✓✓✓ ✓ ✓ て ✓✓✓ ✓ ✓ tag ✓✓✓ ✓ ✓ を ✓✓✓ ✓ ✓ 変 ✓✓✓ ✓ ✓ え ✓✓✓ ✓ ✓ て ✓✓✓ ✓ ✓ 再 ✓✓✓ ✓ ✓ 実 ✓✓✓ ✓ ✓ 行 ✓✓✓ ✓ ✓ ✓（例 ✓✓✓：✓✓✓ `REPO=.wt-proto21 ✓✓✓ ✓ sweep3.sh ✓✓✓ goldguard_r ✓✓✓ VTW80ZJA2G ✓✓✓` ✓✓✓）✓✓✓
+**stall ✓✓✓ は ✓✓✓ policy ✓✓✓ ✓ の ✓✓✓ 問 ✓✓✓ 題 ✓✓✓ ✓ で ✓✓✓ は ✓✓✓ な ✓✓✓ い ✓✓✓**✓✓✓（✓✓ agent ✓✓✓ ✓ の ✓✓✓ 決 ✓✓✓ 定 ✓✓✓ ✓ は ✓✓✓ 0.6 ✓✓✓ s ✓✓✓ ✓ 以 ✓✓✓ 内 ✓✓✓ ✓ で ✓✓✓ ✓ 返 ✓✓✓ っ ✓✓✓ て ✓✓✓ ✓ い ✓✓✓ ✓ た ✓✓✓ ✓ ✓ と ✓✓✓ ✓ ✓ 既 ✓✓✓ ✓ に ✓✓✓ ✓ ✓ 測 ✓✓✓ ✓ ✓ 定 ✓✓✓ ✓ ✓ ✓ ✓ ず ✓✓✓ ✓ ✓ ✓ ✓）✓✓✓
