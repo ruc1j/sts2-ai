@@ -9405,3 +9405,24 @@ skip ✓ record ✓ 1,539 ✓件 ✓   skip ✓ 時点の gold ✓ 中央値 ✓
 **前 ✓ round ✓ の ✓ 予測 ✓（goldguard ✓ は ✓ inert ✓ ✓）は ✓ この ✓ 数字 ✓ で ✓ 支持 ✓ される ✓**✓✓：✓ buy_relic ✓ が ✓ legal_actions ✓ に ✓ 出る ✓ 条件 ✓（affordable ✓ ✓ かつ ✓ 表 ✓ で ✓ >= 6 ✓ ✓）が ✓ 6 trace ✓ で ✓ 0 ✓ 件 ✓ ✓→ ✓ 順序 ✓ 変更 ✓ は ✓ 発火 ✓ しない ✓✓（panel ✓ 結果 ✓で ✓ 最終 ✓ 確認 ✓ ✓）✓
 **測定 ✓ 上の ✓ 注意 ✓（正直 ✓な ✓ 記録 ✓ ✓）**：上の ✓ 内訳 ✓ の ✓「買った ✓ 回数 ✓」は ✓ 0 ✓ と ✓ 出た ✓ ✓ が ✓✓、✓ `data/relic_arm_AM8C6YXHSG_agent.jsonl ✓` ✓ には ✓ `buy_relic ✓` ✓ が ✓ 2 ✓ 件 ✓（seq ✓ 229 ✓ GORGET ✓ ✓、直前 ✓ seq ✓ 228 ✓ は ✓ remove ✓ ✓）✓ 実在 ✓ する ✓ ✓→ **私 ✓ の ✓ 出品 ✓ 単位 ✓ の ✓ 購入 ✓ 数え ✓（同じ ✓ record ✓ の ✓ offers ✓ 内で ✓ affordable ✓ 判定 ✓ ✓）に ✓ 不備 ✓**✓ ✓→ ✓ 購入 ✓ 数 ✓ を ✓ この ✓ 表 ✓ から ✓ は ✓ 使わない ✓✓（出品 ✓ 回数 ✓ と ✓ score ✓ ✓ は ✓ trace ✓ 直読み ✓ ✓なので ✓ そのまま ✓ 使う ✓）✓
 **次の ✓ 打つ手 ✓（未実施 ✓ ✓）**：✓ BELT_BUCKLE ✓ ✓ 5 → ✓ 6 ✓ の ✓ ように ✓✓、✓ model ✓ 実装 ✓ 済み ✓ かつ ✓ 実際の ✓ 出品 ✓ で ✓ 買える ✓ 範囲 ✓ の ✓ relic ✓ を ✓ 表 ✓ の ✓ 内側 ✓ に ✓ 入れる ✓✓（価格 ✓ を ✓ 上げる ✓ の ✓ ではなく ✓ ✓「届く ✓ 範囲 ✓ を ✓ 覆う ✓」✓ ✓）✓ → ✓ panel ✓ ✓ で ✓ 測る ✓✓
+
+## Round 126: 「届く ✓ 範囲 ✓ を ✓ 覆う ✓」✓ 価格付け ✓ を ✓ 実装 ✓（`.wt-proto22 ✓` ✓ 785 件 ✓ green ✓ ✓）✓ BELT_BUCKLE ✓ 5→6 ✓・CANDELABRA ✓ +7 ✓・NUNCHAKU ✓ +6 ✓・**BAG_OF_MARBLES ✓ は ✓ 意図的に ✓ 価格 ✓ を ✓ 付けない ✓**✓✓
+
+decompile ✓ で ✓ 確認 ✓ した ✓ 本体 ✓（v0.107.1 ✓）✓
+```
+BeltBuckle ✓ (Shop ✓ rarity ✓): `PowerVar<DexterityPower>(2m ✓)` ✓ + `BeforeCombatStart ✓` ✓/`AfterObtained ✓` ✓ で `!Owner.Potions.Any() ✓` の ✓ とき ✓ だけ ✓ ApplyDexterity ✓✓
+   → **model ✓ は ✓ 既に ✓ 条件 ✓ 込み ✓ で ✓ 実装 ✓ 済み ✓**✓✓：`_sync_belt_buckle ✓`（combat.py ✓ 541-547 ✓）✓ が ✓ `active = not combat.player_potions ✓` ✓ を ✓ 見る ✓ ✓→ ✓ 表 ✓ の ✓ 値 ✓ だけ ✓（5 ✓）が ✓ しきい値 ✓ 6 ✓ に ✓ 届かず ✓ 7 ✓ 回 ✓ 逃していた ✓ ✓✓
+Candelabra ✓ (Uncommon ✓): `AfterSideTurnStart ✓` ✓ 本体 ✓ = `if (... && Owner.PlayerCombatState.TurnNumber == 2 ✓) PlayerCmd.GainEnergy(2 ✓) ✓`✓✓
+   → **model ✓ の ✓ `new_turn ✓ == 2 ✓ → extra_energy ✓ += 2 ✓`（combat.py ✓ 2441 ✓）と ✓ 完全 ✓ 一致 ✓ ✓**（✓ future ✓ turn ✓ 限定 ✓ ✓ の ✓ で ✓ ✓ 二重 ✓ 適用 ✓ ✓ も ✓ ✓ 無い ✓ ✓）✓
+Nunchaku ✓ (Uncommon ✓): `CardsVar(10 ✓)` ✓ + `AttacksPlayed ✓ % ✓` ✓ の ✓ カウンター ✓ ✓✓ → model ✓ 実装 ✓ 済み ✓（274 ✓ ✓）✓
+Whetstone ✓: `AfterObtained ✓` ✓ で ✓ deck ✓ の ✓ Attack ✓ ✓ upgrade ✓ 可能 ✓ なもの ✓ を ✓ 2 ✓ 枚 ✓ upgrade ✓ ✓✓（out-of-combat ✓ ✓）✓
+Planisphere ✓: `AfterRoomEntered ✓` ✓ で ✓ `CreatureCmd.Heal ✓(5m ✓) ✓` ✓✓✓（全 ✓ room ✓ 進入 ✓ 毎 ✓ ✓ に ✓ 5 ✓ 回復 ✓ ✓）✓
+RoyalStamp ✓: `CardsVar(1 ✓)` ✓ + `RoyallyApproved ✓` ✓ enchantment ✓ ✓✓（out-of-combat ✓ ✓）✓
+BagOfMarbles ✓: `BeforeSideTurnStart ✓` ✓ で ✓ `PowerCmd.Apply<VulnerablePower ✓>(1m ✓) ✓` ✓ ✓✓ → **RED_MASK ✓ と ✓ 同じ ✓「毎 turn ✓ 適用 ✓」型 ✓ ✓**✓
+```
+**入れ ✓ た ✓ 価格 ✓**（`SHOP_RELIC_SCORES ✓` ✓ 42 ✓→**44 ✓ 件 ✓**✓ ✓）✓: `RELIC.BELT_BUCKLE ✓ 6 ✓` ✓（旧 ✓ 5 ✓ ✓）✓・`RELIC.CANDELABRA ✓ 7 ✓` ✓・`RELIC.NUNCHAKU ✓ 6 ✓` ✓
+**入れ ✓ なかった ✓ もの ✓ と ✓ 理由 ✓**✓（正直 ✓ な ✓ 線引き ✓ ✓）✓✓
+- `RELIC.BAG_OF_MARBLES ✓` ✓（毎 ✓ turn ✓ 全 ✓ 敌に ✓ Vulnerable ✓ 1 ✓ ✓）✓：**combat.py ✓ が ✓ まだ ✓ 未来 ✓ turn ✓ で ✓ 再適用 ✓ しない ✓**✓ ので ✓✓ 買って ✓ も ✓ rollout ✓ が ✓ 誤評価 ✓ する ✓✓ → **model ✓ の ✓ hook ✓（RED_MASK ✓ と ✓ 同じ ✓ 形 ✓ ✓）を ✓ 先に ✓ 入れて ✓ から ✓ 価格 ✓✓**✓ ✓（test ✓ で ✓「買わない ✓ ✓」を ✓ 固定 ✓ ✓）✓
+- Whetstone ✓・RoyalStamp ✓・Planisphere ✓：out-of-combat ✓ で ✓ observation ✓ 経由 ✓ ✓（前 ✓ round ✓ の ✓ ANCHOR ✓ corpus ✓ test ✓ ✓ の ✓ 型 ✓ ✓）✓ → ✓ 価格 ✓ の ✓ 議論 ✓ を ✓ 分ける ✓✓
+test ✓ 2 件 ✓：`test_shop_buys_the_energy_relic_it_now_prices ✓`（CANDELABRA ✓ 190 ✓ を ✓ gold ✓ 260 ✓ で ✓ 買う ✓ ✓）✓・`test_shop_still_refuses_a_relic_with_no_model_support ✓`（BAG_OF_MARBLES ✓ → ✓ skip ✓ ✓）✓
+**panel ✓ 連鎖 ✓**：`goldguard ✓`（13:02 ✓ 開始 ✓ ✓・5 ✓ seed ✓ ✓・1 ✓ 本 ✓ 完了 ✓ ✓）の ✓ 後に ✓ `priceband ✓`（`.wt-proto22 ✓` ✓ ✓・dll ✓ 249,856 ✓ ✓ ✓・同じ ✓ 5 ✓ seed ✓ ✓）を ✓ 起動 ✓✓ ✓ 基準 ✓ control ✓ 70 ✓勝 ✓ 5 ✓敗 ✓ ✓
