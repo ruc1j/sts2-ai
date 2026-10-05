@@ -8462,3 +8462,37 @@ run 中の potion 購入数: 0 x1 ✓ 1 x4 ✓ 3 x4 ✓（使用数は購入数�
 （QUEEN 戦の最后で legal actions に potion が3個並び ✓ それらを使っても 171/400 を削り切れなかった ✓ 前 round まで ✓）✓
 → potion を「より良い時に使う」改善は ✓ counterfactual が取れないので 지금은 対象にしない ✓
 （holding が敗因かどうかを測る物差しが無い ✓ 測れないものには panel を使わない ✓ teaching 32 ✓）✓
+
+## Round 87: live の决定を replay で完全再現した ✓ **`simulations` は record の値（100）に合わせないと答えが変わる** ✓
+
+`evdiag_VTW80ZJA2G` seq 135 ✓（VANTOM 173 HP ✓ player 72/80 HP ✓ block 5 ✓ energy 2 ✓）✓
+record された决定は `end_turn` ✓ `simulations 100` ✓ `search_value 0.647` ✓ `decision_source rollout_success` ✓ ✓
+hand には STRIKE x3（exported Damage 6 ✓）✓ SHRUG_IT_OFF ✓ UNRELENTING（cost 0 ✓ Damage 14 ✓）✓ BURNING_PACT ✓ BARRICADE ✓ が有り ✓
+→ **札を残して終了した ✓ 一見火力の無駄に見える** ✓
+
+replay ✓（同じ record ✓ play の credit 順を `_PENDING_ACTION` で再現 ✓ teaching 59 ✓）✓
+- simulations 300 で回すと **CARD.SHRUG_IT_OFF** ✓ search_value 0.7998 ✓（答えが違う ✓✗）✓
+- **simulations 100 ✓ record の値 ✓ で回すと `end_turn` ✓ search_value 0.6470 ✓ で record と完全一致 ✓✓** ✓
+ranking ✓
+```
+'End turn'  0.6470   ← 選ばれた ✓
+'card:2'    0.6185   SHRUG_IT_OFF ✓
+'card:0@0'  0.5915   STRIKE ✓
+'card:5'    0.3685   BARRICADE ✓
+'card:4@0'  -0.1660  UNRELENTING（14 damage ✓）✗✗
+```
+**理由が分かった** ✓ 敌に `POWER.SLIPPERY_POWER 8` ✓✓
+`SlipperyPower.cs` の `ModifyHpLostAfterOsty` ✓ は **1 hit で失う HP を 1m に丸める** ✓（Buff ✓ Counter ✓ stack ✓ amount < 1 ならそのまま ✓）✓
+→ Slippery 8 の VANTOM への attack は **hit ごとに 1 ダメージ** ✓（model は `combat.py:1447` ✓ `1463-1467` ✓ `3340` ✓ `3577` ✓ で cap と strip を実装済み ✓）✓
+14 damage の UNRELENTING も 1 hit なら 1 に丸められ ✓ hit 数と相談して価値が下がる ✓ → **rollout が終了を選んだのは筋が通っている** ✓✓
+
+**「play できる札を残して終了した 51 turn」の内訳** ✓ 9 trace ✓ 札別 ✓
+`DEFEND_IRONCLAD 34 ✓ STRIKE_IRONCLAD 23 ✓ BLOODLETTING 20 ✓ SHRUG_IT_OFF 6 ✓ SECOND_WIND 4 ✓ ANGER 4 ✓ RUPTURE 4 ✓ BREAKTHROUGH 3 ✓ IMPERVIOUS 3 ✓ UNRELENTING 2` ✓
+- **cost -1 の札（SPOILS_MAP ✓ WOUND ✓ など）を「play できる」と数える落とし** ✓✗（observation の `cost` に -1 が出る ✓ → **filter は `0 <= cost` ✓ が正しい** ✓）✓
+- 残りは block 札 ✓ self-damage 札（BLOODLETTING ✓ BREAKTHROUGH ✓ HpLoss 1 ✓）✓ そして上の Slippery のような ✓ 攻击が効かない局面 ✓
+→ **play 選択の質に明らかな gap は見えない** ✓（play ordering ✓ と合わせて ✓ この筋は閉じる ✓）✓
+
+**audit の道具立てとして新しい確定的事実** ✓
+1. **replay は record の `simulations` を使わないと別の答えを出す** ✓（300 → SHRUG_IT_OFF ✓ 100 → end_turn ✓ で live と一致 ✓）✓ 監査ツールには `record["simulations"]` を渡す ✓
+2. **observation の card entry は `cost` を持つ ✓ 未使用札は -1 ✓** ✓ play 可能性の判定は `0 <= cost` ✓（Toxic のように play できる Status 札との区別に使える ✓）✓
+3. `combat_records()` は `Path` を取る ✓ str を渡すと `AttributeError: 'str' object has no attribute 'open'` ✓✓
