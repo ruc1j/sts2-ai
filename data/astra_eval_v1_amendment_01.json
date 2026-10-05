@@ -21,5 +21,16 @@
     "repeat count",
     "planned run count",
     "timeout"
+  ],
+  "new_metric_confirmation_seeds": [
+    "9B3C304A5D",
+    "AED850BE3B",
+    "4DE718E2F1"
+  ],
+  "new_metric_confirmation_selection": "All three originally planned confirmation seeds for which neither arm had started when the metric was amended. Fixed before any outcome from these seeds; no new seeds or run count changes.",
+  "posthoc_or_partially_seen_metric_seeds": [
+    "N8CQ4ZKP2W",
+    "D6A1F8C3E5",
+    "A972EACCB8"
   ]
 }
