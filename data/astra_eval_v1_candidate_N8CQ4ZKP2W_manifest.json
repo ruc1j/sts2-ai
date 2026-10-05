@@ -1,0 +1,48 @@
+{
+  "panel": "astra_eval_v1",
+  "run_index": 0,
+  "arm": "candidate",
+  "seed": "N8CQ4ZKP2W",
+  "source_commit": "20a8aeeaaf8f5b95fd64d52758228657d5fee65d",
+  "sha256": {
+    "official_agent.py": "d860f2334eb44f9d5cd49d63dac0512d301f595a030b45529428ef6beef13557",
+    "combat.py": "14474b8e1b0d9fbe699caa9e881110334287aa163f7cfcea62413244dd837609",
+    "official_mod/CombatBridge.cs": "308120538bfae7d92b07c1ea1f35e21644ad6585960db61c510ea4f6f1685280",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "dbbd3fab88fea6172068b6dc185fc3be9744f41ba73a73a82b1f2f2694f9dbc7"
+  },
+  "plan_sha256": "5e23f7dc81bb5909081abdb5a2b92ad26745f8839cdd6e52cba06c7fc4bffba1",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791212533.7672231,
+  "finished": 1791213106.5098612,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 547,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 23
+    },
+    "final_hp": 23
+  },
+  "artifacts_sha256": {
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_map.json": "f93d53542759400009c4adce97de29bd4d9473dace58bb9434b081fd3838e9ca",
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_agent.jsonl": "e3961932b322714ffc3e34419bfd907b1fc5b9177c3214abf6fc72769520ca5f",
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_mod.log": "c7b973058ef118f80ed33a9b31439bf6fb356c89db9625ac8fe7cb2056ed5b5c",
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_result.json": "1e191235c24939b8f0dd664281887a01ec2b85499300bac6ee5d3f404bfdc9f3",
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_stdout.log": "d2506f20d2cf7fa1587b20026d3b71f21190bd3b37d3b2250d4e20434a83a494",
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_map_ACT.HIVE.json": "e9546fb20ee49b543c484b3d8489ee1c9440e878c282bc8d57867ccf8ca61086",
+    "astra_eval_v1_candidate_N8CQ4ZKP2W_map_ACT.GLORY.json": "d7414a6e53b447d195223831cc023686f9d05cfb4f06522ad54f44a323e24069"
+  }
+}
