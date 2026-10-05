@@ -1,0 +1,34 @@
+{
+  "seed": "N8CQ4ZKP2W",
+  "simulations": 100,
+  "head": "821e33502d36f62483977073b3162952d770ab71",
+  "started": 1791217675.1457129,
+  "sha256": {
+    "official_agent.py": "0e71a9042413adf6cdedff37eba39ed41607cbff2e58fff34e75ae3a9bb47d00",
+    "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "finished": 1791218213.0046878,
+  "source_unchanged": true,
+  "source_commit": "821e33502d36f62483977073b3162952d770ab71",
+  "outcome": {
+    "status": "win",
+    "combat_wins": 19,
+    "combat_losses": 0,
+    "act_3_complete": true,
+    "terminal": {
+      "seq": 536,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 19
+    },
+    "final_hp": 19,
+    "max_hp": 85
+  },
+  "artifacts_sha256": {
+    "agent.jsonl": "f132aaaf9539472e33e4b52fb9a338ffc51c77ac656299c7ad605aba39c1b537",
+    "mod.log": "ec1df5aa194359bc2d3fa2442b2e2208fc3803f584d33b7e976ec84a364679a4",
+    "map.json": "f93d53542759400009c4adce97de29bd4d9473dace58bb9434b081fd3838e9ca",
+    "result.json": "9f6f579db90da08a3f779675118f1abe864b91b20a493935f6096b69aa5085bd"
+  }
+}
