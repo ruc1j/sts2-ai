@@ -9271,3 +9271,23 @@ VTW80ZJA2G ✓ 13 勝 1 敗 ✓ 262 ✓ Act 2, F16 ✓  vs control ✓ 13 勝 �
 → **3 seed ✓ 中 2 seed ✓ で完全に inert ✓✓** ✓（買える価格付き relic ✓ のある shop ✓ に届かなかった ✓）✓
 → 残り ✓ N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓（完走実績のある seed ✓ / ここ ✓ で relic 購入が増える ✓かどうかが本質 ✓）✓
 → **判定基準 ✓（3 seed ✓ で改善 ✓）に照らすと ✓ 現状は採用不可 ✓ に近い ✓**✓（2 seed ✓ で何も起きていない ✓ので ✓「改善 ✓」の母数 ✓ が足りない ✓）✓
+
+## Round 119: EventBridge ✓ にも event の選択肢一覧 ✓ を trace させる patch を入れ build 通す ✓（**まだ commit していない ✓ 検証 run 待ち ✓**）
+
+`official_mod/EventBridge.cs ✓` の変更 ✓
+```
+`var offerList ✓ = indexed ✓.Select(item ✓ => new { option_index ✓, text_key ✓, is_proceed ✓, relic_id ✓ }).ToArray() ✓;` ✓ を定義 ✓（indexed ✓/eligible ✓ のスコープ ✓ 内 ✓）✓
+→ Trace ✓ 4 箇所 ✓ に `options = offerList ✓` ✓ を追加 ✓
+   agent_timeout ✓（137 ✓）✓ / invalid_event_action ✓ 1 箇所目 ✓（146 ✓）✓ / invalid_event_action ✓ + eligible_text_keys ✓（153 ✓）✓ / **受理した選択 ✓（157-167 ✓）**✓
+→ 目的 ✓: 「event ✓ が relic X ✓ を出した ✓のに別の ✓ を選んだ ✓」を可視化する ✓（今の trace ✓ は選んだ relic ✓ しか残さない ✓→ 前 round ✓ の弃却 0 件 ✓ measurement ✓ では BYRDPIP ✓ を政策にできなかった ✓）✓
+```
+**状態 ✓**：build 0 エラー ✓✓ dll 245,760 ✓→ **249,856 B ✓** ✓ main suite 783 件 ✓ OK ✓ ✓（observation ✓/action ✓ の書式 ✓ は変えていない ✓→ 决定は変わらない ✓想定 ✓✓ 実測で確認する ✓）✓
+**commit は検証後 ✓**（ShopBridge ✓ のときと同じ手順 ✓: まず run ✓ で `options ✓` 出現 ✓ + 战績不変 ✓ を確認 ✓→ commit ✓）✓
+**検証 run ✓ を連鎖 ✓**：relic panel ✓ 完了後 ✓`REPO=/Users/mao/workspace/sts2-ai ✓ sweep3.sh evoptexport AM8C6YXHSG ✓` ✓（1 seed ✓・新 dll ✓ を install ✓ する ✓）→ event record ✓ に `options ✓` が出るか ✓ と control ✓ との战績比較 ✓
+
+**relic panel ✓ 4 本 ✓**（arm `.wt-proto19 ✓` ✓ 価格付けのみ ✓ 5 seed ✓）✓
+```
+AM8C6YXHSG ✓ 17 ✓/391 ✓ Act 3 F15 ✓（control ✓ 17 ✓/360 ✓ Act 3 F15 ✓）✓  H2LV6ZJ4XW ✓ 20 ✓/388 ✓ Act 3 F6 ✓（一致 ✓）✓
+VTW80ZJA2G ✓ 13 ✓/262 ✓ Act 2 F16 ✓（一致 ✓）✓  + 4 本目 ✓（N8CQ4ZKP2W ✓ か D6A1F8C3E5 ✓）✓ 5 本目 ✓ 走行中 ✓
+```
+→ 3 seed ✓ で胜ち数は control ✓ と同一 ✓（1 ✓ seed ✓ で relic 2 個 ✓ を買った ✓が战績は同じ ✓）✓→ **採否は残り 2 seed ✓（完走実績 ✓ の方 ✓）次第 ✓**✓
