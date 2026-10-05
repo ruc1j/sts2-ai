@@ -8969,3 +8969,19 @@ QUEEN 戦 **12 turn ✓** ✓ boss HP **400 ✓→ 17 ✓**（383 削った ✓�
 2. **relic 取得の見込みが無いときに egg を取らない ✓** ✓（BYRDONIS_NEST の得点を状況依存にする ✓）✓
 → **先に必要 ✓：BYRDPIP がどこから入手できるかの特定 ✓**（event ✓/shop ✓/敌の drop ✓）✓ 今回の trace 検索では **combat record の relic list ✓ に現れるだけで ✓ 入手 moment ✓ を拾えなかった** ✓✗（search の prev 更新を BYRDPIP 含む行に限定するミス ✓）→ 次回 ✓ 全 record を辿って初出の直前 phase ✓ を読む ✓
 panel ✓：seed2 `evdense_arm H2LV6ZJ4XW = 20 勝 ✓ 388 records ✓ Act 3 Floor 6 ✓`（control ✓ と同一 ✓）✓ 3 本目走行中 ✓
+
+## Round 106: **egg ✓ を取って BYRDPIP ✓ を持たない run は、何も取らない run より Act 3 到達率が低い ✓**（15% ✓ vs 23% ✓）✓ pair なら 52% ✓✓
+
+616 run ✓（`_mod.log ✓` から最終到達 ✓）✓ 「egg を取った ✓」= BYRDONIS_NEST ✓ の event record ✓ が弃却でない ✓、「BYRDPIP ✓」= trace の relic list ✓ に RELIC.BYRDPIP ✓
+```
+egg ✓ + BYRDPIP ✓  :  94 run ✓ Act 到達 中央値 3 ✓ ✓ **Act 3 到達 49 ✓（52% ✓✓）**
+egg ✓ + BYRDPIP ✗  :  54 run ✓ Act 到達 中央値 2 ✓ ✗ Act 3 到達  8 ✓（15% ✓）
+egg ✗ + BYRDPIP ✗  : 448 run ✓ Act 到達 中央値 2 ✓   Act 3 到達 105 ✓（23% ✓）
+```
+→ **egg は relic が無いと有害 ✓** ✓（何もしない群より Act 3 到達が低い ✓✗✓ 54 run ✓ の母数 ✓）✓
+→ **egg + relic ✓ の pair は Act 3 到達 52% ✓** ✓（何も取らない群の 2.3 倍 ✓）✓
+→ **相関であって因果ではない ✓** ✓ が ✓ 机制は独立に裏がある ✓：BYRDONIS_EGG ✓ は play できない Quest 札 ✓ で ✓ draw pile ✓ を薄める ✓（parked ✓ の「未 play 札が draw 構成を変える ✓」項目 ✓ と同じ ✓）✓
+→ **実装可能な条件 ✓**：`BYRDONIS_NEST ✓` の `TAKE: 100 ✓` を ✓ **「RELIC.BYRDPIP ✓ を既に持っているときだけ ✓」** ✓ に変える ✓（event observation の `player.relics ✓` に見える ✓ bridge が export している ✓）✓
+**BYRDPIP の入手元** ✓：101 trace ✓ で **直前が map record ✓ の combat record ✓ で初出 ✓**（Treasure ✓ や敌 drop ✓ など decision を伴わない経路 ✓）✓ → **policy で「取りに行く ✓」対象にはしにくい ✓** ✓ 測定の筋は egg ✓ 側 ✓
+
+panel ✓（改訂版 `evdense_arm` ✓）: AM8C6YXHSG 14 勝 ✗（control 17 ✓）✓ H2LV6ZJ4XW 20 勝 ✓（同一 ✓）✓ VTW80ZJA2G 走行中 ✓
