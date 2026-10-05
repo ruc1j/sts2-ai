@@ -25,7 +25,8 @@ internal static class MapScreenHandlerPatch
 
 internal static class MapBridge
 {
-    private static bool _wroteMap;
+    // Which act's graph we have already written, so a run leaves one map file per act behind.
+    private static string? _writtenAct;
 
     private sealed record MapAction(
         int Seq,
@@ -70,10 +71,14 @@ internal static class MapBridge
             }).ToArray(),
         };
         string? mapPath = CommandLineHelper.GetValue("bridge-map");
-        if (!_wroteMap && mapPath is not null)
+        string actId = run.Act.Id.ToString();
+        if (mapPath is not null && _writtenAct != actId)
         {
-            AgentIo.WriteJson(mapPath, map);
-            _wroteMap = true;
+            // The act the launcher asked for keeps the requested path; later acts are written beside it with
+            // the act id.  A run that dies in Act 3 then still leaves the Act 3 graph behind, which is what
+            // checking an Act 3 route against what was actually walkable needs.
+            AgentIo.WriteJson(_writtenAct is null ? mapPath : mapPath.Replace(".json", $"_{actId}.json"), map);
+            _writtenAct = actId;
         }
         AgentIo.WriteObservation(new
         {

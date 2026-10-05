@@ -8102,3 +8102,33 @@ mod を rebuild 済み ✓（`ビルドに成功しました ✓ 0 警告 0 エ�
 
 **次の work の方向** ✓ boss 戦の model ではなく ✓ **late act の HP 経済** ✓（rest を取るか ✓ 必要のない fight を避けるか ✓）✓
 それが本当に選べたのかを見るのが per-act map file ✓→ 今回の tooling fix はそのための準備 ✓
+
+## Round 74: per-act の map file を出すように tooling を直した ✓ 検証 run で 3 act 分揃った ✓ Act 3 の路線仮説は棄却 ✓
+
+**`MapBridge.cs` の修正** ✓ `private static bool _wroteMap` ✓ → `private static string? _writtenAct` ✓
+最初の act は依頼された path ✓ 以降の act は `_<ACT.ID>.json` を隣に書く ✓（既存の tool が見る path はそのまま ✓）✓
+rebuild 済み ✓（0 警告 0 エラー ✓）✓
+
+**検証 run** ✓ tag `mapfix` ✓ seed H2LV6ZJ4XW ✓ HEAD `57a57aa` の code + 新しい dll ✓
+```
+RESULT mapfix H2LV6ZJ4XW wins=20 losses=1 combat_records=388 depth=Act 3, Floor 6
+```
+同じ seed の `sw59`（tooling 変更前 ✓）と **勝敗 ✓ records ✓ 到達が完全一致** ✓ → tooling 変更が挙動を変えていない ✓
+map file ✓ 3 つ揃った ✓
+`data/mapfix_H2LV6ZJ4XW_map.json` ✓（ACT.OVERGROWTH ✓ 64 points ✓）✓ `..._map_ACT.HIVE.json` ✓（59 points ✓ RestSite 9 ✓）✓ `..._map_ACT.GLORY.json` ✓（**53 points ✓ RestSite 8 ✓**）✓
+install された dll が build 出力と同一（235,008 B ✓ 09:15 ✓）✓
+
+**Act 3 の路線仮説を棄却した** ✓ walk と各段の choices ✓
+```
+(3,0) Ancient → (5,1) Monster → children: (5,2) Unknown だけ ✓ 強制
+(5,2) Unknown → children: (5,3) Monster だけ ✓ 強制
+(5,3) Monster → children: (4,4) Monster だけ ✓ 強制
+(4,4) Monster → children: (5,5) Monster / (3,5) Unknown ✓ 選べる ✓ が rest は無い ✓
+(3,5) Unknown → children: (3,6) RestSite ✓ だけ ✓ ここへ進む前に Floor 6 の fight（SLIMED_BERSERKER ✓）で死亡 ✓
+```
+**5 段中 4 段が children 1 つだけ ✓ 最初の RestSite は死んだ node の次 ✓** ✓
+→ Act 3 に入って rest を避けたのではなく ✓ **Act 2 の終わり・Act 3 の出だしで削られていた** ✓
+（Act 2 の walk は row 6 ✓ 10 ✓ 14 ✓ に RestSite を取っており ✓ boss 直前の rest も取っている ✓）✓
+前 round の「QUEEN 戦に 11 HP で入る ✓ 49% が 10 以下 ✓」の HP がどこで減るかを次の調べにする ✓
+
+tooling 変更なので policy は無変更 ✓ suite 783 件 green ✓
