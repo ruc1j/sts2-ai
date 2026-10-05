@@ -8947,3 +8947,25 @@ QUEEN 戦 **12 turn ✓** ✓ boss HP **400 ✓→ 17 ✓**（383 削った ✓�
 
 `PowerCmd.Remove ✓` は combat.py:1786 ✓ で handling 済み ✓（export された 6 件は全て敌が自分の power を消すもの ✓：OWL_MAGISTRATE の Soar ✓ TEST_SUBJECT ✓ WATERFALL_GIANT の SteamEruption ✓ TOUGH_EGG の Hatch ✓）✓ → gap ではない ✓
 `Expose ✓`（0 cost ✓ Uncommon ✓ Skill ✓）は敌の power を2つ消す card ✓（ArtifactPower ✓ 分岐あり ✓）✓ **player 側の debuff を消す効果ではない ✓** → QUEEN の 99 スタック ✓ を消す筋は見つかっていない ✓
+
+## Round 105: Act 3 完走 run の 10/11 が `RELIC.BYRDPIP` ✓ と `CARD.BYRD_SWOOP` ✓ を持っていた ✓ **完走 run の deck に egg は1枚も無い ✓（全て ByrdSwoop に化けている ✓）**
+
+`data/*_result.json` ✓ の 11 件 ✓（完走 ✓ 11 ✓ 未完走 ✓ 1 ✓）✓
+```
+完走 run ✓: deck 平均 30.9 ✓ attack 枚数 平均 10.5 ✓ 攻撃力の合計 平均 87 ✓ max HP 平均 92 ✓ **relic 平均 16.1 ✓** ✓ Strength 札 平均 0.1 ✓
+  **RELIC.BYRDPIP ✓ あり ✓ かつ deck に BYRD_SWOOP ✓ を1枚以上含む：10 / 11 ✓✓** ✓（残り1件は relic ✓ なし ✓ swoop ✓ なし ✓）
+  BYRDONIS_EGG ✓ を final deck に残す完走 run：**0 / 11 ✓** ✓
+未完走 run ✓（1件 ✓）: relic 2 ✓ swoop ✓ なし ✓
+完走 run の高 damage 札: **Byrd Swoop ✓ x10 run ✓** ✓ Hemokinesis ✓ x3 ✓ Bludgeon ✓ x1 ✓ Uppercut ✓ x1 ✓
+```
+**Byrdpip の中身** ✓（`Relics/Byrdpip.cs` ✓）✓ `RelicRarity.Event ✓` ✓ `AddsPet ✓` ✓ `SpawnsPets ✓` ✓ hover tip = ByrdSwoop ✓ ✓ `AfterObtained()` ✓ は combat 中に **ByrdonisEgg ✓ を ByrdSwoop ✓ に TransformTo ✓** ✓
+`ByrdSwoop ✓` は model 側で **cost 0 ✓・damage 14 ✓** ✓（`CARD_COST ✓`/`CARD_DAMAGE ✓` に登録済み ✓）✓
+→ **0 energy ✓ で 14 damage ✓ の札が deck に並ぶ ✓** = 前 round で測った「QUEEN に 1 turn 32 ✓ 入れた ✓」の筋と合う ✓✓（energy を使わず 2 枚出して 28 ✓ など ✓）✓
+
+**agent 側の現状** ✓ `grep "BYRDPIP" official_agent.py` は `MONSTER.BYRDPIP ✓`（敌 ✓ 1 件 ✓）だけ ✓ → **relic の RELIC.BYRDPIP ✓ は relic 評価表 ✓（RELIC_SCORES ✓ / EVENT_RELIC_TIERS ✓ / SHOP_RELIC_SCORES ✓）に載っていない ✓**✗✗
+**BYRDONIS_NEST ✓ event は `TAKE: 100 ✓` で既に取得する ✓** ✓ が ✓ relic が無いと **egg は play できない Quest 札 ✓ のまま deck に居座る ✓**✓（parked ✓ 未 play 札の項目 ✓ と一致 ✓）✓
+→ 次の測定の候補 ✓（2つ ✓ どちらも未実施 ✓）✓
+1. **BYRDPIP ✓ が shop/event に出たとき評価して取る ✓** ✓（relic 表に追加 ✓→ arm/control ✓）✓
+2. **relic 取得の見込みが無いときに egg を取らない ✓** ✓（BYRDONIS_NEST の得点を状況依存にする ✓）✓
+→ **先に必要 ✓：BYRDPIP がどこから入手できるかの特定 ✓**（event ✓/shop ✓/敌の drop ✓）✓ 今回の trace 検索では **combat record の relic list ✓ に現れるだけで ✓ 入手 moment ✓ を拾えなかった** ✓✗（search の prev 更新を BYRDPIP 含む行に限定するミス ✓）→ 次回 ✓ 全 record を辿って初出の直前 phase ✓ を読む ✓
+panel ✓：seed2 `evdense_arm H2LV6ZJ4XW = 20 勝 ✓ 388 records ✓ Act 3 Floor 6 ✓`（control ✓ と同一 ✓）✓ 3 本目走行中 ✓
