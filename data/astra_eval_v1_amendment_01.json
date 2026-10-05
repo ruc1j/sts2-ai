@@ -32,5 +32,7 @@
     "N8CQ4ZKP2W",
     "D6A1F8C3E5",
     "A972EACCB8"
-  ]
+  ],
+  "new_metric_confirmation_fixed_in_commit": "7efa807dfa0ff2734f4f90c346a241a78f993ccd",
+  "new_metric_confirmation_fixed_at": 1791215185
 }
