@@ -8219,3 +8219,23 @@ Monster/Unknown の数は Act 3 到達 run の方が少ない ✓（中央値 7 
 - shop の relic 購入が 4,764 decisions 中 106 件 ✓（buy_card 1,445 ✓）✓ → **relic が shop に出る頻度**を確認する ✓ 出ていないなら policy の問題ではない ✓
 - card reward の選択 ✓（前々 round で potential 80 / 22 の差を見た ✓）✓ を到達と関連づけて測る ✓
 sweep `sw64` は走行中 ✓（09:34 時点で seed 1 が Act 2 ✓ `..._map_ACT.HIVE.json` まで出力 ✓）✓ 完了待ち `bash-1107` ✓
+
+## Round 78: 同じ seed の再 run は結果が完全一致 ✓ 再 run からは新しい情報が得られない ✓（測定軸の確認 ✓）
+
+sweep `sw64`（HEAD `3b65c2c` ✓ 09:29 開始 ✓）の途中結果 ✓
+```
+RESULT sw64 H2LV6ZJ4XW  wins=20 losses=1 records=388 depth=Act 3, Floor 6   fail=Watchdog ✓ Entering Monster room (Act 3, Floor 6)
+RESULT sw64 EAIF2UUVCK  wins=11 losses=1 records=225 depth=Act 2, Floor 10  fail=Rewards screen did not appear after combat
+RESULT sw64 9PCQMO0DAY  走行中（Act 2 の map まで出力 ✓）
+```
+**H2LV6ZJ4XW は 3 回（`sw59` ✓ `mapfix` ✓ `sw64` ✓）すべて 20 勝 1 敗 ✓ 388 records ✓ Act 3, Floor 6 ✓ で一致** ✓
+EAIF2UUVCK も前の panel と同じ 11 勝 1 敗 ✓ 225 records ✓ Act 2, Floor 10 ✓ ✓
+→ **同じ seed の repeater からは何も学べない** ✓ 挙動を変えたと主張するには ✓ (1) 决定差分（attribution の decision diff ✓）✓ または (2) 新しい seed ✓ が必要 ✓
+（teaching 7 ✓「arm と control が同じ数字なら測定が無い」✓ の再現 ✓）✓
+per-act の map file ✓ 3 act 分 ✓ は期待どおり出ている ✓（`sw64_H2LV6ZJ4XW_map.json` ✓ `_ACT.HIVE.json` ✓ `_ACT.GLORY.json` ✓）✓
+
+**重かった測定を streaming 版に書き直した** ✓ `/tmp/potential_depth.py` ✓
+前の版は trace ごとに全 record を materialize して 10 分以上掛かった ✓→ 行を stream し ✓ boss 戦を両方見つけたら打ち切り ✓`deck` は直前のものだけ保持 ✓
+background job `bash-1124` は cancel ✓ 置き換えた版の完了待ち `bash-1129` ✓（log `/tmp/pot.log` ✓）✓
+測るもの: **Act 2 boss / Act 3 boss の最初の record 時点で ✓ 直前の `deck` record から計算した攻撃火力の greedy 上限** ✓（3 energy ✓ 攻撃札を damage 順に選ぶ ✓ 手札順序と 1 combat 1 回制限を無視する近似 ✓ 比較専用 ✓）を ✓ 最終到達別 ✓（Act 1 / 2 / 3 ✓）✓ に分布させる ✓
+前々 round の単一 run での値（AM8C6YXHSG 80 ✓ D6A1F8C3E5 22 ✓）が ✓ corpus でも到達と相関するかどうかを見る ✓
