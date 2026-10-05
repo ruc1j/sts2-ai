@@ -3984,6 +3984,60 @@ class MadScienceTest(unittest.TestCase):
         after = step(self._combat(card), "card:0@0", DUMMY_DATA, random.Random(0))
         self.assertEqual(after.enemies[0].hp, 64)
 
+    def test_attack_applies_strength_weak_and_target_vulnerable_once(self) -> None:
+        for strength, weak, vulnerable, expected in ((4, 0, 1, 24), (4, 0, 0, 16), (10, 1, 1, 24)):
+            with self.subTest(strength=strength, weak=weak, vulnerable=vulnerable):
+                card = Card(MAD_SCIENCE, upgraded=True, variant="Attack", variant_value=12)
+                state = replace(self._combat(card), player_powers=(("StrengthPower", strength), ("WeakPower", weak)))
+                state = replace(state, enemies=(replace(state.enemies[0], powers=(("VulnerablePower", vulnerable),)),))
+                after = step(state, "card:0@0", DUMMY_DATA, random.Random(0))
+                self.assertEqual(after.enemies[0].hp, 80 - expected)
+                self.assertEqual(after.attacks_played_combat, 1)
+
+    def test_sapping_repeat_sees_pen_nib_and_its_first_vulnerable(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Attack", rider="Sapping", variant_value=12)
+        state = replace(self._combat(card), player_powers=(("StrengthPower", 4), ("DuplicationPower", 1)),
+                        player_relics=(RELIC_PEN_NIB,), relic_counters=((RELIC_PEN_NIB, 9),))
+        after = step(state, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 80 - 32 - 24)
+        self.assertEqual(dict(after.relic_counters)[RELIC_PEN_NIB], 1)
+        self.assertEqual(_power(after.enemies[0].powers, "VulnerablePower"), 4)
+
+    def test_sapping_uses_artifact_for_weak_before_vulnerable(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Attack", rider="Sapping", variant_value=12)
+        state = self._combat(card)
+        state = replace(state, enemies=(replace(state.enemies[0], powers=(("ArtifactPower", 1),)),))
+        after = step(state, "card:0@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 68)
+        self.assertEqual(_power(after.enemies[0].powers, "WeakPower"), 0)
+        self.assertEqual(_power(after.enemies[0].powers, "VulnerablePower"), 2)
+
+    def test_skill_modifiers_and_saved_skill_counter_use_its_actual_type(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Skill", variant_value=8)
+        state = replace(self._combat(card), player_powers=(("DexterityPower", 2), ("FrailPower", 1)),
+                        player_relics=("RELIC.TUNING_FORK",), relic_counters=(("RELIC.TUNING_FORK", 9),))
+        after = step(state, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_block, 7 + 7)
+        self.assertEqual(after.skills_played_combat, 1)
+
+    def test_power_uses_curious_discount_and_leaves_combat(self) -> None:
+        card = Card(MAD_SCIENCE, variant="Power", rider="Expertise")
+        state = replace(self._combat(card), player_powers=(("CuriousPower", 1),), player_relics=(RELIC_LOST_WISP,))
+        after = step(state, "card:0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.energy, 3)
+        self.assertEqual(after.powers_played_this_turn, 1)
+        self.assertEqual(after.discard_pile, ())
+        self.assertEqual(after.enemies[0].hp, 72)
+
+    def test_second_wind_keeps_attack_copy_and_exhausts_skill_copy(self) -> None:
+        attack = Card(MAD_SCIENCE, variant="Attack", variant_value=12)
+        skill = Card(MAD_SCIENCE, variant="Skill", variant_value=8)
+        state = replace(self._combat(attack), hand=(SECOND_WIND, attack, skill, DEFEND))
+        after = step(state, SECOND_WIND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.hand, (attack,))
+        self.assertEqual(after.player_block, 10)
+        self.assertIn(skill, after.exhaust_pile)
+
     def test_violence_rider_hits_three_times(self) -> None:
         card = Card(MAD_SCIENCE, variant="Attack", rider="Violence", variant_value=16)
         after = step(self._combat(card), "card:0@0", DUMMY_DATA, random.Random(0))

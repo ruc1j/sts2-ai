@@ -11,6 +11,41 @@ from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND,
 
 
 class OfficialAgentTest(unittest.TestCase):
+    def test_mad_science_imports_base_values_and_variants_in_all_piles(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        attack = {"id": "CARD.MAD_SCIENCE", "type": "Attack", "rider": "Sapping", "cost": 1,
+                  "vars": [{"id": "Damage", "value": 16, "base_value": 12}]}
+        skill = {"id": "CARD.MAD_SCIENCE", "type": "Skill", "rider": "Energized",
+                 "vars": [{"id": "Block", "value": 7, "base_value": 8}]}
+        power = {"id": "CARD.MAD_SCIENCE", "type": "Power", "rider": "Expertise"}
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3,
+                       "powers": [{"id": "POWER.STRENGTH_POWER", "amount": 4}]},
+            "hand": [dict(attack, index=0)], "draw_pile": [skill], "discard_pile": [power], "exhaust_pile": [attack],
+            "enemies": [{"id": "MONSTER.DUMMY", "hp": 100, "block": 0,
+                         "powers": [{"id": "POWER.VULNERABLE_POWER", "amount": 1}],
+                         "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.MAD_SCIENCE", "hand_index": 0, "target_id": 1},
+                              {"type": "end_turn"}],
+        }
+        official_agent._reset_play_counters()
+        for legacy in (False, True):
+            with self.subTest(legacy=legacy):
+                if legacy:
+                    del attack["vars"][0]["base_value"]
+                with patch("official_agent.search", return_value=[(END_TURN, 0.0)]) as searched:
+                    rollout_choice(observation, observation["legal_actions"], data, 1)
+                state = searched.call_args.args[0]
+                self.assertEqual(state.hand[0].variant_value, 12)
+                self.assertEqual((state.draw_pile[0].variant, state.draw_pile[0].variant_value), ("Skill", 8))
+                self.assertEqual((state.discard_pile[0].variant, state.discard_pile[0].rider), ("Power", "Expertise"))
+                self.assertEqual(state.exhaust_pile[0].variant, "Attack")
+                after = step(state, "card:0@0", data, random.Random(0))
+                self.assertEqual(after.enemies[0].hp, 76)
+
     def test_rollout_imports_saved_relic_counters_separately_from_combat_plays(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
             "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],

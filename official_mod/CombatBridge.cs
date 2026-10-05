@@ -151,16 +151,16 @@ internal static class CombatBridge
                     type = card.Type.ToString(),
                     rarity = card.Rarity.ToString(),
                     pool = card.Pool.Id.ToString(),
-                    vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
+                    vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue, base_value = variable.Value.BaseValue }),
                     // Mad Science rolls a per-copy CardType and RiderEffect. `type` already carries
                     // the former; without the latter the agent cannot tell a 3-hit Violence copy
                     // from a single hit, or know a Power copy grants Strength+Dexterity.
                     rider = (card as MadScience)?.TinkerTimeRider.ToString(),
                     target = card.TargetType.ToString(),
                 }),
-                draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
-                discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
-                exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
+                draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(PileCard),
+                discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(PileCard),
+                exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(PileCard),
                 enemies = combat.Enemies.Select(enemy => new
                 {
                     combat_id = enemy.CombatId,
@@ -257,6 +257,18 @@ internal static class CombatBridge
         return (cards, attacks, skills);
     }
 
+    private static object PileCard(CardModel card) => new
+    {
+        id = card.Id.ToString(),
+        upgrade = card.CurrentUpgradeLevel,
+        enchantment = card.Enchantment?.Id.ToString(),
+        type = card is MadScience ? card.Type.ToString() : null,
+        rider = (card as MadScience)?.TinkerTimeRider.ToString(),
+        vars = card is MadScience
+            ? card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue, base_value = variable.Value.BaseValue })
+            : null,
+    };
+
     private static Dictionary<string, int> RelicCounters(MegaCrit.Sts2.Core.Entities.Players.Player player)
     {
         var counters = new Dictionary<string, int>();
@@ -344,13 +356,13 @@ internal static class CombatBridge
                 type = card.Type.ToString(),
                 rarity = card.Rarity.ToString(),
                 pool = card.Pool.Id.ToString(),
-                vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue }),
+                vars = card.DynamicVars.Select(variable => new { id = variable.Key, value = variable.Value.PreviewValue, base_value = variable.Value.BaseValue }),
                 rider = (card as MadScience)?.TinkerTimeRider.ToString(),
                 target = card.TargetType.ToString(),
             }),
-            draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
-            discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
-            exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(card => new { id = card.Id.ToString(), upgrade = card.CurrentUpgradeLevel, enchantment = card.Enchantment?.Id.ToString() }),
+            draw_pile = player.PlayerCombatState.DrawPile.Cards.Select(PileCard),
+            discard_pile = player.PlayerCombatState.DiscardPile.Cards.Select(PileCard),
+            exhaust_pile = player.PlayerCombatState.ExhaustPile.Cards.Select(PileCard),
             potions = player.PotionSlots.Select((potion, index) => potion is null ? null : new { index, id = potion.Id.ToString(), usage = potion.Usage.ToString(), target = potion.TargetType.ToString() }),
             enemies = combat.Enemies.Select(enemy => new
             {

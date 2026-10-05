@@ -2873,17 +2873,19 @@ def _observation_card(value: object) -> str | Card:
         # Frantic Escape is the one card whose copies drift above their base cost during a combat
         # (EnergyCost.AddThisCombat), and the observation reports each copy's current cost.
         extra_cost = max(_number(value.get("cost")) - 1, 0) if card_id == "CARD.FRANTIC_ESCAPE" else 0
-        # Mad Science rolls a CardType and a RiderEffect per copy; the bridge reports `type` and
-        # `rider`, and this copy's scaled Damage/Block sits in its own vars.
+        # Mad Science's preview already includes Strength/Dexterity and player multipliers.
+        # Import the base value, then apply combat modifiers once in the model. Its upgrade
+        # adds Innate, not damage/block. Legacy traces fall back to the canonical 12/8.
         variant = rider = None
         variant_value = 0
         if card_id == "CARD.MAD_SCIENCE":
             variant = value.get("type") if isinstance(value.get("type"), str) else None
             rider = value.get("rider") if isinstance(value.get("rider"), str) else None
             wanted = "Block" if variant == "Skill" else "Damage"
+            canonical = 8 if variant == "Skill" else 12
             variant_value = next(
-                (_number(variable.get("value")) for variable in value.get("vars") or () if variable.get("id") == wanted),
-                0,
+                (_number(variable.get("base_value"), canonical) for variable in value.get("vars") or () if variable.get("id") == wanted),
+                canonical,
             )
         return Card(
             name, _number(value.get("upgrade")) > 0,

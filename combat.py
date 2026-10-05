@@ -329,6 +329,7 @@ class Card:
     # can be a 3-hit attack and a Strength power. The bridge reports both per copy.
     variant: str | None = None
     rider: str | None = None
+    # Unmodified Damage/Block base value, never the buffed preview shown in the hand.
     variant_value: int = 0
     # Distinguish an observed discounted copy from otherwise identical cards in hand.
     instance_id: int | None = None
@@ -339,6 +340,13 @@ CardValue = str | Card
 
 def card_name(card: CardValue) -> str:
     return card.name if isinstance(card, Card) else card
+
+
+def _card_type(card: CardValue) -> str | None:
+    name = card_name(card)
+    if name == MAD_SCIENCE:
+        return card.variant if isinstance(card, Card) else None
+    return "Attack" if name in ATTACKS else "Skill" if name in SKILLS else "Power" if name in POWERS else None
 
 
 @dataclass(frozen=True)
@@ -630,7 +638,7 @@ def _after_exhaust(combat: Combat, cards: tuple[CardValue, ...], rng: random.Ran
         combat = replace(combat, joss_paper_count=joss_count, exhausted_this_turn=True)
     burning_used = combat.burning_sticks_used
     if RELIC_BURNING_STICKS in relics and not burning_used:
-        skill = next((card for card in cards if card_name(card) in SKILLS), None)
+        skill = next((card for card in cards if _card_type(card) == "Skill"), None)
         if skill is not None:
             combat = replace(combat, hand=combat.hand + (skill,), burning_sticks_used=True)
             burning_used = True
@@ -1027,7 +1035,7 @@ def _autoplay_stampede(combat: Combat, data: dict, rng: random.Random) -> Combat
         alive = [index for index, enemy in enumerate(combat.enemies) if enemy.alive]
         candidates = [
             index for index, value in enumerate(combat.hand)
-            if card_name(value) in ATTACKS and card_name(value) != WHIRLWIND
+            if _card_type(value) == "Attack" and card_name(value) != WHIRLWIND
         ]
         if not alive or not candidates:
             break
@@ -1152,11 +1160,12 @@ def _spawn_wrigglers(data: dict, rng: random.Random) -> tuple[Enemy, ...]:
 
 def _effective_cost(combat: Combat, card: CardValue) -> int:
     name = card_name(card)
+    kind = _card_type(card)
     cost = CARD_COST.get(name, 0)
     # CuriousPower (MadScience.OnPlay) lowers the energy cost of the owner's Power cards by its
     # stack, floored at 0. The bridge reports the already-modified cost in legal_actions, so without
     # this the rollout treats a powered-up Power card as unaffordable and never plays it.
-    if name in POWERS:
+    if kind == "Power":
         curious = _power(combat.player_powers, "CuriousPower")
         if curious:
             cost = max(cost - curious, 0)
@@ -1187,10 +1196,10 @@ def _effective_cost(combat: Combat, card: CardValue) -> int:
         cost = min(cost, 1)
     if isinstance(card, Card):
         cost += card.extra_cost
-    if name in ATTACKS and _power(combat.player_powers, "TangledPower"):
+    if kind == "Attack" and _power(combat.player_powers, "TangledPower"):
         # TangledPower afflicts every Attack with Entangled (EnergyVar 1) for the turn.
         cost += 1
-    if name in ATTACKS and _power(combat.player_powers, "FreeAttackPower"):
+    if kind == "Attack" and _power(combat.player_powers, "FreeAttackPower"):
         # FreeAttackPower.TryModifyEnergyCostInCombatLate zeroes Attack costs while it lasts; each
         # Attack played decrements it (see step()).
         return 0
@@ -2558,7 +2567,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         discard = list(combat.discard_pile)
         aggression = _power(player_powers, "AggressionPower")
         if aggression:
-            candidates = [index for index, card in enumerate(discard) if card_name(card) in ATTACKS]
+            candidates = [index for index, card in enumerate(discard) if _card_type(card) == "Attack"]
             selected_indices = rng.sample(candidates, min(aggression, len(candidates)))
             selected = [_upgrade_card(discard[index]) for index in selected_indices]
             for index in sorted(selected_indices, reverse=True):
@@ -2619,6 +2628,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     else:
         played_value = action_card
     card = card_name(played_value)
+    kind = _card_type(played_value)
+    is_attack, is_skill, is_power = kind == "Attack", kind == "Skill", kind == "Power"
     if isinstance(played_value, Card) and played_value.bound:
         # BeforeCardPlayed sets this before the play resolves, so the next Bound card in the same turn
         # is gated off by ShouldPlay (real runs played Bound cards 279 times).
@@ -2627,7 +2638,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # consumes one charge, even when another source already increased the same play's count.
     plays = 1
     for power_name in ("DuplicationPower", "OneTwoPunchPower"):
-        if _power(combat.player_powers, power_name) and (power_name == "DuplicationPower" or card in ATTACKS):
+        if _power(combat.player_powers, power_name) and (power_name == "DuplicationPower" or is_attack):
             plays += 1
             combat = replace(combat, player_powers=_add_power(combat.player_powers, power_name, -1))
     if RELIC_THROWING_AXE in combat.player_relics and combat.cards_played_combat == 0:
@@ -2636,7 +2647,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # GigantificationPower marks the first powered Attack played on the turn and multiplies that
     # command's damage by 3, then decrements.
     gigantified = bool(
-        card in ATTACKS
+        is_attack
         and combat.attacks_played_this_turn == 0
         and _power(combat.player_powers, "GigantificationPower")
     )
@@ -2649,7 +2660,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         if card_index is not None:
             played_value = hand[card_index]
             card = card_name(played_value)
-    if card in SKILLS:
+    if is_skill:
         # AfterCardPlayed fires once per resolution, so an increased play count runs these hooks again.
         for _ in range(plays):
             vital_spark = sum(_power(enemy.powers, "VitalSparkPower") for enemy in combat.enemies if enemy.alive)
@@ -2678,9 +2689,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     card_cost = 0 if card_is_free else _effective_cost(combat, played_value)
     if card_is_free:
         free_cards.remove(played_value)
-    block_card_has_gain = card in BLOCK_CARDS
+    block_card_has_gain = card in BLOCK_CARDS or (card == MAD_SCIENCE and is_skill)
     if card == SECOND_WIND:
-        block_card_has_gain = any(card_name(value) not in ATTACKS for value in hand)
+        block_card_has_gain = any(_card_type(value) != "Attack" for value in hand)
     unmovable_amount = _power(combat.player_powers, "UnmovablePower")
     unmovable_double = block_card_has_gain and combat.block_cards_this_turn < unmovable_amount
     if block_card_has_gain:
@@ -2692,26 +2703,26 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # saved across fights (Pen Nib, Nunchaku, Tuning Fork - each "every 10th").
     relics = combat.player_relics
     # The per-play counters advance once per resolution, so a duplicated play counts `plays` times.
-    attacks_this_turn = combat.attacks_played_this_turn + (plays if card in ATTACKS else 0)
-    skills_this_turn = combat.skills_played_this_turn + (plays if card in SKILLS else 0)
-    attacks_combat = combat.attacks_played_combat + (plays if card in ATTACKS else 0)
-    skills_combat = combat.skills_played_combat + (plays if card in SKILLS else 0)
+    attacks_this_turn = combat.attacks_played_this_turn + (plays if is_attack else 0)
+    skills_this_turn = combat.skills_played_this_turn + (plays if is_skill else 0)
+    attacks_combat = combat.attacks_played_combat + (plays if is_attack else 0)
+    skills_combat = combat.skills_played_combat + (plays if is_skill else 0)
     cards_combat = combat.cards_played_combat + plays
     cards_this_turn = combat.cards_played_this_turn + plays
-    powers_this_turn = combat.powers_played_this_turn + (plays if card in POWERS else 0)
+    powers_this_turn = combat.powers_played_this_turn + (plays if is_power else 0)
     # New bridge observations carry each relic's saved counter. Legacy snapshots without
     # those values retain the combat-history approximation; never conflate independent relics.
     relic_counters = dict(combat.relic_counters)
     pen_nib_before = relic_counters.get(RELIC_PEN_NIB, combat.attacks_played_combat)
     pen_nib_plays = {
         resolution for resolution in range(plays)
-        if RELIC_PEN_NIB in relics and card in ATTACKS and (pen_nib_before + resolution + 1) % 10 == 0
+        if RELIC_PEN_NIB in relics and is_attack and (pen_nib_before + resolution + 1) % 10 == 0
     }
     relic_triggers = {}
     for relic, is_matching_type, fallback in (
-        (RELIC_PEN_NIB, card in ATTACKS, combat.attacks_played_combat),
-        (RELIC_NUNCHAKU, card in ATTACKS, combat.attacks_played_combat),
-        (RELIC_TUNING_FORK, card in SKILLS, combat.skills_played_combat),
+        (RELIC_PEN_NIB, is_attack, combat.attacks_played_combat),
+        (RELIC_NUNCHAKU, is_attack, combat.attacks_played_combat),
+        (RELIC_TUNING_FORK, is_skill, combat.skills_played_combat),
     ):
         if relic in relics:
             before_count = relic_counters.get(relic, fallback)
@@ -2719,21 +2730,22 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             relic_triggers[relic] = after_count // 10 - before_count // 10
             relic_counters[relic] = after_count % 10
     helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (card_cost >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
-    vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and card in BLOCK_CARDS
-    lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
+    vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and (card in BLOCK_CARDS or (card == MAD_SCIENCE and is_skill))
+    applies_debuff = card in DEBUFF_CARDS or (isinstance(played_value, Card) and card == MAD_SCIENCE and played_value.rider in {"Sapping", "Choking"})
+    lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and applies_debuff
     energy_gain_allowed = not _power(combat.player_powers, "NoEnergyGainPower")
     combo_powers, combo_enemies, combo_block, combo_energy = combat.player_powers, list(combat.enemies), 0, 0
     combo_pending: list[tuple[str, int]] = []
     combo_block += helmet_block
-    if card in ATTACKS and _power(combat.player_powers, "FreeAttackPower"):
+    if is_attack and _power(combat.player_powers, "FreeAttackPower"):
         # FreeAttackPower.BeforeCardPlayed decrements once per Attack played from hand.
         combo_powers = _add_power(combo_powers, "FreeAttackPower", -1)
-    if card in POWERS and RELIC_LOST_WISP in relics:
+    if is_power and RELIC_LOST_WISP in relics:
         # LostWisp.AfterCardPlayed: 8 Unpowered damage to every hittable enemy per Power card.
         combo_enemies = [
             _damage_enemy(enemy, 8, powered=False) if enemy.alive else enemy for enemy in combo_enemies
         ]
-    if card in ATTACKS:
+    if is_attack:
         combo_block += _power(combat.player_powers, "RagePower")
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
             combo_pending.append(("DexterityPower", 1))
@@ -2748,7 +2760,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6, powered=False)
         if energy_gain_allowed:
             combo_energy += relic_triggers.get(RELIC_NUNCHAKU, 0)
-    if card in SKILLS:
+    if is_skill:
         if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0:
             combo_enemies = [_damage_enemy(enemy, 5, powered=False) if enemy.alive else enemy for enemy in combo_enemies]
         combo_block += 7 * relic_triggers.get(RELIC_TUNING_FORK, 0)
@@ -2843,7 +2855,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             (CARD_DRAW[card] + (1 if card == POMMEL_STRIKE and card_was_upgraded else 0)) * plays, data, rng,
         )
         hand = list(combat.hand)
-    if card == IMPATIENCE and not any(card_name(value) in ATTACKS for value in hand):
+    if card == IMPATIENCE and not any(_card_type(value) == "Attack" for value in hand):
         combat = _draw_into_combat(replace(combat, hand=tuple(hand)), 2, data, rng)
         hand = list(combat.hand)
     # Enlightenment.OnPlay (reduceOnly): once played, every card costs at most 1 for the rest of
@@ -2861,10 +2873,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == FORGOTTEN_RITUAL and energy_gain_allowed and combat.exhausted_this_turn:
         energy += 4 if card_was_upgraded else 3
     if card == EXPECT_A_FIGHT and energy_gain_allowed:
-        energy += sum(card_name(value) in ATTACKS for value in hand)
+        energy += sum(_card_type(value) == "Attack" for value in hand)
     player_hp = combat.player_hp
     self_damage = SELF_DAMAGE.get(card, 0)
-    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and card in ATTACKS:
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and is_attack:
         self_damage += 2
     # GalvanicPower (enemy buff): BeforeCombatStart and AfterCardEnteredCombat afflict every one of
     # the player's Power cards with Galvanized, and AfterCardPlayed deals the power's amount as
@@ -2873,7 +2885,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # ponytail: the affliction rides the card, so it outlives the enemy that applied it - taking the
     # largest amount any enemy in this fight brought (alive or dead) keeps that without tracking
     # per-card afflictions. Upgrade to per-card state if an enemy ever applies two different amounts.
-    if card in POWERS:
+    if is_power:
         self_damage += max((_power(enemy.powers, "GalvanicPower") for enemy in combat.enemies), default=0)
     if self_damage:
         # Apply Tungsten Rod/Beating Remnant/Lizard Tail to card self-damage as well as enemy hits.
@@ -2946,9 +2958,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         player_powers = _add_power(player_powers, "NoEnergyGainPower", (1) * plays)
     if card == PRIMAL_FORCE:
         if isinstance(played_value, Card):
-            hand = [Card(GIANT_ROCK, card_was_upgraded) if card_name(value) in ATTACKS else value for value in hand]
+            hand = [Card(GIANT_ROCK, card_was_upgraded) if _card_type(value) == "Attack" else value for value in hand]
         else:
-            hand = [GIANT_ROCK if card_name(value) in ATTACKS else value for value in hand]
+            hand = [GIANT_ROCK if _card_type(value) == "Attack" else value for value in hand]
     # SecretWeapon.OnPlay picks one CardType.Attack out of the draw pile and adds it to hand.  The
     # player makes that choice; the model prices it as the strongest Attack in the draw pile, which is
     # what our own heuristic would want there.  The chosen index is remembered so the post-play rewrite
@@ -2958,7 +2970,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         candidates = [
             (CARD_DAMAGE.get(card_name(value), 0) + (2 if card_is_upgraded(combat, value) else 0), index)
             for index, value in enumerate(combat.draw_pile)
-            if card_name(value) in ATTACKS
+            if _card_type(value) == "Attack"
         ]
         if candidates:
             secret_weapon_draw_index = max(candidates)[1]
@@ -2972,7 +2984,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # 58, Stone Armor 35, Rupture 30, Crimson Mantle 22, Hellraiser 16, Unmovable 9, Vicious 4,
     # Aggression 3, Pyre 1, Juggernaut 1, Stampede 1 - while the model used to drop them into the discard,
     # which let a spent Power be shuffled back and replayed later in the same fight.
-    leaves_combat = not exhaust and card in POWERS
+    leaves_combat = not exhaust and is_power
     exhaust_before = combat.exhaust_pile
     played_pile_index = len(exhaust_before if exhaust else combat.discard_pile)
     exhaust_pile = exhaust_before + ((played_value,) if exhaust else ())
@@ -3036,11 +3048,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             free_cards=tuple(_upgraded(value) for value in combat.free_cards),
             upgraded_cards=_remember_legacy_upgrades(combat, targets),
         )
-    if card in POWERS:
+    if is_power:
         for _ in range(plays):
             combat = _after_power_play(combat, rng, data)
     juggling_amount = _power(combat.player_powers, "JugglingPower")
-    if juggling_amount and card in ATTACKS and attacks_this_turn == 3:
+    if juggling_amount and is_attack and attacks_this_turn == 3:
         # JugglingPower.AfterCardPlayed: the 3rd Attack played during the player's side puts one
         # clone of that Attack into hand. The counter is per-turn (AfterSideTurnEnd resets it), and
         # JugglingPower.AfterApplied seeds it with the attacks already played this turn.
@@ -3074,7 +3086,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         generated = rng.choice(INFERNAL_BLADE_ATTACKS)
         generated_value = Card(generated) if isinstance(played_value, Card) else generated
         combat = replace(combat, hand=tuple(combat.hand) + (generated_value,), free_cards=combat.free_cards + (generated_value,))
-    if RELIC_RAZOR_TOOTH in relics and (card in ATTACKS or card in SKILLS):
+    if RELIC_RAZOR_TOOTH in relics and (is_attack or is_skill):
         if isinstance(played_value, Card):
             upgraded_value = _upgrade_card(played_value)
             pile = list(combat.exhaust_pile if exhaust else combat.discard_pile)
@@ -3150,8 +3162,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == SECOND_WIND:
         # SecondWind.OnPlay: exhausts every non-Attack card still in hand, gaining 5 block
         # (ValueProp.Move, so Frail doesn't reduce it) per card exhausted this way.
-        non_attacks = tuple(value for value in combat.hand if card_name(value) not in ATTACKS)
-        remaining = tuple(value for value in combat.hand if card_name(value) in ATTACKS)
+        non_attacks = tuple(value for value in combat.hand if _card_type(value) != "Attack")
+        remaining = tuple(value for value in combat.hand if _card_type(value) == "Attack")
         block = 5 * len(non_attacks)
         combat = replace(combat, hand=remaining, exhaust_pile=combat.exhaust_pile + non_attacks)
         combat = _grant_block(combat, block, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double, apply_frail=False)
@@ -3167,43 +3179,20 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, player_powers=_add_power(combat.player_powers, "FeelNoPainPower", 4 if card_was_upgraded else 3))
     if card == VICIOUS:
         return replace(combat, player_powers=_add_power(combat.player_powers, "ViciousPower", 2 if card_was_upgraded else 1))
-    if card == MAD_SCIENCE:
+    if card == MAD_SCIENCE and not is_attack:
         # MadScience.OnPlay switches on the copy's TinkerTimeType, then applies its RiderEffect.
-        # The bridge reports both, and DynamicVars already carry this copy's scaled Damage/Block.
+        # Attack copies continue through the shared damage, modifier and death handling below.
         variant = played_value.variant if isinstance(played_value, Card) else None
         rider = played_value.rider if isinstance(played_value, Card) else None
         amount = played_value.variant_value if isinstance(played_value, Card) else 0
-        enemies = list(combat.enemies)
         player_powers = combat.player_powers
-        if variant == "Attack" and target is not None:
-            index = int(target)
-            hits = 3 if rider == "Violence" else 1
-            for _ in range(hits):
-                if enemies[index].alive:
-                    enemies[index] = _damage_enemy(enemies[index], amount + _power(player_powers, "StrengthPower"))
-            combat = replace(combat, enemies=tuple(enemies))
-        elif variant == "Skill":
-            combat = _grant_block(combat, amount, rng)
+        if variant == "Skill":
+            combat = _grant_block(combat, amount, rng, vambrace_double=vambrace_double, unmovable_double=unmovable_double)
         elif variant == "Power" and rider == "Expertise":
-            player_powers = _add_power(player_powers, "StrengthPower", 2)
-            player_powers = _add_power(player_powers, "DexterityPower", 2)
+            player_powers = _add_power(player_powers, "StrengthPower", 2 * plays)
+            player_powers = _add_power(player_powers, "DexterityPower", 2 * plays)
             combat = replace(combat, player_powers=player_powers)
-        # Riders that stack on top of whichever half ran above. Chaos adds a random free card to
-        # hand, which the model cannot name, so it is left out - a safe-direction omission.
-        enemies, player_powers = list(combat.enemies), combat.player_powers
-        if rider == "Sapping" and target is not None:
-            index = int(target)
-            enemies[index] = replace(enemies[index], powers=_add_power(_add_power(enemies[index].powers, "WeakPower", 2), "VulnerablePower", 2))
-            combat = replace(combat, enemies=tuple(enemies))
-        elif rider == "Choking" and target is not None:
-            index = int(target)
-            enemies[index] = replace(enemies[index], powers=_add_power(enemies[index].powers, "StranglePower", 6))
-            combat = replace(combat, enemies=tuple(enemies))
-        elif rider == "Energized":
-            combat = replace(combat, energy=combat.energy + 2)
-        elif rider == "Wisdom":
-            combat = _draw_into_combat(combat, 3, data, rng)
-        return combat
+        return _mad_science_bonus(combat, rider, plays, data, rng)
     if card == CASCADE:
         # Cascade.OnPlay: AutoPlayFromDrawPile(X, Top) - X cards off the draw pile are played for
         # free (X + 1 when upgraded), without being forced to exhaust. This model keeps the draw
@@ -3345,7 +3334,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
     before = tuple(enemies)
     enemy = enemies[int(target)]
-    if card == SPITE:
+    if card == MAD_SCIENCE:
+        hits = 3 if played_value.rider == "Violence" else 1
+    elif card == SPITE:
         hits = 3 if card_was_upgraded and combat.lost_hp_this_turn else 2 if combat.lost_hp_this_turn else 1
     elif card == PECK:
         hits = 4 if card_was_upgraded else 3
@@ -3360,7 +3351,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hits = 2
     hits_per_play = hits
     hits *= plays
-    if card == PERFECTED_STRIKE:
+    if card == MAD_SCIENCE:
+        damage = played_value.variant_value
+    elif card == PERFECTED_STRIKE:
         strikes = sum(
             1 for value in combat.hand + combat.draw_pile + combat.discard_pile + combat.exhaust_pile
             if card_name(value) in STRIKE_TAGGED
@@ -3386,11 +3379,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += combat.maul_bonus if card == MAUL else combat.thrash_bonus
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM, MAUL, THRASH}:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM, MAUL, THRASH, MAD_SCIENCE}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
-    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and card in ATTACKS:
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and is_attack:
         damage += 3
-    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and card in ATTACKS:
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and is_attack:
         damage = damage * 3 // 2
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
     combat, vigor = _spend_vigor(combat)
@@ -3409,6 +3402,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # hits from the target's new state.  The last resolution's debuffs go in below with the other
     # end-of-play effects, so the total stays one grant per resolution.
     resolution_debuffs = _card_resolution_debuffs(card, card_was_upgraded)
+    if card == MAD_SCIENCE:
+        if played_value.rider == "Sapping":
+            resolution_debuffs = (("WeakPower", 2), ("VulnerablePower", 2))
+        elif played_value.rider == "Choking":
+            resolution_debuffs = (("StranglePower", 6),)
     for hit_index in range(hits):
         if not enemies[int(target)].alive:
             break
@@ -3420,6 +3418,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             for power_name, amount in resolution_debuffs:
                 state = _apply_enemy_debuff(state, power_name, amount * (2 if lamp_double else 1))
             enemies[int(target)] = state
+    if card == MAD_SCIENCE:
+        for power_name, amount in resolution_debuffs:
+            enemies[int(target)] = _apply_enemy_debuff(enemies[int(target)], power_name, amount * (2 if lamp_double else 1))
     if card == MOLTEN_FIST and enemies[int(target)].alive:
         vulnerable = _power(enemy.powers, "VulnerablePower")
         if vulnerable:
@@ -3437,7 +3438,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == MAUL:
         combat = replace(combat, maul_bonus=combat.maul_bonus + (2 if card_was_upgraded else 1))
     if card == THRASH:
-        attacks = [index for index, value in enumerate(hand) if card_name(value) in ATTACKS]
+        attacks = [index for index, value in enumerate(hand) if _card_type(value) == "Attack"]
         if attacks:
             exhausted = hand.pop(attacks[rng.randrange(len(attacks))])
             gained = _thrash_gain(exhausted)
@@ -3516,7 +3517,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             combat = replace(combat, hand=tuple(drawn_hand), draw_pile=draw_pile, discard_pile=discard_pile)
             combat = _autoplay_drawn_strikes(combat, one, data, rng)
             drawn_hand = list(combat.hand)
-            if card_name(one[0]) not in ATTACKS:
+            if _card_type(one[0]) != "Attack":
                 break
     if enemy.alive and not enemies[int(target)].alive:
         for index, partner in enumerate(enemies):
@@ -3547,7 +3548,18 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         gained = 4 if card_was_upgraded else 3
         combat = replace(combat, player_max_hp=combat.player_max_hp + gained, player_hp=combat.player_hp + gained)
     combat = _apply_reflected_damage(combat, reflected)
+    if card == MAD_SCIENCE and not combat.terminal:
+        combat = _mad_science_bonus(combat, played_value.rider, plays, data, rng)
     return replace(combat, draw_pile=combat.draw_pile + (DAZED,) * hive)
+
+
+def _mad_science_bonus(combat: Combat, rider: str | None, plays: int, data: dict, rng: random.Random) -> Combat:
+    if rider == "Energized" and not _power(combat.player_powers, "NoEnergyGainPower"):
+        return replace(combat, energy=combat.energy + 2 * plays)
+    if rider == "Wisdom":
+        return _draw_into_combat(combat, 3 * plays, data, rng)
+    # Chaos generation and the Curious/Improvement power variants remain unmodeled.
+    return combat
 
 
 def _thrash_gain(value: CardValue) -> int:
@@ -3638,7 +3650,7 @@ def _setup_bonus(combat: Combat, state: Combat, card: CardValue, data: dict) -> 
         return _projected_attack_value(state, WHIRLWIND)
     if name == INFLAME:
         attacks = sorted(
-            (value for value in state.hand if card_name(value) in ATTACKS and card_name(value) != WHIRLWIND),
+            (value for value in state.hand if _card_type(value) == "Attack" and card_name(value) != WHIRLWIND),
             key=lambda value: 0 if value in state.free_cards else _effective_cost(state, value),
         )
         energy, selected = state.energy, []
@@ -3682,7 +3694,7 @@ def _greedy_action(combat: Combat, data: dict) -> str:
         # Vulnerability applies (Bash/Tremble) strengthen later attacks by 50%; credit
         # that so they are played before the attacks they boost.
         if card in {BASH, TREMBLE}:
-            score += sum(CARD_DAMAGE.get(card_name(value), 0) // 2 for value in state.hand if card_name(value) in ATTACKS and card_name(value) != card and CARD_COST.get(card_name(value), 99) <= state.energy)
+            score += sum(CARD_DAMAGE.get(card_name(value), 0) // 2 for value in state.hand if _card_type(value) == "Attack" and card_name(value) != card and CARD_COST.get(card_name(value), 99) <= state.energy)
         # Drawing is worth what the extra options are worth, and search() already prices that in:
         # its rollout plays the rest of the turn out of the bigger hand and the better line shows up
         # as final HP. _step_score must therefore NOT pay for it again - crediting it there once
