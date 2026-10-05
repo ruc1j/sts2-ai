@@ -8855,3 +8855,40 @@ batch 1 3本目 ✓ VTW80ZJA2G ✓ 走行中 ✓ → 終わり次第 ✓ 改訂�
 batch 1（未改訂 ✓）の 3 本目 ✓ VTW80ZJA2G ✓ 走行中 ✓ → 改訂版 `.wt-proto16` ✓ → batch 3 ✓ の順で panel ✓ する ✓
 **panel の順番** ✓（1 度に 1 変更 ✓）✓ 1. `.wt-proto16`（DENSE_VEGETATION の gold 評価 ✓）✓ 2. `.wt-proto17`（BUGSLAYER ✓）✓ 3. `.wt-proto15`（SAPPHIRE_SEED ✓ TEA_MASTER ✓）✓
 control は `evfix_ctrl` ✓（50 勝 ✓ 3 敗 ✓）✓ をそのまま使う ✓（HEAD 間で policy 変更が無い ✓）✓
+
+## Round 102: batch 1（未改訂 ✓）の panel 完了 ✓ **1 seed で +3 勝・Act 2→Act 3 ✓ / 1 seed で -6 勝 ✓** ✓ 合計 47 勝 ✓（control 50 勝 ✓）→ 採らない ✓
+
+```
+seed          control（evfix_ctrl ✓ 50 勝 ✓）            batch 1（未改訂 ✓ evscore_arm ✓）
+AM8C6YXHSG    17 勝 ✓ 360 records ✓ Act 3, Floor 15 ✓    11 勝 ✓ 191 records ✓ Act 2, Floor 16  ✗✗ -6 勝 ✓
+H2LV6ZJ4XW    20 勝 ✓ 388 records ✓ Act 3, Floor  6 ✓    20 勝 ✓ 388 records ✓ Act 3, Floor  6  ✓ 同一 ✓（価格付け event に当たらず ✓）
+VTW80ZJA2G    13 勝 ✓ 262 records ✓ Act 2, Floor 16 ✓    16 勝 ✓ 325 records ✓ Act 3, Floor  6  ✓✓ +3 勝 ✓ Act 3 に到達 ✓
+合計          50 勝 3 敗 ✓ Act 3 完走 0 ✓                47 勝 3 敗 ✓ Act 3 完走 0 ✓
+```
+**改善した seed は 1 件だけ** ✓（VTW80ZJA2G ✓ 13→16 勝 ✓ Act 2 boss 室止まり → Act 3 Floor 6 ✓）✓
+**悪化した seed が 1 件** ✓（AM8C6YXHSG ✓ 17→11 勝 ✓）✓ → **採用基準（3 seed ✓ で改善 ✓）を満たさない ✓ 採らない ✓** ✓
+event: accepted 21 ✓ rejected 11 ✓（34.4% ✓）✓ まだ弹かれるもの ✓：SYMBIOTE 2 ✓ SAPPHIRE_SEED 1 ✓ DOLL_ROOM 1 ✓ THE_LEGENDS_WERE_TRUE 1 ✓ **DENSE_VEGETATION 1 ✓（REST ✓ の後続 page ✓）** ✓ INFESTED_AUTOMATON 1 ✓ WELCOME_TO_WONGOS 1 ✓ TEA_MASTER 1 ✓
+
+## **長い間使ってきた数字の訂正 ✓：Act 2 boss「進入 HP 中央値 17 ✓（36% ✓ が 10 以下 ✓）」は進入の値ではなかった** ✓
+
+6 trace ✓（`sw59_* ✓ 5 本 ✓ + evdiag_* ✓ 2 本 ✓ うち boss 到達 6 ✓）✓ 同じ定義 ✓（boss 戦の最初の combat record ✓ の直前の player hp ✓）✓ で測った ✓
+```
+evdiag_9PCQMO0DAY: 進入 60 ✓ boss 戦の最後の HP 9 ✓
+evdiag_VTW80ZJA2G:  進入 69 ✓  最後 8 ✓
+sw59_AM8C6YXHSG:    進入 75 ✓  最後 43 ✓
+sw59_D6A1F8C3E5:    進入 85 ✓  最後 35 ✓
+sw59_H2LV6ZJ4XW:    進入 79 ✓  最後 5 ✓
+sw59_VTW80ZJA2G:    進入 69 ✓  最後 8 ✓
+進入 HP 中央値 72 ✓ / boss 戦終了時の HP 中央値 8.5 ✓✗✗
+```
+→ **boss 進入は健全 ✓（中央値 72 ✓）で ✓ boss 戦を出るときに瀕死 ✓（中央値 8.5 ✓）** ✓✓
+→ 前まで CODEWIKI に「boss 進入 HP 中央値 17 ✓（QUEEN ✓ は 11 ✓）」と書いていたのは ✓ **boss 戦の終わり側の値だった** ✓✗（どこで混ざったかはこの測定のまでは特定できていない ✓）✓
+→ **壁の読み方は変わらない ✓** ✓（boss 戦で 60〜70 HP 失う ✓ → Act 3 入口の連続 fight ✓ で死ぬ ✓）✓ が ✓
+**「boss 前に rest を増やせ ✓」型の仮説は ✓ 進入が健全である限り筋が良い ✓** ✓（teaching 112 ✓ 測定が実際に何を測ったか ✓ の実例 ✓）✓
+
+Act 2 の部屋構成の比較 ✓（boss 進入 60+ ✓ 308 run ✓ vs 中間 ✓ 76 run ✓）✓
+```
+Monster 4.6 ✓ Elite 0.3-0.4 ✓ RestSite 3.1-3.2 ✓ Shop 1.2 ✓ Unknown 3.7 ✓ Treasure 1.0 ✓  → **両群で同じ ✓** ✓
+```
+→ Act 2 の通り道の種類は boss 進入 HP の高低と無関係 ✓ ✓（进入 HP の差は fight の中身 ✓ の側 ✓）✓
+改訂版 panel `evdense_arm` ✓ は 11:29 時点で batch 1 完了を受けて起動 ✓（`bash-1270` ✓）✓
