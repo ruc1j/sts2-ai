@@ -1511,6 +1511,40 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose_map(observation)["col"], 0)
 
+    def test_map_avoids_extra_fights_when_later_heal_equalizes_hp(self) -> None:
+        observation = {
+            "player": {"hp": 80, "max_hp": 80},
+            "map": {"points": [
+                {"col": 0, "row": 1, "type": "Monster", "children": [{"col": 0, "row": 2}]},
+                {"col": 1, "row": 1, "type": "Unknown", "children": [{"col": 0, "row": 2}]},
+                {"col": 0, "row": 2, "type": "RestSite", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 1}, {"type": "map", "col": 1, "row": 1}],
+        }
+        self.assertEqual(choose_map(observation)["col"], 1)
+
+    def test_map_does_not_charge_completed_room_again(self) -> None:
+        observation = {
+            "player": {"hp": 70, "max_hp": 80},
+            "run": {"current": {"col": 2, "row": 0}},
+            "map": {"points": [
+                {"col": 2, "row": 0, "type": "Monster", "children": [{"col": 0, "row": 1}, {"col": 1, "row": 1}]},
+                {"col": 0, "row": 1, "type": "Monster", "children": [{"col": 0, "row": 2}]},
+                {"col": 0, "row": 2, "type": "RestSite", "children": [{"col": 0, "row": 3}]},
+                {"col": 0, "row": 3, "type": "RestSite", "children": [{"col": 2, "row": 4}]},
+                {"col": 1, "row": 1, "type": "RestSite", "children": [{"col": 1, "row": 2}]},
+                {"col": 1, "row": 2, "type": "Unknown", "children": [{"col": 1, "row": 3}]},
+                {"col": 1, "row": 3, "type": "Unknown", "children": [{"col": 2, "row": 4}]},
+                {"col": 2, "row": 4, "type": "Boss", "children": []},
+            ]},
+            "legal_actions": [{"type": "map", "col": 0, "row": 1}, {"type": "map", "col": 1, "row": 1}],
+        }
+        for room_type in ("Monster", "RestSite", "Unknown"):
+            with self.subTest(current_room=room_type):
+                observation["map"]["points"][0]["type"] = room_type
+                self.assertEqual(choose_map(observation)["col"], 1)
+
     def test_reward_prefers_known_strong_card(self) -> None:
         observation = {
             "cards": [

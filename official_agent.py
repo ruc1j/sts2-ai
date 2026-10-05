@@ -2529,8 +2529,9 @@ def choose_map(observation: dict) -> dict:
         dfs(start, [start])
         return found
 
-    def route_key(path: list[tuple[int, int]]) -> tuple[int, int, int, int, int, int, int]:
-        types = [points[coord]["type"] for coord in path]
+    def route_key(path: list[tuple[int, int]]) -> tuple[int, int, int, int, int, int]:
+        # The observed HP already includes the completed current room.
+        types = [points[coord]["type"] for coord in path if coord != current]
         elite_run = unrested_elites = 0
         for room_type in types:
             if room_type == "RestSite":
@@ -2566,6 +2567,9 @@ def choose_map(observation: dict) -> dict:
             unrested_elites,
             hp_cost,
             -types.count("Treasure"),
+            # A later heal can make extra fights look free. Prefer fewer fights
+            # when the projected HP is tied, before minimizing uncertain rooms.
+            types.count("Monster") + types.count("Elite"),
             types.count("Unknown"),
             -types.count("Shop"),
         )
