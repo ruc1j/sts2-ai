@@ -8239,3 +8239,35 @@ per-act の map file ✓ 3 act 分 ✓ は期待どおり出ている ✓（`sw6
 background job `bash-1124` は cancel ✓ 置き換えた版の完了待ち `bash-1129` ✓（log `/tmp/pot.log` ✓）✓
 測るもの: **Act 2 boss / Act 3 boss の最初の record 時点で ✓ 直前の `deck` record から計算した攻撃火力の greedy 上限** ✓（3 energy ✓ 攻撃札を damage 順に選ぶ ✓ 手札順序と 1 combat 1 回制限を無視する近似 ✓ 比較専用 ✓）を ✓ 最終到達別 ✓（Act 1 / 2 / 3 ✓）✓ に分布させる ✓
 前々 round の単一 run での値（AM8C6YXHSG 80 ✓ D6A1F8C3E5 22 ✓）が ✓ corpus でも到達と相関するかどうかを見る ✓
+
+## Round 79: card reward は boss 直前で高 damage の offer をほぼ取っていた ✓ 棄却 ✓（potential の測定の弱点も記録 ✓）
+
+**まず measurement 側の bug を 2 つ直した** ✓
+1. **greedy loop が抜けない** ✓ `CARD_DAMAGE` 持ちで cost 0 の攻撃札（Anger ✓ Rage ✓ Brutality ✓ Bloodletting ✓）を選ぶと energy が減らず `while True` が止まらなかった ✓✗ potential 測定が 20 分近く終わらなかった ✓ → **play 数の上限 12** ✓ を入れて解決 ✓（job `bash-1124` cancel ✓）✓
+2. card_reward record の `cards` entry は dict だけでなく **plain string の場合がある** ✓ → `AttributeError: 'str' object has no attribute 'get'` ✓（`offer_id` ✓ で正規化 ✓）✓
+
+**deck 火力 potential（3 energy ✓ greedy ✓ 上限 12 play ✓）** ✓ 585 run ✓
+```
+Act 2 で止まり boss 戦に到達 214 run: 中央値  81 ✓  25 パーセント  30 ✗  75 パーセント  87   deck 中央値 21
+Act 3 まで到達（Act 2 boss 時点）155 run: 中央値  98 ✓  25 パーセント  79 ✓  75 パーセント 168   deck 中央値 22
+Act 3 boss（QUEEN）に到達       113 run: 中央値  98 ✓  25 パーセント  83 ✓  75 パーセント 168   deck 中央値 29
+```
+**中央値より 25 パーセント側の差が大きい** ✓（30 vs 79 ✓）✓ Act 2 で死ぬ run の下位側は火力 deck が弱い ✓
+ただし **potential の絶対値は 0 cost 札で水増しされる** ✓（Anger 6 x 12 play で +72 ✓ など ✓ 実際の draw 枚数を無視している ✓）✓
+→ **この数字は run 同士の比較には使える ✓ 絶対値や必要火力との突き合わせには使えない** ✓（teaching 13 ✓ ad-hoc arithmetic ✓）✓
+
+**reward policy が火力を置き去りにしているか** ✓ boss 戦直前の card_reward decision で ✓
+選んだ札を最高 damage の offer と入れ替えた場合の potential 増分 ✓（同じ近似 ✓ 差なので近似の偏りは打ち消す ✓）✓
+```
+Act 2 boss 到達 214 run: 増分 中央値 0 ✓ 75% 0 ✓ 最大 60 ✓ 高 damage を避けた 18/214 ✓
+Act 3 到達      155 run: 増分 中央値 0 ✓ 75% 0 ✓ 最大  3 ✓ 高 damage を避けた  2/155 ✓
+Act 3 boss 到達 113 run: 増分 中央値 0 ✓ 75% 0 ✓ 最大 54 ✓ 高 damage を避けた  6/113 ✓
+```
+→ **boss 直前の 1 手では 96% が最高 damage の offer を取っている** ✓ reward policy のこの側は正しく ✓ **仮説は棄却** ✓
+避けた例は TAUNT（0 damage ✓ debuff ✓）→ ANGER ✓ / IMPERVIOUS ✓ → ANGER ✓ / POMMEL_STRIKE（9 ✓）→ HEMOKINESIS（15 ✓）✓ など ✓
+debuff 札を売る価値が高いと判断した結果 ✓ で ✓ 火力だけを積めという指示と矛盾する根拠にはならない ✓
+**よって potential の差（30 vs 79）は boss 直前の 1 手ではなく ✓ その前の積み上げ ✓ が主因** ✓（何を取れるかは seed が決まる部分も大きい ✓）✓
+
+**残る hypothesis** ✓ shop の relic 購入（106/4,764 ✓ options が trace に出ないので frequency 側が不明 ✓）✓
+Act 2 boss 時点で火力 deck が弱い run が何が足りないのか ✓（札の枚数 ✓ 強化 ✓ relic ✓）を ✓ potential 以外の物差しで見る ✓
+sweep `sw64` は 3 本目 9PCQMO0DAY が走行中 ✓（H2LV6ZJ4XW ✓ EAIF2UUVCK ✓ は前 round と同じ結果 ✓ 完了待ち `bash-1107` ✓）✓
