@@ -1,0 +1,105 @@
+{
+  "planned_runs": 12,
+  "completed_runs": 12,
+  "unknown_runs": 0,
+  "external_failures": 0,
+  "rollout_exceptions": 0,
+  "source_changed_runs": 0,
+  "groups": {
+    "development": {
+      "seeds": [
+        "N8CQ4ZKP2W",
+        "D6A1F8C3E5"
+      ],
+      "arms": {
+        "candidate": {
+          "runs": 2,
+          "act_3_complete": 1,
+          "act_2_complete": 2,
+          "act_1_complete": 2
+        },
+        "control": {
+          "runs": 2,
+          "act_3_complete": 0,
+          "act_2_complete": 1,
+          "act_1_complete": 1
+        }
+      },
+      "depth": {
+        "improved": 1,
+        "worsened": 0,
+        "same": 1
+      },
+      "same_depth_progress": {
+        "comparable_pairs": 1,
+        "unavailable": [],
+        "mean_delta_percentage_points": 85.75
+      }
+    },
+    "confirmation": {
+      "seeds": [
+        "A972EACCB8",
+        "9B3C304A5D",
+        "AED850BE3B",
+        "4DE718E2F1"
+      ],
+      "arms": {
+        "candidate": {
+          "runs": 4,
+          "act_3_complete": 0,
+          "act_2_complete": 0,
+          "act_1_complete": 2
+        },
+        "control": {
+          "runs": 4,
+          "act_3_complete": 0,
+          "act_2_complete": 0,
+          "act_1_complete": 2
+        }
+      },
+      "depth": {
+        "improved": 1,
+        "worsened": 0,
+        "same": 3
+      },
+      "same_depth_progress": {
+        "comparable_pairs": 3,
+        "unavailable": [],
+        "mean_delta_percentage_points": -3.1614754509249727
+      }
+    },
+    "added_metric_confirmation": {
+      "seeds": [
+        "9B3C304A5D",
+        "AED850BE3B",
+        "4DE718E2F1"
+      ],
+      "arms": {
+        "candidate": {
+          "runs": 3,
+          "act_3_complete": 0,
+          "act_2_complete": 0,
+          "act_1_complete": 2
+        },
+        "control": {
+          "runs": 3,
+          "act_3_complete": 0,
+          "act_2_complete": 0,
+          "act_1_complete": 2
+        }
+      },
+      "depth": {
+        "improved": 1,
+        "worsened": 0,
+        "same": 2
+      },
+      "same_depth_progress": {
+        "comparable_pairs": 2,
+        "unavailable": [],
+        "mean_delta_percentage_points": -10.82329425746854
+      }
+    }
+  },
+  "decision": "Adopt as depth improvement; confirmation Act 3 clear rate remains 0/4 in both arms. Development improves on Act 3, confirmation improves on depth before the added progress metric is consulted.",
+  "elapsed_seconds": 3960.5757308006287
+}
