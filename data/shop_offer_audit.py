@@ -67,6 +67,7 @@ def main(argv: list[str]) -> int:
                             gold_at_relic_offer.append(gold)
                 if action == 'buy_relic':
                     relic_buys += 1
+                    bought_relic = True
                 elif action == 'skip' and any(relic.get('affordable') for relic in relics):
                     skipped_while_relic_affordable += 1
             elif action == 'buy_relic':
