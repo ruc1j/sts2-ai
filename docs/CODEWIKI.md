@@ -8057,3 +8057,48 @@ Act 3 で rest を 1 も取らなかった run が Floor 6 で死んでいる �
 
 **combat model の忠実度側は動いていない** ✓ 前 round の census で arm corpus 614 中 612 ✓ 新しい run 218 中 218 ✓
 Rampage growth は採用せず ✓（一致 43/52 → 18/52 ✓ 前 round ✓）✓
+
+## Round 73: **boss 進入時の player HP が壁**だと数えた ✓ QUEEN 戦は中央値 11 HP ✓ 49% が 10 以下で入る ✓
+
+まず「どこで詰まっているか」を corpus で数えた ✓ 61 run を sample して mod log の最後の `Act N, Floor M` ✓
+と最後の combat record の敌 id を対応させた ✓
+```
+最終到達: Act 1 9 ✓ Act 2 32 ✓ Act 3 20
+最後の fight: Act 1 boss 7 / non-boss 1 ✓ Act 2 boss 26 / non-boss 6 ✓ Act 3 boss 18 / non-boss 2
+```
+**最後の一戦が boss である割合 48/57 ✓ 84%** ✓（"non-boss" 扱いになった DECIMILLIPEDE の segment 3 件も実は Act 2 boss 戦 ✓）✓
+→ Act 3 の道中の fight が壁なのではなく ✓ **boss 戦が壁** ✓（前 round の「Act 3 で rest を取らない run が Floor 6 で死んだ」は副次的 ✓）✓
+
+**boss 戦での火力も数えた** ✓（同一 fight の record を combat_id でつなぎ ✓ 初 record の max_hp から最後の HP を引いた ✓）✓
+```
+THE_INSATIABLE 380 fight: 中央値 9 turn ✓ 削った量 251 ✓ 残り 70 ✓ 火力/turn 27.5 ✓ 100 未満しか削れていない 7/380
+VANTOM            556 fight: 中央値 10 turn ✓ 削った量 154 ✓ 残り 19 ✓ 火力/turn 15.6 ✓ 18/556
+QUEEN             100 fight: 中央値 8 turn  ✓ 削った量  77 ✓ 残り 332 ✓ 火力/turn  9.7 ✓ 60/100
+```
+QUEEN 戦の火力 9.7/turn が異常に低い ✓ が ✓ **原因是 entry の HP だった** ✓
+
+**boss 進入時の player HP** ✓（各 boss 戦の最初の record における player HP の最小値 ✓）✓
+```
+THE_INSATIABLE 380 fight: 中央値 17 HP ✓ 最低 1 ✓ 10 以下で入った 36%
+QUEEN          116 fight: 中央値 11 HP ✗✗ 最低 1 ✗✗ 10 以下で入った 49% ✗✗
+VANTOM         675 fight: 中央値 32 HP ✓ 最低 1 ✓ 10 以下で入った 15%
+```
+QUEEN 戦の play 内訳は Strike 446 ✓ Anger 290 ✓ Shrug 243 ✓ Battle Trance 238 ✓ Defend 219 ✓ Taunt 150 ✓ Bash 137 ✓
+**1 fight あたり中央値 29 play ✓ 8 turn** ✓ で ✓ 手を抜いているのではない ✓ **11/90 HP で boss を迎えている** ✓から壊れる ✓
+（VANTOM は 32 HP で入って 19 残りまで削っている ✓ HP を持っていれば届く例 ✓）✓
+
+**ChainsOfBinding は model 済みと確認した** ✓（QUEEN 戦で CHAINS_OF_BINDING 3 が出たので疑った ✓）✓
+`combat.py:369 ✓ 373 ✓ 967 ✓ 970 ✓ 2272` ✓ が `ChainsOfBindingPower` の Bound affliction を持っている ✓
+decompile の `AfterCardDrawn` は **その turn に Afflict した数が Amount 未満の時に限って** Bound を載せる ✓ ✓
+model も同じ条件で載せている ✓ → 「札を_play できなくする_効果を見落としていた」ではない ✓
+
+**測るための道具を 1 つ直した** ✓ `MapBridge.cs` ✓
+`private static bool _wroteMap;` ✓ が `if (!_wroteMap && mapPath is not null)` ✓ で **Act 1 の graph しか disk に出していなかった** ✓
+→ `_writtenAct` （act id ✓）に変え ✓ 最初の act は依頼された path ✓ 以降の act は `_<ACT.ID>.json` を隣に書く ✓ようにした ✓
+`AgentIo.WriteJson(_writtenAct is null ? mapPath : mapPath.Replace(".json", $"_{actId}.json"), map);` ✓
+mod を rebuild 済み ✓（`ビルドに成功しました ✓ 0 警告 0 エラー ✓ 2.07 s ✓` ✓ dll 235,008 B ✓ 09:15 ✓）✓
+**検証 run 走行中** ✓ tag `mapfix` ✓ seed H2LV6ZJ4XW ✓ 09:16 開始 ✓（install された dll が 09:15 の新規 build と同一 ✓ size 235,008 ✓ lesson 6 ✓）✓
+完了待ち `bash-1096` ✓ **3 つの map file が出ることを確認してから commit する** ✓
+
+**次の work の方向** ✓ boss 戦の model ではなく ✓ **late act の HP 経済** ✓（rest を取るか ✓ 必要のない fight を避けるか ✓）✓
+それが本当に選べたのかを見るのが per-act map file ✓→ 今回の tooling fix はそのための準備 ✓
