@@ -9233,3 +9233,20 @@ H2LV6ZJ4XW ✓: 20 勝 1 敗 ✓ records 388 ✓ Act 3, Floor 6 ✓   vs control
 ```
 → seed 1 ✓ では GORGET ✓ + STRAWBERRY ✓ を実際に買った ✓（control ✓ は同じ店で gold 419 ✓ を残して skip ✓）✓
 → 残り 3 seed ✓（VTW80ZJA2G ✓ N8CQ4ZKP2W ✓ D6A1F8C3E5 ✓）✓ 採否は 5 seed ✓ 揃えて判定 ✓
+
+## Round 117: egg ✓→ Byrdpip ✓ の連鎖が decompile ✓ で確定 ✓ **egg を持つと Rest site ✓ に HATCH ✓ が出て ✓ HATCH ✓ が BYRDPIP ✓ をgive ✓ → egg ✓ が ByrdSwoop ✓（cost 0 ✓・14 damage ✓）に化ける ✓**
+
+```
+`Cards/ByrdonisEgg.cs ✓` → `TryModifyRestSiteOptions ✓(Player player ✓...)`
+    if (player != Owner ✓) return false ✓;
+    options.Add(new HatchRestSiteOption ✓(player) ✓);       ← **egg ✓ を持っている人 ✓ だけ ✓ Rest ✓ に HATCH ✓ が増える ✓**✓
+`RestSite/HatchRestSiteOption.cs ✓` → `OptionId => "HATCH ✓"` ✓ `OnSelect ✓(): await RelicCmd.Obtain<Byrdpip ✓>(Owner ✓) ✓`  ← **HATCH ✓ が BYRDPIP ✓ を与える ✓**✓
+`Relics/Byrdpip.cs ✓` → `AfterObtained ✓()` ✓ で combat 中の ByrdonisEgg ✓ を `CardCmd.TransformTo<ByrdSwoop ✓>` ✓
+`RelicPools/EventRelicPool.cs ✓` の 29 ✓ 行目に `ModelDb.Relic<Byrdpip ✓>` ✓ → **event ✓ の relic 出品プール ✓ にも入っている ✓**✓
+`official_agent.py ✓` 2830-2832 ✓: `hatch = next(... option_id == "HATCH ✓" ✓); if hatch ✓: return hatch ✓` → **うちは HATCH ✓ が出れば常に取っている ✓**✓
+```
+→ **連鎖 ✓**：BYRDONIS_NEST ✓ で TAKE ✓（egg ✓）→ 次の Rest ✓ で HATCH ✓（自動で取る ✓）→ BYRDPIP ✓ → **egg ✓ が ByrdSwoop ✓（cost 0 ✓・damage 14 ✓）✓** ✓
+→ **egg panel ✓ の悪化 ✓（D6A1F8C3E5 ✓ 15 勝 Act 3 ✓ → 11 勝 Act 2 ✓）の説明が付く ✓✓**：EAT ✓（+7 max HP ✓）に変えた run は egg を持たない ✓→ HATCH が出ない ✓→ BYRDPIP が来ない ✓→ ByrdSwoop も無い ✓✓
+→ **前 round の「相関は政策を支持しない ✓」という書き方は訂正 ✓**✓：panel ✓ が否定したのは「TAKE ✓ を EAT ✓ に置き換える ✓」変更 ✓ であり ✓ 机制 ✓（egg ✓→ HATCH ✓→ Byrdpip ✓→ 無料火力 ✓）が確認できた今は ✓ **egg を取る ✓ 側の証拠として整合 ✓**✓（採らない ✓ 変更 ✓ は却下 ✓ 済み ✓ for real ✓）✓
+→ **次の小さな打つ手 ✓（未実施 ✓）**：**`RELIC.BYRDPIP ✓` を event relic ✓ の評価に入れる ✓**（`EventRelicPool ✓` に入っている ✓ ので event ✓ 側の decision ✓ で選べる ✓ が ✓ 現在の `EVENT_RELIC_TIERS ✓`/`_event_relic_score ✓` は知らない ✓✗）✓
+→ 前 round ✓ の corpus ✓ 数字 ✓（egg+BYRDPIP ✓ で Act 3 到達 52% ✓ 94 run ✓）は ✓ この机制 ✓ と矛盾しない ✓✓
