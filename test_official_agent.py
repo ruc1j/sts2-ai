@@ -774,6 +774,34 @@ class OfficialAgentTest(unittest.TestCase):
         observation["player"]["hp"] = 10
         self.assertEqual(choose(observation)["card_id"], "CARD.FLAME_BARRIER")
 
+    def test_hellraiser_precedes_queen_attacks_but_preserves_kills_and_survival(self) -> None:
+        observation = {
+            "player": {"hp": 68, "max_hp": 99, "block": 0, "energy": 4, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.HELLRAISER", "cost": 1, "type": "Power"},
+                {"index": 1, "id": "CARD.INFLAME", "cost": 1, "type": "Power"},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]},
+                {"index": 3, "id": "CARD.FLAME_BARRIER", "cost": 2, "type": "Skill", "vars": [{"id": "Block", "value": 17}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.TORCH_HEAD_AMALGAM", "hp": 91, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"damage": 18, "repeats": 1}]},
+                {"combat_id": 2, "id": "MONSTER.QUEEN", "hp": 394, "block": 0, "powers": [], "intents": []},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.HELLRAISER", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.INFLAME", "hand_index": 1, "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 2, "target_id": 1},
+                {"type": "card", "card_id": "CARD.FLAME_BARRIER", "hand_index": 3, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertEqual(choose(observation)["decision_source"], "hellraiser_before_queen_focus")
+        observation["enemies"][0]["hp"] = 9
+        self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
+        observation["enemies"][0]["hp"] = 91
+        observation["player"]["hp"] = 10
+        self.assertEqual(choose(observation)["card_id"], "CARD.FLAME_BARRIER")
+
     def test_rage_yields_to_stronger_defense_when_incoming_exceeds_rage_block(self) -> None:
         for incoming, hp, expected in (
             (0, 30, "CARD.RAGE"),
