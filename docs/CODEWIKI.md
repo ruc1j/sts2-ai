@@ -9190,3 +9190,27 @@ RED_MASK ✓ / MANGO ✓ / GORGET ✓ / STRAWBERRY ✓ / ANCHOR ✓ / DOLLYS_MIR
   → **実装する前に ✓ arm trace ✓ で observation ✓ に出ている ✓ を確かめる ✓**（RED_MASK ✓ を買った run ✓ の enemy powers ✓ が毎 turn ✓ WEAK ✓ を保つか ✓ / GORGET ✓ を買った run ✓ の turn 1 ✓ player powers ✓ に Plating ✓ が出るか ✓）✓
   → rollout ✓ は turn を未来へ進める ✓ ので ✓**毎 turn 適用される power ✓ を model が再適用しないと ✓ 未来の被害 ✓ を過大評価 ✓**✓（precedent ✓: UNCEASING_TOP ✓ の per-event hook ✓ ✓ combo relic ✓ を AfterCardPlayed ✓ で適用 ✓ した実績 ✓）✓
 panel ✓：arm `.wt-proto19 ✓` ✓ 5 seed ✓ 12:22 ✓ 開始 ✓ 1 本目 ✓ 走行中 ✓（12:29 ✓ 時点で RESULT 0 ✓）✓ 待受け → `/tmp/relic_watch.log ✓` ✓
+
+## Round 115: 価格付けた relic に対する model 側の実装を別 tree ✓ で用意 ✓ **RED_MASK ✓（毎 turn ✓ 全敌に Weak 1 ✓）だけが model に要る ✓**（ANCHOR ✓ 等は observation ✓ 経由 ✓）
+
+`.wt-proto20 ✓`（HEAD ✓ = ShopBridge ✓ 込み ✓ から作成 ✓）✓ **787 件 green ✓**（test 4 ✓ 追加 ✓）✓
+```
+combat.py ✓ 286 ✓: RELIC_RED_MASK ✓ = "RELIC.RED_MASK ✓"
+combat.py ✓ 2459 ✓（turn 前進 ✓ の relic ブロック ✓ SPARKLING_ROUGE ✓/SELF_FORMING_CLAY ✓ の間 ✓）:
+    if RELIC_RED_MASK ✓ in relics ✓:
+        enemies = [replace(enemy ✓, powers=_add_power(enemy.powers ✓, "WeakPower ✓", 1) ✓) if enemy.alive ✓ else enemy ✓ ...]
+→ **rollout ✓ が未来の turn ✓ へ進む時にだけ ✓ 適用 ✓**（今の turn ✓ の Weak ✓ は observation ✓ に既に載っている ✓）→ **二重適用しない ✓**✓（teaching 47 ✓「observation ✓ が既に運んでいる効果 ✓ を model が再適用する ✓」✓ の回避 ✓）✓
+precedent ✓: combat.py ✓ 2445-2454 ✓ に「周期性の relic ✓ 効果 ✓」ブロック ✓（HAPPY_FLOWER ✓ %3 ✓/PENDULUM ✓/CAPTAINS_WHEEL ✓ turn3 ✓ で +18 block ✓/HORN_CLEAT ✓ turn2 ✓ +14 ✓/SPARKLING_ROUGE ✓）✓
+```
+**8種のうち model 実装が要るのは RED_MASK ✓ だけ ✓** ✓（他の観測経路 ✓）✓
+- STRAWBERRY ✓ MANGO ✓（max HP ✓）→ 次の observation ✓ の hp/max_hp ✓ に出る ✓
+- DOLLYS_MIRROR ✓ GNARLED_HAMMER ✓（札を追加 ✓）→ hand ✓/draw_pile ✓ の observation ✓ に出る ✓
+- ANCHOR ✓（combat 開始 block 10 ✓）→ **前 round ✓ の corpus test ✓ で turn 1 ✓ の player block = 10 ✓ を確認 ✓**✓
+- UNCEASING_TOP ✓ → 実装済み ✓（combat.py:2069 ✓）✓
+- GORGET ✓（AfterRoomEntered ✓ で Plating 4 ✓）→ **player powers ✓ として observation ✓ に出る ✓ 想定 ✓** ✓が ✓ arm trace ✓ で確かめる ✓（未確認 ✓）✓
+**テスト ✓**：`test_red_mask_keeps_weak_on_enemies_at_each_new_turn ✓`（relic ✓ あり ✓→ Weak >= 1 ✓）✓ `test_weak_decays_without_the_red_mask_relic ✓`（無し ✓→ 0 ✓）✓ + shop ✓ 2 件 ✓
+**副産物 ✓**：8種の価格 ✓ だけを入れた tree ✓（`.wt-proto19 ✓` ✓）は **既存 test を1件も壊さなかった ✓**（783 ✓ 件 green ✓）→ main の shop 回帰 test ✓ はこれらの relic を固定していない ✓✓
+**patch の失敗 ✓ 2 件 ✓（教訓 ✓ teaching 27 ✓ の再確認 ✓）**：
+- `if RELIC_SELF_FORMING_CLAY in relics: ✓` は combat.py ✓ に **2箇所 ✓（2010 ✓ と 2455 ✓）** あって `count==1 ✓` が落ちた ✓ → SPARKLING_ROUGE ✓ の 2行 ✓ と組にして一意化 ✓✓
+- `RELIC_CLOAK_CLASP, ✓` は test_combat.py ✓ に **2箇所 ✓（import ✓ と 1142 ✓ の使用箇所 ✓）** ✓ → import 行の `RELIC_CLOAK_CLASP, SETUP_STRIKE, ✓` ✓ で一意化 ✓✓
+panel ✓：arm `.wt-proto19 ✓` ✓ 5 seed ✓ の 1 本目 ✓ 走行中 ✓（12:33 ✓ 時点で RESULT 1 ✓ 件）✓ 次 ✓：paired ✓ 版 `.wt-proto20 ✓` ✓ の panel ✓（19 ✓ の結果を見てから ✓ 起動 ✓）✓
