@@ -9061,3 +9061,26 @@ evscore_arm ✓ 3 本 ✓ 全て (False ✓, 0 ✓) ✓   evfix_ctrl ✓ 3 本 �
 - `depth=Act N, Floor M ✓` = **そこで死んだ ✓** ✓（Act 3 Floor 6 ✓ = Act 3 の fight で死亡 ✓✓）✓
 - Act 3 到達 run が完走しない ✓ 理由は **Act 3 の fight に勝てない ✓** ✓（前々 round ✓ の QUEEN ✓ の 1 turn 火力 ✓ と同じ結論 ✓に収束 ✓）✓
 - 完走 seed の control 基準 ✓（`37bb82c ✓`）✓：N8CQ4ZKP2W ✓ 5 勝 ✓ Act 1 Floor 14 ✓ で死亡 ✓ / D6A1F8C3E5 ✓ 15 勝 ✓ Act 3 Floor 5 ✓ で死亡 ✓
+
+## Round 110: N8CQ4ZKP2W ✓ が Act 1 で死んだ fight を解析 ✓ **PhrogParasite ✓→ Wriggler ✓ の増援群で、rollout は動いていて ✓ 素の負け筋 ✓**だった ✓（新しい mechanic ✓ も misplay ✓ も見当たらない ✓）
+
+`base_ctrl_N8CQ4ZKP2W ✓` の最後の fight ✓（seq 112-142 ✓ combat record 30 ✓）✓
+```
+敌 ✓: MONSTER.PHROG_PARASITE ✓（INFESTED_POWER 4 ✓ → 死んだら Wriggler ✓ x4 ✓ model 済み ✓ `_spawn_wrigglers ✓`）✓ → MONSTER.WRIGGLER ✓（STRENGTH 2 ✓）✓
+player HP ✓: turn 1-2 ✓ 54 ✓ → 3 ✓ 37 ✓ → 6 ✓ 32 ✓ → 7 ✓ 12 ✓ → 死亡 ✓（combat_end won=False ✓ hp 0 ✓）✓
+our play ✓ 末尾 ✓: turn 5 STRIKE ✓ SHRUG_IT_OFF ✓x2 ✓ / turn 6 potion ✓(direct_potion ✓) COLOSSUS ✓ STRIKE ✓ FORGOTTEN_RITUAL ✓ / turn 7 BASH ✓ STRIKE ✓（両方 `lethal_direct ✓` ✓）→ 死ぬ ✓
+WRIGGLER の hp 19-20 ✓・STRENGTH 2 ✓・intents Attack ✓/Buff+StatusCard ✓ ✓ model は `WRIGGLE_MOVE ✓`（StrengthPower ✓ + Infection ✓）を読んでいる ✓
+```
+→ **rollout は動いていた ✓** ✓（`rollout_success ✓` ✓ と `lethal_direct ✓` ✓ で組立てられた play ✓）✓ heuristic tail ✓ は `generic_multi_primary_focus_direct ✓` 6 件 ✓ だけ ✓
+→ **12 HP ✓ で Strength 2 ✓ を積んだ Wriggler 群 ✓ を残したまま end_turn ✓ したのが致命 ✓** ✓ が ✓ それは **HP が足りない ✓ 側の問題 ✓** ✓（model の damage 再現は 612/614 ✓ ✓ 死の瞬間の不一致は見つかっていない ✓）✓
+
+**multi-enemy ✓ で rollout が止まっている ✓ 説も却下 ✓** ✓（直近 panel trace ✓ の combat decision ✓ 3,283 件 ✓）✓
+```
+1 体 ✓: 2568 decision ✓ rollout_success 1813 ✓（71% ✓）✓ heuristic_fallback 500 ✓ lethal_direct 159 ✓
+2 体 ✓:  424 ✓            238 ✓（56% ✓）✓ heuristic_fallback 86 ✓ lethal_direct 71 ✓ queen_minion_direct 11 ✓
+3体以上 ✓: 291 ✓            175 ✓（60% ✓）✓ lethal_direct 63 ✓ heuristic_fallback 42 ✓ generic_multi_primary_focus_direct 6 ✓
+```
+→ **3 体以上でも rollout は 60% ✓ で動いている ✓** ✓（heuristic 専用 ✓ になっている訳ではない ✓）✓
+→ `generic_multi_primary_focus_direct ✓` は 14 件 ✓/3,283 ✓（0.4% ✓）✓ → **swarm が dumb fallback ✓ で処理されている ✓ という仮説は却下 ✓** ✓
+→ 残る筋 ✓：**Act 1 のこの fight を HP 54 ✓ で受けた ✓ こと ✓**（map の選び方 ✓）と ✓ **Wriggler 群の被 damage 総量 ✓** ✓ の方 ✓
+`egg_arm ✓` 1 本目 N8CQ4ZKP2W ✓ = 5 勝 ✓ 111 records ✓ Act 1 Floor 14 ✓ で control ✓ と完全一致 ✓（この seed ✓ では変更が inert ✓）✓ 2 本目走行中 ✓
