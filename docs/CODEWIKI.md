@@ -8704,3 +8704,25 @@ TEA_MASTER 108 ✓ THE_FUTURE_OF_POTIONS 101 ✓ TINKER_TIME 90 ✓ INFESTED_AUT
 → `EVENT_OPTION_SCORES` ✓ に entry を足す作業 ✓（decompile から各 option の得失 ✓ HP ✓ gold ✓ 札 ✓ relic ✓ を取って価格化する ✓）✓
 **「bridge に通すためだけに選ぶ ✓」は今回の実測で有害 ✓** ✓ 得点なしで通すことと得点をつけて選ぶことは違う ✓✓（teaching 9 ✓ 決定）✓
 現在の HEAD の基準値 ✓：**50 勝 3 敗 ✓ Act 3 完走 0 ✓（seed AM8C6YXHSG ✓ H2LV6ZJ4XW ✓ VTW80ZJA2G ✓）** ✓
+
+## Round 96: 弾かれる event の経済を decompile から追加で取った ✓（batch 2 の材料 ✓ 実装は batch 1 の panel 後 ✓）
+
+`MegaCrit.Sts2.Core.Models.Events/*.cs` ✓（v0.107.1 ✓）✓
+```
+TEA_MASTER ✓：BONE_TEA = LoseGold(BoneTeaCost ✓) → RelicCmd.Obtain<BoneTea> ✓ / EMBER_TEA = LoseGold → Obtain<EmberTea> ✓
+          TEA_OF_DISCOURTESY = **gold を払わず Obtain** ✓（第3の option ✓）✓
+          → option 側に relic が載る ✓（bridge は `relic_id` ✓ を出す ✓）✓ `_event_relic_score` ✓ で tier 順にできる ✓
+            ただし gold コストは DynamicVar ✓（BoneTeaCost ✓）で observation の option には出ない ✓ → **コストが見えない ✓ 低 gold のときに金入りを選ぶrisk あり ✓**
+SAPPHIRE_SEED ✓：EAT = CreatureCmd.Heal ✓（回復 ✓）/ PLANT = CardCmd.Enchant<Sown> ✓（札1枚に Sown ✓）✓
+          → HP が低ければ EAT ✓ が測れる ✓（DENSE_VEGETATION と同じ形の条件 ✓）✓
+THE_FUTURE_OF_POTIONS ✓：Trade(potion) → **CardCmd.Upgrade(card)** ✓（potion を差し出して札を強化 ✓）✓ / Done ✓
+          → 強化の価値 ✓ vs potion 1個 ✓ の比較が必要 ✓（potion 経済の測定 ✓ と組む ✓）✓
+INFESTED_AUTOMATON ✓：STUDY ✓ / TOUCH_CORE ✓ **両方 CardPileCmd.Add(deck ✓)** ✓（別の札 ✓）✓
+          → **どちらの札が渡るかが observation の option に出ない ✓** ✓→ 価格付けできない ✓（この event は委ねたまま ✓）✓
+```
+**実装可能な順** ✓（観測に値段が揃っているものだけ ✓）✓
+1. SAPPHIRE_SEED ✓（HP 条件 ✓ EAT ✓）✓ 2. TEA_MASTER ✓（relic tier ✓ ただし gold コストが見えない ✓ 低 gold で金入りを選ばない条件 ✓）✓
+3. THE_FUTURE_OF_POTIONS ✓（強化 vs potion ✓）✓ 4. BUGSLAYER ✓（Exterminate ✓ / Squash ✓ **両方 free の card 追加 ✓ 札名は StringVar で observation に出る？未確認 ✓**）✓
+**INFESTED_AUTOMATON ✓ SYMBIOTE ✓（Corrupted enchant ✓ の得失 ✓）は観測が足りず保留 ✓** ✓
+batch 1（DENSE_VEGETATION ✓ BRAIN_LEECH ✓ WHISPERING_HOLLOW ✓）の panel `evscore_arm` ✓ 11:14 開始 ✓ 走行中 ✓（`bash-1241` ✓）✓
+**batch 2 を batch 1 と混ぜて走らせない** ✓（1 commit で1変更の測定 ✓ teaching 2 ✓）✓
