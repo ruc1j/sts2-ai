@@ -7979,3 +7979,41 @@ print 値 9 以上が日常 ✓ 大きい値ほど later combats ✓ → **持�
    → census と trace 実測で測り ✓ その後 panel を考える ✓）✓
 
 sweep `sw59`（4 seed ✓ HEAD `3bdb798`）は走行中 ✓ 08:46 開始 ✓ 完了待ち `bash-1045` ✓
+
+## Round 71: **Rampage の growth は model に入れられない**と測定で決めた ✓ 一致 43/52 → 18/52 に落ちた ✓（採用せず ✓）
+
+scratch `.wt-proto11`（削除済み ✓）で二段_variant を作り ✓ 記録された Rampage play 52 件で測った ✓
+probe `/tmp/rampage_probe.py`（`CARD.RAMPAGE` の play だけ replay ✓ game 側の HP 減は combat_id ✓ model 側は positional ✓）✓
+
+| variant | replayed | match | mismatch |
+|---|---:|---:|---:|
+| main（growth 無し ✓） | 52 | **43** ✓ | 9 |
+| combat 内 growth + run 中 seed ✓ | 52 | **18** ✗✗ | 34 |
+| combat 内 growth のみ ✓ | 52 | **43**（main と同一 ✓） | 9 |
+
+**run 中に persistence させる版は大きく過大評価した** ✓ 例: seed S9T3K7V1GQ seq 155 で game 13 / model **86** ✓
+seed S4N8K2V6QJ seq 148 で game 14 / model **49** ✓ → 採用しない ✓
+
+**なぜ観測できないか** ✓ pile 内の札の entry は `{"id": "CARD.RAMPAGE", "upgrade": 0, "enchantment": null}` だけ ✓
+**その札の現在の Damage BaseValue は出ない** ✓（`vars` は combat record の敵 intent 側に出るだけで ✓ 札の pile entry には付かない ✓）✓
+だから「どの copy がどれだけ育ったか」を観測から決める手段が無い ✓
+自分で play した数を数える道（`_RUN_CARD_GROWTH` ✓）は試した ✓ が ✓ 上の数値どおり過大評価になった ✓
+理由: 同じ名前の copy が複数ある deck が実在する ✓（`demonform_S4N8K2V6QJ` の draw pile に Rampage が **2 枚** ✓）✓
+model は card ごとに 1 つの bonus しか持てないので ✓ copy 単位で分けられない ✓
+（`Rampage.cs` の growth は CardModel 側で run 中持続する ✓ ので ✓ 観測できない以上 ✓ 忠実に載せられない ✓）✓
+
+**main の 9 件の不一致**（game 14 / 19 / 28 / 36 ✓ model 9 / 13 / 14 / 16 ✓）は growth だけでも説明しない ✓
+combat 内 growth のみをいれても一致の内訳は変わらなかった ✓（= 同じ combat で同じ copy を2回玩む record が無い ✓）✓
+→ ここは未解決のまま置く ✓（growth 以外の source ✓ Strength 成長など ✓ の可能性を残す ✓）✓
+
+**probe -side の教訓 2 つ** ✓
+1. **trace ごとに run-scoped state を初期化しないと測定が壊れる** ✓ agent は run ごとに process ✓
+   probe は同じ process で複数の trace を流すので ✓ `_RUN_CARD_GROWTH.clear()` を trace 単位で必要だった ✓（最初の probe は growth が trace を跨って漏れた ✓）✓
+2. audit は `choose()` を呼ばないので ✓ agent 側の credit（`choose` の中）は自動では再現しない ✓
+   probe で `_growth_play_of` を explicitly 呼んで mirror した ✓（teaching 46 ✓ 同じ型 ✓）✓
+
+sweep `sw59` の途中結果 ✓ 4 seed 中 3 本完了 ✓
+- AM8C6YXHSG ✓ 17 勝 1 敗 ✓ 360 records ✓ Act 3, Floor 15 ✓（boss 室に入る所で stop ✓ 前と同じ ✓）
+- D6A1F8C3E5 ✓ 15 勝 1 敗 ✓ 302 records ✓ Act 3, Floor 5 ✓（fixafter と同じ ✓）
+- **H2LV6ZJ4XW ✓ 20 勝 1 敗 ✓ 388 records ✓ Act 3, Floor 6** ✓（この seed には過去の Act 3 完走の記録がある ✓ 現状の build では Floor 6 の monster 戦で敗北 ✓）
+4 本目 VTW80ZJA2G は走行中 ✓ 完了待ち `bash-1045` ✓
