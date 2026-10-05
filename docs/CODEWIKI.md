@@ -8168,3 +8168,27 @@ Act 1 の walk に限定して ✓ graph の children から選択可能を判�
 **tooling の教訓 2 つ** ✓
 1. **trace 内の `combat_id` は fight を区別できない** ✓ `act3_pop2_B4J8Q1R6YK` で combat record 269 件に対し distinct combat_id は **4** ✓（スロット番号の使い回し ✓）✓ → fight の区切りは **`combat_end` record** ✓ を使う ✓
 2. `*_map.json` と trace の対応は古い artifact では信用できない ✓（座標が graph に無い ✓ 3,822 件 ✓）✓ 新しい run の per-act map 同士で照合する ✓
+
+## Round 76: 一戦の HP 損失を数えた ✓ median 17 ✓ 90 パーセント 53 ✓ **損失 40 以上が fight の 19.4%** ✓
+
+182 run ✓ 2,486 fight ✓（境界は `combat_end` ✓ 前 round の教訓 ✓）✓ 損失 = fight の最初の record の HP - 最後の record の HP ✓
+```
+一戦の HP 損失: 中央値 17 ✓  75% 32 ✓  90% 53 ✓  95% 67 ✓  最大 135
+損失 40 以上: 483 fight（19.4%）✓  損失 60 以上: 183 fight ✓
+損失 40 以上の fight に出てきた monster:
+   VANTOM 144 ✓ THE_INSATIABLE 101 ✓ BOWLBUG_ROCK 36 ✓ QUEEN 34 ✓ TORCH_HEAD_AMALGAM 34 ✓
+   BOWLBUG_SILK 34 ✓ SLUMBERING_BEETLE 34 ✓ BYGONE_EFFIGY 18 ✓ DECIMILLIPEDE segments 15 x3 ✓ MYTE 14 ✓
+最も重い一戦: QUEEN + TORCH_HEAD_AMALGAM で 損失 109〜135（max HP 122〜144 ✓ 7〜10 turn ✓）✓
+```
+→ **boss 戦が最大の一括損失** ✓（109〜135 ✓）✓ が ✓ **道中の mob（Bowlbug 系 ✓ Slumbering Beetle ✓）も 34〜36 fight で 40 以上削っている** ✓
+boss と同数の fight で削られている ✓ = 削られ方は boss だけの問題ではない ✓
+
+**Strength で自分の攻撃を育てる mob は model 済みと確認した** ✓（SLUMBERING_BEETLE の `ROLL_OUT_MOVE` は `DamageCmd.Attack` + `PowerCmd.Apply StrengthPower` を自分に載せる ✓ので ✓ 毎ターン攻撃力が上がる ✓型 ✓）✓
+`combat.py:1427` ✓ `1685` の `+ _power(enemy.powers, "StrengthPower")` ✓ が intent の damage に敌の Strength を足している ✓✓
+`1747` ✓ `1767` は effects 側の StrengthPower 適用を見ており ✓ `1902` `1904` は PersonalHive などの成長を載せている ✓
+** exported intent 値と二重計上になっていないか** ✓ → census が 614 中 612 ✓ 新しい run 218 中 218 ✓ で敵の damage が合っているので ✓ 二重計上ではない ✓
+
+**次の測定（sw64 の per-act map を使う ✓）** ✓ 道中の fight で 40 以上削られる run が多いなら ✓
+** Elite / 戦いを選んだ node の数と ✓ その時に他により安い選択肢があったか ** ✓を ✓ act 単位の graph ✓（`..._map_ACT.HIVE.json` ✓ `..._map_ACT.GLORY.json` ✓）✓ と trace の route ✓ から測る ✓
+前 round の rest 検証では Act 1 の graph しか無く検証できる遷移が 57 件だった ✓ 新しい run では 3 act 分揃う ✓ので ✓ 同じ検証を act 全部でやる ✓
+sweep `sw64`（HEAD `3b65c2c` ✓ 09:29 ✓ H2LV6ZJ4XW ✓ EAIF2UUVCK ✓ 9PCQMO0DAY ✓）は走行中 ✓ 完了待ち `bash-1107` ✓
