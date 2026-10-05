@@ -2270,6 +2270,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         hand_damage = sum(HAND_INJECTED_STATUS.get(card_name(card), 0) for card in combat.hand)
         unblockable_hand_damage = sum(HAND_END_UNBLOCKABLE.get(card_name(card), 0) for card in combat.hand) + regret_damage
         relics = combat.player_relics
+        # Orichalcum's VeryEarly hook checks before Plating and other turn-end block.
+        orichalcum_triggers = RELIC_ORICHALCUM in relics and combat.player_block == 0
         # CloakClasp.BeforeSideTurnEnd: block equal to 1 per card still in hand, granted before
         # the hand is cleared to discard (and before the enemy turn below, so it can help block).
         cloak_clasp_block = len(combat.hand) if RELIC_CLOAK_CLASP in relics else 0
@@ -2293,14 +2295,24 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             for card in combat.hand
         )
         combat = replace(
-            combat, player_block=combat.player_block + cloak_clasp_block,
+            combat,
             discard_pile=combat.discard_pile + (() if retain_hand else flushed_hand),
             hand=retained_hand if retain_hand else (),
             paels_tears_pending=RELIC_PAELS_TEARS in relics and combat.energy > 0,
         )
         plating = _power(combat.player_powers, "PlatingPower")
-        if plating:
-            combat = replace(combat, player_block=combat.player_block + plating)
+        # BeforeSideTurnEnd grants happen before the hand's OnTurnEndInHand effects.
+        # Each is an unpowered grant, including its own AfterBlockGained triggers.
+        for block in (
+            plating,
+            cloak_clasp_block,
+            6 if orichalcum_triggers else 0,
+            4 if RELIC_RIPPLE_BASIN in relics and combat.attacks_played_this_turn == 0 else 0,
+        ):
+            if block > 0:
+                combat = _grant_block(combat, block, rng, powered=False, apply_frail=False)
+        if combat.terminal:
+            return combat
         # Toxic/Burn/Infection/Decay are not Unblockable, and the player's block is still up when
         # the turn-end hook runs (it clears at the start of the next player turn), so block absorbs
         # them first - at the cost of not being there for the enemy turn below.
@@ -2322,14 +2334,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             blocked = min(combat.player_block, constrict)
             combat = replace(combat, player_block=combat.player_block - blocked)
             combat = _apply_player_damage(combat, constrict - blocked, trigger_inferno=True)
-        # BeforeSideTurnEnd hooks.  Orichalcum checks the pre-hook block value, while Ripple
-        # Basin independently rewards a turn with no attacks; both can trigger together.
         end_block = combat.player_block
-        if RELIC_ORICHALCUM in relics and end_block == 0:
-            end_block += 6
-        if RELIC_RIPPLE_BASIN in relics and combat.attacks_played_this_turn == 0:
-            end_block += 4
-        combat = replace(combat, player_block=end_block)
         if RELIC_PARRYING_SHIELD in relics and end_block >= 10:
             alive = [i for i, enemy in enumerate(combat.enemies) if enemy.alive]
             if alive:

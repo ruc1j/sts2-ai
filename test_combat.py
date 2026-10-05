@@ -2113,6 +2113,34 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(combat.player_hp, 80 - 3)  # HasTurnEndInHandEffect: 3 flat Unpowered damage
         self.assertEqual(combat.hand.count(INFECTION), 0)  # discarded normally afterward, like any other card
 
+    def test_orichalcum_blocks_infection_before_a_non_attacking_enemy_turn(self) -> None:
+        # astra_goal_r1 seq70: HP80, no block, Infection; the next observation still has HP80.
+        state = Combat(80, (INFECTION,), (STRIKE,) * 10, (),
+                       (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),),
+                       player_relics=("RELIC.ORICHALCUM",))
+        self.assertEqual(step(state, END_TURN, DUMMY_DATA, random.Random(0)).player_hp, 80)
+
+    def test_orichalcum_checks_block_before_plating_and_status_damage(self) -> None:
+        state = Combat(80, (INFECTION,), (STRIKE,) * 10, (),
+                       (Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ()),),
+                       player_relics=("RELIC.ORICHALCUM",))
+        for initial_block, plating, expected_hp in ((2, 0, 69), (0, 4, 77)):
+            with self.subTest(initial_block=initial_block, plating=plating):
+                before = replace(state, player_block=initial_block,
+                                 player_powers=(("PlatingPower", plating),))
+                after = step(before, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+                self.assertEqual(after.player_hp, expected_hp)
+
+    def test_turn_end_block_grants_trigger_juggernaut_without_dexterity_or_frail(self) -> None:
+        state = Combat(80, (INFECTION,), (STRIKE,) * 10, (),
+                       (Enemy("MONSTER.DUMMY", 100, "HIT_MOVE", ()),),
+                       player_relics=("RELIC.ORICHALCUM", "RELIC.RIPPLE_BASIN", RELIC_CLOAK_CLASP),
+                       player_powers=(("PlatingPower", 4), ("JuggernautPower", 6),
+                                      ("DexterityPower", 10), ("FrailPower", 2)))
+        after = step(state, END_TURN, ATTACKING_DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.player_hp, 80)  # 4 + 6 + 4 + 1 block covers Infection plus attack.
+        self.assertEqual(after.enemies[0].hp, 76)  # Four grants, each dealing six damage.
+
     def test_wither_curse_deals_damage_at_turn_end_and_block_absorbs_it(self) -> None:
         # Wither is a Curse (MaxUpgradeLevel 0) with HasTurnEndInHandEffect: 3 flat Unpowered
         # damage, not Unblockable, so the block still standing when the hook runs absorbs it.
