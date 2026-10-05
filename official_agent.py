@@ -3091,6 +3091,10 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         ),
         player_max_hp=observation["player"].get("max_hp", observation["player"]["hp"]),
         player_potions=allowed_potions + automatic_potions,
+        relic_counters=tuple(sorted(
+            (relic, _number(count))
+            for relic, count in (observation["player"].get("relic_counters") or {}).items()
+        )),
         # The bridge exposes Lizard Tail but not its one-shot-used flag; below half HP, assume
         # it has already fired so rollouts never count on a second resurrection.
         lizard_tail_used=(

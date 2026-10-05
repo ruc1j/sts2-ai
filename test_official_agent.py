@@ -11,6 +11,34 @@ from combat import BURN, Card, DAZED, END_TURN, INFECTION, TOXIC, WITHER, WOUND,
 
 
 class OfficialAgentTest(unittest.TestCase):
+    def test_rollout_imports_saved_relic_counters_separately_from_combat_plays(self) -> None:
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1,
+            "plays": {"cards_this_turn": 1, "attacks_this_turn": 1, "skills_this_turn": 0,
+                      "cards_combat": 1, "attacks_combat": 1, "skills_combat": 0},
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": [],
+                       "relics": ["RELIC.PEN_NIB", "RELIC.NUNCHAKU"],
+                       "relic_counters": {"RELIC.PEN_NIB": 9, "RELIC.NUNCHAKU": 0}},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{"id": "MONSTER.DUMMY", "hp": 50, "block": 0, "powers": [],
+                         "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                              {"type": "end_turn"}],
+        }
+        official_agent._reset_play_counters()
+        official_agent._seed_exported_plays(observation)
+        with patch("official_agent.search", return_value=[(END_TURN, 0.0)]) as searched:
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        state = searched.call_args.args[0]
+        self.assertEqual(state.attacks_played_combat, 1)
+        self.assertEqual(dict(state.relic_counters), observation["player"]["relic_counters"])
+        after = step(state, "card:0@0", data, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.energy), (38, 2))
+
     def test_rollout_keeps_a_free_copy_without_discounting_the_other_copy(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
             "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],

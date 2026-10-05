@@ -391,9 +391,10 @@ class Combat:
     # PanachePower's CardsLeft: 5 cards played after the Panache play deal its damage to every
     # hittable enemy, then reset. The play that applied the power does not count.
     panache_cards_this_turn: int = 0
-    # Whole-combat cumulative counters (Nunchaku/Tuning Fork) - never reset until the fight ends.
+    # Combat history and saved relic counters have different lifetimes.
     attacks_played_combat: int = 0
     skills_played_combat: int = 0
+    relic_counters: tuple[tuple[str, int], ...] = ()
     # Kunai / Shuriken grant their power in AfterCardPlayed, i.e. after the attack that triggered them
     # has resolved, so the 3rd attack of the turn does not benefit from its own relic bonus.  A grant
     # waiting here is folded into player_powers when the next card is played (or at the turn end).
@@ -2688,7 +2689,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # Card-play-counting relics (Kunai/Shuriken/Ornamental Fan/Kusarigama/Letter Opener/
     # Nunchaku/Tuning Fork): all fire off a plain "every Nth attack/skill played" counter, either
     # reset each turn (the four "every 3rd attack" relics, Letter Opener's "every 3rd skill") or
-    # cumulative for the whole fight (Nunchaku, Tuning Fork - both "every 10th").
+    # saved across fights (Pen Nib, Nunchaku, Tuning Fork - each "every 10th").
     relics = combat.player_relics
     # The per-play counters advance once per resolution, so a duplicated play counts `plays` times.
     attacks_this_turn = combat.attacks_played_this_turn + (plays if card in ATTACKS else 0)
@@ -2698,12 +2699,25 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     cards_combat = combat.cards_played_combat + plays
     cards_this_turn = combat.cards_played_this_turn + plays
     powers_this_turn = combat.powers_played_this_turn + (plays if card in POWERS else 0)
-    # Relic counters (Pen Nib's attacks-played, Nunchaku's) are not in the observation - the bridge
-    # writes relic ids only - so attacks_played_combat is 0 when a decision state is rebuilt.
-    # `0 % 10 == 0` read that as "already activated", doubling every first attack of every combat.
-    # The game activates these at the 10th attack, so treat them as inactive until the model has
-    # counted 10 itself.
-    pen_nib_double = RELIC_PEN_NIB in relics and card in ATTACKS and attacks_combat >= 10 and attacks_combat % 10 == 0
+    # New bridge observations carry each relic's saved counter. Legacy snapshots without
+    # those values retain the combat-history approximation; never conflate independent relics.
+    relic_counters = dict(combat.relic_counters)
+    pen_nib_before = relic_counters.get(RELIC_PEN_NIB, combat.attacks_played_combat)
+    pen_nib_plays = {
+        resolution for resolution in range(plays)
+        if RELIC_PEN_NIB in relics and card in ATTACKS and (pen_nib_before + resolution + 1) % 10 == 0
+    }
+    relic_triggers = {}
+    for relic, is_matching_type, fallback in (
+        (RELIC_PEN_NIB, card in ATTACKS, combat.attacks_played_combat),
+        (RELIC_NUNCHAKU, card in ATTACKS, combat.attacks_played_combat),
+        (RELIC_TUNING_FORK, card in SKILLS, combat.skills_played_combat),
+    ):
+        if relic in relics:
+            before_count = relic_counters.get(relic, fallback)
+            after_count = before_count + (plays if is_matching_type else 0)
+            relic_triggers[relic] = after_count // 10 - before_count // 10
+            relic_counters[relic] = after_count % 10
     helmet_block = 4 if RELIC_INTIMIDATING_HELMET in relics and (card_cost >= 2 or (card == WHIRLWIND and combat.energy >= 2)) else 0
     vambrace_double = RELIC_VAMBRACE in relics and not combat.vambrace_used and card in BLOCK_CARDS
     lamp_double = RELIC_UNSETTLING_LAMP in relics and not combat.unsettling_lamp_used and card in DEBUFF_CARDS
@@ -2732,13 +2746,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             if alive:
                 hit = rng.choice(alive)
                 combo_enemies[hit] = _damage_enemy(combo_enemies[hit], 6, powered=False)
-        if RELIC_NUNCHAKU in relics and attacks_combat >= 10 and attacks_combat % 10 == 0 and energy_gain_allowed:
-            combo_energy += 1
+        if energy_gain_allowed:
+            combo_energy += relic_triggers.get(RELIC_NUNCHAKU, 0)
     if card in SKILLS:
         if RELIC_LETTER_OPENER in relics and skills_this_turn % 3 == 0:
             combo_enemies = [_damage_enemy(enemy, 5, powered=False) if enemy.alive else enemy for enemy in combo_enemies]
-        if RELIC_TUNING_FORK in relics and skills_combat % 10 == 0:
-            combo_block += 7
+        combo_block += 7 * relic_triggers.get(RELIC_TUNING_FORK, 0)
     if card == RAGE:
         combo_powers = _add_power(combo_powers, "RagePower", 5 if card_was_upgraded else 3)
     if card == COLOSSUS:
@@ -2750,6 +2763,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         attacks_played_this_turn=attacks_this_turn, skills_played_this_turn=skills_this_turn,
         attacks_played_combat=attacks_combat, skills_played_combat=skills_combat, cards_played_this_turn=cards_this_turn,
         cards_played_combat=cards_combat,
+        relic_counters=tuple(sorted(relic_counters.items())),
         powers_played_this_turn=powers_this_turn, free_cards=tuple(free_cards),
         vambrace_used=combat.vambrace_used or vambrace_double,
         unsettling_lamp_used=combat.unsettling_lamp_used or lamp_double,
@@ -3215,11 +3229,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += vigor
         if card_was_upgraded:
             damage += ALL_ENEMY_UPGRADE_DAMAGE.get(card, 3)
-        if pen_nib_double:
-            damage *= 2
         before = list(enemies)
         hits = ALL_ENEMY_HITS.get(card, 1) + (ALL_ENEMY_UPGRADE_HITS.get(card, 0) if card_was_upgraded else 0)
-        for _ in range(plays):
+        for resolution in range(plays):
+            resolution_damage = damage * (2 if resolution in pen_nib_plays else 1)
             for index, enemy in enumerate(enemies):
                 if not enemy.alive:
                     continue
@@ -3227,7 +3240,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                     if not enemies[index].alive:
                         break
                     target_enemy = enemies[index]
-                    scaled = _apply_debuff_multipliers(combat, target_enemy, damage)
+                    scaled = _apply_debuff_multipliers(combat, target_enemy, resolution_damage)
                     enemies[index] = _damage_enemy(target_enemy, scaled)
             # A later resolution sees the Vulnerable applied by the previous one.
             if card == THUNDERCLAP:
@@ -3272,17 +3285,17 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return replace(combat, enemies=tuple(enemies), player_powers=_add_power(combat.player_powers, "StrengthPower", gained))
     if card == SWORD_BOOMERANG:
         damage = 3 + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
-        if pen_nib_double:
-            damage *= 2
         before = tuple(enemies)
         reflected, hive = 0, 0
-        for _ in range((4 if card_was_upgraded else 3) * plays):
+        hits_per_play = 4 if card_was_upgraded else 3
+        for hit_index in range(hits_per_play * plays):
             alive = [index for index, candidate in enumerate(enemies) if candidate.alive]
             if not alive:
                 break
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
-            scaled = _apply_debuff_multipliers(combat, before_enemy, damage)
+            resolution_damage = damage * (2 if hit_index // hits_per_play in pen_nib_plays else 1)
+            scaled = _apply_debuff_multipliers(combat, before_enemy, resolution_damage)
             enemies[hit] = _damage_enemy(before_enemy, scaled)
             reflected += _power(before_enemy.powers, "ThornsPower")
             hive += _power(before_enemy.powers, "PersonalHivePower")
@@ -3303,17 +3316,16 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card == VOLLEY:
         damage = 14 if card_was_upgraded else 10
         damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
-        if pen_nib_double:
-            damage *= 2
         before = tuple(enemies)
         reflected, hive = 0, 0
-        for _ in range(volley_x * plays):
+        for hit_index in range(volley_x * plays):
             alive = [index for index, candidate in enumerate(enemies) if candidate.alive]
             if not alive:
                 break
             hit = rng.choice(alive)
             before_enemy = enemies[hit]
-            scaled = _apply_debuff_multipliers(combat, before_enemy, damage)
+            resolution_damage = damage * (2 if hit_index // volley_x in pen_nib_plays else 1)
+            scaled = _apply_debuff_multipliers(combat, before_enemy, resolution_damage)
             enemies[hit] = _damage_enemy(before_enemy, scaled)
             reflected += _power(before_enemy.powers, "ThornsPower")
             hive += _power(before_enemy.powers, "PersonalHivePower")
@@ -3346,6 +3358,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             # Dismantle.OnPlay: hitCount = target.HasPower<VulnerablePower>() ? 2 : 1 - two separate
             # attacks, each with its own rounding, block absorption, and Slippery decrement.
             hits = 2
+    hits_per_play = hits
     hits *= plays
     if card == PERFECTED_STRIKE:
         strikes = sum(
@@ -3385,14 +3398,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # StrikeDummy.ModifyDamageAdditive: +3 on any powered attack tagged Strike.
     if RELIC_STRIKE_DUMMY in combat.player_relics and card in STRIKE_TAGGED:
         damage += 3
-    if pen_nib_double:
-        damage *= 2
     if gigantified:
         # GigantificationPower marks exactly one powered Attack command per play (the first one on
         # the turn) and multiplies that command's damage by 3.
         damage = damage * 3
     base_damage = damage
-    damage = _apply_debuff_multipliers(combat, enemy, damage)
     # OnPlay deals the damage and applies its own debuffs in the same resolution (Bash, Break, Squash,
     # Uppercut), so a play that resolves more than once has its later hits amplified by the Vulnerable the
     # earlier resolution applied.  Deal the hit, re-apply that resolution's debuffs, and price the remaining
@@ -3402,13 +3412,14 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     for hit_index in range(hits):
         if not enemies[int(target)].alive:
             break
+        resolution_damage = base_damage * (2 if hit_index // hits_per_play in pen_nib_plays else 1)
+        damage = _apply_debuff_multipliers(combat, enemies[int(target)], resolution_damage)
         enemies[int(target)] = _damage_enemy(enemies[int(target)], damage)
         if resolution_debuffs and hit_index + 1 < hits:
             state = enemies[int(target)]
             for power_name, amount in resolution_debuffs:
                 state = _apply_enemy_debuff(state, power_name, amount * (2 if lamp_double else 1))
             enemies[int(target)] = state
-            damage = _apply_debuff_multipliers(combat, enemies[int(target)], base_damage)
     if card == MOLTEN_FIST and enemies[int(target)].alive:
         vulnerable = _power(enemy.powers, "VulnerablePower")
         if vulnerable:

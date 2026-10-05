@@ -16,6 +16,7 @@ using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Cards;
 using MegaCrit.Sts2.Core.Models.Potions;
 using MegaCrit.Sts2.Core.Models.Powers;
+using MegaCrit.Sts2.Core.Models.Relics;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Nodes.Screens.GameOverScreen;
 using MegaCrit.Sts2.Core.Nodes.Screens.Overlays;
@@ -122,6 +123,7 @@ internal static class CombatBridge
                     max_energy = player.PlayerCombatState.MaxEnergy,
                     powers = player.Creature.Powers.Select(p => new { id = p.Id.ToString(), amount = p.Amount, facing = p is SurroundedPower surrounded ? surrounded.Facing.ToString() : null }),
                     relics = player.Relics.Select(r => r.Id.ToString()),
+                    relic_counters = RelicCounters(player),
                 },
                 action.Type,
                 hand_index = action.HandIndex,
@@ -255,6 +257,25 @@ internal static class CombatBridge
         return (cards, attacks, skills);
     }
 
+    private static Dictionary<string, int> RelicCounters(MegaCrit.Sts2.Core.Entities.Players.Player player)
+    {
+        var counters = new Dictionary<string, int>();
+        foreach (var relic in player.Relics)
+        {
+            // DisplayAmount can show an animation value. Use the saved runtime counters.
+            int? count = relic switch
+            {
+                PenNib penNib => penNib.AttacksPlayed,
+                Nunchaku nunchaku => nunchaku.AttacksPlayed,
+                TuningFork tuningFork => tuningFork.SkillsPlayed,
+                _ => null,
+            };
+            if (count is int value)
+                counters[relic.Id.ToString()] = value;
+        }
+        return counters;
+    }
+
     private static async Task<(AgentAction Action, List<object> Legal)> Exchange(RunState run, MegaCrit.Sts2.Core.Entities.Players.Player player, int seq, CancellationToken ct)
     {
         var combat = CombatManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("combat state unavailable");
@@ -301,6 +322,7 @@ internal static class CombatBridge
                 max_energy = player.PlayerCombatState.MaxEnergy,
                 powers = player.Creature.Powers.Select(p => new { id = p.Id.ToString(), amount = p.Amount, facing = p is SurroundedPower surrounded ? surrounded.Facing.ToString() : null }),
                 relics = player.Relics.Select(r => r.Id.ToString()),
+                relic_counters = RelicCounters(player),
                 upgraded_cards = player.Deck.Cards.Concat(player.PlayerCombatState.AllCards).Where(card => card.CurrentUpgradeLevel > 0).Select(card => card.Id.ToString()),
             },
             plays = new

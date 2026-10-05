@@ -32,6 +32,45 @@ EFFECTLESS_ATTACK_DUMMY_DATA = {"monsters": [{"id": "MONSTER.DUMMY", "states": [
 
 
 class CombatTest(unittest.TestCase):
+    def test_saved_pen_nib_counter_overrides_combat_history_and_advances(self) -> None:
+        state = Combat(80, (STRIKE, STRIKE), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+                       player_relics=(RELIC_PEN_NIB,), attacks_played_combat=1,
+                       relic_counters=((RELIC_PEN_NIB, 9),))
+        first = step(state, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(first.enemies[0].hp, 38)
+        self.assertEqual(dict(first.relic_counters)[RELIC_PEN_NIB], 0)
+        second = step(first, "Strike@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual(second.enemies[0].hp, 32)
+        self.assertEqual(dict(second.relic_counters)[RELIC_PEN_NIB], 1)
+        self.assertEqual(dict(step(second, END_TURN, DUMMY_DATA, random.Random(0)).relic_counters)[RELIC_PEN_NIB], 1)
+        fresh_counter = replace(state, attacks_played_combat=9, relic_counters=((RELIC_PEN_NIB, 0),))
+        self.assertEqual(step(fresh_counter, "Strike@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 44)
+
+    def test_saved_relic_counters_are_independent(self) -> None:
+        tuning_fork = "RELIC.TUNING_FORK"
+        state = Combat(80, (ANGER, DEFEND), (), (), (Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ()),),
+                       player_relics=(RELIC_PEN_NIB, RELIC_NUNCHAKU, tuning_fork),
+                       relic_counters=((RELIC_PEN_NIB, 0), (RELIC_NUNCHAKU, 9), (tuning_fork, 9)))
+        attack = step(state, "Anger@0", DUMMY_DATA, random.Random(0))
+        self.assertEqual((attack.enemies[0].hp, attack.energy), (44, 4))
+        self.assertEqual(dict(attack.relic_counters), {RELIC_PEN_NIB: 1, RELIC_NUNCHAKU: 0, tuning_fork: 9})
+        defend = step(attack, DEFEND, DUMMY_DATA, random.Random(0))
+        self.assertEqual(defend.player_block, 12)
+        self.assertEqual(dict(defend.relic_counters), {RELIC_PEN_NIB: 1, RELIC_NUNCHAKU: 0, tuning_fork: 0})
+
+    def test_pen_nib_only_doubles_the_resolution_that_reaches_ten(self) -> None:
+        for counter in (8, 9):
+            for card, damage in ((STRIKE, 18), (SWORD_BOOMERANG, 27), (VOLLEY, 60),
+                                 (THUNDERCLAP, 16 if counter == 8 else 14)):
+                with self.subTest(counter=counter, card=card):
+                    state = Combat(80, (card,), (), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),),
+                                   energy=2, player_relics=(RELIC_PEN_NIB,),
+                                   relic_counters=((RELIC_PEN_NIB, counter),), player_powers=(("DuplicationPower", 1),))
+                    action = card if card in {SWORD_BOOMERANG, VOLLEY} else f"{card}@0"
+                    after = step(state, action, DUMMY_DATA, random.Random(0))
+                    self.assertEqual(after.enemies[0].hp, 100 - damage)
+                    self.assertEqual(dict(after.relic_counters)[RELIC_PEN_NIB], (counter + 2) % 10)
+
     def test_enemy_multi_hit_rounds_weak_and_vulnerable_once_per_hit(self) -> None:
         # QUEEN in astra_goal_r2 seq473: (3 + 2) * .75 * 1.5 floors to 5, five times.
         data = {"monsters": [{"id": "MONSTER.DUMMY", "states": [{
