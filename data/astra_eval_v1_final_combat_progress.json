@@ -1,0 +1,95 @@
+[
+  {
+    "seed": "D6A1F8C3E5",
+    "enemy": "MONSTER.QUEEN",
+    "group": "development",
+    "basis": "last combat observation before the terminal death record",
+    "arms": {
+      "control": {
+        "trace": "data/astra_eval_v1_control_D6A1F8C3E5_agent.jsonl",
+        "player_start_hp": 72,
+        "enemy_max_hp": 400,
+        "remaining_hp": 371,
+        "removed_percent": 7.250000000000001,
+        "seq": 476,
+        "turn": 6,
+        "action": "end_turn",
+        "terminal_seq": 477
+      },
+      "candidate": {
+        "trace": "data/astra_eval_v1_candidate_D6A1F8C3E5_agent.jsonl",
+        "player_start_hp": 83,
+        "enemy_max_hp": 400,
+        "remaining_hp": 28,
+        "removed_percent": 93.0,
+        "seq": 400,
+        "turn": 11,
+        "action": "end_turn",
+        "terminal_seq": 401
+      }
+    },
+    "delta_percentage_points": 85.75
+  },
+  {
+    "seed": "A972EACCB8",
+    "enemy": "MONSTER.FOGMOG",
+    "group": "posthoc_confirmation",
+    "basis": "last combat observation before the terminal death record",
+    "arms": {
+      "control": {
+        "trace": "data/astra_eval_v1_control_A972EACCB8_agent.jsonl",
+        "player_start_hp": 73,
+        "enemy_max_hp": 74,
+        "remaining_hp": 47,
+        "removed_percent": 36.48648648648649,
+        "seq": 157,
+        "turn": 15,
+        "action": "end_turn",
+        "terminal_seq": 158
+      },
+      "candidate": {
+        "trace": "data/astra_eval_v1_candidate_A972EACCB8_agent.jsonl",
+        "player_start_hp": 87,
+        "enemy_max_hp": 74,
+        "remaining_hp": 38,
+        "removed_percent": 48.64864864864865,
+        "seq": 151,
+        "turn": 13,
+        "action": "end_turn",
+        "terminal_seq": 152
+      }
+    },
+    "delta_percentage_points": 12.162162162162161
+  },
+  {
+    "seed": "9B3C304A5D",
+    "enemy": "MONSTER.VANTOM",
+    "group": "new_metric_confirmation",
+    "basis": "last combat observation before the terminal death record",
+    "arms": {
+      "control": {
+        "trace": "data/astra_eval_v1_control_9B3C304A5D_agent.jsonl",
+        "player_start_hp": 69,
+        "enemy_max_hp": 173,
+        "remaining_hp": 54,
+        "removed_percent": 68.78612716763006,
+        "seq": 161,
+        "turn": 11,
+        "action": "end_turn",
+        "terminal_seq": 162
+      },
+      "candidate": {
+        "trace": "data/astra_eval_v1_candidate_9B3C304A5D_agent.jsonl",
+        "player_start_hp": 80,
+        "enemy_max_hp": 173,
+        "remaining_hp": 106,
+        "removed_percent": 38.72832369942196,
+        "seq": 142,
+        "turn": 11,
+        "action": "end_turn",
+        "terminal_seq": 143
+      }
+    },
+    "delta_percentage_points": -30.057803468208093
+  }
+]
