@@ -8645,3 +8645,33 @@ RESULT evfix_ctrl AM8C6YXHSG wins=17 losses=1 records=360 depth=Act 3, Floor 15 
 RESULT evfix_ctrl H2LV6ZJ4XW wins=20 losses=1 records=388 depth=Act 3, Floor  6 ✓ arm: 20 勝 ✓ Act 3 Floor  6 ✓（同一 ✓）
 ```
 3 本目 VTW80ZJA2G ✓ control 未完了 ✓（`bash-1165` ✓）✓ 2 seed の時点では **1 seed で悪化 ✓ 1 seed で変化なし ✓ 改善した seed は無い** ✓
+
+## Round 94: Act 2 boss（THE_INSATIABLE 321 HP ✓）の解剖 ✓ **8〜9 turn ✓ 進入 75〜98 HP ✓ 退出 2〜43 HP ✓** ✓ 残 HP が Act 3 の深さを決めている ✓
+
+生 run 5 本 ✓（arm 3 ✓ control 2 ✓）✓ 同じ boss ✓
+```
+arm  AM8C6YXHSG:  8 turn ✓ 進入 78/85 ✓ 退出 10 ✓  boss HP 321 → 6
+arm  H2LV6ZJ4XW:  9 turn ✓ 進入 98/116 ✓ 退出 29 ✓  boss HP 321 → 9
+arm  VTW80ZJA2G:  9 turn ✓ 進入 80/80  ✓ 退出  2 ✓  boss HP 320 → 19（この run は boss 室で停止 ✓）
+ctrl AM8C6YXHSG:  8 turn ✓ 進入 75/85 ✓ 退出 43 ✓  boss HP 321 → 14
+ctrl H2LV6ZJ4XW:  9 turn ✓ 進入 79/116 ✓ 退出  5 ✓  boss HP 321 → 20
+```
+**boss 戦で失う HP は 68〜78** ✓✓（arm ✓）✓ **退出時の HP が Act 3 の到達に直結する** ✓✓
+- ctrl AM8C6YXHSG は **43 HP で抜けて Act 3 Floor 15** ✓（Act 3 boss QUEEN まで行き ✓ 99 → 1 で败北 ✓）✓
+- arm AM8C6YXHSG は **10 HP で抜けて Act 3 Floor 6 で死亡** ✓✓
+→ **1 turn 長いと約 10 HP 多く失う** ✓（8〜9 turn で 68〜78 ✓）✓ **2 turn 短縮 ≒ Act 3 に +20 HP** ✓
+→ **壁の形** ✓ Act 2 boss を長引かせる ✓ → 残 HP 少ない ✓ → Act 3 入口の連続 fight ✓（前々 round ✓）で即死 ✓✓
+
+**potion の観測は key が top level ✓** ✓（前 round の私の「boss 進入時に potion 無し ✓」は key の取り違え ✓✗✗）✓
+```
+combat record: `potions` ✓（top level ✓）= ['VULNERABLE_POTION','FORTIFIER','BLOCK_POTION'] ✓ / `player.potions` = [] ✓
+legal_actions の potion entry と同じ内容 ✓（VULNERABLE ✓ FORTIFIER ✓ BLOCK ✓）✓
+```
+→ **boss 戦で 3 個の potion を使っている** ✓（turn 1 で Vulnerable ✓ turn 6 で Block ✓ と Fortifier ✓）✓ **使っても 10 HP 残で抜けた** ✓
+→ potion を使い切っていた ✓ のではなく ✓ **使い切っても boss の射程が長い** ✓✓（前 round の potion 経済の結論と同じ方向 ✓）✓
+→ **tooling** ✓ potion を数える監査は `player.potions` ✓ ではなく **`potions` ✓（top level ✓）** ✓ を読む ✓（teaching 91 ✓ isinstance で守る ✓ の続報 ✓：key の位置を確かめる ✓）✓
+
+**残る lever の形** ✓ boss 戦の turn 数を減らす ✓＝その時点で出せる damage/turn を上げる ✓
+ただし ✓ そのための火力は card reward で積む方向では無い ✓（corpus ✓ 2 通りの測り方で確認 ✓）✓ ので ✓
+**次の手は「その fight で実際に何が出ているか」の内訳** ✓（札を引けていない ✓ energy 使い切り ✓ 被 damage の内訳 ✓）✓ を ✓ act ではなく fight で見る ✓
+control 3 本目 VTW80ZJA2G ✓ 走行中 ✓（`bash-1165` ✓）✓
