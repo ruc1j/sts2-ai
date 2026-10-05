@@ -8400,3 +8400,30 @@ decision_reason: None 2136 ✓ rollout_disabled_no_playable_card 485 ✓ rollout
 → 火力が続かない問題の另一側 ✓（札が尽きる ✓）✓ policy 変更の候補ではなく ✓ まず card reward / 枚数経済の測定に残す ✓
 
 panel の panel（event policy ✓）は arm 1 本目が走行中 ✓ 0 件の event 拒否 ✓（4 件 accepted ✓ 0 rejected ✓）✓ 完了待ち `bash-1165` ✓
+
+## Round 84: hand の `vars` は**修正込みの preview** ✓ だから Rampage の growth はそこから読めない ✓（前 round の「道が開く」は訂正 ✓）
+
+前 round で「hand entry が `vars` を出している ✓ だから play する copy の現在の Damage が読める ✓」と書いた ✓
+**が ✓ この判断の前に読むべき code comment が既にあった** ✓ `combat.py:3360-3366` ✓
+```
+# fight, so a copy met mid-run already hits harder than its printed 5/4. The bridge's
+# `vars` cannot supply the real number: DamageVar.UpdateCardPreview runs the whole
+# ModifyDamage hook chain, so the reported Damage already has Strength, Weak, Frail and
+# enchantments folded in - reading it here would double-count everything below. The model
+# therefore starts from the printed value and only adds the growth it sees itself, which
+# under-rates a long-carried copy rather than over-rating one.
+```
+export される `Damage` は ✓ Strength ✓ Weak ✓ Frail ✓ enchantment まで織り込んだ **最終 preview** ✓ ✓
+（`CARD.STRIKE_IRONCLAD` upgrade 0 が 6 出ていた ✓ のも print 値 5 + 何か ✓ で ✓ growth ではない ✓）✓
+model は damage に自分で Strength などを足す ✓ ので ✓ preview を base として使うと **同じ modifier を2回数える** ✓✗
+→ **Rampage の growth は観測から忠実に seed できない ✓** という結論に戻る ✓（推論方式の過大評価 ✓ 43/52 → 18/52 ✓ と合わせて ✓ **この項目は閉じる** ✓）✓
+新しい教訓 ✓「自分がもう一度開こうとしていている判断が ✓ code の comment や CODEWIKI に既に書かれていないかを確認してから測る」✓（teaching 42 ✓ 71 ✓と同型 ✓）✓
+
+**Toxic は game 側で play できる ✓ と確定** ✓（前 round の疑いの答え ✓）✓
+`CardModel.CanPlay(out reason, out preventer)` ✓ の中に `if (!IsPlayable) → unplayable` ✓（`CardModel.cs:1759` ✓）✓
+`Toxic.cs` は `IsPlayable` を override していない ✓（`CardModel.cs:792` の既定 true ✓）✓ → **energy があれば play できる ✓** ✓
+意味 ✓ 1 energy を使って Toxic を hand から出すと ✓ `OnTurnEndInHand` の **owner への 5 ダメージを回避できる** ✓（`Toxic.cs` の `DamageVar(5m, Unpowered|Move)` ✓ + Exhaust ✓）✓
+model 側は Toxic を play できない札として扱い ✓ rollout は価格付けしない ✓
+母数 ✓ 新しい 9 trace で **`legal_actions` に model の play できない札として出るのは `CARD.TOXIC` だけ ✓ 17 record** ✓（combat decision 約 2,600 件の 0.7% ✓）✓
+→ **play できる選択肢を増やす変更なので panel 対象 ✓ だが ✓ 17 件では win panel の信号が出ない** ✓（teaching 32 ✓「决定が変わらないのに win panel を走らせない」✓）✓
+**既知の小さな gap として記録し ✓ panel には回さない** ✓（決定の変わらない変更で win を動かさない ✓）✓
