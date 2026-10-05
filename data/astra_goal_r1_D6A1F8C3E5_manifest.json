@@ -1,0 +1,27 @@
+{
+  "seed": "D6A1F8C3E5",
+  "simulations": 100,
+  "head": "712304843c1de90f6db6dc19e6f2e6554ad76e63",
+  "sha256": {
+    "combat.py": "5bcd5e422e97689d1d9630324b09c3499070a831d315a6b9d56fc7811c10f132",
+    "official_agent.py": "8fe5ebc4b74d253c9f9393861e65b44f158db6ccb59553e37e2eb7dc28eb9fa3",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "da95390c2e467eff10ee78f8a59e48b2a2ee1089dc6de4523fb57bda08879ffa"
+  },
+  "source_commit": "e70feae4fc21e88d1be0523bedacc2c5975f88e3",
+  "outcome": {
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "act_3_complete": false,
+    "terminal": {
+      "seq": 404,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    }
+  },
+  "artifacts_sha256": {
+    "agent.jsonl": "b19ee81e4e68b110e2b7c767460914a5db82dc6fdf42fb5128695dd204b38706",
+    "mod.log": "115ae19cd73dd33dd852e9b47ec401422f0365f126f422b2daa708897e79d9a8",
+    "map.json": "749e9dfb8638249f5d1a361b5ca81c4e58d4d5a5a292d3a7a46a9a421ff6fa8a"
+  }
+}
