@@ -1398,6 +1398,11 @@ Vulnerable付与からのとどめ分岐は「攻撃してくる敵がちょう�
 生きている主敵(MinionPowerなし)が1体だけならその敵を、そうでなければ唯一の攻撃者を対象にした。再生するとseq254はOVICOPTERへのBashになる。
 回帰テスト`test_finishes_last_primary_even_while_minions_swing`を追加し、全834テスト成功。判断の変更で、効果は未測定。
 
+**余ったゴールドで点数表にないショップのレリックを買う(2026-10-11)。** `SHOP_RELIC_SCORES`にないレリックは点数−1で、所持金に関係なく買わなかった。
+D6 v2候補seq343は598ゴールドでPantograph(ボス戦開始時に回復)とGambling Chipを見送り、最終ボスで死亡した。Act 3 Floor 15で死んだrunの
+死亡時所持ゴールドは平均300(他の到達点は24〜53)。他に買うものがなく、購入後も`SURPLUS_GOLD_RESERVE`=150が残るときだけ、点数の高い順・
+安い順で1つ買う。全traceで該当するショップ訪問は7回と少ない。取得方針の変更で、効果は未測定。
+
 ### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして
