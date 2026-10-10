@@ -1,8 +1,8 @@
 {
   "id": "astra_eval_v3",
-  "hypothesis": "その手番の被弾が致死のとき、倒しても致死が残るlethal_directを強制せず防御・rolloutへ任せると、踏破率または到達度が改善する",
-  "change_type": "strategy_single",
-  "change": "ad7acb7: 致死被弾の手番では、倒した後の被弾がHP未満になるか主敵を全滅させる討伐だけをlethal_directで強制する",
+  "hypothesis": "lethal_directが「倒しても致死が残る討伐」と「主敵が生きている間の取り巻きだけの討伐」を強制せずrolloutへ任せると、踏破率または到達度が改善する",
+  "change_type": "strategy_bundle",
+  "change": "ad7acb7(致死被弾の手番の討伐制限)に4a95665(取り巻きだけの討伐を強制しない、Torch Head/Kin Followerと致死回避は例外)をcherry-pickした680bfb4。どちらもlethal_directの強制条件の変更。",
   "versions": {
     "control": {
       "repo": "/tmp/sts2-eval-v3-control",
@@ -16,9 +16,10 @@
     },
     "candidate": {
       "repo": "/tmp/sts2-eval-v3-candidate",
-      "commit": "ad7acb715d6ef06c65ec906ab36b5566cfe8c0d9",
+      "commit": "680bfb4113c9b0a42363f0997e9e460e7df1a35b",
+      "branch": "eval-v3-candidate",
       "sha256": {
-        "official_agent.py": "db360506d80b9bf3cac5887049e1e6baad279c3ae0ab337915d14fe1b415a7ac",
+        "official_agent.py": "860bc6a30d1befc4e7df77acc784b4d4b5a18e3c8d86d0b28281f977aa0ffb85",
         "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
         "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
         "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
