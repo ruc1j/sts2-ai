@@ -1,8 +1,8 @@
 {
   "id": "astra_eval_v4",
-  "hypothesis": "強ブロック不足を理由にS/Aランクの報酬まで見送る規則を外すと、デッキが育ち踏破率または到達度が改善する",
-  "change_type": "strategy_single",
-  "change": "bb63f42をv3候補(680bfb4)へcherry-pick。choose_card_rewardのstrong_block_shortageによる見送りを撤廃。",
+  "hypothesis": "報酬の強ブロック不足による見送りを外し、余ったゴールドで点数表にないショップのレリックを買うと、デッキと装備が育ち踏破率または到達度が改善する",
+  "change_type": "acquisition_bundle",
+  "change": "v3候補(680bfb4)にbb63f42(報酬の見送り規則の撤廃)と7290703(余剰ゴールドで点数表にないレリックを購入、購入後150残る場合のみ)を適用したa2475a2。",
   "versions": {
     "control": {
       "repo": "/tmp/sts2-eval-v4-control",
@@ -16,9 +16,9 @@
     },
     "candidate": {
       "repo": "/tmp/sts2-eval-v4-candidate",
-      "commit": "92ff489d72124a0a3c9af177771cee0e77c1e820",
+      "commit": "a2475a2c5efb49559854050e93e748e432deb5d2",
       "sha256": {
-        "official_agent.py": "b8954889075b07cc6a2d2bcb8b8a269bb770adfea722ba322d8257e533e5de29",
+        "official_agent.py": "9ed3d139e5de7c3392d36087157f011cb183f03e4e711fd647dd95fc9a96cf82",
         "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
         "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
         "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"

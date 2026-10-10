@@ -2,13 +2,13 @@
   "id": "astra_eval_v5",
   "hypothesis": "探索の共通乱数と、最後の主敵を倒せば戦闘が終わる局面のとどめ判定により、戦闘中の選択の誤りが減り踏破率または到達度が改善する",
   "change_type": "decision_bundle",
-  "change": "v4候補(92ff489)に25f275e(combat.searchの共通乱数)と7d2dacb(finishing_target: 生きている主敵が1体ならその敵を倒しきる判定の対象にする)をcherry-pickした31745ae。",
+  "change": "v4候補(a2475a2)に25f275e(combat.searchの共通乱数)と7d2dacb(finishing_target)を適用した82e64a4。",
   "versions": {
     "control": {
       "repo": "/tmp/sts2-eval-v5-control",
-      "commit": "92ff489d72124a0a3c9af177771cee0e77c1e820",
+      "commit": "a2475a2c5efb49559854050e93e748e432deb5d2",
       "sha256": {
-        "official_agent.py": "b8954889075b07cc6a2d2bcb8b8a269bb770adfea722ba322d8257e533e5de29",
+        "official_agent.py": "9ed3d139e5de7c3392d36087157f011cb183f03e4e711fd647dd95fc9a96cf82",
         "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
         "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
         "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
@@ -16,14 +16,14 @@
     },
     "candidate": {
       "repo": "/tmp/sts2-eval-v5-candidate",
-      "commit": "31745ae413ed641d9ba7f190f36cea6959c718ee",
-      "branch": "eval-v5-candidate",
+      "commit": "82e64a40edc3e23a737d8025d7a537cfad5eb5d3",
       "sha256": {
-        "official_agent.py": "22f835b0bc41564c9100db490679611fa878e3bb4729eef2b08ccb605e42aa51",
+        "official_agent.py": "4afe269e6743d7107fa1c349c9fe5372dee8831deab7bc74a1a396c9634b2ac2",
         "combat.py": "b5b7842816dac60c28b332728b9ef9db913725b3d21370406ce4226fdfca4cfc",
         "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
         "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
-      }
+      },
+      "branch": "eval-v5-candidate"
     }
   },
   "conditions": {
