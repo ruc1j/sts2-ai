@@ -1,0 +1,197 @@
+{
+  "id": "astra_eval_v2",
+  "hypothesis": "IllusionPower持ちの敵への強制lethal_directを致死回避時に限ると、復活する取り巻きに手番を浪費せず踏破率または到達度が改善する",
+  "change_type": "strategy_single",
+  "change": "5b79fc8: official_agent.pyのlethal候補からIllusionPower持ちの敵だけを倒す手を除外(その敵の攻撃が致死を生む場合を除く)",
+  "versions": {
+    "control": {
+      "repo": "/tmp/sts2-eval-v2-control",
+      "commit": "767b5e29d7970e3a4a08e48752ba9ccfa9c3dd9c",
+      "sha256": {
+        "official_agent.py": "0e71a9042413adf6cdedff37eba39ed41607cbff2e58fff34e75ae3a9bb47d00",
+        "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
+        "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+        "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+      }
+    },
+    "candidate": {
+      "repo": "/tmp/sts2-eval-v2-candidate",
+      "commit": "5b79fc8bebae5b0795eb368ceff4c16f4205ec3e",
+      "sha256": {
+        "official_agent.py": "23692daab6672abb18f8fc6b8bf69b2f56cdf81ef4dbe526e2d64bb7d5394d0e",
+        "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
+        "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+        "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+      }
+    }
+  },
+  "conditions": {
+    "game_version": "v0.107.1",
+    "game_assembly": "/Users/mao/Library/Application Support/Steam/steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64/sts2.dll",
+    "game_assembly_sha256": "e7ceb80669bfaf5c8fccabaa126ae2bb283aba514be5b5b55612579cfd285f18",
+    "character": "Ironclad",
+    "ascension": 0,
+    "simulations": 100,
+    "agent_max_combats": 100,
+    "stop_after_act": 3,
+    "userdata_snapshot": "/Users/mao/.sts2/userdata-pin",
+    "userdata_sha256": "99fc8fc4db13b816824117057f3ba3da60f46ff1cf54c0267d51fb62e4746752",
+    "search_rng": "observation seq; identical runner and pinned userdata for each run"
+  },
+  "development_seeds": [
+    "N8CQ4ZKP2W",
+    "D6A1F8C3E5",
+    "A972EACCB8",
+    "9B3C304A5D",
+    "AED850BE3B",
+    "4DE718E2F1"
+  ],
+  "confirmation_seeds": [
+    "7FCFED219F",
+    "EB97217329",
+    "D839F5F1C8",
+    "C510D86949",
+    "68AC111D81",
+    "D0E3C14EFE"
+  ],
+  "selection": {
+    "development": "v1の全6 seed。結果を見てこの修正を見つけたため開発用。",
+    "confirmation": "SHA256 of sts2-ai/eval-20261011/v2/confirmation/{i}, i=1..6, first 10 hex characters uppercase. No seed exists in prior data/ filenames or goal archives; no outcomes or mechanic exposure inspected."
+  },
+  "repetitions_per_seed_per_version": 1,
+  "planned_runs": 24,
+  "per_run_timeout_seconds": 1800,
+  "panel_time_limit_seconds": 14400,
+  "rerun_rule": "Only verified external interruption/crash: retain attempt and retry same seed/version/settings once under a new tag within panel time limit. Candidate-caused failures remain reliability regressions. Unexplained missingness keeps comparison on hold.",
+  "primary_metric": "Act 3 complete / runs with verified terminal outcome, equally weighted by seed; show planned/completed/unknown counts",
+  "secondary_order": [
+    "Act 2 clear",
+    "Act 1 clear",
+    "same-seed depth improved minus worsened",
+    "same final-combat progress (docs/EVALUATION.md)"
+  ],
+  "acceptance": "docs/EVALUATION.md: both development and confirmation improve without unresolved reliability regression; otherwise hold/reject under its rules. Never stop at the third win.",
+  "freeze": "Both versions stay unchanged through the panel. Newly diagnosed correctness failures end this version comparison as hold instead of silently changing source.",
+  "run_order": [
+    {
+      "arm": "candidate",
+      "seed": "N8CQ4ZKP2W",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "N8CQ4ZKP2W",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "control",
+      "seed": "D6A1F8C3E5",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "D6A1F8C3E5",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "candidate",
+      "seed": "A972EACCB8",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "A972EACCB8",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "control",
+      "seed": "9B3C304A5D",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "9B3C304A5D",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "candidate",
+      "seed": "AED850BE3B",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "AED850BE3B",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "control",
+      "seed": "4DE718E2F1",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "4DE718E2F1",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "candidate",
+      "seed": "7FCFED219F",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "7FCFED219F",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "control",
+      "seed": "EB97217329",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "EB97217329",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "candidate",
+      "seed": "D839F5F1C8",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "D839F5F1C8",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "control",
+      "seed": "C510D86949",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "C510D86949",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "candidate",
+      "seed": "68AC111D81",
+      "tag": "astra_eval_v2_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "68AC111D81",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "control",
+      "seed": "D0E3C14EFE",
+      "tag": "astra_eval_v2_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "D0E3C14EFE",
+      "tag": "astra_eval_v2_candidate"
+    }
+  ]
+}
