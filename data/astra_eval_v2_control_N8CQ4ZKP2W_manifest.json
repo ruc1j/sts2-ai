@@ -1,0 +1,48 @@
+{
+  "panel": "astra_eval_v2",
+  "run_index": 1,
+  "arm": "control",
+  "seed": "N8CQ4ZKP2W",
+  "source_commit": "767b5e29d7970e3a4a08e48752ba9ccfa9c3dd9c",
+  "sha256": {
+    "official_agent.py": "0e71a9042413adf6cdedff37eba39ed41607cbff2e58fff34e75ae3a9bb47d00",
+    "combat.py": "865461b406c9c555876b498f96b3bd09a32f3fad2bf325fe90b891b54c63d401",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "d8ce2aec33bac0bbc791d96c20343acc213721893fbed7c12f889cbcecf7c1e9",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791663148.378015,
+  "finished": 1791663695.2211142,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 536,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 19
+    },
+    "final_hp": 19
+  },
+  "artifacts_sha256": {
+    "astra_eval_v2_control_N8CQ4ZKP2W_map_ACT.GLORY.json": "d7414a6e53b447d195223831cc023686f9d05cfb4f06522ad54f44a323e24069",
+    "astra_eval_v2_control_N8CQ4ZKP2W_result.json": "9f6f579db90da08a3f779675118f1abe864b91b20a493935f6096b69aa5085bd",
+    "astra_eval_v2_control_N8CQ4ZKP2W_stdout.log": "33c0d756be5d44985429f3b0e0b6004b697629b7017ef2fe38daf78ade159552",
+    "astra_eval_v2_control_N8CQ4ZKP2W_agent.jsonl": "f132aaaf9539472e33e4b52fb9a338ffc51c77ac656299c7ad605aba39c1b537",
+    "astra_eval_v2_control_N8CQ4ZKP2W_map_ACT.HIVE.json": "e9546fb20ee49b543c484b3d8489ee1c9440e878c282bc8d57867ccf8ca61086",
+    "astra_eval_v2_control_N8CQ4ZKP2W_mod.log": "240a9aa4e02087e1a1de59064aa13de5f848b8ec64d8153f39e5e6562d846a0c",
+    "astra_eval_v2_control_N8CQ4ZKP2W_map.json": "f93d53542759400009c4adce97de29bd4d9473dace58bb9434b081fd3838e9ca"
+  }
+}
