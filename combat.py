@@ -3723,11 +3723,15 @@ def _greedy_action(combat: Combat, data: dict) -> str:
 
 
 def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -> list[tuple[str, float]]:
-    rng = random.Random(seed)
     results = []
     for action in legal_actions(combat):
         scores = []
-        for _ in range(max(1, simulations // len(legal_actions(combat)))):
+        for simulation in range(max(1, simulations // len(legal_actions(combat)))):
+            # Common random numbers: every candidate move replays the same seeded streams, so the
+            # gap between two moves reflects the moves, not which draws/enemy rolls each happened
+            # to get. With one shared stream, ~33 rollouts per move let luck swamp a Defend's 5
+            # block (D839 v2 seq350: End turn 1.10 over Defend 1.02 facing 28 with 4 energy left).
+            rng = random.Random(seed * 1_000_003 + simulation)
             state = step(combat, action, data, rng)
             # Credit this move's own effect (damage dealt, kills, block against incoming) the
             # same way _greedy_action scores every later turn - otherwise a genuinely useful
