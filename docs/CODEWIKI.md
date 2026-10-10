@@ -1382,6 +1382,13 @@ QUEEN戦で火力不足のまま死亡した。唯一の踏破seed N8の見送�
 同局面を1200回で評価するとDefend 1.070・手番終了1.065でほぼ同値で、この1件はモデル上も僅差だった。100回探索の選択が大量探索の最善手と
 一致する率を過去の局面で測っている途中。探索の変更なので全判断に影響し、実走での効果は未測定。
 
+**取り巻き(MinionPower)への確定討伐を原則強制しない(2026-10-11)。** 比較v2の候補68ACはAct 2 Floor 5のOVICOPTER戦で死亡した。
+`lethal_direct`がほぼ毎ターンTough Egg(孵化前・孵化後とも取り巻き)をBludgeonやPerfected Strikeで倒し、OVICOPTERは8ターンで130→85
+しか減らなかった。OVICOPTERは卵を産み続けるため、卵の討伐は終わらない。A972 v2候補の同じ戦闘も同じ形だった。
+主敵が生きている間、取り巻きだけを倒す討伐は強制せずrolloutへ任せる。例外は意図して狙うTorch Head・Kin Followerと、
+その取り巻きの攻撃を消せばこの手番を生き残れる場合。再生すると68ACの7局面・A972の2局面は大半がOVICOPTERへの攻撃に変わる。
+判断の変更で、効果は未測定。
+
 ### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして

@@ -1205,9 +1205,28 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation)
         self.assertNotEqual(action.get("decision_source"), "lethal_direct")
         self.assertIn(action.get("card_id"), {"CARD.DEFEND_IRONCLAD", "CARD.SHRUG_IT_OFF"})
-        # Out of danger, the guaranteed egg kill is still forced as before.
+        # Out of danger, an egg kill is no longer forced either: Ovicopter keeps laying new ones
+        # (68AC v2 spent Bludgeon on eggs nearly every turn while Ovicopter went 130 -> 85).
         observation["player"]["hp"] = 60
-        self.assertEqual(choose(observation).get("decision_source"), "lethal_direct")
+        action = choose(observation)
+        self.assertNotEqual(action.get("decision_source"), "lethal_direct")
+        self.assertNotIn(action.get("target_id"), {6, 3})
+
+    def test_still_kills_queen_torch_head_and_lethal_minion(self) -> None:
+        # Torch Head is a minion we focus on purpose, so its guaranteed kill stays forced.
+        observation = {
+            "player": {"hp": 60, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [{"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 9}]}],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.QUEEN", "hp": 300, "block": 0, "powers": [], "intents": []},
+                {"combat_id": 2, "id": "MONSTER.TORCH_HEAD_AMALGAM", "hp": 8, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"type": "Attack", "damage": 18, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": target}
+                for target in (1, 2)
+            ] + [{"type": "end_turn"}],
+        }
+        self.assertEqual((choose(observation).get("target_id"), choose(observation).get("decision_source")), (2, "lethal_direct"))
 
     def test_vulnerable_potion_kills_attacker_when_remaining_block_survives(self) -> None:
         observation = {

@@ -1349,8 +1349,33 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
             or primary_alive <= {enemy.get("combat_id") for enemy in lethal_targets(action)}
         ]
 
+    # A MinionPower enemy never has to die to end the fight, and summoners replace it (Ovicopter
+    # lays new Tough Eggs every few turns). Force a minion kill only when it is one we focus on
+    # purpose (Torch Head, Kin Follower) or when its hit is what would kill us this turn; leave the
+    # rest to rollout. 68AC v2: Bludgeon/Perfected Strike went into eggs nearly every turn while
+    # Ovicopter dropped 130 -> 85 over 8 turns.
+    def is_minion(enemy: dict) -> bool:
+        return any(
+            power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0
+            for power in enemy.get("powers", ())
+        )
+
+    focused_minions = {"MONSTER.TORCH_HEAD_AMALGAM", "MONSTER.KIN_FOLLOWER"}
+    if any(_number(enemy.get("hp")) > 0 and not is_minion(enemy) for enemy in enemy_by_id.values()):
+        unblocked = sum(enemy_incoming.values()) - _number(player.get("block"))
+        lethal = [
+            action for action in lethal
+            if any(not is_minion(enemy) or enemy.get("id") in focused_minions for enemy in lethal_targets(action))
+            or (
+                0 < _number(player.get("hp")) <= unblocked
+                and unblocked
+                - sum(enemy_incoming.get(enemy.get("combat_id"), 0) for enemy in lethal_targets(action))
+                - card_value(action, "block") < _number(player.get("hp"))
+            )
+        ]
+
     if lethal:
-        killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
+        killers =[action for action in lethal if not _is_self_damage(action, hand)] or lethal
         # Never let stochastic rollout trade a guaranteed kill for a different target; this is
         # especially important when a dangerous minion can be finished immediately.
         def lethal_key(action: dict) -> tuple[int, int, int, int]:
