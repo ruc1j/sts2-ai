@@ -1350,6 +1350,16 @@ n=2、FACT/HYPOTHESIS分離した詳細分析は行っていない。researcher/
 「IllusionPower持ちenemyへの`lethal_direct`が、他に非確定だが本命(FOGMOG等)への攻撃機会がある
 場合に不当に優先されていないか」を確認する調査を次の候補として残す。
 
+**2026-10-11 確定・修正。** 確認用seed A972EACCB8のFOGMOG戦で、両版ともEYE_WITH_TEETH(HP6、IllusionPower)を
+毎ターン`lethal_direct`で倒していた。`lethal_key`は同点なら最大ダメージを選ぶため、使われたのはBludgeon・Perfected
+Strike・Bashで、対照はFOGMOGを15ターンで53→47、候補は13ターンで62→38しか削れずに死亡した。現行mainでtraceを
+再生しても同じ判断になる(対照17件・候補12件)。EYE_WITH_TEETHのintentはDazed追加のみで、倒しても被弾は減らない。
+
+THE_OBSCURA戦のParafright専用だった除外を、IllusionPowerを持つ敵全般へ広げた。復活する敵だけを倒すlethalは、
+その敵の攻撃を消すことで致死を避けられる場合だけ強制し、それ以外はIllusionの復活をモデル化済みのrolloutへ任せる。
+修正後の再生では該当29件のうち多くがFOGMOGへの攻撃に変わった。回帰テスト`test_does_not_force_kill_on_reviving_eye_with_teeth`
+を追加し、全831テスト成功。分類は判断の変更(局所改善)で、全体の踏破率への効果は未測定。
+
 ### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして

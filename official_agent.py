@@ -1111,10 +1111,21 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         lethal = [action for action in lethal if action.get("target_id") not in alive_decimillipede_ids]
     obscura_id = next((enemy.get("combat_id") for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.THE_OBSCURA" and _number(enemy.get("hp")) > 0), None)
     obscura_present = obscura_id is not None
-    if obscura_present:
+
+    # IllusionPower minions (Parafright, Eye With Teeth) revive at full HP after the enemy phase,
+    # so forcing a kill on one only pays when it removes the hit that would otherwise kill us.
+    # Every other such kill is left to rollout, which models the revive.  A972 live traces spent
+    # Bludgeon/Perfected Strike on a 6 HP Eye With Teeth every turn while Fogmog went untouched.
+    def revives(enemy: dict) -> bool:
+        return (obscura_present and enemy.get("id") == "MONSTER.PARAFRIGHT") or any(
+            power.get("id") == "POWER.ILLUSION_POWER" and _number(power.get("amount")) > 0
+            for power in enemy.get("powers", ())
+        )
+
+    if any(revives(enemy) for enemy in enemy_by_id.values()):
         lethal = [
             action for action in lethal
-            if any(enemy.get("id") != "MONSTER.PARAFRIGHT" for enemy in lethal_targets(action))
+            if any(not revives(enemy) for enemy in lethal_targets(action))
             or (
                 sum(enemy_incoming.values()) - _number(player.get("block")) - card_value(action, "block") >= _number(player.get("hp"))
                 and sum(enemy_incoming.values())

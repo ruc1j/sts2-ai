@@ -1147,6 +1147,35 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation)
         self.assertEqual((action["target_id"], action["decision_source"]), (3, "lethal_direct"))
 
+    def test_does_not_force_kill_on_reviving_eye_with_teeth(self) -> None:
+        # A972 Fogmog fight: lethal_direct spent Bludgeon on the 6 HP Eye With Teeth every turn,
+        # which revives after the enemy phase, while Fogmog itself took no damage.
+        observation = {
+            "player": {"hp": 73, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.BLUDGEON", "cost": 3, "type": "Attack", "vars": [{"id": "Damage", "value": 32}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "id": "MONSTER.EYE_WITH_TEETH", "hp": 6, "block": 0, "powers": [{"id": "POWER.ILLUSION_POWER", "amount": 1}, {"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"type": "StatusCard", "damage": 0, "repeats": 0}]},
+                {"combat_id": 2, "id": "MONSTER.FOGMOG", "hp": 53, "block": 0, "powers": [{"id": "POWER.STRENGTH_POWER", "amount": 1}], "intents": [{"type": "Attack", "damage": 15, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": card_id, "hand_index": hand_index, "target_id": target}
+                for card_id, hand_index in (("CARD.BLUDGEON", 0), ("CARD.STRIKE_IRONCLAD", 1))
+                for target in (1, 2)
+            ] + [{"type": "end_turn"}],
+        }
+        action = choose(observation)
+        self.assertNotEqual(action.get("decision_source"), "lethal_direct")
+        self.assertEqual(action.get("target_id"), 2)
+        # Still forced when the reviving minion's own hit is the one that would kill us.
+        observation["player"]["hp"] = 5
+        observation["enemies"][0]["intents"] = [{"type": "Attack", "damage": 10, "repeats": 1}]
+        observation["enemies"][1]["intents"] = []
+        action = choose(observation)
+        self.assertEqual((action.get("target_id"), action.get("decision_source")), (1, "lethal_direct"))
+
     def test_vulnerable_potion_kills_attacker_when_remaining_block_survives(self) -> None:
         observation = {
             "player": {"hp": 1, "max_hp": 80, "block": 0, "energy": 3},
