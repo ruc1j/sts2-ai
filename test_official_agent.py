@@ -1176,6 +1176,39 @@ class OfficialAgentTest(unittest.TestCase):
         action = choose(observation)
         self.assertEqual((action.get("target_id"), action.get("decision_source")), (1, "lethal_direct"))
 
+    def test_blocks_instead_of_killing_eggs_when_ovicopter_hit_is_fatal(self) -> None:
+        # A972 v2 seq214: at 15 HP, lethal_direct spent Perfected Strike and Strike on Tough Eggs
+        # while Ovicopter's 24 went unblocked; Shrug It Off + Defend+ would have survived it.
+        observation = {
+            "player": {"hp": 15, "max_hp": 87, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "upgrade": 1, "type": "Skill", "vars": [{"id": "Block", "value": 10}]},
+                {"index": 1, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 14}]},
+                {"index": 2, "id": "CARD.PERFECTED_STRIKE", "cost": 2, "type": "Attack", "vars": [{"id": "CalculatedDamage", "value": 35}]},
+                {"index": 3, "id": "CARD.SHRUG_IT_OFF", "cost": 1, "upgrade": 1, "type": "Skill", "vars": [{"id": "Block", "value": 11}]},
+            ],
+            "enemies": [
+                {"combat_id": 6, "id": "MONSTER.TOUGH_EGG", "hp": 14, "block": 0, "powers": [{"id": "POWER.HATCH_POWER", "amount": 1}, {"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"type": "Summon", "damage": 0, "repeats": 0}]},
+                {"combat_id": 3, "id": "MONSTER.TOUGH_EGG", "hp": 21, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"type": "Attack", "damage": 6, "repeats": 1}]},
+                {"combat_id": 1, "id": "MONSTER.OVICOPTER", "hp": 77, "block": 0, "powers": [], "intents": [{"type": "Attack", "damage": 24, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": card_id, "hand_index": hand_index, "target_id": target}
+                for card_id, hand_index in (("CARD.STRIKE_IRONCLAD", 1), ("CARD.PERFECTED_STRIKE", 2))
+                for target in (6, 3, 1)
+            ] + [
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0},
+                {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 3},
+                {"type": "end_turn"},
+            ],
+        }
+        action = choose(observation)
+        self.assertNotEqual(action.get("decision_source"), "lethal_direct")
+        self.assertIn(action.get("card_id"), {"CARD.DEFEND_IRONCLAD", "CARD.SHRUG_IT_OFF"})
+        # Out of danger, the guaranteed egg kill is still forced as before.
+        observation["player"]["hp"] = 60
+        self.assertEqual(choose(observation).get("decision_source"), "lethal_direct")
+
     def test_vulnerable_potion_kills_attacker_when_remaining_block_survives(self) -> None:
         observation = {
             "player": {"hp": 1, "max_hp": 80, "block": 0, "energy": 3},

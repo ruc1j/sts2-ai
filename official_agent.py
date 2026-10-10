@@ -1326,6 +1326,29 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
                 if cost <= card_energy and damage(first, ovicopter) + damage(second, ovicopter) >= _number(ovicopter.get("hp")) + _number(ovicopter.get("block")):
                     return _tag_action(max((first, second), key=lambda action: damage(action, ovicopter)), "ovicopter_turn_lethal_direct")
 
+    # When this turn's incoming damage already kills us, a forced kill only helps if what is left
+    # no longer kills us or it ends the fight; otherwise leave the turn to the defense/rollout logic.
+    # A972 v2 Ovicopter: at 15 HP, Perfected Strike + Strike killed two hatching Tough Eggs
+    # while Ovicopter's 24 went unblocked with Shrug It Off and Defend+ still in hand.
+    if 0 < _number(player.get("hp")) <= sum(enemy_incoming.values()) - _number(player.get("block")):
+        primary_alive = {
+            combat_id
+            for combat_id, enemy in enemy_by_id.items()
+            if _number(enemy.get("hp")) > 0
+            and not any(
+                power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0
+                for power in enemy.get("powers", ())
+            )
+        }
+        lethal = [
+            action for action in lethal
+            if sum(enemy_incoming.values())
+            - sum(enemy_incoming.get(enemy.get("combat_id"), 0) for enemy in lethal_targets(action))
+            - _number(player.get("block"))
+            - card_value(action, "block") < _number(player.get("hp"))
+            or primary_alive <= {enemy.get("combat_id") for enemy in lethal_targets(action)}
+        ]
+
     if lethal:
         killers = [action for action in lethal if not _is_self_damage(action, hand)] or lethal
         # Never let stochastic rollout trade a guaranteed kill for a different target; this is

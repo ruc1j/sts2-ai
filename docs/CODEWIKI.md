@@ -1360,6 +1360,16 @@ THE_OBSCURA戦のParafright専用だった除外を、IllusionPowerを持つ敵�
 修正後の再生では該当29件のうち多くがFOGMOGへの攻撃に変わった。回帰テスト`test_does_not_force_kill_on_reviving_eye_with_teeth`
 を追加し、全831テスト成功。分類は判断の変更(局所改善)で、全体の踏破率への効果は未測定。
 
+**同じ形の2件目(2026-10-11)。** 比較v2の候補A972はFogmogを3ターンで突破したが、Act 2 Floor 6のOVICOPTER戦で死亡した。
+seq214はHP15・被弾予告24(OVICOPTER)で、手札にShrug It Off+とDefend+(計21ブロック)がありながら、`lethal_direct`が
+Perfected StrikeとStrikeで孵化待ちのTough Egg(攻撃予告なし)を2体倒し、ブロック0で24を受けた。`lethal_direct`は
+被弾が致死でも先に倒せる敵を倒すため、倒しても死を避けられない敵への討伐を優先していた。
+
+その手番の被弾が致死の場合、討伐を強制するのは「倒した後の被弾がHP未満になる」か「主敵を全て倒して戦闘が終わる」ときだけにした。
+それ以外は防御・rolloutへ任せる。OVICOPTERの2手で倒す専用分岐は`lethal`の有無を合図に使うため、この絞り込みはその分岐の後に置く。
+再生するとseq214・215はShrug It Offに変わる。回帰テスト`test_blocks_instead_of_killing_eggs_when_ovicopter_hit_is_fatal`を追加し、
+全832テスト成功。比較v2の候補(`5b79fc8`)には含まれない別の判断変更で、効果は未測定。
+
 ### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして
