@@ -2818,20 +2818,10 @@ def choose_card_reward(observation: dict) -> dict:
         or (draw_needed and selected_id in DRAW_CARDS)
         or (defense_needed and selected_id in DEFENSE_PRIORITY)
     )
-    # A 16+ card deck with under 3 strong blocks (D6: 29 cards, 1 strong block) cannot afford to
-    # keep taking off-axis A/S-tier attacks (Anger, Headbutt, Dark Embrace, Expect a Fight) just
-    # because their tier clears the B-tier-only check below - skip anything that isn't core, a
-    # defense pick, or a needed draw pick, regardless of tier, until the block shortage is
-    # resolved. Gate the draw exemption on draw_needed (<2 draw cards already) - otherwise a
-    # deck that already has 2+ draw cards keeps taking more of them (D6: 3+ Battle Trance, 24
-    # cards, 0 strong blocks) since every one of them slipped past this skip unconditionally.
-    if strong_block_shortage and not (
-        core.get(selected_id)
-        or strong_defense_bonus(selected_id)
-        or selected_id in DEFENSE_PRIORITY
-        or (draw_needed and selected_id in DRAW_CARDS)
-    ):
-        return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
+    # No hard skip on a strong-block shortage any more. In the v2 panel it caused 50 of 92 skips
+    # (44 of them S/A-tier picks), and 7FCF sat at 16-19 cards from Act 1 to its Act 3 boss loss
+    # waiting for a strong block that was rarely offered. strong_defense_bonus above still
+    # prefers a strong block whenever one is offered.
     # Once the deck has enough cards to cover the early fights, a plain B/C/D-tier pick only
     # dilutes the draw. Keep cards that solve the current axis or a measured defense/draw
     # shortage, but use the reward's Skip alternative for everything else.

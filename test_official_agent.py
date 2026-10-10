@@ -1770,11 +1770,10 @@ class OfficialAgentTest(unittest.TestCase):
             {"id": "CARD.COLOSSUS", "cost": 1},
         ]
 
-    def test_reward_skips_off_axis_pick_when_deck_lacks_strong_block(self) -> None:
-        # D6 (Act3 TEST_SUBJECT loss): a large deck stuck on 1 strong block kept taking A/S-tier
-        # off-axis attacks (Anger, Headbutt, Dark Embrace, Expect a Fight) because their tier
-        # cleared the B-tier-only Skip check below. With deck>=16 and <3 strong blocks, an
-        # unsupported pick must be skipped regardless of tier.
+    def test_reward_takes_high_tier_pick_despite_strong_block_shortage(self) -> None:
+        # The old hard skip under a strong-block shortage (deck>=16, <3 strong blocks) froze
+        # decks: in the v2 panel it caused 50 of 92 skips, 44 of them S/A-tier, and 7FCF stayed at
+        # 16-19 cards from Act 1 to its Act 3 boss loss. An A-tier pick is taken again.
         observation = {
             "player": {"deck": self._d6_shortage_deck()},
             "cards": [{"id": "CARD.ANGER", "rarity": "Common", "cost": 0}],
@@ -1783,7 +1782,7 @@ class OfficialAgentTest(unittest.TestCase):
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.ANGER")
 
     def test_reward_still_takes_supported_picks_when_deck_lacks_strong_block(self) -> None:
         # Same shortage as above, but core/DEFENSE_PRIORITY/DRAW_CARDS/Colossus picks must still
@@ -1825,11 +1824,9 @@ class OfficialAgentTest(unittest.TestCase):
                 }
                 self.assertEqual(choose_card_reward(observation)["card_id"], card_id)
 
-    def test_reward_draw_pick_exemption_respects_draw_needed_under_block_shortage(self) -> None:
-        # D6 rerun (Act2 boss loss, turn3 Byrd Swoop->Iron Wave->Strike->Rage): the
-        # strong_block_shortage skip exempted every DRAW_CARDS pick unconditionally, so a deck
-        # already past _draw_starved's <2 threshold kept taking more Battle Trance (ended at 3+
-        # copies, 24 cards, 0 strong blocks). The exemption must gate on draw_needed instead.
+    def test_reward_draw_pick_under_block_shortage(self) -> None:
+        # With the strong-block hard skip gone, an S-tier draw card is taken under a block
+        # shortage whether or not the deck already has two draw cards.
         base_deck = self._d6_shortage_deck()  # 16 cards, 1 strong block, 1 draw card (Pommel Strike)
         observation = {
             "player": {"deck": base_deck},
@@ -1845,8 +1842,8 @@ class OfficialAgentTest(unittest.TestCase):
             **observation,
             "player": {"deck": base_deck + [{"id": "CARD.DRUM_OF_BATTLE", "cost": 1}]},
         }
-        with self.subTest("two_draw_cards_now_skipped"):
-            self.assertEqual(choose_card_reward(observation_with_two_draw_cards)["option_id"], "Skip")
+        with self.subTest("two_draw_cards_still_taken_on_tier"):
+            self.assertEqual(choose_card_reward(observation_with_two_draw_cards)["card_id"], "CARD.BATTLE_TRANCE")
 
     def test_reward_skips_unsupported_cards(self) -> None:
         observation = {

@@ -1370,6 +1370,12 @@ Perfected StrikeとStrikeで孵化待ちのTough Egg(攻撃予告なし)を2体�
 再生するとseq214・215はShrug It Offに変わる。回帰テスト`test_blocks_instead_of_killing_eggs_when_ovicopter_hit_is_fatal`を追加し、
 全832テスト成功。比較v2の候補(`5b79fc8`)には含まれない別の判断変更で、効果は未測定。
 
+**強ブロック不足時の報酬見送りを撤廃(2026-10-11)。** デッキ16枚以上・強ブロック3枚未満の間、軸・防御・ドロー以外の報酬を
+ランクに関係なく見送る規則があった。比較v2の24 runで見送り92回のうち50回がこの規則によるもので、44回はS/Aランクだった。
+確認用7FCFはAct 1でデッキ16枚になってから強ブロックがほぼ提示されず、Act 3ボス戦まで16〜19枚のまま報酬20回中12回を見送り、
+QUEEN戦で火力不足のまま死亡した。唯一の踏破seed N8の見送りは18回中1回だった(相関であり因果ではない)。
+規則を外し、提示された強ブロックを優先する`strong_defense_bonus`とBランク以下の見送りは残した。取得方針の変更で、効果は未測定。
+
 ### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして
