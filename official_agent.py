@@ -1540,20 +1540,36 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
             )
         return incoming - current + projected
 
-    def turn_can_clear_threats() -> bool:
-        """True when the attacks affordable this turn can finish the only enemy that is swinging.
+    def finishing_target() -> dict | None:
+        """The one enemy whose death removes this turn's whole hit, if there is one.
 
-        `is_lethal` asks whether one card kills; this asks whether the turn does. Killing the
-        attacker removes the entire incoming hit, so a multi-card kill beats blocking part of it -
-        but only while a single enemy is the threat, since killing one of several leaves the rest.
+        That is the last primary (non-minion) enemy - its death ends the fight even while its
+        minions are still swinging - or else the only enemy that is swinging. D0E3 v3: at 8 HP
+        Bash + Strike would have finished a 17 HP Ovicopter, but three attacking hatchlings made
+        it "one of several threats" and the fallback hit eggs instead, and the run died.
         """
-        threats = [
-            enemy for enemy in observation.get("enemies", ())
-            if _intent_incoming(enemy) > 0 and _number(enemy.get("hp")) > 0
+        alive = [enemy for enemy in observation.get("enemies", ()) if _number(enemy.get("hp")) > 0]
+        primaries = [
+            enemy for enemy in alive
+            if not any(
+                power.get("id") == "POWER.MINION_POWER" and _number(power.get("amount")) > 0
+                for power in enemy.get("powers", ())
+            )
         ]
-        if len(threats) != 1:
+        if len(primaries) == 1:
+            return primaries[0]
+        threats = [enemy for enemy in alive if _intent_incoming(enemy) > 0]
+        return threats[0] if len(threats) == 1 else None
+
+    def turn_can_clear_threats() -> bool:
+        """True when the attacks affordable this turn can finish `finishing_target()`.
+
+        `is_lethal` asks whether one card kills; this asks whether the turn does. Killing that
+        enemy removes the entire incoming hit, so a multi-card kill beats blocking part of it.
+        """
+        target = finishing_target()
+        if target is None:
             return False
-        target = threats[0]
         budget, total = card_energy, 0
         for action in sorted(cards, key=lambda candidate: -damage(candidate, target)):
             dealt = damage(action, target)
@@ -1567,9 +1583,8 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         return total >= _number(target.get("hp"))
 
     if incoming - current_block >= hp:
-        threats = [enemy for enemy in observation.get("enemies", ()) if _intent_incoming(enemy) > 0]
-        if len(threats) == 1:
-            target = threats[0]
+        target = finishing_target()
+        if target is not None:
             for setup in focusable:
                 if card_value(setup, "vulnerable") <= 0:
                     continue

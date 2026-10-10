@@ -1391,6 +1391,13 @@ QUEEN戦で火力不足のまま死亡した。唯一の踏破seed N8の見送�
 その取り巻きの攻撃を消せばこの手番を生き残れる場合。再生すると68ACの7局面・A972の2局面は大半がOVICOPTERへの攻撃に変わる。
 判断の変更で、効果は未測定。
 
+**最後の主敵を倒せば戦闘が終わる局面を「とどめ」の判定に入れる(2026-10-11)。** 比較v3の候補D0E3はAct 2 Floor 5のOVICOPTER戦で死亡した。
+seq254はHP8・OVICOPTER残り17で、Bash→Strike(8+6×1.5=17)で倒せば取り巻きごと戦闘が終わった。ところが`turn_can_clear_threats`と
+Vulnerable付与からのとどめ分岐は「攻撃してくる敵がちょうど1体」のときしか働かず、攻撃してくる孵化済みの卵が3体いたため対象外になった。
+安全策が探索の手を差し替え、代わりの判断が卵にBashとUppercutを打って死亡した。両方の判定の対象を`finishing_target()`にまとめ、
+生きている主敵(MinionPowerなし)が1体だけならその敵を、そうでなければ唯一の攻撃者を対象にした。再生するとseq254はOVICOPTERへのBashになる。
+回帰テスト`test_finishes_last_primary_even_while_minions_swing`を追加し、全834テスト成功。判断の変更で、効果は未測定。
+
 ### 2026-08-23 val91: KIN_PRIEST 7件目、死亡直前(最終end_turn)にもrollout_rejected_unsafe
 
 data/leader_val91_trace.jsonl。turn11のend_turn自体がdecision_reason=rollout_rejected_unsafeとして

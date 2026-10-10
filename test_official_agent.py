@@ -1212,6 +1212,32 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertNotEqual(action.get("decision_source"), "lethal_direct")
         self.assertNotIn(action.get("target_id"), {6, 3})
 
+    def test_finishes_last_primary_even_while_minions_swing(self) -> None:
+        # D0E3 v3 seq254: at 8 HP, Bash + Strike (8 + 6*1.5 = 17) kills a 17 HP Ovicopter and ends
+        # the fight, but three attacking hatchlings made it "one of several threats", so the
+        # fallback hit eggs instead and the run died.
+        egg = lambda combat_id: {"combat_id": combat_id, "id": "MONSTER.TOUGH_EGG", "hp": 21, "block": 0, "powers": [{"id": "POWER.MINION_POWER", "amount": 1}], "intents": [{"type": "Attack", "damage": 6, "repeats": 1}]}
+        observation = {
+            "player": {"hp": 8, "max_hp": 87, "block": 0, "energy": 4, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.BASH", "cost": 2, "type": "Attack", "vars": [{"id": "Damage", "value": 8}, {"id": "VulnerablePower", "value": 2}]},
+                {"index": 2, "id": "CARD.STRIKE_IRONCLAD", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 3, "id": "CARD.TAUNT", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 8}, {"id": "VulnerablePower", "value": 2}]},
+            ],
+            "enemies": [
+                egg(4), egg(3), egg(2),
+                {"combat_id": 1, "id": "MONSTER.OVICOPTER", "hp": 17, "block": 0, "powers": [], "intents": [{"type": "Attack", "damage": 28, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": card_id, "hand_index": hand_index, "target_id": target}
+                for card_id, hand_index in (("CARD.STRIKE_IRONCLAD", 0), ("CARD.BASH", 1), ("CARD.STRIKE_IRONCLAD", 2), ("CARD.TAUNT", 3))
+                for target in (4, 3, 2, 1)
+            ] + [{"type": "end_turn"}],
+        }
+        action = choose(observation)
+        self.assertEqual((action.get("card_id"), action.get("target_id")), ("CARD.BASH", 1))
+
     def test_still_kills_queen_torch_head_and_lethal_minion(self) -> None:
         # Torch Head is a minion we focus on purpose, so its guaranteed kill stays forced.
         observation = {
