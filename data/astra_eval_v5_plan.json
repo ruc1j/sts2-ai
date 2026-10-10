@@ -1,8 +1,8 @@
 {
   "id": "astra_eval_v5",
-  "hypothesis": "探索の候補手ごとに同じ乱数列で先読みする(共通乱数)と、選択の誤りが減り踏破率または到達度が改善する",
-  "change_type": "search_change",
-  "change": "25f275eをv4候補(92ff489)へcherry-pick。combat.searchの各候補手のk回目の先読みをRandom(seed*1000003+k)で始める。",
+  "hypothesis": "探索の共通乱数と、最後の主敵を倒せば戦闘が終わる局面のとどめ判定により、戦闘中の選択の誤りが減り踏破率または到達度が改善する",
+  "change_type": "decision_bundle",
+  "change": "v4候補(92ff489)に25f275e(combat.searchの共通乱数)と7d2dacb(finishing_target: 生きている主敵が1体ならその敵を倒しきる判定の対象にする)をcherry-pickした31745ae。",
   "versions": {
     "control": {
       "repo": "/tmp/sts2-eval-v5-control",
@@ -16,14 +16,14 @@
     },
     "candidate": {
       "repo": "/tmp/sts2-eval-v5-candidate",
-      "commit": "ce7c899c3b2d19f8908f47c7e5850dacb4599576",
+      "commit": "31745ae413ed641d9ba7f190f36cea6959c718ee",
+      "branch": "eval-v5-candidate",
       "sha256": {
-        "official_agent.py": "b8954889075b07cc6a2d2bcb8b8a269bb770adfea722ba322d8257e533e5de29",
+        "official_agent.py": "22f835b0bc41564c9100db490679611fa878e3bb4729eef2b08ccb605e42aa51",
         "combat.py": "b5b7842816dac60c28b332728b9ef9db913725b3d21370406ce4226fdfca4cfc",
         "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
         "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
-      },
-      "branch": "eval-v5-candidate"
+      }
     }
   },
   "conditions": {
