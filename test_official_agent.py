@@ -4264,6 +4264,30 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["target_id"], 2)
         self.assertEqual(action["decision_source"], "generic_multi_primary_focus_direct")
 
+    def test_multi_primary_focus_yields_to_the_search_when_it_can_run(self) -> None:
+        observation = {
+            "player": {"hp": 40, "max_hp": 80, "block": 0},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.DEFEND_IRONCLAD", "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "enemies": [
+                {"combat_id": 1, "hp": 40, "powers": [], "intents": [{"damage": 8, "repeats": 1}]},
+                {"combat_id": 2, "hp": 30, "powers": [], "intents": [{"damage": 8, "repeats": 1}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+        }
+        rolled = observation["legal_actions"][2]
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=100)
+        self.assertEqual(action["card_id"], "CARD.DEFEND_IRONCLAD")
+        self.assertNotEqual(action.get("decision_source"), "generic_multi_primary_focus_direct")
+
     def test_multi_primary_focus_defers_to_block_before_losing_more_than_half_hp(self) -> None:
         strike = {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 2}
         shrug = {"type": "card", "card_id": "CARD.SHRUG_IT_OFF", "hand_index": 1}

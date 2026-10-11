@@ -1545,8 +1545,14 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
             max(two_card_kills, key=lambda action: (enemy_incoming.get(action["target_id"], 0), card_value(action, "damage"))),
             "two_card_lethal_setup_direct",
         )
+    # Only a fallback for turns the search cannot price. Replaying 90 of its urgent firings
+    # (data/astra_*, mostly Act 2 MYTE/CHOMPER/EXOSKELETON/BOWLBUG packs) through search, the
+    # search's move differed in 64 and ended those fights 2.3 HP higher (SE 0.74, 30 better /
+    # 15 worse) and won 5.7 pt more often; v11 4A3287BD62 seq249 attacked into 26 damage with
+    # Defend and Evil Eye in hand and killed nothing.
     if (
-        len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids
+        not rollout_enabled
+        and len(primary_ids) > 1 and focusable and not lethal and urgent and not kin_follower_ids
         and (defense_block <= 0 or incoming * 2 < hp)
     ):
         source = "generic_multi_primary_focus_direct"
