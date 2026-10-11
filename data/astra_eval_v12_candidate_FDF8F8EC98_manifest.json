@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 2,
+  "arm": "candidate",
+  "seed": "FDF8F8EC98",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791742958.627669,
+  "finished": 1791743325.7891982,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 14,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 412,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_FDF8F8EC98_map.json": "5c18b13158725b7f7f109ae481006ba782ec159ad8a045964df28dcb934a24e4",
+    "astra_eval_v12_candidate_FDF8F8EC98_stdout.log": "542da2e294654a398eae66051f34ce7b60ceac346bbec5165e4cec34bbbdec04",
+    "astra_eval_v12_candidate_FDF8F8EC98_mod.log": "494b7d9429b6a6807f8568fe2335922492e398ac92fd3cdc436592f665c47370",
+    "astra_eval_v12_candidate_FDF8F8EC98_map_ACT.HIVE.json": "e6523db1bc87ce0e7e367026ea7e77ab6101cd4beba707ace8672bdfa89fae7a",
+    "astra_eval_v12_candidate_FDF8F8EC98_map_ACT.GLORY.json": "948697791839d1c45aa09aa7d96577342b717d4dce0d96a7b7b29e4c24f49dc8",
+    "astra_eval_v12_candidate_FDF8F8EC98_agent.jsonl": "04e2d54934a7d18e8d489f3210ee860554322436efb1ce6b28e48ff009e5cfca"
+  }
+}
