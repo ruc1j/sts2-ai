@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v14",
+  "run_index": 8,
+  "arm": "candidate",
+  "seed": "D11303A501",
+  "source_commit": "8af98a65c62e9d409583c5a867ddd744f54ff10a",
+  "sha256": {
+    "official_agent.py": "7c1198943607aa7eb8ab0c1d76389ba99531ec575d77d4dce3f658720c6bdfd0",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "0c744805cfa0bba9aac27f4827f40e969b1fd9f898249ce1b554f494b03c89ba",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791762048.570354,
+  "finished": 1791762335.318284,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 367,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v14_candidate_D11303A501_mod.log": "9550d14e9605d41c29ec03d9b409846280992efae21b821527da60a0f6f50a4b",
+    "astra_eval_v14_candidate_D11303A501_stdout.log": "ced822fc465d0337bbd1739a7c497117285d7d6379992d96afdc5b6e82fc658a",
+    "astra_eval_v14_candidate_D11303A501_map.json": "a9200ca42bb828cfe660aa6a3ce36fbcf430ed86585ae620ad9b53de65083241",
+    "astra_eval_v14_candidate_D11303A501_map_ACT.HIVE.json": "681dbae526f670bfffcb39cd7846d40c0b971e0ce8a47148bef7f114bac6a93d",
+    "astra_eval_v14_candidate_D11303A501_agent.jsonl": "fbbdf87bab0d1226f4ab6aac1bff86db9192be6217530650f33f60fd3662e072",
+    "astra_eval_v14_candidate_D11303A501_map_ACT.GLORY.json": "4a6608763fb1a84d73cc102202233c1bb47c3f4439f4f4808ce60eb16bc3cbb6"
+  }
+}
