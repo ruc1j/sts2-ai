@@ -2056,6 +2056,14 @@ class CombatTest(unittest.TestCase):
         after = step(upgraded, f"{BODY_SLAM}@0", {}, random.Random(0))
         self.assertEqual((after.energy, after.enemies[0].hp), (0, 90))
 
+    def test_body_slam_does_not_count_its_own_rage_block(self) -> None:
+        # RagePower.AfterCardPlayed grants its block after BodySlam.OnPlay read the block
+        # (v8 2A33BA8A51 seq380: 3 block, Rage 3, Strength 2 -> the game dealt 5).
+        combat = Combat(80, (BODY_SLAM,), (), (), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1, player_block=3,
+                        player_powers=(("RagePower", 3), ("StrengthPower", 2)))
+        after = step(combat, f"{BODY_SLAM}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.player_block), (95, 6))
+
     def test_headbutt_deals_damage_and_returns_a_discard_card_to_draw(self) -> None:
         after = step(Combat(80, (HEADBUTT,), (), (STRIKE,), (Enemy("MONSTER.DUMMY", 100, "MOVE", ()),), energy=1), f"{HEADBUTT}@0", {}, random.Random(1))
         self.assertEqual(after.enemies[0].hp, 91)

@@ -3382,7 +3382,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     elif card == MIND_BLAST:
         damage = len(combat.draw_pile)
     elif card == BODY_SLAM:
-        damage = combat.player_block
+        # BodySlam reads the block at OnPlay; Rage, Ornamental Fan and the other AfterCardPlayed
+        # block above was credited to combat.player_block early and only lands after the hit
+        # (v8 2A33BA8A51 seq380: 3 block + Rage 3, the game dealt 3 + Strength, the model 6 + it).
+        damage = combat.player_block - combo_block
     elif card == FIEND_FIRE:
         damage = 7
     elif card in {MAUL, THRASH}:
