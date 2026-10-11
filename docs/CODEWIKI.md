@@ -444,6 +444,7 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 | v7 | v6に正しさの修正2件を加えたmain対`767b5e2`、未使用8 seed | 保留: 確定6 seedでAct 2突破1対0、到達点 改善1・悪化1。候補由来の停止1件(余剰ゴールドのレリック購入がOrreryを買った。`849692b`で取り消し) |
 | v8 | 余剰ゴールドのレリック購入を取り消したmain対`767b5e2`、未使用16 seed | 改善(弱い): Act 3踏破0対0、Act 2突破4対3、Act 1突破13対15、到達点 改善4・悪化4。v6〜v8の確定32 seed合算はAct 3 1対0、Act 2 7対5、Act 1 28対29、到達点 改善9・悪化6 |
 | v9 | コスト0のRageを防御札の後に回さない(`58758bd`)、v8の16 seed(対照再利用)+新規8 seed | 保留: 判断が分かれたのは24 seed中3 seed。集合Aは到達点 改善1、集合Bは悪化1、突破数はすべて同値 |
+| v10 | 今日の変更をすべて含むmain(`78c8e59`)対`767b5e2`、未使用8 seed | 改善(弱い): Act 3踏破1対0(DD1018C7FF、対照はAct 2ボスで敗北)、Act 2突破2対1、到達点 改善2・悪化2。v6・v7・v8・v10の確定40 seed合算はAct 3 2対0、Act 2 9対6、Act 1 34対36、到達点 改善11・悪化8 |
 
 あわせてゲーム再現の正しさの修正2件(Perfected StrikeがUltimate StrikeをStrikeとして数える、強化Ashen Strikeの上乗せ)を入れた。
 v2〜v5の監査でモデルとゲームの一致は99.8%、残った不一致はこの2件でほぼ説明できた。
