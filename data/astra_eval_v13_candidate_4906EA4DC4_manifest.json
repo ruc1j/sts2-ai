@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v13",
+  "run_index": 19,
+  "arm": "candidate",
+  "seed": "4906EA4DC4",
+  "source_commit": "8af98a65c62e9d409583c5a867ddd744f54ff10a",
+  "sha256": {
+    "official_agent.py": "7c1198943607aa7eb8ab0c1d76389ba99531ec575d77d4dce3f658720c6bdfd0",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "4b067c88cc912f2713d42fdb7f6250e7bc2ea1c5f7cb53373bf71e6f5920353f",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791758777.358727,
+  "finished": 1791759143.555752,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      7
+    ],
+    "combat_wins": 16,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 412,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v13_candidate_4906EA4DC4_map_ACT.GLORY.json": "b759ee21c0cf03e31c8c97fb0b429125af74afc992814718c4ccddf0a719cbc5",
+    "astra_eval_v13_candidate_4906EA4DC4_stdout.log": "6604e0336cb2ad9bbd653350a76b32a040aab6d7f46854eade27dcf0dcc8feff",
+    "astra_eval_v13_candidate_4906EA4DC4_mod.log": "bb0f348179254d3924670ea336f7b3e3affaa6efba5f8154db07cb41ce5c53f1",
+    "astra_eval_v13_candidate_4906EA4DC4_map_ACT.HIVE.json": "4b12f2bd153a8f76635482380b497527b9ef7983531a7e69b6079e78ff29675b",
+    "astra_eval_v13_candidate_4906EA4DC4_map.json": "b8c619d7e419a6b3787b0735e881d685f9bf2bb19d4d7d17394c5b95a60e29df",
+    "astra_eval_v13_candidate_4906EA4DC4_agent.jsonl": "b9ee1bd48ede2e5303f08c1230b63a882f5a604556672d1d30cb5d82267018f8"
+  }
+}
