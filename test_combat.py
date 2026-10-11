@@ -3175,6 +3175,15 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(next_turn.paels_legion_cooldown, 1)
         self.assertEqual(step(next_turn, END_TURN, DUMMY_DATA, random.Random(0)).paels_legion_cooldown, 0)
 
+    def test_stampede_autoplays_an_attack_the_live_turn_could_not_afford(self) -> None:
+        # A rebuilt hand marks cards the live decision could not play (0 energy) unplayable_this_turn;
+        # Stampede's autoplay is free and still plays them (v9 364D012944 seq336: Bash at 0 energy).
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        bash = Card(BASH, unplayable_this_turn=True)
+        combat = Combat(80, (bash,), (), (), (enemy,), energy=0, player_powers=(("StampedePower", 1),))
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 92)
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))

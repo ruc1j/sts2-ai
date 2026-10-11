@@ -1076,6 +1076,11 @@ def _autoplay_stampede(combat: Combat, data: dict, rng: random.Random) -> Combat
             break
         hand_index = rng.choice(candidates)
         value = combat.hand[hand_index]
+        if isinstance(value, Card) and value.unplayable_this_turn:
+            # The flag is the live decision's energy verdict; an autoplay is free and ignores it
+            # (v9 364D012944 seq336: Stampede played a 2-cost Bash at 0 energy).
+            value = replace(value, unplayable_this_turn=False)
+            combat = replace(combat, hand=combat.hand[:hand_index] + (value,) + combat.hand[hand_index + 1:])
         action = f"card:{hand_index}@{rng.choice(alive)}" if isinstance(value, Card) else f"{card_name(value)}@{rng.choice(alive)}"
         candidate = replace(combat, free_cards=combat.free_cards + (value,))
         if action not in legal_actions(candidate):

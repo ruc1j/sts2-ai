@@ -3135,10 +3135,11 @@ def _paels_legion_cooldown(observation: dict) -> int:
     if "RELIC.PAELS_LEGION" not in (player.get("relics") or ()):
         return 0
     powers = {power.get("id"): _number(power.get("amount")) for power in player.get("powers") or ()}
-    if powers.get("POWER.UNMOVABLE_POWER"):
-        return 1
     dexterity = powers.get("POWER.DEXTERITY_POWER", 0)
     frail = 0.75 if powers.get("POWER.FRAIL_POWER") else 1.0
+    # Unmovable's doubling shows in the same preview (v9 76E9F731A3 seq190: Taunt 8 previewed 32).
+    if _COMBAT_CARD_BLOCK["this_turn"] < powers.get("POWER.UNMOVABLE_POWER", 0):
+        frail *= 2
     for card in observation.get("hand") or ():
         for variable in (card.get("vars") or ()) if isinstance(card, dict) else ():
             if variable.get("id") != "Block" or variable.get("base_value") is None:
