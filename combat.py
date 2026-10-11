@@ -75,6 +75,10 @@ ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
 # attack until AfterCardPlayed disables it for the rest of the combat.
 ENCHANTMENT_VIGOROUS = "ENCHANTMENT.VIGOROUS"
 VIGOROUS_DAMAGE = 8
+# Sharp.EnchantDamageAdditive adds Amount to every powered attack of the card. The bridge exports only
+# the id: SelfHelpBook's READ_THE_BACK enchants with 2 and Gnarled Hammer with 3 (SharpAmount).
+ENCHANTMENT_SHARP = "ENCHANTMENT.SHARP"
+RELIC_GNARLED_HAMMER = "RELIC.GNARLED_HAMMER"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -2700,6 +2704,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card_is_free:
         free_cards.remove(played_value)
     vigorous = isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_VIGOROUS
+    sharp = (3 if RELIC_GNARLED_HAMMER in combat.player_relics else 2) if (
+        isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_SHARP
+    ) else 0
     if vigorous:
         played_value = replace(played_value, enchantment=None)
     block_card_has_gain = card in BLOCK_CARDS or (card == MAD_SCIENCE and is_skill)
@@ -3229,6 +3236,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
         if vigorous:
             damage += VIGOROUS_DAMAGE
+        damage += sharp
         combat, vigor = _spend_vigor(combat)
         damage += vigor
         if card_was_upgraded:
@@ -3406,6 +3414,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += 3
     if vigorous and is_attack:
         damage += VIGOROUS_DAMAGE
+    if is_attack:
+        damage += sharp
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and is_attack:
         damage = damage * 3 // 2
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")

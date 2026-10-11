@@ -3109,6 +3109,18 @@ class CombatTest(unittest.TestCase):
         again = step(replace(after, hand=after.discard_pile, discard_pile=()), "card:0@0", {}, random.Random(0))
         self.assertEqual(again.enemies[0].hp, 80)
 
+    def test_sharp_adds_its_amount_to_every_play(self) -> None:
+        # Sharp.EnchantDamageAdditive: +2 from Self Help Book, +3 from Gnarled Hammer, on every play
+        # (v4 9A4C108922 seq87: a Sharp Strike showed 8 damage and dealt 8).
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        strike = Card(STRIKE, enchantment="ENCHANTMENT.SHARP")
+        after = step(Combat(80, (strike,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 92)
+        again = step(replace(after, hand=after.discard_pile, discard_pile=()), "card:0@0", {}, random.Random(0))
+        self.assertEqual(again.enemies[0].hp, 84)
+        hammer = step(Combat(80, (strike,), (), (), (enemy,), player_relics=("RELIC.GNARLED_HAMMER",)), "card:0@0", {}, random.Random(0))
+        self.assertEqual(hammer.enemies[0].hp, 91)
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))
