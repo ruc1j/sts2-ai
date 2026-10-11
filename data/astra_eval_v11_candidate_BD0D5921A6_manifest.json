@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v11",
+  "run_index": 16,
+  "arm": "candidate",
+  "seed": "BD0D5921A6",
+  "source_commit": "0a66a34195fe414f0dde0a248d497979ca34e6e3",
+  "sha256": {
+    "official_agent.py": "c3c40b148ec10a59dce5616cd031e3faa874df4a7bc29e0c4af952f1990f27f6",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "3454e67e828c2b949a0904adf4d2bf69d16089bebe9f7c7a53db34b2ab5bbaf3",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791741325.758368,
+  "finished": 1791741657.806387,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 420,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v11_candidate_BD0D5921A6_mod.log": "c6d0695cda96e39f37404e291a780c1b09c70465dfd92ae0d8f69c5738732b36",
+    "astra_eval_v11_candidate_BD0D5921A6_stdout.log": "fd7039f71858a2f933bbe83c92972290f2228c7be1f6fe3d1daa7f70f8269e9d",
+    "astra_eval_v11_candidate_BD0D5921A6_map_ACT.HIVE.json": "3879900db0226fd2a4a8105bd5b211d30bf230662dab75b7f4d302c1420a2acc",
+    "astra_eval_v11_candidate_BD0D5921A6_map.json": "39b5ef86dd4932e145c05b6abaa1b20849a70de599187f383208f3f13263cc74",
+    "astra_eval_v11_candidate_BD0D5921A6_map_ACT.GLORY.json": "312a239a87556041a056a62b3dc6f207e2ac1c4547e4faada937391ba257f882",
+    "astra_eval_v11_candidate_BD0D5921A6_agent.jsonl": "ebf9a07d53f0b922fa29a05f91c655962c92ce1d87ce82788f175d3922477391"
+  }
+}
