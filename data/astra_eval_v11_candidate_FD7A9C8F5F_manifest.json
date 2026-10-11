@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v11",
+  "run_index": 15,
+  "arm": "candidate",
+  "seed": "FD7A9C8F5F",
+  "source_commit": "0a66a34195fe414f0dde0a248d497979ca34e6e3",
+  "sha256": {
+    "official_agent.py": "c3c40b148ec10a59dce5616cd031e3faa874df4a7bc29e0c4af952f1990f27f6",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "3454e67e828c2b949a0904adf4d2bf69d16089bebe9f7c7a53db34b2ab5bbaf3",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791740959.748833,
+  "finished": 1791741325.4859781,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 364,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v11_candidate_FD7A9C8F5F_agent.jsonl": "3ef10e3224c9ea1a045a2a4d65623c410f7c5b6a949580b53e1d27e201985926",
+    "astra_eval_v11_candidate_FD7A9C8F5F_map_ACT.GLORY.json": "c149d6410bc7f35e50dd17c3ecbd67828ad5005f9110a57e6800a8e3ef2d6749",
+    "astra_eval_v11_candidate_FD7A9C8F5F_mod.log": "4c143f5399107f460ca074242d68632f442aaeac54d4d8170afc0a72782fddc7",
+    "astra_eval_v11_candidate_FD7A9C8F5F_map.json": "24a080805a4dda53aa04bf9f1d047fe7f0a37e8ae37db3ed8f4348efe78a79a6",
+    "astra_eval_v11_candidate_FD7A9C8F5F_map_ACT.HIVE.json": "de2f6d334d525edb82c558ad81f71392924ab930523b6ab4e122dd014dfb27b1",
+    "astra_eval_v11_candidate_FD7A9C8F5F_stdout.log": "6d596ac3ed0f9c5148115b8ec14a0eac427ae659d7730f8bbcb6965d42130631"
+  }
+}
