@@ -46,6 +46,45 @@ class OfficialAgentTest(unittest.TestCase):
                 after = step(state, "card:0@0", data, random.Random(0))
                 self.assertEqual(after.enemies[0].hp, 76)
 
+    def test_rollout_knows_hp_was_lost_on_the_players_own_turn(self) -> None:
+        # Spite hits twice once the player lost HP on the current side of the round
+        # (CombatHistoryEntry.HappenedThisTurn). The bridge does not export that, so v8 9036A1561C
+        # seq213/275/290 priced Spite as one hit after Crimson Mantle's turn-start self-damage.
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+
+        def observation(turn: int, hp: int, powers: list[dict]) -> dict:
+            return {
+                "seq": turn * 10 + hp, "phase": "combat", "turn": turn,
+                "player": {"hp": hp, "max_hp": 80, "block": 0, "energy": 3, "powers": powers},
+                "hand": [{"index": 0, "id": "CARD.SPITE", "cost": 0, "type": "Attack"}],
+                "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+                "enemies": [{"id": "MONSTER.DUMMY", "hp": 50, "block": 0, "powers": [],
+                             "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+                "legal_actions": [{"type": "card", "card_id": "CARD.SPITE", "hand_index": 0, "target_id": 1},
+                                  {"type": "end_turn"}],
+            }
+
+        def rollout_state(obs: dict):
+            official_agent._advance_play_counters(obs)
+            with patch("official_agent.search", return_value=[(END_TURN, 0.0)]) as searched:
+                rollout_choice(obs, obs["legal_actions"], data, 1)
+            return searched.call_args.args[0]
+
+        mantle = [{"id": "POWER.CRIMSON_MANTLE_POWER", "amount": 8}]
+        official_agent._reset_play_counters()
+        self.assertFalse(rollout_state(observation(1, 80, [])).lost_hp_this_turn)
+        # The enemy turn's hit between observations is the previous side: it does not count.
+        self.assertFalse(rollout_state(observation(2, 70, [])).lost_hp_this_turn)
+        # HP lost during the player's own turn (e.g. Hemokinesis) does.
+        self.assertTrue(rollout_state(observation(2, 68, [])).lost_hp_this_turn)
+        official_agent._reset_play_counters()
+        rollout_state(observation(1, 80, mantle))
+        state = rollout_state(observation(2, 79, mantle))
+        self.assertTrue(state.lost_hp_this_turn)
+        self.assertEqual(step(state, "card:0@0", data, random.Random(0)).enemies[0].hp, 40)
+
     def test_rollout_imports_saved_relic_counters_separately_from_combat_plays(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
             "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],

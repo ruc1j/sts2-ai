@@ -1256,6 +1256,20 @@ class CombatTest(unittest.TestCase):
         two_plays = step(Combat(60, (), (), (), (enemy,), player_powers=(("CrimsonMantlePower", 18),)), END_TURN, DUMMY_DATA, random.Random(0))
         self.assertEqual((two_plays.player_hp, two_plays.player_block), (58, 18))
 
+    def test_crimson_mantle_turn_start_hp_loss_counts_for_this_turn_and_keeps_turn_end_cleanup(self) -> None:
+        # Spite.LostHpThisTurn reads every DamageReceivedEntry of the current turn, so the mantle's
+        # turn-start self-damage makes the next Spite hit twice (v8 9036A1561C seq213/275/290: the
+        # game dealt the second hit, the model one). The turn-start reset used to run after that
+        # self-damage and erased it, and re-reading combat.player_powers after the self-damage also
+        # restored the Flame Barrier the turn end had just removed.
+        enemy = Enemy("MONSTER.DUMMY", 50, "IDLE_MOVE", ())
+        combat = Combat(60, (), (), (), (enemy,), player_powers=(("CrimsonMantlePower", 8), ("FlameBarrierPower", 4)), lost_hp_this_turn=True)
+        after = step(combat, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertTrue(after.lost_hp_this_turn)
+        self.assertEqual(_power(after.player_powers, "FlameBarrierPower"), 0)
+        quiet = step(Combat(60, (), (), (), (enemy,), lost_hp_this_turn=True), END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertFalse(quiet.lost_hp_this_turn)
+
     def test_player_regen_heals_at_the_end_of_the_turn_and_decrements_by_one(self) -> None:
         # RegenPower.AfterSideTurnEnd heals its owner by Amount and then decrements by 1 (recorded runs
         # show a held Regen of 5, 4, 3, 2, 1 on consecutive turns).  The enemy side was already modeled;

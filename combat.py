@@ -2429,6 +2429,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
         # upcoming turn). new_turn is the turn number the player is about to begin.
         new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
+        # The turn-start self-damage below belongs to the new turn (Spite.LostHpThisTurn counts it),
+        # so clear the per-turn HP-loss flag first, and hand the cleaned powers to combat so the
+        # self-damage helpers do not bring back what the turn end just removed.
+        combat = replace(combat, player_powers=player_powers, lost_hp_this_turn=False)
         inferno_self_damage = _power(player_powers, "InfernoSelfDamage")
         if inferno_self_damage:
             combat = _apply_player_damage(combat, inferno_self_damage, trigger_inferno=True)
@@ -2613,7 +2617,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             attacks_played_this_turn=0, skills_played_this_turn=0, block_cards_this_turn=0, cards_played_this_turn=0,
             bound_played_this_turn=False, chains_afflicted_this_turn=0,
             hellraiser_autoplays_this_turn=0, pyre_autoplays_this_turn=0,
-            powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=False, exhausted_this_turn=False, damage_received_this_turn=0,
+            powers_played_this_turn=0, damaged_this_turn=False, lost_hp_this_turn=combat.lost_hp_this_turn, exhausted_this_turn=False, damage_received_this_turn=0,
             cards_played_last_turn=combat.cards_played_this_turn, enlightened_this_turn=False, free_cards=(),
             play_count=1,
         )

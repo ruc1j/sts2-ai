@@ -420,6 +420,11 @@ _TURN_OWN_PLAYS: collections.Counter = collections.Counter()
 _TURN_EFFECT_DEPARTURES: collections.Counter = collections.Counter()
 _TURN_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0, "turn": -1}
 _COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0}
+# Spite.LostHpThisTurn: any DamageReceivedEntry with UnblockedDamage > 0 in the current round AND on the
+# current side (CombatHistoryEntry.HappenedThisTurn), so the enemy turn's hits do not count but the
+# player's own turn-start self-damage (Crimson Mantle, Inferno) and in-turn HP loss do. The bridge does
+# not export it; "hp" is the last HP seen this turn and "lost" whether any of it was lost.
+_TURN_HP: dict = {"hp": None, "lost": False}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
 # Set when the current observation carried the mod's exported play counts (unused today, kept so a run
 # can report which source priced it).
@@ -486,6 +491,17 @@ def _reset_play_counters() -> None:
     _TURN_SEEN_HAND = collections.Counter()
     _TURN_OWN_PLAYS = collections.Counter()
     _TURN_EFFECT_DEPARTURES = collections.Counter()
+    _TURN_HP.update(hp=None, lost=False)
+
+
+def _turn_start_self_damage(player: dict) -> int:
+    """HP the player's own powers took at the start of this turn (before the first observation)."""
+    powers = {power.get("id"): _number(power.get("amount")) for power in player.get("powers") or ()}
+    # CrimsonMantlePower's counter is 8 or 10 per play and each play costs 1 HP (see combat.py).
+    damage = powers.get("POWER.CRIMSON_MANTLE_POWER", 0) // 8 + (1 if powers.get("POWER.INFERNO_POWER", 0) else 0)
+    if damage and "RELIC.TUNGSTEN_ROD" in (player.get("relics") or ()):
+        damage = max(0, damage - 1)
+    return damage
 
 
 def _advance_play_counters(observation: dict) -> None:
@@ -510,11 +526,17 @@ def _advance_play_counters(observation: dict) -> None:
         _TURN_OWN_PLAYS = collections.Counter()
         _TURN_EFFECT_DEPARTURES = collections.Counter()
         _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=turn)
+        _TURN_HP.update(hp=None, lost=turn > 1 and _turn_start_self_damage(observation.get("player") or {}) > 0)
         if action is not None and action.get("type") == "card":
             # The play that closed the previous turn is not part of this turn's counters.
             action = None
     for name, amount in _hand_contents(observation).items():
         _TURN_SEEN_HAND[name] = max(_TURN_SEEN_HAND[name], amount)
+    hp = (observation.get("player") or {}).get("hp")
+    if hp is not None:
+        if _TURN_HP["hp"] is not None and hp < _TURN_HP["hp"]:
+            _TURN_HP["lost"] = True
+        _TURN_HP["hp"] = hp
     if action is not None and action.get("type") == "card":
         name = CARD_NAMES.get(action.get("card_id"), action.get("card_id"))
         # Credit every card we chose, including the ones that are neither Attack nor Skill.  A Power card
@@ -3198,6 +3220,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             and observation["player"]["hp"] * 2 <= observation["player"].get("max_hp", observation["player"]["hp"])
         ),
         upgraded_cards=upgraded_cards,
+        lost_hp_this_turn=_TURN_HP["lost"],
         # ponytail: the bridge exposes the Toric power's remaining uses but not the block it
         # stored, so assume the unupgraded 5. Under-counting block is the safe direction; expose
         # the power's Block var from CombatBridge if this turns out to matter.
