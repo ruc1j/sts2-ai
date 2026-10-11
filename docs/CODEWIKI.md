@@ -508,3 +508,10 @@ v2〜v7の117 runの死亡地点はTHE_INSATIABLE(Act 2ボス)が50件で最多�
 - 点数の無いイベントは、ゲームの `EventRoomHandler` がランダムに選ぶ（v11とrandom20の481イベントのうち114件）。HPを払う分岐がある上位イベントに点数を付けた（`7c5526c`、`5955acf`）。
 
 **同じseedの比較は、ごく小さな変化でも分岐する。** `ed1b3ee` で探索の残りHPの項を `scored_hp / 100` から `scored_hp * hp_weight`（既定0.01）に変えた。数学的には同じだが、浮動小数点では `57*0.01 = 0.5700000000000001`、`57/100 = 0.57` と一致しない。このため、ほぼ同点の手の順位が入れ替わった。DC167E87AE seq225では、局面（手札、デッキ18枚、レリック）がまったく同じなのに、対照はUppercut、v11とv12の候補はDefendを打ち、そこから先の展開が分かれた。`b6c1b07` で元の計算に戻した。v11とv12の候補はこの揺れを含んでいる。seedごとの改善と悪化には、変更の中身と無関係な分岐が混ざっていると考えること。
+
+**AutoSlayは通算49階で打ち切る（実行環境の天井）。** `AutoSlayer.PlayRunAsync` は `while (runState.TotalFloor < 49)` で回る（`AutoSlayConfig.maxFloor = 49` は定数で、ループに埋め込まれている）。`TotalFloor` は `MapPointHistory` の合計。49階に達すると、`Run completed (max floor reached). Abandoning` で放棄する。
+
+- Act 3を踏破した7本は、すべて17+16+15=48階だった。
+- Act 2が18階のマップ（`[2, 18]` の到達点が出るseed）では、17+18=35階を使う。Act 3は14階までしか進めず、ボス（15階）に届かない。
+- v14対照 8DF8EC394A は、Act 3 F13の戦闘にHP41で勝った直後に打ち切られた。放棄処理でもUIノードが見つからずエラーになり、incompleteになった。全runでこの打ち切りが出たのは、この1本だけ（ほとんどのrunは49階より前に死ぬ）。
+- 対策案（未着手）: Harmonyのtranspilerで `PlayRunAsync` のstate machineにある定数49を引き上げる。DLLが変わるので、比較では両版を同じDLLにそろえる必要がある。
