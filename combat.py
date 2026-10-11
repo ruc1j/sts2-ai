@@ -162,6 +162,12 @@ ALL_ENEMY_UPGRADE_DAMAGE = {EXTERMINATE: 1, CONFLAGRATION: 0,
     BREAKTHROUGH: 4, DRAMATIC_ENTRANCE: 4, HOWL_FROM_BEYOND: 5, PACTS_END: 6}
 # Flat block granted by skills with no other effect (Frail halves it, same as Defend).
 CARD_BLOCK = {DEFEND: 5, IRON_WAVE: 5, EQUILIBRIUM: 13, IMPERVIOUS: 30, LIFT: 11, ULTIMATE_DEFEND: 11, FLAME_BARRIER: 12, FINESSE: 4, TRUE_GRIT: 7, EVIL_EYE: 8, COLOSSUS: 5, ARMAMENTS: 5, BLOOD_WALL: 16, TORIC_TOUGHNESS: 5}
+# Each card's OnUpgrade Block.UpgradeValueBy (decompiled). The old fallback of +1 under-rated every
+# upgraded Iron Wave, Equilibrium, Impervious (+10), Lift, Ultimate Defend, Flame Barrier and Finesse.
+CARD_UPGRADE_BLOCK = {
+    DEFEND: 3, IRON_WAVE: 2, EQUILIBRIUM: 3, IMPERVIOUS: 10, LIFT: 5, ULTIMATE_DEFEND: 4, FLAME_BARRIER: 4,
+    FINESSE: 3, TRUE_GRIT: 2, EVIL_EYE: 3, COLOSSUS: 3, ARMAMENTS: 0, BLOOD_WALL: 4, TORIC_TOUGHNESS: 2,
+}
 # Cards that both deal damage and apply Vulnerable to that same target (Bash's pattern).
 CARD_VULNERABLE_TARGET = {BASH: 2, BREAK: 5, SQUASH: 2}
 
@@ -2786,7 +2792,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             _damage_enemy(enemy, 8, powered=False) if enemy.alive else enemy for enemy in combo_enemies
         ]
     if is_attack:
-        combo_block += _power(combat.player_powers, "RagePower")
+        # RagePower.AfterCardPlayed runs once per resolution, so a replayed attack (One-Two Punch,
+        # Duplication) gains its block once per play (v5 C510D86949 seq152: 2 x 3).
+        combo_block += _power(combat.player_powers, "RagePower") * plays
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
             combo_pending.append(("DexterityPower", 1))
         if RELIC_SHURIKEN in relics and attacks_this_turn % 3 == 0:
@@ -3140,7 +3148,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card in CARD_BLOCK:
         base = CARD_BLOCK[card]
         if card_was_upgraded:
-            base += 4 if card == BLOOD_WALL else 3 if card in {DEFEND, EVIL_EYE, COLOSSUS} else 2 if card in {TRUE_GRIT, TORIC_TOUGHNESS} else 0 if card == ARMAMENTS else 1
+            base += CARD_UPGRADE_BLOCK[card]
         # FastenPower.ModifyBlockAdditive adds its amount to block from any card carrying
         # CardTag.Defend. In the decompiled card pool exactly two of the Ironclad's cards declare
         # that tag - DefendIronclad and UltimateDefend - so Shrug It Off, Iron Wave and the rest

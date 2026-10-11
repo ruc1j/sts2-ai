@@ -3147,6 +3147,16 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (taunt,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
         self.assertEqual((after.player_block, after.discard_pile[0].enchantment), (14, None))
 
+    def test_upgraded_block_cards_use_their_own_upgrade_amounts(self) -> None:
+        # Block.UpgradeValueBy per card (decompiled); the old fallback gave +1 to all of these
+        # (v5 D55BC878ED seq188: an upgraded Iron Wave gave 7 block, the model 6).
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        for card, block in ((IRON_WAVE, 7), (IMPERVIOUS, 40), (FLAME_BARRIER, 16)):
+            with self.subTest(card=card):
+                combat = Combat(80, (Card(card, upgraded=True),), (), (), (enemy,), energy=3)
+                action = next(action for action in legal_actions(combat) if action.startswith("card:0"))
+                self.assertEqual(step(combat, action, {}, random.Random(0)).player_block, block)
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))
