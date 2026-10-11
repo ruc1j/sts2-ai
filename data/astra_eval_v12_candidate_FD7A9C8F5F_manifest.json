@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 15,
+  "arm": "candidate",
+  "seed": "FD7A9C8F5F",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791746998.219765,
+  "finished": 1791747385.431944,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 387,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_FD7A9C8F5F_mod.log": "38c3525582ce3b6a1736e6ac289d2bbd10e96292e7e3d3bffa0d142f82159af1",
+    "astra_eval_v12_candidate_FD7A9C8F5F_map_ACT.GLORY.json": "c149d6410bc7f35e50dd17c3ecbd67828ad5005f9110a57e6800a8e3ef2d6749",
+    "astra_eval_v12_candidate_FD7A9C8F5F_agent.jsonl": "a6dadd42c54ac88d6c2e052ff1e3fbe0ee0e41f9ff4c9f57c7f8932c3c4fe3a6",
+    "astra_eval_v12_candidate_FD7A9C8F5F_map.json": "24a080805a4dda53aa04bf9f1d047fe7f0a37e8ae37db3ed8f4348efe78a79a6",
+    "astra_eval_v12_candidate_FD7A9C8F5F_map_ACT.HIVE.json": "de2f6d334d525edb82c558ad81f71392924ab930523b6ab4e122dd014dfb27b1",
+    "astra_eval_v12_candidate_FD7A9C8F5F_stdout.log": "ebe8514d33c49d9931763eabf1f8809b96bac89bb8300f71aa2a83167f87a10b"
+  }
+}
