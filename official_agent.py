@@ -1394,7 +1394,8 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
     # afterward, unless an incoming hit exceeds its base block and a stronger defense is ready.
     rage = next((action for action in cards if action["card_id"] == "CARD.RAGE"), None)
     if rage:
-        remaining_energy = _number(player.get("energy")) - _number(hand.get(rage.get("hand_index"), {}).get("cost"), 1)
+        rage_cost = _number(hand.get(rage.get("hand_index"), {}).get("cost"), 1)
+        remaining_energy = _number(player.get("energy")) - rage_cost
         attack_after_rage = any(
             action.get("card_id") != "CARD.RAGE"
             and not _is_self_damage(action, hand)
@@ -1408,7 +1409,11 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
             rage_block = 5 if _number(hand.get(rage.get("hand_index"), {}).get("upgrade")) else 3
             defenses = [action for action in cards if card_value(action, "block") > 0]
             best_defense = max(defenses, key=lambda action: card_value(action, "block"), default=None)
-            if best_defense and remaining > rage_block and card_value(best_defense, "block") > rage_block:
+            # Yielding only makes sense when Rage competes with the defense for energy. The live
+            # game's Rage costs 0 (all 163 observed copies in v2-v8), so yielding just pushed Rage
+            # behind the turn's attacks: 95 attacks across 165 such turns were played before Rage
+            # and lost its block (B7BC v4 seq207: Iron Wave, Defend, Defend, then a useless Rage).
+            if rage_cost > 0 and best_defense and remaining > rage_block and card_value(best_defense, "block") > rage_block:
                 return _tag_action(best_defense, "rage_defense_direct")
             return _tag_action(rage, "rage_direct")
 

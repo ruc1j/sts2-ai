@@ -895,6 +895,29 @@ class OfficialAgentTest(unittest.TestCase):
                 }
                 self.assertEqual(choose(observation)["card_id"], expected)
 
+    def test_free_rage_is_not_pushed_behind_defenses(self) -> None:
+        # The live Rage costs 0: playing it first costs nothing, and every attack after it gains
+        # block. B7BC v4 seq207 played Iron Wave, Defend, Defend and then Rage with no attack left.
+        observation = {
+            "player": {"hp": 67, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.RAGE", "cost": 0, "type": "Skill"},
+                {"index": 1, "id": "CARD.IRON_WAVE", "cost": 1, "type": "Attack", "vars": [{"id": "Damage", "value": 5}, {"id": "Block", "value": 5}]},
+                {"index": 2, "id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5}]},
+            ],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.RAGE", "hand_index": 0, "target_id": None},
+                {"type": "card", "card_id": "CARD.IRON_WAVE", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 2, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "enemies": [{
+                "combat_id": 1, "id": "MONSTER.DUMMY", "hp": 100, "block": 0,
+                "powers": [], "intents": [{"damage": 22, "repeats": 1}],
+            }],
+        }
+        self.assertEqual(choose(observation)["card_id"], "CARD.RAGE")
+
     def test_rollout_cannot_choose_nonblocking_play_on_lethal_incoming(self) -> None:
         observation = {
             "seq": 1,
