@@ -3547,6 +3547,34 @@ class OfficialAgentTest(unittest.TestCase):
         }
         self.assertEqual(choose(observation)["card_id"], "CARD.STRIKE_IRONCLAD")
 
+    def test_multi_card_kill_precedes_sandpit_escape(self) -> None:
+        # 5F213792B3 random20 seq314: Bludgeon plus two free Angers dealt 77 into 54 boss HP, but
+        # Frantic Escape took 2 of the 3 energy and the run died with the boss at 20.
+        observation = {
+            "player": {"hp": 5, "max_hp": 80, "block": 0, "energy": 3},
+            "hand": [
+                {"index": 0, "id": "CARD.ANGER", "type": "Attack", "cost": 0, "vars": [{"id": "Damage", "value": 17}]},
+                {"index": 1, "id": "CARD.BLUDGEON", "type": "Attack", "cost": 3, "vars": [{"id": "Damage", "value": 43}]},
+                {"index": 2, "id": "CARD.FRANTIC_ESCAPE", "type": "Skill", "cost": 2},
+                {"index": 3, "id": "CARD.ANGER", "type": "Attack", "cost": 0, "vars": [{"id": "Damage", "value": 17}]},
+            ],
+            "enemies": [{
+                "combat_id": 1,
+                "hp": 54,
+                "block": 0,
+                "powers": [{"id": "POWER.SANDPIT_POWER", "amount": 2}],
+                "intents": [{"type": "Attack", "damage": 12, "repeats": 2}],
+            }],
+            "legal_actions": [
+                {"type": "card", "card_id": "CARD.ANGER", "hand_index": 0, "target_id": 1},
+                {"type": "card", "card_id": "CARD.BLUDGEON", "hand_index": 1, "target_id": 1},
+                {"type": "card", "card_id": "CARD.FRANTIC_ESCAPE", "hand_index": 2},
+                {"type": "card", "card_id": "CARD.ANGER", "hand_index": 3, "target_id": 1},
+                {"type": "end_turn"},
+            ],
+        }
+        self.assertNotEqual(choose(observation)["card_id"], "CARD.FRANTIC_ESCAPE")
+
     def test_uses_potion_before_sandpit_escape_when_incoming_is_lethal(self) -> None:
         observation = {
             "player": {"hp": 10, "max_hp": 80},

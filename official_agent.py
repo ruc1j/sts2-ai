@@ -1263,7 +1263,35 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         if potion_room is not None:
             _POTION_USED_ROOM = potion_room
         return _tag_action(direct_potion, "direct_potion")
-    if sandpit_critical and not lethal:
+    def turn_kill_possible() -> bool:
+        # Best total damage this turn's energy buys against each enemy, one play per card. 5F21
+        # random20 seq314: Frantic Escape spent 2 of 3 energy at 54 boss HP while Bludgeon and
+        # two free Angers in hand dealt 77 - the run died a turn later with the boss at 20.
+        for enemy in enemy_by_id.values():
+            target_hp = _number(enemy.get("hp")) + _number(enemy.get("block"))
+            if target_hp <= 0:
+                continue
+            best_by_card: dict[object, tuple[int, int]] = {}
+            for action in cards:
+                if action.get("target_id") not in {enemy.get("combat_id"), None} or _is_self_damage(action, hand):
+                    continue
+                dealt = damage(action, enemy)
+                if dealt <= 0:
+                    continue
+                cost = _number(hand.get(action.get("hand_index"), {}).get("cost"))
+                cost = card_energy if cost < 0 else cost
+                key = action.get("hand_index")
+                if dealt > best_by_card.get(key, (0, 0))[1]:
+                    best_by_card[key] = (cost, dealt)
+            best = [0] * (card_energy + 1)
+            for cost, dealt in best_by_card.values():
+                for budget in range(card_energy, cost - 1, -1):
+                    best[budget] = max(best[budget], best[budget - cost] + dealt)
+            if best[card_energy] >= target_hp:
+                return True
+        return False
+
+    if sandpit_critical and not lethal and not turn_kill_possible():
         if escape:
             return _tag_action(escape, "sandpit_escape")
         draw_cards = [action for action in cards if action["card_id"] in DRAW_CARDS]
