@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v9",
+  "run_index": 19,
+  "arm": "candidate",
+  "seed": "901A9ED74B",
+  "source_commit": "58758bd8ab464589dee960ef7d693e48ba38098a",
+  "sha256": {
+    "official_agent.py": "bcb358d23fdadc03262ee6b0ed9d31217fb01cb5a400601e4910cea3de4ac59c",
+    "combat.py": "c54273e2bbf37fe77b74ce4794021626508e2e3937a6bc13d526dad34d8ca46c",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "491761f66db1bfccee0c36b9e565f33527a40ca99cf689ddea35d0bfa7162ea2",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791714735.3947918,
+  "finished": 1791715179.2817678,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 508,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v9_candidate_901A9ED74B_map_ACT.GLORY.json": "cd785192d3e0620d41b4f6935cec6d89d8f3fa5b216a1759665e9fbb73e5f5f4",
+    "astra_eval_v9_candidate_901A9ED74B_agent.jsonl": "a3dbeddb35f185ea82fd8e6acfc0c839aba5b4ce209cecde3c170047571846a8",
+    "astra_eval_v9_candidate_901A9ED74B_map.json": "9c0eb9d1bba3e2226c2b39df96512c1ebb3015710903b385751ecd3076e6ea41",
+    "astra_eval_v9_candidate_901A9ED74B_mod.log": "265baa6aac12081d2fd307b7302909409500cb339b5b0ab759e04764b2b5365b",
+    "astra_eval_v9_candidate_901A9ED74B_map_ACT.HIVE.json": "2bd1c8d011577e0ee59ec489c1b303d5c670361dad08f956788491232c748824",
+    "astra_eval_v9_candidate_901A9ED74B_stdout.log": "55539ca5e455d3a28b5a2a30dd65966cf5ba587de7473d50f145e1620ef8878d"
+  }
+}
