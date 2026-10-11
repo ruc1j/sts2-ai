@@ -429,6 +429,9 @@ _TURN_HP: dict = {"hp": None, "lost": False}
 # enchantment id, so the agent remembers which card ids already spent it this combat.
 _COMBAT_VIGOROUS_SPENT: set = set()
 _LAST_COMBAT_HAND: dict = {}
+# Vambrace doubles only the first card block of a combat and the bridge does not export that it
+# fired, so remember whether a card with a Block var was played this fight.
+_COMBAT_CARD_BLOCK: dict = {"played": False}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
 # Set when the current observation carried the mod's exported play counts (unused today, kept so a run
 # can report which source priced it).
@@ -497,6 +500,7 @@ def _reset_play_counters() -> None:
     _TURN_EFFECT_DEPARTURES = collections.Counter()
     _TURN_HP.update(hp=None, lost=False)
     _COMBAT_VIGOROUS_SPENT.clear()
+    _COMBAT_CARD_BLOCK["played"] = False
 
 
 def _turn_start_self_damage(player: dict) -> int:
@@ -518,6 +522,8 @@ def _advance_play_counters(observation: dict) -> None:
         played = _LAST_COMBAT_HAND.get(action.get("hand_index")) or {}
         if played.get("enchantment") in ONE_SHOT_ENCHANTMENTS:
             _COMBAT_VIGOROUS_SPENT.add((played.get("id"), played.get("enchantment")))
+        if any(variable.get("id") == "Block" and _number(variable.get("value")) > 0 for variable in played.get("vars") or ()):
+            _COMBAT_CARD_BLOCK["played"] = True
     _LAST_COMBAT_HAND.clear()
     if observation.get("phase") != "combat":
         _reset_play_counters()
@@ -528,6 +534,7 @@ def _advance_play_counters(observation: dict) -> None:
         # No enemy instance carried over: a different fight, so its combat-long counters restart.
         _COMBAT_PLAYS.update(attacks=0, skills=0, cards=0)
         _COMBAT_VIGOROUS_SPENT.clear()
+        _COMBAT_CARD_BLOCK["played"] = False
     if enemy_ids:
         _COMBAT_ENEMY_IDS = enemy_ids
     piles = _pile_contents(observation)
@@ -541,6 +548,7 @@ def _advance_play_counters(observation: dict) -> None:
             # A fight restarts at turn 1; enemy combat ids can repeat across fights, so this is the
             # boundary that also holds when no non-combat observation came in between.
             _COMBAT_VIGOROUS_SPENT.clear()
+            _COMBAT_CARD_BLOCK["played"] = False
         _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=turn)
         _TURN_HP.update(hp=None, lost=turn > 1 and _turn_start_self_damage(observation.get("player") or {}) > 0)
         if action is not None and action.get("type") == "card":
@@ -3249,6 +3257,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         ),
         upgraded_cards=upgraded_cards,
         lost_hp_this_turn=_TURN_HP["lost"],
+        vambrace_used=_COMBAT_CARD_BLOCK["played"],
         # Maul and Thrash grow their own Damage BaseValue for the rest of the run; the hand copy's
         # base_value carries that growth without Strength or other modifiers folded in (v8
         # 88141BFEC3 seq279: Thrash base_value 16, the game hit for 2 x (16 + 5 Strength)).

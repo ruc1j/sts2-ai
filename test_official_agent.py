@@ -144,6 +144,39 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(state.thrash_bonus, 12)
         self.assertEqual(step(state, "card:0@0", data, random.Random(0)).enemies[0].hp, 126)
 
+    def test_rollout_knows_vambrace_already_fired_this_fight(self) -> None:
+        # Vambrace doubles only the first card block of a combat; the bridge does not export that it
+        # fired, so the state rebuilt later in the fight doubled every block card (v8 5CE6E5E3F8
+        # seq298: the game gave Taunt's 7, the model 14).
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        defend = {"id": "CARD.DEFEND_IRONCLAD", "cost": 1, "type": "Skill", "vars": [{"id": "Block", "value": 5, "base_value": 5}]}
+
+        def observation(seq: int, turn: int) -> dict:
+            return {
+                "seq": seq, "phase": "combat", "turn": turn,
+                "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": [], "relics": ["RELIC.VAMBRACE"]},
+                "hand": [dict(defend, index=0)], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+                "enemies": [{"id": "MONSTER.DUMMY", "hp": 50, "block": 0, "powers": [],
+                             "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+                "legal_actions": [{"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0, "target_id": None},
+                                  {"type": "end_turn"}],
+            }
+
+        def rollout_state(obs: dict):
+            official_agent._advance_play_counters(obs)
+            with patch("official_agent.search", return_value=[(END_TURN, 0.0)]) as searched:
+                rollout_choice(obs, obs["legal_actions"], data, 1)
+            return searched.call_args.args[0]
+
+        official_agent._reset_play_counters()
+        self.assertFalse(rollout_state(observation(1, 1)).vambrace_used)
+        official_agent._PENDING_ACTION = {"type": "card", "card_id": "CARD.DEFEND_IRONCLAD", "hand_index": 0}
+        self.assertTrue(rollout_state(observation(2, 1)).vambrace_used)
+        rollout_state(observation(3, 2))
+        self.assertFalse(rollout_state(observation(4, 1)).vambrace_used)
+
     def test_rollout_imports_saved_relic_counters_separately_from_combat_plays(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
             "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],

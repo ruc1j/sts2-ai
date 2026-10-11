@@ -3139,6 +3139,14 @@ class CombatTest(unittest.TestCase):
         after = step(Combat(80, (tremble,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
         self.assertEqual((len(after.discard_pile), len(after.exhaust_pile)), (1, 0))
 
+    def test_glam_replays_the_first_play_only(self) -> None:
+        # Glam.EnchantPlayCount adds one resolution until the card's first play in the combat
+        # (v5 DCC93C65AA seq346: a Glam Taunt gave 14 block).
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        taunt = Card(TAUNT, enchantment="ENCHANTMENT.GLAM")
+        after = step(Combat(80, (taunt,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
+        self.assertEqual((after.player_block, after.discard_pile[0].enchantment), (14, None))
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))

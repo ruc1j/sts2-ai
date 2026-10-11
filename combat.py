@@ -83,7 +83,9 @@ ENCHANTMENT_SHARP = "ENCHANTMENT.SHARP"
 ENCHANTMENT_NIMBLE = "ENCHANTMENT.NIMBLE"
 NIMBLE_BLOCK = 2
 ENCHANTMENT_SOWN = "ENCHANTMENT.SOWN"
-ONE_SHOT_ENCHANTMENTS = frozenset({ENCHANTMENT_VIGOROUS, ENCHANTMENT_SOWN})
+# Glam.EnchantPlayCount: the card's first play in a combat resolves one extra time (Times 1).
+ENCHANTMENT_GLAM = "ENCHANTMENT.GLAM"
+ONE_SHOT_ENCHANTMENTS = frozenset({ENCHANTMENT_VIGOROUS, ENCHANTMENT_SOWN, ENCHANTMENT_GLAM})
 ENCHANTMENT_SOULS_POWER = "ENCHANTMENT.SOULS_POWER"
 RELIC_GNARLED_HAMMER = "RELIC.GNARLED_HAMMER"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
@@ -2660,6 +2662,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # Hook.ModifyCardPlayCount visits every applicable source. Each adds one resolution and
     # consumes one charge, even when another source already increased the same play's count.
     plays = 1
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_GLAM:
+        plays += 1
     for power_name in ("DuplicationPower", "OneTwoPunchPower"):
         if _power(combat.player_powers, power_name) and (power_name == "DuplicationPower" or is_attack):
             plays += 1
@@ -2717,6 +2721,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         combat = replace(combat, card_block_bonus=NIMBLE_BLOCK)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_SOWN:
         combat = replace(combat, energy=combat.energy + 1)
+        played_value = replace(played_value, enchantment=None)
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_GLAM:
         played_value = replace(played_value, enchantment=None)
     sharp = (3 if RELIC_GNARLED_HAMMER in combat.player_relics else 2) if (
         isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_SHARP

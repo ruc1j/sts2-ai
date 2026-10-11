@@ -230,6 +230,10 @@ def main() -> int:
                 # Crimson Mantle), from a Corrupted enchantment (2 per play), and relic retaliation
                 # all land here rather than at the end of the turn.
                 checks.append(("card_player_hp", following["player"]["hp"], after.player_hp))
+                # Block is the other half of most card plays (Nimble's +2 went unnoticed for 181 plays
+                # while only HP was compared). Only within the same turn: a turn end clears it.
+                if previous.get("turn") == following.get("turn"):
+                    checks.append(("card_player_block", following["player"]["block"], after.player_block))
             else:
                 checks = [("endturn_player_hp", following["player"]["hp"], after.player_hp)]
             for key, expected, got in checks:
