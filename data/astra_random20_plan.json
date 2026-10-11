@@ -1,0 +1,173 @@
+{
+  "conditions": {
+    "game_version": "v0.107.1",
+    "game_assembly": "/Users/mao/Library/Application Support/Steam/steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64/sts2.dll",
+    "game_assembly_sha256": "e7ceb80669bfaf5c8fccabaa126ae2bb283aba514be5b5b55612579cfd285f18",
+    "character": "Ironclad",
+    "ascension": 0,
+    "simulations": 100,
+    "agent_max_combats": 100,
+    "stop_after_act": 3,
+    "userdata_snapshot": "/Users/mao/.sts2/userdata-pin",
+    "userdata_sha256": "99fc8fc4db13b816824117057f3ba3da60f46ff1cf54c0267d51fb62e4746752",
+    "search_rng": "observation seq; identical runner and pinned userdata for each run"
+  },
+  "rerun_rule": "Only verified external interruption/crash: retain attempt and retry same seed/version/settings once under a new tag within panel time limit. Candidate-caused failures remain reliability regressions. Unexplained missingness keeps comparison on hold.",
+  "primary_metric": "Act 3 complete / runs with verified terminal outcome, equally weighted by seed; show planned/completed/unknown counts",
+  "secondary_order": [
+    "Act 2 clear",
+    "Act 1 clear",
+    "same-seed depth improved minus worsened",
+    "same final-combat progress (docs/EVALUATION.md)"
+  ],
+  "acceptance": "比較ではない。結果の分析(死因・到達度分布)のみ。",
+  "freeze": "Both versions stay unchanged through the panel. Newly diagnosed correctness failures end this version comparison as hold instead of silently changing source.",
+  "per_run_timeout_seconds": 1800,
+  "id": "astra_random20",
+  "hypothesis": "現在のmain(dc18fe4、v10候補とソース同一)のランダムseed20本での踏破率・到達度の実測(比較ではなく現状把握)",
+  "change_type": "baseline",
+  "change": "単一版 dc18fe4。対照なし。",
+  "versions": {
+    "main": {
+      "repo": "/tmp/sts2-random20",
+      "commit": "dc18fe4b9046f5f2647653742eb30455a45380b1",
+      "sha256": {
+        "official_agent.py": "7848163db383898a473cff2f3c5f6c9476bc580af746677a30cb7d7fda72f7ea",
+        "combat.py": "584b3b2d81bc00cf6ccc0cb18ba970f5bb1da3bd613ce2e2f8780501548fa2e0",
+        "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+        "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+      }
+    }
+  },
+  "development_seeds": [],
+  "confirmation_seeds": [
+    "4A3287BD62",
+    "68EAAB6CA3",
+    "FDF8F8EC98",
+    "06329A18C2",
+    "E710402B56",
+    "DC167E87AE",
+    "E9AADC9C15",
+    "A3D179EEDC",
+    "23D91BD2FA",
+    "A1DEA20F98",
+    "A76A8669E6",
+    "16613D8B50",
+    "09A077CC49",
+    "37FA31CAB4",
+    "5F213792B3",
+    "FD7A9C8F5F",
+    "BD0D5921A6",
+    "C71980BEE3",
+    "9D0461F045",
+    "9BC431474E"
+  ],
+  "selection": {
+    "confirmation": "secrets.token_hex(5).upper() x20, excluding any 10-char token in data/ names; no outcomes inspected."
+  },
+  "repetitions_per_seed_per_version": 1,
+  "planned_runs": 20,
+  "panel_time_limit_seconds": 36000,
+  "run_order": [
+    {
+      "arm": "main",
+      "seed": "4A3287BD62",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "68EAAB6CA3",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "FDF8F8EC98",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "06329A18C2",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "E710402B56",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "DC167E87AE",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "E9AADC9C15",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "A3D179EEDC",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "23D91BD2FA",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "A1DEA20F98",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "A76A8669E6",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "16613D8B50",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "09A077CC49",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "37FA31CAB4",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "5F213792B3",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "FD7A9C8F5F",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "BD0D5921A6",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "C71980BEE3",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "9D0461F045",
+      "tag": "astra_random20_main"
+    },
+    {
+      "arm": "main",
+      "seed": "9BC431474E",
+      "tag": "astra_random20_main"
+    }
+  ]
+}
