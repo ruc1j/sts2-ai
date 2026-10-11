@@ -12,7 +12,7 @@ from combat import (
     SQUASH, STOMP, TAUNT, TEAR_ASUNDER, TEST_SUBJECT, THUNDERCLAP, TORIC_TOUGHNESS, TOXIC, TREMBLE, TRUE_GRIT, TWIN_STRIKE, UPPERCUT, UNRELENTING, WHIRLWIND, WOUND, ARMAMENTS, BARRICADE, PYRE, UNMOVABLE, EXPECT_A_FIGHT, FORGOTTEN_RITUAL, SWORD_BOOMERANG, POTION_BLOCK, POTION_SHIP, POTION_FIRE, POTION_EXPLOSIVE, POTION_SHAPED_ROCK, POTION_STRENGTH, POTION_DEXTERITY, POTION_FYSH, POTION_ENERGY, POTION_BLOOD, POTION_HEART, POTION_BRONZE, POTION_SPEED_POTION, POTION_FLEX_POTION, POTION_SWIFT_POTION, POTION_REGEN_POTION, POTION_FORTIFIER, POTION_WEAK_POTION, POTION_VULNERABLE_POTION, POTION_POTION_OF_BINDING, POTION_LUCKY_TONIC, POTION_CURE_ALL, POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE, POTION_DUPLICATOR, POTION_GIGANTIFICATION, POTION_FAIRY_IN_A_BOTTLE, POTION_FOUL_POTION, POTION_SNECKO_OIL, POTION_STABLE_SERUM, PANACHE, ONE_TWO_PUNCH, Card, Combat, END_TURN, Enemy, _greedy_action, _power, initial_combat, legal_actions, search, step,
     _action_card, _after_exhaust, _apply_player_damage, _draw_into_combat, _effective_cost, _enemy_attack_damage, _enemy_turn, _resolve_move, _step_score, _summon,
     FASTEN, DEMON_FORM, NEOWS_FURY, MAD_SCIENCE, CARD_BLOCK, ULTIMATE_STRIKE, RAMPAGE,
-    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
+    MAUL, THRASH, FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL, OMNISLICE, STAMPEDE, CASCADE, DOUBT, REGRET, SHAME, WITHER, APOTHEOSIS, JUGGLING, CARDS_OUTSIDE_THE_CHARACTER_POOL,
 )
 
 # A single harmless, no-op monster used to isolate turn-transition relic effects (Brimstone,
@@ -3057,6 +3057,24 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (FLASH_OF_STEEL,), (STRIKE,), (), (enemy,))
         after = step(combat, f"{FLASH_OF_STEEL}@0", {}, random.Random(0))
         self.assertEqual((after.enemies[0].hp, after.hand), (95, (STRIKE,)))
+
+    def test_omnislice_passes_the_first_hit_to_the_other_enemies_unpowered(self) -> None:
+        # Omnislice.OnPlay (decompiled): the target takes a normal 8-damage attack, then every other
+        # hittable enemy takes that hit's TotalDamage + OverkillDamage as Unpowered damage, so the
+        # target's Vulnerable counts once and the others' Vulnerable does not apply again.
+        enemies = (
+            Enemy("MONSTER.DUMMY", 40, "MOVE", (), powers=(("VulnerablePower", 1),), block=5),
+            Enemy("MONSTER.DUMMY", 30, "MOVE", (), powers=(("VulnerablePower", 1),)),
+            Enemy("MONSTER.DUMMY", 30, "MOVE", (), block=4),
+        )
+        combat = Combat(80, (OMNISLICE,), (), (), enemies, player_powers=(("StrengthPower", 2),))
+        self.assertIn(f"{OMNISLICE}@0", legal_actions(combat))
+        after = step(combat, f"{OMNISLICE}@0", {}, random.Random(0))
+        self.assertEqual(
+            [(enemy.hp, enemy.block) for enemy in after.enemies],
+            [(30, 0), (15, 0), (19, 0)],
+        )
+        self.assertEqual(after.energy, 3)
 
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))

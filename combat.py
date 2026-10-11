@@ -23,7 +23,7 @@ FASTEN = "Fasten"
 DEMON_FORM = "Demon Form"
 NEOWS_FURY = "Neow's Fury"
 MAD_SCIENCE = "Mad Science"
-MAUL, THRASH = "Maul", "Thrash"
+MAUL, THRASH, OMNISLICE = "Maul", "Thrash", "Omnislice"
 FIGHT_ME, JUGGERNAUT, PURITY, SALVO, FLASH_OF_STEEL = "Fight Me", "Juggernaut", "Purity", "Salvo", "Flash of Steel"
 STAMPEDE = "Stampede"
 CASCADE = "Cascade"
@@ -107,7 +107,7 @@ CARD_COST = {
     IMPATIENCE: 0, MIND_BLAST: 1, BODY_SLAM: 1, BELIEVE_IN_YOU: 0, FINESSE: 0, RUPTURE: 1, STONE_ARMOR: 1, FEEL_NO_PAIN: 1, SECOND_WIND: 1, ENLIGHTENMENT: 0,
     HEADBUTT: 1, NEOWS_FURY: 1, MAD_SCIENCE: 1, UPPERCUT: 2, TRUE_GRIT: 1, BURNING_PACT: 1, FIEND_FIRE: 2, EVIL_EYE: 1, BRAND: 0, INFERNAL_BLADE: 1, RAGE: 0, SPITE: 0, COLOSSUS: 1, VOLLEY: 0,
     TORIC_TOUGHNESS: 2, SQUASH: 1, TEAR_ASUNDER: 2, HAVOC: 1, STOKE: 1, METAMORPHOSIS: 2, VICIOUS: 1,
-    MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0,
+    MAUL: 1, THRASH: 1, FIGHT_ME: 2, JUGGERNAUT: 2, PURITY: 0, SALVO: 1, FLASH_OF_STEEL: 0, OMNISLICE: 0,
     STAMPEDE: 2, CASCADE: 0,  # Cascade's cost is X, spent like Whirlwind's
     APOTHEOSIS: 2, JUGGLING: 1, PANACHE: 0, ONE_TWO_PUNCH: 1, STRATAGEM: 1,
 }
@@ -116,7 +116,7 @@ CARD_DAMAGE = {
     STRIKE: 6, BASH: 8, ANGER: 6, BLUDGEON: 32, DISMANTLE: 8, IRON_WAVE: 5, TWIN_STRIKE: 5, CINDER: 18, HEMOKINESIS: 15, UNRELENTING: 14, GIANT_ROCK: 16, BREAKTHROUGH: 9,
     FEED: 10, NEOWS_FURY: 10, BYRD_SWOOP: 14, PILLAGE: 6, HEADBUTT: 9, SQUASH: 10, TEAR_ASUNDER: 5, UPPERCUT: 13, SPITE: 5, VOLLEY: 10, MANGLE: 15, PECK: 2, SETUP_STRIKE: 7, SWORD_BOOMERANG: 3,
     BREAK: 20, RAMPAGE: 9, BOLAS: 3, FISTICUFFS: 7, THRUMMING_HATCHET: 11, ULTIMATE_STRIKE: 14,
-    MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4, FIGHT_ME: 5, SALVO: 12, FLASH_OF_STEEL: 5,
+    MOLTEN_FIST: 10, POMMEL_STRIKE: 9, MAUL: 5, THRASH: 4, FIGHT_ME: 5, SALVO: 12, FLASH_OF_STEEL: 5, OMNISLICE: 8,
 }
 CARD_HITS = {TWIN_STRIKE: 2, MAUL: 2, THRASH: 2, FIGHT_ME: 2}
 CARD_UPGRADE_DAMAGE = {BASH: 2, SQUASH: 2, TEAR_ASUNDER: 2, CINDER: 6, TWIN_STRIKE: 2, POMMEL_STRIKE: 1, MANGLE: 5, SETUP_STRIKE: 2, MAUL: 1, THRASH: 2, FIGHT_ME: 1, SALVO: 4, FLASH_OF_STEEL: 3,
@@ -176,7 +176,7 @@ ATTACKS = {
     STRIKE, BASH, ANGER, BLUDGEON, STOMP, DISMANTLE, BULLY, IRON_WAVE, TWIN_STRIKE, CINDER, ASHEN_STRIKE, HEMOKINESIS, PERFECTED_STRIKE, UNRELENTING, GIANT_ROCK, BREAKTHROUGH,
     WHIRLWIND, FEED, BYRD_SWOOP, PILLAGE, BREAK, HOWL_FROM_BEYOND, RAMPAGE, THUNDERCLAP, BOLAS, DRAMATIC_ENTRANCE, FISTICUFFS, THRUMMING_HATCHET, ULTIMATE_STRIKE,
     MOLTEN_FIST, POMMEL_STRIKE, MIND_BLAST, BODY_SLAM, PACTS_END, HEADBUTT, NEOWS_FURY, SQUASH, TEAR_ASUNDER, UPPERCUT, FIEND_FIRE, SPITE, VOLLEY, MANGLE, PECK, EXTERMINATE, SETUP_STRIKE, SWORD_BOOMERANG,
-    MAUL, THRASH, FIGHT_ME, SALVO, FLASH_OF_STEEL, CONFLAGRATION,
+    MAUL, THRASH, FIGHT_ME, SALVO, FLASH_OF_STEEL, CONFLAGRATION, OMNISLICE,
 }
 # Cards the game can never generate for this model's character: Stoke and Infernal Blade both draw
 # from `Owner.Character.CardPool.GetUnlockedCards(...)` (decompiled), which is the character's own
@@ -3418,6 +3418,13 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         resolution_damage = base_damage * (2 if hit_index // hits_per_play in pen_nib_plays else 1)
         damage = _apply_debuff_multipliers(combat, enemies[int(target)], resolution_damage)
         enemies[int(target)] = _damage_enemy(enemies[int(target)], damage)
+        if card == OMNISLICE and hit_index % hits_per_play == 0:
+            # Omnislice.OnPlay passes the first hit's TotalDamage + OverkillDamage (blocked damage
+            # included) to every other hittable teammate of the target as Unpowered damage, so
+            # Strength and Vulnerable are not applied a second time.
+            for index, other in enumerate(enemies):
+                if index != int(target) and other.alive:
+                    enemies[index] = _damage_enemy(other, damage, powered=False)
         if resolution_debuffs and hit_index + 1 < hits:
             state = enemies[int(target)]
             for power_name, amount in resolution_debuffs:
