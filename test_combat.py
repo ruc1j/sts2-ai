@@ -1936,6 +1936,17 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (perfected,), (pommel,), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),), energy=3)
         self.assertEqual(step(combat, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 90)
 
+    def test_upgraded_ashen_strike_scales_by_four_without_flat_bonus(self) -> None:
+        # Ashen Strike+ keeps the 6 base and raises the per-exhausted-card bonus to 4 (observed vars
+        # CalculationBase 6 / ExtraDamage 4). AED v2 seq156 dealt 6 with an empty exhaust pile while the
+        # model added the generic +3 upgrade bonus and predicted 9.
+        ashen = Card(ASHEN_STRIKE, True)
+        dummy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        empty = Combat(80, (ashen,), (), (), (dummy,), energy=3)
+        self.assertEqual(step(empty, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 94)
+        two = Combat(80, (ashen,), (), (), (dummy,), energy=3, exhaust_pile=(STRIKE, DEFEND))
+        self.assertEqual(step(two, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 86)
+
     def test_perfected_strike_counts_ultimate_strike_as_a_strike(self) -> None:
         # C510 v5 seq209: Perfected Strike showed 33 with Ultimate Strike as one of eight Strikes, while
         # the model counted seven and predicted 30.  6 base + 2 per Strike (two cards here) = 10.

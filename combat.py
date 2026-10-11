@@ -3362,7 +3362,10 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         )
         damage = 6 + (3 if card_was_upgraded else 2) * strikes
     elif card == ASHEN_STRIKE:
-        damage = 6 + 3 * len(exhaust_before)
+        # Upgrading raises the per-exhausted-card ExtraDamage 3 -> 4 and leaves the 6 base alone
+        # (observed vars CalculationBase 6 / ExtraDamage 4 on Ashen Strike+). The generic +3 upgrade
+        # bonus below used to be added on top: 12 audit mismatches, each 3 damage too high.
+        damage = 6 + (4 if card_was_upgraded else 3) * len(exhaust_before)
     elif card == MIND_BLAST:
         damage = len(combat.draw_pile)
     elif card == BODY_SLAM:
@@ -3381,7 +3384,7 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += combat.maul_bonus if card == MAUL else combat.thrash_bonus
     else:
         damage = 4 + 2 * _power(enemy.powers, "VulnerablePower") if card == BULLY else CARD_DAMAGE[card]
-    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, BODY_SLAM, MAUL, THRASH, MAD_SCIENCE}:
+    if card_was_upgraded and card not in {UPPERCUT, SPITE, PECK, PERFECTED_STRIKE, ASHEN_STRIKE, BODY_SLAM, MAUL, THRASH, MAD_SCIENCE}:
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and is_attack:
         damage += 3
