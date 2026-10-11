@@ -2960,6 +2960,17 @@ class CombatTest(unittest.TestCase):
         upgraded = step(Combat(80, (MAUL,), (), (), (enemy,), upgraded_cards=(MAUL,)), f"{MAUL}@0", {}, random.Random(0))
         self.assertEqual((upgraded.enemies[0].hp, upgraded.maul_bonus), (88, 2))  # 6 damage, Increase 2
 
+    def test_rampage_grows_by_increase_after_each_play(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        after = step(Combat(80, (RAMPAGE, RAMPAGE), (), (), (enemy,)), f"{RAMPAGE}@0", {}, random.Random(0))
+        self.assertEqual((after.enemies[0].hp, after.rampage_bonus), (91, 5))
+        again = step(after, f"{RAMPAGE}@0", {}, random.Random(0))
+        self.assertEqual(again.enemies[0].hp, 77)  # 9 + 5
+        grown = step(Combat(80, (RAMPAGE,), (), (), (enemy,), rampage_bonus=5), f"{RAMPAGE}@0", {}, random.Random(0))
+        self.assertEqual(grown.enemies[0].hp, 86)  # A3D179EEDC seq179: hand base 14
+        upgraded = step(Combat(80, (RAMPAGE,), (), (), (enemy,), upgraded_cards=(RAMPAGE,)), f"{RAMPAGE}@0", {}, random.Random(0))
+        self.assertEqual((upgraded.enemies[0].hp, upgraded.rampage_bonus), (91, 9))  # Increase 5 -> 9
+
     def test_thrash_exhausts_an_attack_from_hand_and_absorbs_its_damage(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
         after = step(Combat(80, (THRASH, STRIKE, DEFEND), (), (), (enemy,)), f"{THRASH}@0", {}, random.Random(0))

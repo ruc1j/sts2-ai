@@ -3291,6 +3291,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         # 88141BFEC3 seq279: Thrash base_value 16, the game hit for 2 x (16 + 5 Strength)).
         maul_bonus=_grown_damage(observation, "CARD.MAUL"),
         thrash_bonus=_grown_damage(observation, "CARD.THRASH"),
+        rampage_bonus=_grown_damage(observation, "CARD.RAMPAGE"),
         # ponytail: the bridge exposes the Toric power's remaining uses but not the block it
         # stored, so assume the unupgraded 5. Under-counting block is the safe direction; expose
         # the power's Block var from CombatBridge if this turns out to matter.

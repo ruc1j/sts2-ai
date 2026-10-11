@@ -472,6 +472,7 @@ class Combat:
     # bridge reported at the start of the search.
     maul_bonus: int = 0
     thrash_bonus: int = 0
+    rampage_bonus: int = 0
     bellows_used: bool = False
     burning_sticks_used: bool = False
     joss_paper_count: int = 0
@@ -3451,6 +3452,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage = combat.player_block - combo_block
     elif card == FIEND_FIRE:
         damage = 7
+    elif card == RAMPAGE:
+        # Rampage.OnPlay raises its own Damage BaseValue by Increase (5, upgraded 9) after the hit,
+        # and the growth persists for the run like Maul's (A3D179EEDC seq179: hand base 14, the
+        # model's fixed 9 under-dealt by 5).
+        damage = CARD_DAMAGE[card] + combat.rampage_bonus
     elif card in {MAUL, THRASH}:
         # Both cards raise their own Damage BaseValue permanently, and that growth survives the
         # fight, so a copy met mid-run already hits harder than its printed 5/4. The bridge's
@@ -3530,6 +3536,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
                 amount,
             ),
         )
+    if card == RAMPAGE:
+        combat = replace(combat, rampage_bonus=combat.rampage_bonus + (9 if card_was_upgraded else 5))
     if card == MAUL:
         combat = replace(combat, maul_bonus=combat.maul_bonus + (2 if card_was_upgraded else 1))
     if card == THRASH:
