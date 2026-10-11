@@ -88,6 +88,7 @@ ENCHANTMENT_GLAM = "ENCHANTMENT.GLAM"
 ONE_SHOT_ENCHANTMENTS = frozenset({ENCHANTMENT_VIGOROUS, ENCHANTMENT_SOWN, ENCHANTMENT_GLAM})
 ENCHANTMENT_SOULS_POWER = "ENCHANTMENT.SOULS_POWER"
 RELIC_GNARLED_HAMMER = "RELIC.GNARLED_HAMMER"
+RELIC_DAUGHTER_OF_THE_WIND = "RELIC.DAUGHTER_OF_THE_WIND"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -2795,6 +2796,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # RagePower.AfterCardPlayed runs once per resolution, so a replayed attack (One-Two Punch,
         # Duplication) gains its block once per play (v5 C510D86949 seq152: 2 x 3).
         combo_block += _power(combat.player_powers, "RagePower") * plays
+        # DaughterOfTheWind.AfterCardPlayed: 1 Unpowered block per Attack played (v5 D55BC878ED).
+        if RELIC_DAUGHTER_OF_THE_WIND in relics:
+            combo_block += plays
         if RELIC_KUNAI in relics and attacks_this_turn % 3 == 0:
             combo_pending.append(("DexterityPower", 1))
         if RELIC_SHURIKEN in relics and attacks_this_turn % 3 == 0:

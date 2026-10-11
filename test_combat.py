@@ -3157,6 +3157,11 @@ class CombatTest(unittest.TestCase):
                 action = next(action for action in legal_actions(combat) if action.startswith("card:0"))
                 self.assertEqual(step(combat, action, {}, random.Random(0)).player_block, block)
 
+    def test_daughter_of_the_wind_gives_one_block_per_attack(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        combat = Combat(80, (STRIKE,), (), (), (enemy,), player_relics=("RELIC.DAUGHTER_OF_THE_WIND",), player_powers=(("DexterityPower", 2),))
+        self.assertEqual(step(combat, f"{STRIKE}@0", {}, random.Random(0)).player_block, 1)
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))
