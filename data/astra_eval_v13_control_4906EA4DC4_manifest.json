@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v13",
+  "run_index": 18,
+  "arm": "control",
+  "seed": "4906EA4DC4",
+  "source_commit": "dc18fe4b9046f5f2647653742eb30455a45380b1",
+  "sha256": {
+    "official_agent.py": "7848163db383898a473cff2f3c5f6c9476bc580af746677a30cb7d7fda72f7ea",
+    "combat.py": "584b3b2d81bc00cf6ccc0cb18ba970f5bb1da3bd613ce2e2f8780501548fa2e0",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "4b067c88cc912f2713d42fdb7f6250e7bc2ea1c5f7cb53373bf71e6f5920353f",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791758338.992977,
+  "finished": 1791758777.161064,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 515,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v13_control_4906EA4DC4_mod.log": "5ae860e827a85c9488252dbf10d4d7ca37fb60116c3224cfe556a3579c89ac46",
+    "astra_eval_v13_control_4906EA4DC4_map.json": "b8c619d7e419a6b3787b0735e881d685f9bf2bb19d4d7d17394c5b95a60e29df",
+    "astra_eval_v13_control_4906EA4DC4_map_ACT.HIVE.json": "4b12f2bd153a8f76635482380b497527b9ef7983531a7e69b6079e78ff29675b",
+    "astra_eval_v13_control_4906EA4DC4_stdout.log": "87b7f6821f516cc4b7c8ce13dbd553f4077c458b80390fe1c609d048f44e4496",
+    "astra_eval_v13_control_4906EA4DC4_map_ACT.GLORY.json": "b759ee21c0cf03e31c8c97fb0b429125af74afc992814718c4ccddf0a719cbc5",
+    "astra_eval_v13_control_4906EA4DC4_agent.jsonl": "7aaf5aebc0cab3662792128cd6006492312d829a2bd622a7cf7c48f9b3c618b6"
+  }
+}
