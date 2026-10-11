@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 7,
+  "arm": "candidate",
+  "seed": "A3D179EEDC",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791744575.356928,
+  "finished": 1791745004.017358,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 21,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 511,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_A3D179EEDC_mod.log": "29cb192ff368d1c638902a70922031132a0cfe0206b76c4d358a163c5c8611fb",
+    "astra_eval_v12_candidate_A3D179EEDC_stdout.log": "0337a738426eea0e0e637bfcc7e120bb760f38884d1da9947831927876811567",
+    "astra_eval_v12_candidate_A3D179EEDC_agent.jsonl": "8c347ce2db959971dd9c48c7cfc80d9e9042f2f101b03a4014e9efa48e5bf2d5",
+    "astra_eval_v12_candidate_A3D179EEDC_map.json": "f375072d8f10adf13e6c920facb9ac393959fc8a194ee0e4a92f0c0ad5fb9fab",
+    "astra_eval_v12_candidate_A3D179EEDC_map_ACT.GLORY.json": "d05c4999cfa2493cf70f45f7cfa8b5c80942f446aa46026791a9e120ed8669ee",
+    "astra_eval_v12_candidate_A3D179EEDC_map_ACT.HIVE.json": "3cbc63c7ae6bfe0598a65cd525de453c23dffeaebd21a190c0cadfb63c4cac9f"
+  }
+}
