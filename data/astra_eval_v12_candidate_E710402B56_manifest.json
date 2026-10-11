@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 4,
+  "arm": "candidate",
+  "seed": "E710402B56",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791743590.656661,
+  "finished": 1791744075.9243698,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 16,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 478,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_E710402B56_map_ACT.GLORY.json": "61534cd541af654adb4e9b18fe92ce91822076b8dcbc743235abe23dd4a02ddf",
+    "astra_eval_v12_candidate_E710402B56_map.json": "fe673a01709148e2bf42795bdc0c4579b78cb743c0791d0e191f9690e2d0c701",
+    "astra_eval_v12_candidate_E710402B56_mod.log": "d825e6b8f01c277020c93e4198dde6043fed34ffe297d6f2d5b5be7e2accb02f",
+    "astra_eval_v12_candidate_E710402B56_stdout.log": "7bb8e074bb13968207538586a607eccc3eecfa05412bfe63125af43369ef2962",
+    "astra_eval_v12_candidate_E710402B56_map_ACT.HIVE.json": "7081481ce92cfad57b85d3b5843ba6359957d541102fca97905d2c307bd47f8b",
+    "astra_eval_v12_candidate_E710402B56_agent.jsonl": "8f71a37dbdeb47c77069d27655947c573a36204ae508c18cb93775112e325ef1"
+  }
+}
