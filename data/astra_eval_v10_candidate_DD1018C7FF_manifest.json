@@ -1,0 +1,48 @@
+{
+  "panel": "astra_eval_v10",
+  "run_index": 4,
+  "arm": "candidate",
+  "seed": "DD1018C7FF",
+  "source_commit": "78c8e59a75d007332a886d4b5d39d2e4657c1221",
+  "sha256": {
+    "official_agent.py": "7848163db383898a473cff2f3c5f6c9476bc580af746677a30cb7d7fda72f7ea",
+    "combat.py": "584b3b2d81bc00cf6ccc0cb18ba970f5bb1da3bd613ce2e2f8780501548fa2e0",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "3a32000ebaf8d7174d8dd3e59805e34be1a1f1c183d3c222c9679caa604d2190",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791719558.802454,
+  "finished": 1791719845.381,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 374,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 9
+    },
+    "final_hp": 9
+  },
+  "artifacts_sha256": {
+    "astra_eval_v10_candidate_DD1018C7FF_agent.jsonl": "8211ae6ba55ed67c493677c189f5adaf4dd058f3dc4df9a3e19d70307bc178f2",
+    "astra_eval_v10_candidate_DD1018C7FF_result.json": "e2e36d0de22ff3343dc786fbd0e893c93ebe1d6821d04d0c48c6d298139ad076",
+    "astra_eval_v10_candidate_DD1018C7FF_map.json": "f000771818d25385fa59c4ecd33d03b2912f53aa4d72f63d642720808b436a0b",
+    "astra_eval_v10_candidate_DD1018C7FF_map_ACT.HIVE.json": "fd1e425ea0d9f871d54f1d8c91a43f7b6207902167a7da5705c99db836bf0b97",
+    "astra_eval_v10_candidate_DD1018C7FF_stdout.log": "a3e06eda5b4ee0096af359acd62e429ef41674066dab898c56a5259b63d7f21f",
+    "astra_eval_v10_candidate_DD1018C7FF_map_ACT.GLORY.json": "65cfd10d1fa1fc96d529c48202168a8760468769bfbfa757d6dbfafb2c6d1204",
+    "astra_eval_v10_candidate_DD1018C7FF_mod.log": "a6105f2230801c9c70904c26f18cb9bd77739988662cecdfef4fc58c8b2f1ec7"
+  }
+}
