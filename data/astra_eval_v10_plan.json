@@ -26,7 +26,7 @@
   "id": "astra_eval_v10",
   "hypothesis": "今日の変更をすべて含む現在のmain(v8候補に、コスト0のRageの打ち順、Duplicator後のガード、Omnislice・Vigorous・Spiteの再現修正を加えたもの)は、今朝の版767b5e2より踏破率または到達度が高い",
   "change_type": "cumulative",
-  "change": "対照767b5e2。候補4d58008(現在のmain)。",
+  "change": "対照767b5e2。候補7a26822(現在のmain、パネル開始前に更新)。",
   "versions": {
     "control": {
       "repo": "/tmp/sts2-eval-v10-control",
@@ -40,10 +40,10 @@
     },
     "candidate": {
       "repo": "/tmp/sts2-eval-v10-candidate",
-      "commit": "4d58008a6ab8193f91da3dc89fc6cbf3d4b91de8",
+      "commit": "7a268224e04705dde9976ccd5e9940a13b4ca3db",
       "sha256": {
-        "official_agent.py": "10e7592b288c3fde76e9c31f90fc6eaa6632c34a405052ad48b9c948cb5db3b5",
-        "combat.py": "c25dc0399492bb87c2d64fba257a8950a82bbed7b5f0147a149e2f5dda1cdfcc",
+        "official_agent.py": "c014d5e7c6e784aea806adca4859fed9d34b19891c4a145d1642055c41179f66",
+        "combat.py": "01705066f436c492440ecb8133c67120a058312fdaea7630568db6a4de5bcc51",
         "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
         "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
       }
