@@ -879,6 +879,27 @@ EVENT_OPTION_SCORES = {
     # rather than a preference.
     "LOST_WISP": {"CLAIM": 100},
     "SELF_HELP_BOOK": {},  # scored below from the deck's current block needs
+    # The events below used to fall through to AutoSlay's EventRoomHandler, which picks a random
+    # option (random.NextItem). Act 2 bosses are lost on HP (docs/ACT2_BOSS_PLAN_20261012.md), so
+    # the HP-costing branches are avoided. Effects read from the v0.107.1 decompile:
+    # SlipperyBridge HOLD_ON costs 3, 4, 5... HP to re-roll which random card OVERCOME removes.
+    "SLIPPERY_BRIDGE": {"OVERCOME": 100},
+    # BrainLeech RIP costs 5 HP for a colorless card reward; SHARE_KNOWLEDGE picks 1 of 5 free.
+    "BRAIN_LEECH": {"SHARE_KNOWLEDGE": 100},
+    # ColossalFlower REACH_DEEPER costs 5/6/7 HP per dig; extracting takes the gold on offer.
+    "COLOSSAL_FLOWER": {
+        "EXTRACT_CURRENT_PRIZE_1": 100, "EXTRACT_CURRENT_PRIZE_2": 100, "EXTRACT_CURRENT_PRIZE_3": 100,
+        "EXTRACT_INSTEAD": 100,
+    },
+    # SapphireSeed EAT heals 9 and upgrades a card.
+    "SAPPHIRE_SEED": {"EAT": 100},
+    # SpiritGrafter LET_IT_IN heals 25 (adds Metamorphosis); REJECTION costs 10 HP for an upgrade.
+    "SPIRIT_GRAFTER": {"LET_IT_IN": 100},
+    # DollRoom RANDOM grants a doll relic for free; the chosen ones cost 5 or 15 HP.
+    "DOLL_ROOM": {"RANDOM": 100},
+    # Amalgamator trades two Strikes for Ultimate Strike (or two Defends for Ultimate Defend).
+    "AMALGAMATOR": {"COMBINE_STRIKES": 100, "COMBINE_DEFENDS": 50},
+    "DENSE_VEGETATION": {},  # scored below from current HP
 }
 
 
@@ -950,6 +971,16 @@ def choose_event(observation: dict) -> dict:
             return None
         text_key = action.get("text_key", "")
         option = text_key.rsplit(".", 1)[-1]
+        if event_id == "DENSE_VEGETATION":
+            # TRUDGE_ON: 8 HP for 61-99 gold. REST heals the rest-site amount, then forces a
+            # reward-less fight; only worth it when the heal is not mostly wasted.
+            player = observation.get("player", {})
+            hp, max_hp = _number(player.get("hp")), max(1, _number(player.get("max_hp"), 1))
+            preferred = "REST" if hp * 10 < max_hp * 7 else "TRUDGE_ON"
+            if option == preferred:
+                return 100
+            if option in {"REST", "TRUDGE_ON"}:
+                return 0
         if event_id == "SELF_HELP_BOOK":
             preferred = "READ_PASSAGE" if _block_starved(_deck_list(observation)) else "READ_THE_BACK"
             if option == preferred:

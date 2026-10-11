@@ -6577,3 +6577,31 @@ class SearchHpWeightTest(unittest.TestCase):
         with patch.object(official_agent, "search", fake_search):
             rollout_choice(observation, observation["legal_actions"], data, 1)
         self.assertEqual(seen, [0.02])
+
+
+class RandomEventOptionTest(unittest.TestCase):
+    @staticmethod
+    def _event(event_id: str, options: list[str], hp: int = 80) -> dict:
+        return {
+            "phase": "event",
+            "event_id": event_id,
+            "player": {"hp": hp, "max_hp": 80},
+            "legal_actions": [
+                {"type": "event_option", "option_index": index, "text_key": f"{event_id}.pages.INITIAL.options.{option}"}
+                for index, option in enumerate(options)
+            ],
+        }
+
+    def _picked(self, event_id: str, options: list[str], hp: int = 80) -> str:
+        return choose_event(self._event(event_id, options, hp))["text_key"].rsplit(".", 1)[-1]
+
+    def test_hp_costing_branches_are_avoided(self) -> None:
+        self.assertEqual(self._picked("SLIPPERY_BRIDGE", ["OVERCOME", "HOLD_ON_0"]), "OVERCOME")
+        self.assertEqual(self._picked("BRAIN_LEECH", ["SHARE_KNOWLEDGE", "RIP"]), "SHARE_KNOWLEDGE")
+        self.assertEqual(self._picked("COLOSSAL_FLOWER", ["EXTRACT_CURRENT_PRIZE_1", "REACH_DEEPER_1"]), "EXTRACT_CURRENT_PRIZE_1")
+        self.assertEqual(self._picked("SPIRIT_GRAFTER", ["LET_IT_IN", "REJECTION"]), "LET_IT_IN")
+        self.assertEqual(self._picked("DOLL_ROOM", ["RANDOM", "TAKE_SOME_TIME", "EXAMINE"]), "RANDOM")
+
+    def test_dense_vegetation_rests_only_when_hurt(self) -> None:
+        self.assertEqual(self._picked("DENSE_VEGETATION", ["TRUDGE_ON", "REST"], hp=40), "REST")
+        self.assertEqual(self._picked("DENSE_VEGETATION", ["TRUDGE_ON", "REST"], hp=75), "TRUDGE_ON")
