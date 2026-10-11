@@ -3133,6 +3133,12 @@ class CombatTest(unittest.TestCase):
         sown = step(Combat(80, (strike,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
         self.assertEqual((sown.energy, sown.discard_pile[0].enchantment), (3, None))
 
+    def test_souls_power_keeps_an_exhaust_card_in_the_discard(self) -> None:
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        tremble = Card(TREMBLE, enchantment="ENCHANTMENT.SOULS_POWER")
+        after = step(Combat(80, (tremble,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
+        self.assertEqual((len(after.discard_pile), len(after.exhaust_pile)), (1, 0))
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))

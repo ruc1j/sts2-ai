@@ -84,6 +84,7 @@ ENCHANTMENT_NIMBLE = "ENCHANTMENT.NIMBLE"
 NIMBLE_BLOCK = 2
 ENCHANTMENT_SOWN = "ENCHANTMENT.SOWN"
 ONE_SHOT_ENCHANTMENTS = frozenset({ENCHANTMENT_VIGOROUS, ENCHANTMENT_SOWN})
+ENCHANTMENT_SOULS_POWER = "ENCHANTMENT.SOULS_POWER"
 RELIC_GNARLED_HAMMER = "RELIC.GNARLED_HAMMER"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
@@ -3010,6 +3011,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
             hand.append(combat.draw_pile[secret_weapon_draw_index])
     # SecretWeapon carries CardKeyword.Exhaust on the base card, and OnUpgrade removes it.
     exhaust = card in EXHAUSTS or (card == SECRET_WEAPON and not card_was_upgraded)
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_SOULS_POWER:
+        # SoulsPower.OnEnchant removes the card's own Exhaust keyword.
+        exhaust = False
     # CardModel.GetResultPileTypeForCardPlay sends the played card to PileType.None when it is a
     # CardType.Power card (and the Exhaust keyword wins first), so a Power leaves the combat entirely.
     # POWERS is already exactly the CardType.Power set the model can play - the decompile has 111 of them.
