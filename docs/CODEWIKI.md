@@ -9700,3 +9700,4 @@ v2〜v7の117 runの死亡地点はTHE_INSATIABLE(Act 2ボス)が50件で最多�
 - AutoSlayの戦闘部屋の上限は`CombatRoomHandler.Timeout => TimeSpan.FromMinutes(5)`(ショップは120秒、宝箱30秒)。ModはHarmonyを使っているので、getterへのPostfixで延ばせる。ただしv7対照AA6F8282C0の打ち切りが長考なのか停止なのかは未確定で、延ばすとDLLのハッシュと評価条件が変わる。未着手。
 - Duplicatorの後のガード(`33512fe`、判断の変更、比較は未実施): Primal Forceの再生でゲームが落ちる対策(`e67dbb1`)が、手札にPrimal Forceが無くてもそのターンの探索をすべて止めていた。v8候補6729739567のVANTOM戦seq117〜118では、Duplicatorの後のPerfected StrikeとStrikeを規則で打った(探索ならStone Armor)。v5〜v8で理由なしの`heuristic_fallback`は10件。手札にPrimal Forceがあるときだけ止める。
 - 同じVANTOM戦は探索の評価値が最後まで正(ターン10で+0.62)のまま負けたが、HP減少はPlatingを含めすべて予告どおりで、未モデルの被弾ではない。最後のターンに防御札を1枚も引けなかった。
+- Bloodlettingは手札に来た475ターン(v5〜v8、重複除去)のうち42ターンしか打たれていない(`~/.sts2/analysis/bloodletting_scan.md`)。勝ちが見えている道中戦では「HP3とエネルギー2」がモデル上ほぼ釣り合い(評価差0.05〜0.1)、打たない判断自体は誤りではない。一方、取得36回(報酬17、ショップ購入19)はすべてRuptureの無いデッキだった。Rupture+Bloodlettingの筋力エンジンを狙う方針(Act 3踏破2本の形)の結果だが、Ruptureが来ないと枠を使うだけになる。「Ruptureが無いうちはBloodlettingを取らない・買わない」は次の比較候補(未実施)。
