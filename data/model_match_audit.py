@@ -43,6 +43,10 @@ def merged_enemy_data() -> dict:
 
 def combat_records(path):
     records = []
+    # Every non-combat line (combat_end, map, reward, ...) closes the current fight. Enemy combat ids
+    # restart in every fight, so the id overlap in same_fight() alone let a fight-ending kill be
+    # compared against the next fight's first turn-1 observation (v8 5CE6E5E3F8 seq405/419).
+    fight = 0
     with path.open(encoding="utf-8-sig") as handle:
         for line in handle:
             try:
@@ -50,7 +54,9 @@ def combat_records(path):
             except ValueError:
                 continue
             if record.get("phase") != "combat":
+                fight += 1
                 continue
+            record["_fight"] = fight
             if any(not REQUIRED.issubset(enemy) for enemy in record.get("enemies") or ()):
                 return []
             records.append(record)
@@ -145,6 +151,8 @@ def recorded_action(record, state, data):
 def same_fight(previous, following) -> bool:
     """Reject pairs that straddle a fight boundary: the next room's first observation has a fresh HP
     and a fresh combat id set, which is not the state a one-step simulation should predict."""
+    if previous.get("_fight") != following.get("_fight"):
+        return False
     before = {enemy["combat_id"] for enemy in previous.get("enemies") or ()}
     after = {enemy["combat_id"] for enemy in following.get("enemies") or ()}
     if not before or not after or not (before & after):
