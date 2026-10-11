@@ -308,6 +308,10 @@ RELIC_MUMMIFIED_HAND, RELIC_ORICHALCUM, RELIC_PARRYING_SHIELD = "RELIC.MUMMIFIED
 RELIC_PEN_NIB, RELIC_PERMAFROST, RELIC_PETRIFIED_TOAD = "RELIC.PEN_NIB", "RELIC.PERMAFROST", "RELIC.PETRIFIED_TOAD"
 RELIC_POCKETWATCH, RELIC_RAINBOW_RING, RELIC_RAZOR_TOOTH, RELIC_PAELS_BLOOD = "RELIC.POCKETWATCH", "RELIC.RAINBOW_RING", "RELIC.RAZOR_TOOTH", "RELIC.PAELS_BLOOD"
 RELIC_PAELS_FLESH, RELIC_PAELS_TEARS, RELIC_VERY_HOT_COCOA = "RELIC.PAELS_FLESH", "RELIC.PAELS_TEARS", "RELIC.VERY_HOT_COCOA"
+# PaelsLegion.ModifyBlockMultiplicative doubles a card's block while its cooldown is 0; the play that
+# used it starts a 2-turn cooldown, counted down at each player turn start (AfterSideTurnStart).
+RELIC_PAELS_LEGION = "RELIC.PAELS_LEGION"
+PAELS_LEGION_TURNS = 2
 RELIC_FIDDLE, RELIC_BLOOD_SOAKED_ROSE, RELIC_POLLINOUS_CORE = "RELIC.FIDDLE", "RELIC.BLOOD_SOAKED_ROSE", "RELIC.POLLINOUS_CORE"
 RELIC_FORGOTTEN_SOUL = "RELIC.FORGOTTEN_SOUL"
 RELIC_RED_SKULL, RELIC_REPTILE_TRINKET, RELIC_RIPPLE_BASIN = "RELIC.RED_SKULL", "RELIC.REPTILE_TRINKET", "RELIC.RIPPLE_BASIN"
@@ -424,6 +428,9 @@ class Combat:
     play_count: int = 1
     # Block added to every powered grant of the card being played (Nimble); reset for every action.
     card_block_bonus: int = 0
+    paels_legion_cooldown: int = 0
+    # Every block grant of the card play that triggered Pael's Legion is doubled (AffectedCardPlay).
+    paels_legion_this_play: bool = False
     # PanachePower's CardsLeft: 5 cards played after the Panache play deal its damage to every
     # hittable enemy, then reset. The play that applied the power does not count.
     panache_cards_this_turn: int = 0
@@ -1299,6 +1306,12 @@ def _grant_block(
         per_grant *= 2
     if unmovable_double:
         per_grant *= 2
+    legion = powered and RELIC_PAELS_LEGION in combat.player_relics and per_grant > 0 and (
+        combat.paels_legion_this_play or combat.paels_legion_cooldown <= 0
+    )
+    if legion:
+        per_grant *= 2
+        combat = replace(combat, paels_legion_cooldown=PAELS_LEGION_TURNS, paels_legion_this_play=True)
     block = per_grant * plays
     enemies = list(combat.enemies)
     juggernaut = _power(combat.player_powers, "JuggernautPower")
@@ -2133,7 +2146,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
 def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
-    combat = replace(_sync_belt_buckle(_sync_red_skull(combat)), play_count=1, card_block_bonus=0)
+    combat = replace(_sync_belt_buckle(_sync_red_skull(combat)), play_count=1, card_block_bonus=0, paels_legion_this_play=False)
     if action.startswith("potion:"):
         potion, _, target = action.partition(":")[2].partition("@")
         potions = list(combat.player_potions)
@@ -2455,6 +2468,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         # Turn-start relics (AfterSideTurnStart/BeforeSideTurnStart/AfterBlockCleared for the
         # upcoming turn). new_turn is the turn number the player is about to begin.
         new_turn, extra_energy, extra_draw, extra_block, enemies = combat.turn + 1, 0, 0, 0, list(combat.enemies)
+        if combat.paels_legion_cooldown > 0:
+            combat = replace(combat, paels_legion_cooldown=combat.paels_legion_cooldown - 1)
         # The turn-start self-damage below belongs to the new turn (Spite.LostHpThisTurn counts it),
         # so clear the per-turn HP-loss flag first, and hand the cleaned powers to combat so the
         # self-damage helpers do not bring back what the turn end just removed.

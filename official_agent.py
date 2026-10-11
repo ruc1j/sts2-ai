@@ -3129,6 +3129,28 @@ def _map_rollout_card_action(
     return selected
 
 
+def _paels_legion_cooldown(observation: dict) -> int:
+    """Pael's Legion's cooldown is not exported, but its doubling shows in the hand's Block preview."""
+    player = observation.get("player") or {}
+    if "RELIC.PAELS_LEGION" not in (player.get("relics") or ()):
+        return 0
+    powers = {power.get("id"): _number(power.get("amount")) for power in player.get("powers") or ()}
+    if powers.get("POWER.UNMOVABLE_POWER"):
+        return 1
+    dexterity = powers.get("POWER.DEXTERITY_POWER", 0)
+    frail = 0.75 if powers.get("POWER.FRAIL_POWER") else 1.0
+    for card in observation.get("hand") or ():
+        for variable in (card.get("vars") or ()) if isinstance(card, dict) else ():
+            if variable.get("id") != "Block" or variable.get("base_value") is None:
+                continue
+            plain = (_number(variable.get("base_value")) + dexterity) * frail
+            if plain > 0:
+                # Doubled preview: ready now. Plain preview: still cooling down (1 or 2 turns left;
+                # 1 is the guess that lets the rollout count on it sooner).
+                return 0 if _number(variable.get("value")) >= plain * 1.5 else 1
+    return 1
+
+
 def _grown_damage(observation: dict, card_id: str) -> int:
     name = CARD_NAMES[card_id]
     grown = [
@@ -3262,6 +3284,7 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         lost_hp_this_turn=_TURN_HP["lost"],
         vambrace_used=_COMBAT_CARD_BLOCK["played"],
         block_cards_this_turn=_COMBAT_CARD_BLOCK["this_turn"],
+        paels_legion_cooldown=_paels_legion_cooldown(observation),
         # Maul and Thrash grow their own Damage BaseValue for the rest of the run; the hand copy's
         # base_value carries that growth without Strength or other modifiers folded in (v8
         # 88141BFEC3 seq279: Thrash base_value 16, the game hit for 2 x (16 + 5 Strength)).

@@ -3162,6 +3162,19 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (STRIKE,), (), (), (enemy,), player_relics=("RELIC.DAUGHTER_OF_THE_WIND",), player_powers=(("DexterityPower", 2),))
         self.assertEqual(step(combat, f"{STRIKE}@0", {}, random.Random(0)).player_block, 1)
 
+    def test_paels_legion_doubles_card_block_then_cools_down_two_turns(self) -> None:
+        # PaelsLegion.ModifyBlockMultiplicative (x2 at cooldown 0, then Turns = 2, counted down at the
+        # player's turn start). v9 6F6F2E036C seq254: a Taunt showed and gave 14.
+        enemy = Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ())
+        combat = Combat(80, (DEFEND, DEFEND), (DEFEND,) * 10, (), (enemy,), player_relics=("RELIC.PAELS_LEGION",))
+        first = step(combat, f"{DEFEND}", {}, random.Random(0))
+        self.assertEqual((first.player_block, first.paels_legion_cooldown), (10, 2))
+        second = step(first, f"{DEFEND}", {}, random.Random(0))
+        self.assertEqual(second.player_block, 15)
+        next_turn = step(second, END_TURN, DUMMY_DATA, random.Random(0))
+        self.assertEqual(next_turn.paels_legion_cooldown, 1)
+        self.assertEqual(step(next_turn, END_TURN, DUMMY_DATA, random.Random(0)).paels_legion_cooldown, 0)
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))
