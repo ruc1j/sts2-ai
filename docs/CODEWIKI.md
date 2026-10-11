@@ -448,6 +448,7 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 | random20 | `dc18fe4`単独、ランダムseed 20本(比較なし) | Act 3踏破0/20、Act 2突破4/20、Act 1突破20/20。死亡はTHE_INSATIABLE 11(到達15で4勝、勝ちは全て満タン入場、入場60未満0勝6敗)、QUEEN 3。詳細は[RANDOM20_20261012](RANDOM20_20261012.md)、対策案は[ACT2_BOSS_PLAN_20261012](ACT2_BOSS_PLAN_20261012.md) |
 | v11 | 案A(Act 2通常戦の残りHP重み0.02)対`dc18fe4`、開発用20 seed | 開発用で悪化: Act 2突破3対4、到達点 改善2・悪化7・同値11。確認用は未実施で案Aは`efa7f63`で取り消し。詳細は[ACT2_EVAL_V11_20261012](ACT2_EVAL_V11_20261012.md) |
 | v12 | 直行規則の停止・砂脱出の後回し・イベント点数(`efa7f63`)対`dc18fe4`、開発用20+確認用10 seed | 到達度改善として採用(踏破率は未確認): Act 3 0対0、Act 2突破 開発用7対4・確認用2対1、到達点 改善11・悪化6・同値13。詳細は[ACT2_EVAL_V12_20261012](ACT2_EVAL_V12_20261012.md) |
+| v13 | 現在のmain(`8af98a6`)対`dc18fe4`、未使用12 seed | この集合では悪化(1 seed分): Act 3 0対0、Act 2 2対2、Act 1 9対10、到達点 改善2・悪化3・同値7。v12確認用と割れたのでv14で追加確認。詳細は[ACT2_EVAL_V13_20261012](ACT2_EVAL_V13_20261012.md) |
 
 あわせてゲーム再現の正しさの修正2件(Perfected StrikeがUltimate StrikeをStrikeとして数える、強化Ashen Strikeの上乗せ)を入れた。
 v2〜v5の監査でモデルとゲームの一致は99.8%、残った不一致はこの2件でほぼ説明できた。
