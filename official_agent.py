@@ -762,8 +762,6 @@ SHOP_POTION_SCORES = {
     "POTION.LUCKY_TONIC": 7, "POTION.POTION_OF_BINDING": 7,
 }
 SHOP_POTION_MIN_SCORE = 7
-# Gold kept back when spending surplus on an unscored shop relic (a later card removal costs 75-125).
-SURPLUS_GOLD_RESERVE = 150
 
 # The bridge reports boss slots directly. Keep the HP fallback for older unit fixtures that omit
 # both slot and id, but do not mistake a high-HP regular (e.g. Louse Progenitor) for a boss.
@@ -2463,25 +2461,6 @@ def choose_shop(observation: dict) -> dict:
         return best_relic
     if best_card and card_key(best_card)[0] == 2:
         return best_card
-    # Gold is worth nothing once the run ends, and a shop relic is a plus even when the combat
-    # model knows nothing about it (unscored relics score -1 above, so they were never bought).
-    # With a comfortable reserve left for later removals, take one instead of walking out rich:
-    # D6 skipped Pantograph (heals at boss start) holding 598 gold and then died to the Queen.
-    gold = _number(observation.get("gold", (observation.get("player") or {}).get("gold")), 0)
-    relic_costs = {
-        relic.get("index"): _number(relic.get("cost"), 0)
-        for relic in observation.get("relics", ())
-        if isinstance(relic, dict)
-    }
-    spare_relics = [
-        action for action in relics
-        if 0 < relic_costs.get(action.get("relic_index", action.get("index")), 0) <= gold - SURPLUS_GOLD_RESERVE
-    ]
-    if spare_relics:
-        return max(spare_relics, key=lambda action: (
-            _shop_relic_score(action.get("relic_id") or action.get("id"), axis),
-            -relic_costs[action.get("relic_index", action.get("index"))],
-        ))
     return next((action for action in actions if action.get("type") == "skip"), actions[0] if actions else {"type": "skip"})
 
 

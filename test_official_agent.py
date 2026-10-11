@@ -1212,22 +1212,6 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertNotEqual(action.get("decision_source"), "lethal_direct")
         self.assertNotIn(action.get("target_id"), {6, 3})
 
-    def test_shop_spends_surplus_gold_on_unscored_relic(self) -> None:
-        # D6 v2 seq343: skipped Pantograph and Gambling Chip holding 598 gold, then died to the Queen.
-        observation = {
-            "gold": 598,
-            "relics": [{"index": 0, "id": "RELIC.GAMBLING_CHIP", "cost": 255}, {"index": 1, "id": "RELIC.PANTOGRAPH", "cost": 196}],
-            "legal_actions": [
-                {"type": "buy_relic", "index": 0, "relic_index": 0, "relic_id": "RELIC.GAMBLING_CHIP"},
-                {"type": "buy_relic", "index": 1, "relic_index": 1, "relic_id": "RELIC.PANTOGRAPH"},
-                {"type": "skip"},
-            ],
-        }
-        self.assertEqual(choose_shop(observation).get("relic_id"), "RELIC.PANTOGRAPH")
-        # Without the reserve left over afterwards, the gold is kept.
-        observation["gold"] = 300
-        self.assertEqual(choose_shop(observation)["type"], "skip")
-
     def test_finishes_last_primary_even_while_minions_swing(self) -> None:
         # D0E3 v3 seq254: at 8 HP, Bash + Strike (8 + 6*1.5 = 17) kills a 17 HP Ovicopter and ends
         # the fight, but three attacking hatchlings made it "one of several threats", so the
