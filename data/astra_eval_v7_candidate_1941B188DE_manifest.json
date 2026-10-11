@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v7",
+  "run_index": 8,
+  "arm": "candidate",
+  "seed": "1941B188DE",
+  "source_commit": "ba4a05f23789b13bf95bc51cee3e09b20d730e22",
+  "sha256": {
+    "official_agent.py": "9f5642d1356169ecaaeeca51ac5b7ba1d9fd36779c940c5235c142ae4b317eca",
+    "combat.py": "c54273e2bbf37fe77b74ce4794021626508e2e3937a6bc13d526dad34d8ca46c",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "91dcda38f8fdde8e13c71b1fe4370715e9ea8bb756a99225d4b38dc3ca226a10",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791690229.0090702,
+  "finished": 1791690685.7313159,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "incomplete",
+    "act_3_complete": null,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      3
+    ],
+    "combat_wins": 17,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 419,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 76
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v7_candidate_1941B188DE_stdout.log": "007a465a6535b456eff400ba07944d35b61deecc236d94110c17a6315d3ca379",
+    "astra_eval_v7_candidate_1941B188DE_mod.log": "65552262521a8105ed8013fad4f76e2a46feda221abd3fe49e6f11c154dbe667",
+    "astra_eval_v7_candidate_1941B188DE_map_ACT.HIVE.json": "098b916bf0ef13998297235976eb1a900a05fe1a53be7b343814aa0a4b5343e2",
+    "astra_eval_v7_candidate_1941B188DE_map.json": "cf37394d7a1df8d448e45147a05fcf93f3d5d584660a1ec3d9daba089e602d63",
+    "astra_eval_v7_candidate_1941B188DE_map_ACT.GLORY.json": "f280ae751f4fb0956db4115f112e2c538666f7bccb74f3cefe09bc2c75ddf7bc",
+    "astra_eval_v7_candidate_1941B188DE_agent.jsonl": "7ed0537d76f5953aedabec4a68c6e32987aa8a0a13f4eac648b1b29625da25c2"
+  }
+}
