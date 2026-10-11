@@ -1936,6 +1936,14 @@ class CombatTest(unittest.TestCase):
         combat = Combat(80, (perfected,), (pommel,), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),), energy=3)
         self.assertEqual(step(combat, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 90)
 
+    def test_perfected_strike_counts_ultimate_strike_as_a_strike(self) -> None:
+        # C510 v5 seq209: Perfected Strike showed 33 with Ultimate Strike as one of eight Strikes, while
+        # the model counted seven and predicted 30.  6 base + 2 per Strike (two cards here) = 10.
+        perfected = Card(PERFECTED_STRIKE, False)
+        ultimate = Card(ULTIMATE_STRIKE, False)
+        combat = Combat(80, (perfected,), (ultimate,), (), (Enemy("MONSTER.DUMMY", 100, "IDLE_MOVE", ()),), energy=3)
+        self.assertEqual(step(combat, "card:0@0", DUMMY_DATA, random.Random(0)).enemies[0].hp, 90)
+
     def test_thorns_reflection_is_absorbed_by_block(self) -> None:
         # ThornsPower.BeforeDamageReceived fires before the attack's own DamageCmd, so block is still
         # standing (Unpowered is not Unblockable).  Observed on EAIF2UUVCK seq 294: block 7 absorbed a

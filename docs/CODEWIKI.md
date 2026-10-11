@@ -9647,3 +9647,9 @@ goldguard panel の結論も確定した。使用可能な4 seed で57勝、cont
 ## 記録品質の教訓（round 130-135 の文章について）
 
 round 130〜135 の報告文と CODEWIKI 追記で、チェック記号の無限連鎖、分かち書きの分断、同じ主張の複製が起きた。測定値とコミット内容には影響がない。上記4 entry を測定値を保ったまま書き直して上書きした。以後の記録は1文1要点で書き、記号を並べて状態を語らない。
+
+**Perfected StrikeはUltimate StrikeもStrikeとして数える(2026-10-11)。** v5候補13 runの監査(一致率99.8%、不一致8)のうち4件がC510のPerfected Strikeで、
+モデルの与ダメが毎回3少なかった。seq209の表示は33で、Ultimate Strikeを含む8枚のStrikeなら6+3×8+Strength 3=33になる。
+`combat.STRIKE_TAGGED`にULTIMATE_STRIKEがなく7枚と数えていた。追加後、C510の監査で該当4件が一致した。ゲーム再現の正しさの修正。
+残る不一致はD0E3のStrikeに付いた`ENCHANTMENT.VIGOROUS`(表示14・素の値6、モデル未対応)などで、件数は少ない。
+

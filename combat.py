@@ -251,7 +251,9 @@ EXHAUSTS = {METAMORPHOSIS, RELAX, TREMBLE, FEED, DOMINATE, NOT_YET, OFFERING, MA
 # CanonicalTags per decompiled card (v0.107.1): Pommel Strike is tagged Strike too, so Perfected
 # Strike counts it.  Panel replay over the Perfected Strike decisions resolved 27 of 31 mismatches
 # once Pommel Strike was included (the remaining 4 have other causes).
-STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE, POMMEL_STRIKE}
+# Ultimate Strike carries the Strike tag too: C510 v5 showed Perfected Strike at 6 + 3*8 + 3 Strength
+# = 33 with Ultimate Strike as the eighth Strike, while the model counted 7 and predicted 30.
+STRIKE_TAGGED = {STRIKE, TWIN_STRIKE, PERFECTED_STRIKE, ASHEN_STRIKE, SETUP_STRIKE, POMMEL_STRIKE, ULTIMATE_STRIKE}
 
 # Relics with an automatic in-combat effect the search() rollout needs to see to project future
 # turns correctly (verified against each relic's decompiled OnPlay-equivalent hook body). Relics
