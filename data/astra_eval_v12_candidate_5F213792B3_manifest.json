@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 14,
+  "arm": "candidate",
+  "seed": "5F213792B3",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791746623.8539572,
+  "finished": 1791746998.028026,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 16,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 459,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_5F213792B3_mod.log": "f9d413379e762b6381957b2ef8f2e1c259925fd7e34c0514cc17d94a2320c474",
+    "astra_eval_v12_candidate_5F213792B3_map.json": "64009cd05c7c040879748a993221aa716604aeae027f6954473d37dce1cf79ef",
+    "astra_eval_v12_candidate_5F213792B3_map_ACT.HIVE.json": "43d022b380c6d466847399244e15c789d5edf8ed88f3acb86b2622f9e05d0dda",
+    "astra_eval_v12_candidate_5F213792B3_agent.jsonl": "28aa4598ae7a85e9ab96911d266ff4a700203a94e667652eff7835a4749d0212",
+    "astra_eval_v12_candidate_5F213792B3_stdout.log": "1efbe58991452f1bb1c3b255aa60f0f47075393ef64c3f83c96ab8f32b04c9cb",
+    "astra_eval_v12_candidate_5F213792B3_map_ACT.GLORY.json": "c14be7f57356c00df068d4d28bb0e7cc15a617c55501f8908dbaad6c6821f2a7"
+  }
+}
