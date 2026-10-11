@@ -3829,7 +3829,7 @@ def _greedy_action(combat: Combat, data: dict) -> str:
     return best if best is not None else END_TURN
 
 
-def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0, hp_weight: float = 0.01) -> list[tuple[str, float]]:
+def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0) -> list[tuple[str, float]]:
     results = []
     for action in legal_actions(combat):
         scores = []
@@ -3883,7 +3883,7 @@ def search(combat: Combat, data: dict, simulations: int = 5000, seed: int = 0, h
                 scored_hp = min(state.player_max_hp, scored_hp + 12)
             scores.append(
                 (1 if won else -1 if state.player_hp <= 0 else 0)
-                + scored_hp * hp_weight + immediate - (0.01 if self_killed else 0.0)
+                + scored_hp / 100 + immediate - (0.01 if self_killed else 0.0)
             )
         results.append((action, sum(scores) / len(scores)))
     if not results:
