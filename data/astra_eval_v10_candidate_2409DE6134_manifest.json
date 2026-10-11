@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v10",
+  "run_index": 8,
+  "arm": "candidate",
+  "seed": "2409DE6134",
+  "source_commit": "78c8e59a75d007332a886d4b5d39d2e4657c1221",
+  "sha256": {
+    "official_agent.py": "7848163db383898a473cff2f3c5f6c9476bc580af746677a30cb7d7fda72f7ea",
+    "combat.py": "584b3b2d81bc00cf6ccc0cb18ba970f5bb1da3bd613ce2e2f8780501548fa2e0",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "3a32000ebaf8d7174d8dd3e59805e34be1a1f1c183d3c222c9679caa604d2190",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791720515.6227431,
+  "finished": 1791720826.987404,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 14,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 387,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v10_candidate_2409DE6134_agent.jsonl": "ea63e397c3a83318ab4d0190ca974d5483eab0abf312eb566b0b1c892721dc35",
+    "astra_eval_v10_candidate_2409DE6134_mod.log": "ce6d6ebc6bad6a96e004b1282d7e8f28a01fe83392a174bb46e3acd1e3ee8cc4",
+    "astra_eval_v10_candidate_2409DE6134_map_ACT.HIVE.json": "4db9f895fb0f641f8b6825befca669d54447b8de16d4b93a36c8a3aea77c2dc2",
+    "astra_eval_v10_candidate_2409DE6134_map_ACT.GLORY.json": "45ab2f2e0e02f9f63ed49560578a48b14faaab9d71dcf29e03a94e2f64565dc2",
+    "astra_eval_v10_candidate_2409DE6134_stdout.log": "fe625dd632eaba5505647e53aebe7bc1b1274c6b7bb92e24186689aa348e4023",
+    "astra_eval_v10_candidate_2409DE6134_map.json": "70982d28829e2f267c139e11ede1c6d03e355617a94d1ec4c1c1b611b9e29059"
+  }
+}
