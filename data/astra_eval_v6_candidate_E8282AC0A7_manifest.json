@@ -1,0 +1,48 @@
+{
+  "panel": "astra_eval_v6",
+  "run_index": 19,
+  "arm": "candidate",
+  "seed": "E8282AC0A7",
+  "source_commit": "c6b68916c0c76b5a48ace1d362d743f74ed5484d",
+  "sha256": {
+    "official_agent.py": "9f5642d1356169ecaaeeca51ac5b7ba1d9fd36779c940c5235c142ae4b317eca",
+    "combat.py": "b5b7842816dac60c28b332728b9ef9db913725b3d21370406ce4226fdfca4cfc",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "17fa172fb92365cc366474905170ba277c10ad8a25c96b3c0d22279661465b09",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791687890.626272,
+  "finished": 1791688220.264235,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 420,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 54
+    },
+    "final_hp": 54
+  },
+  "artifacts_sha256": {
+    "astra_eval_v6_candidate_E8282AC0A7_agent.jsonl": "d6e930eaa52695dc1abcffd0efc6e34014f5d76ddf50e89b31f714d917635724",
+    "astra_eval_v6_candidate_E8282AC0A7_map.json": "1b0b14b3251577281882defd3053efdb91bb6c18a6e7058650ef36f2ea59595c",
+    "astra_eval_v6_candidate_E8282AC0A7_map_ACT.GLORY.json": "b848ba468ae857564d0e90b27275286e72d864a99c175d3761872e077b0ffd2a",
+    "astra_eval_v6_candidate_E8282AC0A7_stdout.log": "515b31b7362934737664b8bffc208a59f7e2ed989f1739ecb506b44369f7ae89",
+    "astra_eval_v6_candidate_E8282AC0A7_result.json": "3ce1203260cedcbe2b4be2b43418fdbb0c0d69067216dc94be9a545a7cbb0491",
+    "astra_eval_v6_candidate_E8282AC0A7_mod.log": "5e9d3c7346e14412d5c162d23b30f08af43a2672b0dfb0bf5e854ca720460006",
+    "astra_eval_v6_candidate_E8282AC0A7_map_ACT.HIVE.json": "b276dd6a833c5993e0a969ef03d5ff9abeb37ae2e57ba1fb61fee3c908713cbc"
+  }
+}
