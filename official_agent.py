@@ -900,6 +900,11 @@ EVENT_OPTION_SCORES = {
     # Amalgamator trades two Strikes for Ultimate Strike (or two Defends for Ultimate Defend).
     "AMALGAMATOR": {"COMBINE_STRIKES": 100, "COMBINE_DEFENDS": 50},
     "DENSE_VEGETATION": {},  # scored below from current HP
+    # WhisperingHollow GOLD pays 35 gold; HUG transforms a card and costs 9 HP.
+    "WHISPERING_HOLLOW": {"GOLD": 100},
+    # FieldOfManSizedHoles RESIST removes two cards but adds Normality (3 plays a turn cap);
+    # ENTER_YOUR_HOLE only enchants a card with Perfect Fit.
+    "FIELD_OF_MAN_SIZED_HOLES": {"ENTER_YOUR_HOLE": 100},
 }
 
 

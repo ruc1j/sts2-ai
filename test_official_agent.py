@@ -6570,6 +6570,8 @@ class RandomEventOptionTest(unittest.TestCase):
         self.assertEqual(self._picked("COLOSSAL_FLOWER", ["EXTRACT_CURRENT_PRIZE_1", "REACH_DEEPER_1"]), "EXTRACT_CURRENT_PRIZE_1")
         self.assertEqual(self._picked("SPIRIT_GRAFTER", ["LET_IT_IN", "REJECTION"]), "LET_IT_IN")
         self.assertEqual(self._picked("DOLL_ROOM", ["RANDOM", "TAKE_SOME_TIME", "EXAMINE"]), "RANDOM")
+        self.assertEqual(self._picked("WHISPERING_HOLLOW", ["GOLD", "HUG"]), "GOLD")
+        self.assertEqual(self._picked("FIELD_OF_MAN_SIZED_HOLES", ["RESIST", "ENTER_YOUR_HOLE"]), "ENTER_YOUR_HOLE")
 
     def test_dense_vegetation_rests_only_when_hurt(self) -> None:
         self.assertEqual(self._picked("DENSE_VEGETATION", ["TRUDGE_ON", "REST"], hp=40), "REST")
