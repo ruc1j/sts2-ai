@@ -12,7 +12,7 @@ from itertools import combinations
 
 from combat import (
     ALL_ENEMY_DAMAGE, ATTACKS, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
-    POWERS, SKILLS, ENCHANTMENT_VIGOROUS, ONE_SHOT_ENCHANTMENTS,
+    POWERS, SKILLS, ENCHANTMENT_VIGOROUS, ONE_SHOT_ENCHANTMENTS, CARD_DAMAGE, CARD_UPGRADE_DAMAGE,
     BURNING_PACT, CINDER, FIEND_FIRE, THRASH,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
     POTION_STRENGTH, POTION_FAIRY_IN_A_BOTTLE, SELF_DAMAGE, STUNNED_MOVE, _effective_cost, _resolve_move, card_name, search,
@@ -3118,6 +3118,18 @@ def _map_rollout_card_action(
     return selected
 
 
+def _grown_damage(observation: dict, card_id: str) -> int:
+    name = CARD_NAMES[card_id]
+    grown = [
+        _number(variable.get("base_value")) - CARD_DAMAGE[name] - (CARD_UPGRADE_DAMAGE[name] if _number(card.get("upgrade")) > 0 else 0)
+        for card in observation.get("hand") or ()
+        if isinstance(card, dict) and card.get("id") == card_id
+        for variable in card.get("vars") or ()
+        if variable.get("id") == "Damage" and variable.get("base_value") is not None
+    ]
+    return max(0, max(grown, default=0))
+
+
 def rollout_choice(observation: dict, actions: list[dict], data: dict, simulations: int) -> dict:
     specs = {monster["id"]: monster for monster in data["monsters"]}
     enemies = []
@@ -3237,6 +3249,11 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
         ),
         upgraded_cards=upgraded_cards,
         lost_hp_this_turn=_TURN_HP["lost"],
+        # Maul and Thrash grow their own Damage BaseValue for the rest of the run; the hand copy's
+        # base_value carries that growth without Strength or other modifiers folded in (v8
+        # 88141BFEC3 seq279: Thrash base_value 16, the game hit for 2 x (16 + 5 Strength)).
+        maul_bonus=_grown_damage(observation, "CARD.MAUL"),
+        thrash_bonus=_grown_damage(observation, "CARD.THRASH"),
         # ponytail: the bridge exposes the Toric power's remaining uses but not the block it
         # stored, so assume the unupgraded 5. Under-counting block is the safe direction; expose
         # the power's Block var from CombatBridge if this turns out to matter.

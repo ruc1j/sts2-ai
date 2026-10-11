@@ -119,6 +119,31 @@ class OfficialAgentTest(unittest.TestCase):
         rollout_state(observation(3, 2, False))
         self.assertEqual(rollout_state(observation(4, 1, True)).hand[0].enchantment, "ENCHANTMENT.VIGOROUS")
 
+    def test_rollout_imports_thrash_growth_from_its_base_value(self) -> None:
+        # Thrash.OnPlay adds the exhausted attack's damage to its own Damage BaseValue for the rest of
+        # the run. v8 88141BFEC3 seq279: base_value 16 with Strength 5 hit 2 x 21 = 42.
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1,
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3,
+                       "powers": [{"id": "POWER.STRENGTH_POWER", "amount": 5}]},
+            "hand": [{"index": 0, "id": "CARD.THRASH", "cost": 1, "type": "Attack", "upgrade": 0,
+                      "vars": [{"id": "Damage", "value": 21, "base_value": 16}]}],
+            "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{"id": "MONSTER.DUMMY", "hp": 168, "block": 0, "powers": [],
+                         "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+            "legal_actions": [{"type": "card", "card_id": "CARD.THRASH", "hand_index": 0, "target_id": 1},
+                              {"type": "end_turn"}],
+        }
+        official_agent._reset_play_counters()
+        with patch("official_agent.search", return_value=[(END_TURN, 0.0)]) as searched:
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        state = searched.call_args.args[0]
+        self.assertEqual(state.thrash_bonus, 12)
+        self.assertEqual(step(state, "card:0@0", data, random.Random(0)).enemies[0].hp, 126)
+
     def test_rollout_imports_saved_relic_counters_separately_from_combat_plays(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
             "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
