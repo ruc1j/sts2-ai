@@ -100,7 +100,7 @@ regenerating JSON and teaching `_enemy_turn` a command — not writing an enemy 
 ## Working in this repo
 
 - 評価・採否は [docs/EVALUATION.md](docs/EVALUATION.md) に従う。CODEWIKIや引き継ぎの旧基準より優先する。
-- **Read `docs/CODEWIKI.md` before touching policy.** Nearly every threshold in `official_agent.py`
+- **Read `docs/CODEWIKI.md` before touching policy** (its dated logs and Round 4-135 moved to `docs/codewiki/`; grep both). Nearly every threshold in `official_agent.py`
   (block-starvation 40%, Perfected Strike capped at 2, Shackling first vs. Fortifier only with block,
   fewest-combats map routing) is a recorded fix for a specific observed failure, with the run that
   caused it named. Changing a number without reading why it is that number re-opens a closed bug.
