@@ -3090,6 +3090,17 @@ class CombatTest(unittest.TestCase):
         )
         self.assertEqual(after.energy, 3)
 
+    def test_vigorous_adds_eight_to_the_first_play_only(self) -> None:
+        # Vigorous.EnchantDamageAdditive (+Amount, 8 from StoneOfAllTime) applies to powered attacks
+        # until AfterCardPlayed disables it (v8 221047D541 Hemokinesis: the game dealt 23, then 17).
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        strike = Card(STRIKE, enchantment="ENCHANTMENT.VIGOROUS")
+        after = step(Combat(80, (strike,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
+        self.assertEqual(after.enemies[0].hp, 86)
+        self.assertEqual(after.discard_pile[0].enchantment, None)
+        again = step(replace(after, hand=after.discard_pile, discard_pile=()), "card:0@0", {}, random.Random(0))
+        self.assertEqual(again.enemies[0].hp, 80)
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))

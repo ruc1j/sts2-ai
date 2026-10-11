@@ -85,6 +85,40 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertTrue(state.lost_hp_this_turn)
         self.assertEqual(step(state, "card:0@0", data, random.Random(0)).enemies[0].hp, 40)
 
+    def test_rollout_drops_vigorous_after_its_first_play_in_the_fight(self) -> None:
+        # The bridge keeps exporting ENCHANTMENT.VIGOROUS after the enchantment disabled itself, so
+        # the agent remembers the play; a new fight (turn 1 again) re-arms it.
+        data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
+            "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],
+        }]}]}
+        hemokinesis = {"id": "CARD.HEMOKINESIS", "cost": 1, "type": "Attack", "enchantment": "ENCHANTMENT.VIGOROUS"}
+
+        def observation(seq: int, turn: int, in_hand: bool) -> dict:
+            return {
+                "seq": seq, "phase": "combat", "turn": turn,
+                "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+                "hand": [dict(hemokinesis, index=0)] if in_hand else [],
+                "draw_pile": [], "discard_pile": [] if in_hand else [dict(hemokinesis)], "exhaust_pile": [],
+                "enemies": [{"id": "MONSTER.DUMMY", "hp": 50, "block": 0, "powers": [],
+                             "move": "IDLE_MOVE", "intents": [], "combat_id": 1, "slot": 0, "history": []}],
+                "legal_actions": [{"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 0, "target_id": 1},
+                                  {"type": "end_turn"}] if in_hand else [{"type": "end_turn"}],
+            }
+
+        def rollout_state(obs: dict):
+            official_agent._advance_play_counters(obs)
+            with patch("official_agent.search", return_value=[(END_TURN, 0.0)]) as searched:
+                rollout_choice(obs, obs["legal_actions"], data, 1)
+            return searched.call_args.args[0]
+
+        official_agent._reset_play_counters()
+        first = rollout_state(observation(1, 1, True))
+        self.assertEqual(first.hand[0].enchantment, "ENCHANTMENT.VIGOROUS")
+        official_agent._PENDING_ACTION = {"type": "card", "card_id": "CARD.HEMOKINESIS", "hand_index": 0}
+        self.assertIsNone(rollout_state(observation(2, 1, False)).discard_pile[0].enchantment)
+        rollout_state(observation(3, 2, False))
+        self.assertEqual(rollout_state(observation(4, 1, True)).hand[0].enchantment, "ENCHANTMENT.VIGOROUS")
+
     def test_rollout_imports_saved_relic_counters_separately_from_combat_plays(self) -> None:
         data = {"monsters": [{"id": "MONSTER.DUMMY", "values": {}, "states": [{
             "id": "IDLE_MOVE", "type": "MoveState", "next": "IDLE_MOVE", "intents": [],

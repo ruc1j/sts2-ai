@@ -12,7 +12,7 @@ from itertools import combinations
 
 from combat import (
     ALL_ENEMY_DAMAGE, ATTACKS, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
-    POWERS, SKILLS,
+    POWERS, SKILLS, ENCHANTMENT_VIGOROUS,
     BURNING_PACT, CINDER, FIEND_FIRE, THRASH,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
     POTION_STRENGTH, POTION_FAIRY_IN_A_BOTTLE, SELF_DAMAGE, STUNNED_MOVE, _effective_cost, _resolve_move, card_name, search,
@@ -425,6 +425,10 @@ _COMBAT_PLAYS: dict[str, int] = {"attacks": 0, "skills": 0, "cards": 0}
 # player's own turn-start self-damage (Crimson Mantle, Inferno) and in-turn HP loss do. The bridge does
 # not export it; "hp" is the last HP seen this turn and "lost" whether any of it was lost.
 _TURN_HP: dict = {"hp": None, "lost": False}
+# Vigorous is disabled after its first play in a combat, but the bridge keeps exporting the
+# enchantment id, so the agent remembers which card ids already spent it this combat.
+_COMBAT_VIGOROUS_SPENT: set = set()
+_LAST_COMBAT_HAND: dict = {}
 _COMBAT_ENEMY_IDS: frozenset = frozenset()
 # Set when the current observation carried the mod's exported play counts (unused today, kept so a run
 # can report which source priced it).
@@ -492,6 +496,7 @@ def _reset_play_counters() -> None:
     _TURN_OWN_PLAYS = collections.Counter()
     _TURN_EFFECT_DEPARTURES = collections.Counter()
     _TURN_HP.update(hp=None, lost=False)
+    _COMBAT_VIGOROUS_SPENT.clear()
 
 
 def _turn_start_self_damage(player: dict) -> int:
@@ -509,13 +514,20 @@ def _advance_play_counters(observation: dict) -> None:
     global _PENDING_ACTION, _LAST_PLAY_MOVES_OTHER_CARDS, _COMBAT_ENEMY_IDS, _TURN_PILE_START
     global _TURN_SEEN_HAND, _TURN_OWN_PLAYS, _TURN_EFFECT_DEPARTURES
     action, _PENDING_ACTION = _PENDING_ACTION, None
+    if action is not None and action.get("type") == "card":
+        played = _LAST_COMBAT_HAND.get(action.get("hand_index")) or {}
+        if played.get("enchantment") == ENCHANTMENT_VIGOROUS:
+            _COMBAT_VIGOROUS_SPENT.add(played.get("id"))
+    _LAST_COMBAT_HAND.clear()
     if observation.get("phase") != "combat":
         _reset_play_counters()
         return
+    _LAST_COMBAT_HAND.update({card.get("index"): card for card in observation.get("hand") or () if isinstance(card, dict)})
     enemy_ids = _enemy_instance_ids(observation)
     if _COMBAT_ENEMY_IDS and enemy_ids and not (_COMBAT_ENEMY_IDS & enemy_ids):
         # No enemy instance carried over: a different fight, so its combat-long counters restart.
         _COMBAT_PLAYS.update(attacks=0, skills=0, cards=0)
+        _COMBAT_VIGOROUS_SPENT.clear()
     if enemy_ids:
         _COMBAT_ENEMY_IDS = enemy_ids
     piles = _pile_contents(observation)
@@ -525,6 +537,10 @@ def _advance_play_counters(observation: dict) -> None:
         _TURN_SEEN_HAND = _hand_contents(observation)
         _TURN_OWN_PLAYS = collections.Counter()
         _TURN_EFFECT_DEPARTURES = collections.Counter()
+        if turn <= 1:
+            # A fight restarts at turn 1; enemy combat ids can repeat across fights, so this is the
+            # boundary that also holds when no non-combat observation came in between.
+            _COMBAT_VIGOROUS_SPENT.clear()
         _TURN_PLAYS.update(attacks=0, skills=0, cards=0, turn=turn)
         _TURN_HP.update(hp=None, lost=turn > 1 and _turn_start_self_damage(observation.get("player") or {}) > 0)
         if action is not None and action.get("type") == "card":
@@ -2976,7 +2992,7 @@ def _observation_card(value: object) -> str | Card:
         card_id = value.get("id", "")
         name = CARD_NAMES.get(card_id, card_id)
         enchantment = value.get("enchantment")
-        if not isinstance(enchantment, str):
+        if not isinstance(enchantment, str) or (enchantment == ENCHANTMENT_VIGOROUS and card_id in _COMBAT_VIGOROUS_SPENT):
             enchantment = None
         # Frantic Escape is the one card whose copies drift above their base cost during a combat
         # (EnergyCost.AddThisCombat), and the observation reports each copy's current cost.

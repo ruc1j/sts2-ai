@@ -71,6 +71,10 @@ POTION_SNECKO_OIL, POTION_STABLE_SERUM = "POTION.SNECKO_OIL", "POTION.STABLE_SER
 POTION_SHACKLING_POTION, POTION_CLARITY, POTION_RADIANT_TINCTURE = "POTION.SHACKLING_POTION", "POTION.CLARITY", "POTION.RADIANT_TINCTURE"
 ENCHANTMENT_TEZCATARAS_EMBER = "ENCHANTMENT.TEZCATARAS_EMBER"
 ENCHANTMENT_CORRUPTED = "ENCHANTMENT.CORRUPTED"
+# Vigorous.EnchantDamageAdditive adds Amount (8, StoneOfAllTime PushVigorousAmount) to the card's powered
+# attack until AfterCardPlayed disables it for the rest of the combat.
+ENCHANTMENT_VIGOROUS = "ENCHANTMENT.VIGOROUS"
+VIGOROUS_DAMAGE = 8
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
 # Toxic/Burn are injected straight to PileType.Hand (Myte, Mecha Knight); Infection is added to
@@ -2695,6 +2699,9 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     card_cost = 0 if card_is_free else _effective_cost(combat, played_value)
     if card_is_free:
         free_cards.remove(played_value)
+    vigorous = isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_VIGOROUS
+    if vigorous:
+        played_value = replace(played_value, enchantment=None)
     block_card_has_gain = card in BLOCK_CARDS or (card == MAD_SCIENCE and is_skill)
     if card == SECOND_WIND:
         block_card_has_gain = any(_card_type(value) != "Attack" for value in hand)
@@ -3220,6 +3227,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         return combat
     if card in ALL_ENEMY_DAMAGE or card == WHIRLWIND:
         damage = (whirlwind_damage if card == WHIRLWIND else ALL_ENEMY_DAMAGE[card]) + _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
+        if vigorous:
+            damage += VIGOROUS_DAMAGE
         combat, vigor = _spend_vigor(combat)
         damage += vigor
         if card_was_upgraded:
@@ -3392,6 +3401,8 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
         damage += CARD_UPGRADE_DAMAGE.get(card, 3)
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_TEZCATARAS_EMBER and is_attack:
         damage += 3
+    if vigorous and is_attack:
+        damage += VIGOROUS_DAMAGE
     if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_CORRUPTED and is_attack:
         damage = damage * 3 // 2
     damage += _power(combat.player_powers, "StrengthPower") + _power(combat.player_powers, "ReptileTrinketPower")
