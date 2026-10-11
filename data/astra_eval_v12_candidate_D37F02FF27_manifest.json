@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 31,
+  "arm": "candidate",
+  "seed": "D37F02FF27",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791750884.0465438,
+  "finished": 1791751332.466093,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 22,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 556,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_D37F02FF27_stdout.log": "2661a196c8cea60e528e08984fb793d87d2becdf891174a61ef90a4f72f33fc9",
+    "astra_eval_v12_candidate_D37F02FF27_mod.log": "3d65c6ddb5b83957ee8acf9a13e6f62ee7948cc89c2099c23b39b5b780fabf59",
+    "astra_eval_v12_candidate_D37F02FF27_map.json": "dcddd8cb8ef7a15e461e150d1267712f48668c6e420a36fd9af489acbe0642db",
+    "astra_eval_v12_candidate_D37F02FF27_map_ACT.GLORY.json": "ca7046bfe20ce6156e2320ec1ce5b99da257158c8b15f99e7d7e523c65adce04",
+    "astra_eval_v12_candidate_D37F02FF27_map_ACT.HIVE.json": "6b1e506e8b2a46371de091a8b425935f4ffb8f723be4b9261eca2bbcba9e1d8a",
+    "astra_eval_v12_candidate_D37F02FF27_agent.jsonl": "1384a0b2e189ce9320403ff3015a0ccb6efc8b469c3fc1e45478db91cacb9542"
+  }
+}
