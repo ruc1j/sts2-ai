@@ -3016,8 +3016,12 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     # RupturePower.AfterDamageReceived: any unblocked damage a card deals to the player during
     # their own turn (Hemokinesis/Bloodletting/Breakthrough/Offering's self-damage here) grants
     # Strength equal to the Rupture stack.
+    # The Strength from a card's own self-damage is only applied in AfterCardPlayed, so an attack
+    # like Hemokinesis hits without it (BD0D5921A6 seq359: game 22 into Vulnerable, model 24).
     rupture = _power(player_powers, "RupturePower")
-    if rupture and self_damage:
+    if rupture and self_damage and is_attack:
+        combat = replace(combat, pending_combo_powers=combat.pending_combo_powers + (("StrengthPower", rupture * plays),))
+    elif rupture and self_damage:
         player_powers = _add_power(player_powers, "StrengthPower", (rupture) * plays)
     if card == INFLAME:
         player_powers = _add_power(player_powers, "StrengthPower", (2) * plays)

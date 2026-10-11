@@ -3026,6 +3026,8 @@ class CombatTest(unittest.TestCase):
         self.assertEqual(_power(combat.player_powers, "RupturePower"), 1)
         combat = step(combat, f"{HEMOKINESIS}@0", {}, random.Random(0))
         self.assertEqual(_power(combat.player_powers, "StrengthPower"), 1)
+        # The Strength lands after the play, so Hemokinesis itself hits for its base 15.
+        self.assertEqual(combat.enemies[0].hp, 25)
 
     def test_enlightenment_caps_later_card_costs_at_one(self) -> None:
         enemy = Enemy("MONSTER.DUMMY", 40, "MOVE", ())
