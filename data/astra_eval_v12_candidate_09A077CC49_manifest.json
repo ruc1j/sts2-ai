@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 12,
+  "arm": "candidate",
+  "seed": "09A077CC49",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791746028.108973,
+  "finished": 1791746438.9248588,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 489,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_09A077CC49_map.json": "e6b63524277e16ba6c7e540512729637c3f892e62c668049ddb73a836b598836",
+    "astra_eval_v12_candidate_09A077CC49_mod.log": "ddc1c06d1601edb524855cabcab836133eb8a4b37940938bc8ee46fe35490c7f",
+    "astra_eval_v12_candidate_09A077CC49_map_ACT.GLORY.json": "f612233a1e4c94fe810d96e1aacbaa2828f0a62a4b1fdba6dbe4251765834480",
+    "astra_eval_v12_candidate_09A077CC49_stdout.log": "5a2b409a6a82e7b9272064803041baa015df9e9e19359fdab1d37cac137ac5bb",
+    "astra_eval_v12_candidate_09A077CC49_map_ACT.HIVE.json": "90d6d3ec334ba177169f72a767fbef27f1a53ef708e33c0a6982b3c78b768f03",
+    "astra_eval_v12_candidate_09A077CC49_agent.jsonl": "634f8e0a8b2f27194219fcb17746b412e2bb256630710347e68e20cdd0a92b54"
+  }
+}
