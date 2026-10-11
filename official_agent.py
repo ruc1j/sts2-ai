@@ -12,7 +12,7 @@ from itertools import combinations
 
 from combat import (
     ALL_ENEMY_DAMAGE, ATTACKS, BRILLIANT_SCARF_FREE_AFTER, CARD_COST, EXHAUSTS, PACTS_END_EXHAUST_REQUIRED, Card, Combat, Enemy, POTION_BLOCK, POTION_BLOOD, POTION_BRONZE, POTION_DEXTERITY, POTION_ENERGY,
-    POWERS, SKILLS, ENCHANTMENT_VIGOROUS,
+    POWERS, SKILLS, ENCHANTMENT_VIGOROUS, ONE_SHOT_ENCHANTMENTS,
     BURNING_PACT, CINDER, FIEND_FIRE, THRASH,
     POTION_EXPLOSIVE, POTION_FIRE, POTION_FLEX_POTION, POTION_FORTIFIER, POTION_FYSH, POTION_GIGANTIFICATION, POTION_HEART, POTION_CLARITY, POTION_CURE_ALL, POTION_POTION_OF_BINDING, POTION_RADIANT_TINCTURE, POTION_REGEN_POTION, POTION_SHAPED_ROCK, POTION_SHIP, POTION_SPEED_POTION, POTION_SWIFT_POTION, POTION_VULNERABLE_POTION, POTION_WEAK_POTION,
     POTION_STRENGTH, POTION_FAIRY_IN_A_BOTTLE, SELF_DAMAGE, STUNNED_MOVE, _effective_cost, _resolve_move, card_name, search,
@@ -516,8 +516,8 @@ def _advance_play_counters(observation: dict) -> None:
     action, _PENDING_ACTION = _PENDING_ACTION, None
     if action is not None and action.get("type") == "card":
         played = _LAST_COMBAT_HAND.get(action.get("hand_index")) or {}
-        if played.get("enchantment") == ENCHANTMENT_VIGOROUS:
-            _COMBAT_VIGOROUS_SPENT.add(played.get("id"))
+        if played.get("enchantment") in ONE_SHOT_ENCHANTMENTS:
+            _COMBAT_VIGOROUS_SPENT.add((played.get("id"), played.get("enchantment")))
     _LAST_COMBAT_HAND.clear()
     if observation.get("phase") != "combat":
         _reset_play_counters()
@@ -2992,7 +2992,7 @@ def _observation_card(value: object) -> str | Card:
         card_id = value.get("id", "")
         name = CARD_NAMES.get(card_id, card_id)
         enchantment = value.get("enchantment")
-        if not isinstance(enchantment, str) or (enchantment == ENCHANTMENT_VIGOROUS and card_id in _COMBAT_VIGOROUS_SPENT):
+        if not isinstance(enchantment, str) or (card_id, enchantment) in _COMBAT_VIGOROUS_SPENT:
             enchantment = None
         # Frantic Escape is the one card whose copies drift above their base cost during a combat
         # (EnergyCost.AddThisCombat), and the observation reports each copy's current cost.

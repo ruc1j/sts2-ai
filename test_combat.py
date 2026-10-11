@@ -3121,6 +3121,18 @@ class CombatTest(unittest.TestCase):
         hammer = step(Combat(80, (strike,), (), (), (enemy,), player_relics=("RELIC.GNARLED_HAMMER",)), "card:0@0", {}, random.Random(0))
         self.assertEqual(hammer.enemies[0].hp, 91)
 
+    def test_nimble_adds_two_block_and_sown_refunds_one_energy_once(self) -> None:
+        # Nimble.EnchantBlockAdditive (+2) and Sown.OnPlay (+1 energy, then disabled). Before this the
+        # model matched 0 of 181 recorded Nimble plays' block (v2-v8) and now matches 162; the rest
+        # are counter-driven relics the check did not replay.
+        enemy = Enemy("MONSTER.DUMMY", 100, "MOVE", ())
+        defend = Card(DEFEND, enchantment="ENCHANTMENT.NIMBLE")
+        after = step(Combat(80, (defend,), (), (), (enemy,), player_powers=(("DexterityPower", 1),)), "card:0", {}, random.Random(0))
+        self.assertEqual((after.player_block, after.energy), (8, 2))
+        strike = Card(STRIKE, enchantment="ENCHANTMENT.SOWN")
+        sown = step(Combat(80, (strike,), (), (), (enemy,)), "card:0@0", {}, random.Random(0))
+        self.assertEqual((sown.energy, sown.discard_pile[0].enchantment), (3, None))
+
     def test_breakthrough_hits_all_enemies_and_self_damages(self) -> None:
         enemies = (Enemy("MONSTER.DUMMY", 20, "MOVE", ()), Enemy("MONSTER.DUMMY", 30, "MOVE", ()))
         after = step(Combat(80, (BREAKTHROUGH,), (), (), enemies), f"{BREAKTHROUGH}@0", {}, random.Random(0))

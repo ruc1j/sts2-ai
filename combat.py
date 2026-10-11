@@ -78,6 +78,12 @@ VIGOROUS_DAMAGE = 8
 # Sharp.EnchantDamageAdditive adds Amount to every powered attack of the card. The bridge exports only
 # the id: SelfHelpBook's READ_THE_BACK enchants with 2 and Gnarled Hammer with 3 (SharpAmount).
 ENCHANTMENT_SHARP = "ENCHANTMENT.SHARP"
+# Nimble.EnchantBlockAdditive: +2 block (SelfHelpBook READ_PASSAGE and Fresnel Lens both use 2) on every
+# block the card grants. Sown.OnPlay: +1 energy on the card's first play in a combat, then disabled.
+ENCHANTMENT_NIMBLE = "ENCHANTMENT.NIMBLE"
+NIMBLE_BLOCK = 2
+ENCHANTMENT_SOWN = "ENCHANTMENT.SOWN"
+ONE_SHOT_ENCHANTMENTS = frozenset({ENCHANTMENT_VIGOROUS, ENCHANTMENT_SOWN})
 RELIC_GNARLED_HAMMER = "RELIC.GNARLED_HAMMER"
 # Status cards with CardModel.HasTurnEndInHandEffect: deal this much flat Unpowered damage if
 # the card is still in hand when the player ends their turn (see step()'s END_TURN handling).
@@ -406,6 +412,8 @@ class Combat:
     # Extra resolutions from Duplication, One-Two Punch and Throwing Axe stack additively.
     # Reset for every action so a later potion never inherits the previous card's play count.
     play_count: int = 1
+    # Block added to every powered grant of the card being played (Nimble); reset for every action.
+    card_block_bonus: int = 0
     # PanachePower's CardsLeft: 5 cards played after the Panache play deal its damage to every
     # hittable enemy, then reset. The play that applied the power does not count.
     panache_cards_this_turn: int = 0
@@ -1271,7 +1279,7 @@ def _grant_block(
         # DexterityPower.ModifyBlockAdditive is its only hook (StS2 Dexterity is a Block power, not a
         # damage one), and the -1 stacks TenderPower applies show up in the observation as Dexterity
         # already, so nothing is subtracted here on top of them.
-        base += _power(combat.player_powers, "DexterityPower")
+        base += _power(combat.player_powers, "DexterityPower") + combat.card_block_bonus
     block = base * 3 // 4 if apply_frail and _power(combat.player_powers, "FrailPower") else base
     plays = combat.play_count
     # Each resolution is its own grant, so the relic doublings apply to every resolution, not to the
@@ -2115,7 +2123,7 @@ def step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
 def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat:
     if action not in legal_actions(combat):
         raise ValueError(f"illegal action: {action}")
-    combat = replace(_sync_belt_buckle(_sync_red_skull(combat)), play_count=1)
+    combat = replace(_sync_belt_buckle(_sync_red_skull(combat)), play_count=1, card_block_bonus=0)
     if action.startswith("potion:"):
         potion, _, target = action.partition(":")[2].partition("@")
         potions = list(combat.player_potions)
@@ -2704,6 +2712,11 @@ def _step(combat: Combat, action: str, data: dict, rng: random.Random) -> Combat
     if card_is_free:
         free_cards.remove(played_value)
     vigorous = isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_VIGOROUS
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_NIMBLE:
+        combat = replace(combat, card_block_bonus=NIMBLE_BLOCK)
+    if isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_SOWN:
+        combat = replace(combat, energy=combat.energy + 1)
+        played_value = replace(played_value, enchantment=None)
     sharp = (3 if RELIC_GNARLED_HAMMER in combat.player_relics else 2) if (
         isinstance(played_value, Card) and played_value.enchantment == ENCHANTMENT_SHARP
     ) else 0
