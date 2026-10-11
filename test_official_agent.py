@@ -2254,6 +2254,35 @@ class OfficialAgentTest(unittest.TestCase):
         self.assertEqual(action["type"], "end_turn")
         self.assertNotEqual(action.get("card_id"), "CARD.PRIMAL_FORCE")
 
+    def test_duplicator_without_primal_force_keeps_the_rollout(self) -> None:
+        observation = {
+            "run": {"act": 98, "floor": 96, "room_type": "Boss"},
+            "turn": 2,
+            "legal_actions": [
+                {"type": "potion", "potion_id": "POTION.DUPLICATOR", "target_id": None},
+                {"type": "card", "card_id": "CARD.STRIKE_IRONCLAD", "hand_index": 0, "target_id": 104},
+                {"type": "card", "card_id": "CARD.STONE_ARMOR", "hand_index": 1, "target_id": None},
+                {"type": "end_turn"},
+            ],
+            "player": {"hp": 80, "max_hp": 80, "block": 0, "energy": 3, "powers": []},
+            "hand": [
+                {"index": 0, "id": "CARD.STRIKE_IRONCLAD", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 6}]},
+                {"index": 1, "id": "CARD.STONE_ARMOR", "type": "Power", "cost": 1, "vars": []},
+            ],
+            "enemies": [{
+                "combat_id": 104, "id": "MONSTER.DUMMY", "hp": 100, "block": 0, "powers": [],
+                "intents": [{"damage": 6, "repeats": 2}],
+            }],
+        }
+        rolled = {"type": "potion", "potion_id": "POTION.DUPLICATOR", "target_id": None}
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            self.assertEqual(choose(observation, enemy_data={"monsters": []}, simulations=100)["potion_id"], "POTION.DUPLICATOR")
+        observation["legal_actions"] = observation["legal_actions"][1:]
+        rolled = {"type": "card", "card_id": "CARD.STONE_ARMOR", "hand_index": 1, "target_id": None}
+        with patch("official_agent.rollout_choice", return_value=rolled):
+            action = choose(observation, enemy_data={"monsters": []}, simulations=100)
+        self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.STONE_ARMOR", "rollout_success"))
+
     def test_lethal_danger_can_use_another_potion_same_turn(self) -> None:
         observation = {
             "run": {"act": 98, "floor": 98},

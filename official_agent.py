@@ -996,6 +996,11 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         and potion_context == _LAST_POTION_CONTEXT
         and _LAST_POTION_ID == "POTION.DUPLICATOR"
     )
+    # Only a Primal Force actually in hand needs the rollout switched off; without one, the rest of
+    # the Duplicator turn was handed to the heuristic for nothing (v8 6729739567 seq117-118).
+    primal_force_after_duplicator = duplicator_primal_force_guard and any(
+        action.get("card_id") == "CARD.PRIMAL_FORCE" for action in cards
+    )
     if duplicator_primal_force_guard:
         # Duplicator replays PrimalForce.OnPlay; the replay tries to transform generated
         # Giant Rocks again and the engine crashes because those cards have no hand node.
@@ -1017,7 +1022,7 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         rollout_reason = "rollout_disabled_no_playable_card"
     else:
         rollout_reason = None
-    rollout_enabled = rollout_reason is None and not duplicator_primal_force_guard
+    rollout_enabled = rollout_reason is None and not primal_force_after_duplicator
 
     enemy_by_id = {
         enemy.get("combat_id"): enemy
