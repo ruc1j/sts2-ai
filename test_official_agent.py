@@ -6494,3 +6494,34 @@ class RestForgeTest(unittest.TestCase):
 
     def test_still_heals_when_hp_is_dangerous(self) -> None:
         self.assertEqual(self._rest(30), "HEAL")
+
+
+class SearchHpWeightTest(unittest.TestCase):
+    def test_act2_monster_rooms_weigh_leftover_hp_double(self) -> None:
+        weight = official_agent._search_hp_weight
+        self.assertEqual(weight({"run": {"act": 1, "floor": 9, "room_type": "Monster"}}), 0.02)
+        self.assertEqual(weight({"run": {"act": 1, "floor": 16, "room_type": "Boss"}}), 0.01)
+        self.assertEqual(weight({"run": {"act": 1, "floor": 8, "room_type": "Elite"}}), 0.01)
+        self.assertEqual(weight({"run": {"act": 0, "floor": 5, "room_type": "Monster"}}), 0.01)
+        self.assertEqual(weight({}), 0.01)
+
+    def test_rollout_choice_passes_the_weight_to_search(self) -> None:
+        seen = []
+
+        def fake_search(state, data, simulations, seed, **kwargs):
+            seen.append(kwargs.get("hp_weight", 0.01))
+            return [("End turn", 0.0)]
+
+        observation = {
+            "seq": 1, "phase": "combat", "turn": 1, "run": {"act": 1, "floor": 9, "room_type": "Monster"},
+            "player": {"hp": 50, "max_hp": 80, "block": 0, "energy": 3, "max_energy": 3, "powers": [], "relics": []},
+            "hand": [], "draw_pile": [], "discard_pile": [], "exhaust_pile": [],
+            "enemies": [{"combat_id": 1, "id": "MONSTER.NIBBIT", "slot": None, "history": [], "hp": 40, "max_hp": 40, "block": 0, "move": "BUTT_MOVE",
+                         "intents": [{"type": "Attack", "damage": 5, "repeats": 1}], "powers": []}],
+            "legal_actions": [{"type": "end_turn"}],
+        }
+        with open("data/enemies_overgrowth.json", encoding="utf-8-sig") as file:
+            data = json.load(file)
+        with patch.object(official_agent, "search", fake_search):
+            rollout_choice(observation, observation["legal_actions"], data, 1)
+        self.assertEqual(seen, [0.02])

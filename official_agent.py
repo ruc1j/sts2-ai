@@ -3164,6 +3164,22 @@ def _grown_damage(observation: dict, card_id: str) -> int:
     return max(0, max(grown, default=0))
 
 
+# Act 2 hallway fights are near-certain wins, so the search is really trading leftover HP against
+# the immediate move score. Runs that reached THE_INSATIABLE below 60 HP went 0-27 (99 boss fights
+# in data/astra_*); the losers had shed ~31 more HP across Act 2's ordinary fights (87.8 vs 57.0)
+# over the same number of fights. Replaying 42 Act 2 Monster entries through search with HP
+# weighted 0.02 instead of 0.01 kept 3.6 more HP per fight at the same win rate
+# (docs/ACT2_BOSS_PLAN_20261012.md, plan A).
+ACT2_HALLWAY_HP_WEIGHT = 0.02
+
+
+def _search_hp_weight(observation: dict) -> float:
+    run = observation.get("run")
+    if isinstance(run, dict) and _number(run.get("act"), -1) == 1 and run.get("room_type") == "Monster":
+        return ACT2_HALLWAY_HP_WEIGHT
+    return 0.01
+
+
 def rollout_choice(observation: dict, actions: list[dict], data: dict, simulations: int) -> dict:
     specs = {monster["id"]: monster for monster in data["monsters"]}
     enemies = []
@@ -3327,7 +3343,9 @@ def rollout_choice(observation: dict, actions: list[dict], data: dict, simulatio
             observed_free.append(modeled_hand[index])
     if observed_free:
         state = replace(state, hand=tuple(modeled_hand), free_cards=tuple(observed_free))
-    best, value = search(state, data, simulations, observation["seq"])[0]
+    hp_weight = _search_hp_weight(observation)
+    extra = {"hp_weight": hp_weight} if hp_weight != 0.01 else {}
+    best, value = search(state, data, simulations, observation["seq"], **extra)[0]
     if best == "End turn":
         selected = next(action for action in actions if action["type"] == "end_turn")
         return selected | {"simulations": simulations, "search_value": value}
