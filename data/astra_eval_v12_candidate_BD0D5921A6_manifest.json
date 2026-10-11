@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v12",
+  "run_index": 16,
+  "arm": "candidate",
+  "seed": "BD0D5921A6",
+  "source_commit": "efa7f637a0285294621587bc6df36abb81406580",
+  "sha256": {
+    "official_agent.py": "b0fec8ebd6378f2f5f2739ef73ad6ec3d59d32be059a39374a0e029d25a8fb3e",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "f28116c9cf7d29856daa9a404e15eef9b4c23a7d8b508e3abdc9bac624362765",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791747385.706851,
+  "finished": 1791747732.7342222,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 449,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v12_candidate_BD0D5921A6_mod.log": "7a787de15bb7246317d6bc08c70ae29c97d9dfadbd2245ea05f0d35fc3bc13b9",
+    "astra_eval_v12_candidate_BD0D5921A6_map.json": "39b5ef86dd4932e145c05b6abaa1b20849a70de599187f383208f3f13263cc74",
+    "astra_eval_v12_candidate_BD0D5921A6_stdout.log": "c204e2a6248f629f59e187c35f416896d082a6f0cf342902c757b988bea486df",
+    "astra_eval_v12_candidate_BD0D5921A6_agent.jsonl": "1c6b4a498fee7cf78535a830a9dc5f7f08cbb2028141c7a4909fff465be14e89",
+    "astra_eval_v12_candidate_BD0D5921A6_map_ACT.HIVE.json": "3879900db0226fd2a4a8105bd5b211d30bf230662dab75b7f4d302c1420a2acc",
+    "astra_eval_v12_candidate_BD0D5921A6_map_ACT.GLORY.json": "312a239a87556041a056a62b3dc6f207e2ac1c4547e4faada937391ba257f882"
+  }
+}
