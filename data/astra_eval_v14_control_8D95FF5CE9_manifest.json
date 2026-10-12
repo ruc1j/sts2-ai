@@ -1,0 +1,48 @@
+{
+  "panel": "astra_eval_v14",
+  "run_index": 14,
+  "arm": "control",
+  "seed": "8D95FF5CE9",
+  "source_commit": "dc18fe4b9046f5f2647653742eb30455a45380b1",
+  "sha256": {
+    "official_agent.py": "7848163db383898a473cff2f3c5f6c9476bc580af746677a30cb7d7fda72f7ea",
+    "combat.py": "584b3b2d81bc00cf6ccc0cb18ba970f5bb1da3bd613ce2e2f8780501548fa2e0",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "0c744805cfa0bba9aac27f4827f40e969b1fd9f898249ce1b554f494b03c89ba",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791763821.9766662,
+  "finished": 1791764201.576803,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 475,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 10
+    },
+    "final_hp": 10
+  },
+  "artifacts_sha256": {
+    "astra_eval_v14_control_8D95FF5CE9_result.json": "fb4b8557e0d99fa5b6dcf9352315a6e4398b66ba302a3a5a0de4577b98535e3c",
+    "astra_eval_v14_control_8D95FF5CE9_stdout.log": "201bf2168c993de378ba964234f42f92a36e9d4e40b473cf5bfcb3dae7495795",
+    "astra_eval_v14_control_8D95FF5CE9_agent.jsonl": "2ee56d7a462b3784290849485625f120c92f089fde526e6fa209ca1abbc99f06",
+    "astra_eval_v14_control_8D95FF5CE9_map_ACT.HIVE.json": "65a1829ca99f94b2a606a7f7d49039492709cf2092677055792d434f28ca34fb",
+    "astra_eval_v14_control_8D95FF5CE9_mod.log": "2c3f346d2abf7992eb7790d0c2a2ba3750823086f099f53735babf1191bf973e",
+    "astra_eval_v14_control_8D95FF5CE9_map.json": "002c493a85df0dde8e2160be0961ec0fdbc972343cff5b76326924501d44db2f",
+    "astra_eval_v14_control_8D95FF5CE9_map_ACT.GLORY.json": "670018b6a9c5df8c871cfe7fff9767010ceee1761222757c811a2e881228e6a2"
+  }
+}
