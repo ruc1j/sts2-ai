@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v21",
+  "run_index": 24,
+  "arm": "candidate",
+  "seed": "9E1E0E1D6A",
+  "source_commit": "777a573a50790688e280917964996cd15cac35dc",
+  "sha256": {
+    "official_agent.py": "d1e678d8c27929900f708e97d53019dbfaed1bbb007e13d2e922c2bcad1519c5",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "31eecdf0deeb19d25ac8a4cb131f2a61cacddf71e9c1e5ee23cdfbf3eb899610",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791829035.54786,
+  "finished": 1791829504.112999,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 20,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 566,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v21_candidate_9E1E0E1D6A_map_ACT.HIVE.json": "fda56d5d4a2e5c45d5500c02126ea96fd9ea8e198efd653ad33419ee29945a66",
+    "astra_eval_v21_candidate_9E1E0E1D6A_stdout.log": "19b6d61aea35cebe3d348c4f94789b3ff439696b0ffe8107fbfbfd2fa91bdd36",
+    "astra_eval_v21_candidate_9E1E0E1D6A_agent.jsonl": "969310397c2847fe1ddb88e08a30400b4eac88cf3daa1884e71363b704dc4ca6",
+    "astra_eval_v21_candidate_9E1E0E1D6A_map_ACT.GLORY.json": "035261d64a3bc085aae4530702fe2ee4be7097e8a4288fe6b3ec9b6faa303428",
+    "astra_eval_v21_candidate_9E1E0E1D6A_map.json": "d74515edddbd81ce21174d75954cda09a3d5ed85023c5bf0bccd4f6494d23cbf",
+    "astra_eval_v21_candidate_9E1E0E1D6A_mod.log": "4f5a4d4ec476aab24bbfda42fb09ff91d9919bf418e3e4477218e9d7f0d210e3"
+  }
+}
