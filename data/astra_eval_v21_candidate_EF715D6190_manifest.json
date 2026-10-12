@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v21",
+  "run_index": 29,
+  "arm": "candidate",
+  "seed": "EF715D6190",
+  "source_commit": "777a573a50790688e280917964996cd15cac35dc",
+  "sha256": {
+    "official_agent.py": "d1e678d8c27929900f708e97d53019dbfaed1bbb007e13d2e922c2bcad1519c5",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "31eecdf0deeb19d25ac8a4cb131f2a61cacddf71e9c1e5ee23cdfbf3eb899610",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791830706.54612,
+  "finished": 1791831075.623709,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 445,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v21_candidate_EF715D6190_stdout.log": "028f5b290b3d48cf2ce839c925cb503dd6699216720b18ac6aaa49d547803101",
+    "astra_eval_v21_candidate_EF715D6190_map.json": "410bb0128ac9881c1b20459d5ff66c3e17869d455d12e03d6fa7ea2099ae3886",
+    "astra_eval_v21_candidate_EF715D6190_map_ACT.HIVE.json": "ddf7d0232b900d80640abc3d95d0d54e8d77afa43a1f885dc19f132c319b64eb",
+    "astra_eval_v21_candidate_EF715D6190_map_ACT.GLORY.json": "448e7a56256359b1504a9d3e226d804ce7e36d3c7aaa61aaf913b99a87d58688",
+    "astra_eval_v21_candidate_EF715D6190_agent.jsonl": "bd4a82c85fc619772b09fe7d8c81db4154e4b94e60512b2d88604f575299c685",
+    "astra_eval_v21_candidate_EF715D6190_mod.log": "bbbbf8cb3a6df80ff10b64dc23e6cd86dff4df14d491087f244f93361deac822"
+  }
+}
