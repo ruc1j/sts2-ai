@@ -527,7 +527,7 @@ v2〜v7の117 runの死亡地点はTHE_INSATIABLE(Act 2ボス)が50件で最多�
 
 **倒れたときに持っていたポーション（2026-10-12）。** 負けた304戦のうち104戦はポーションを持ったまま倒れた。
 
-- 最多はFOUL_POTION（27件）。戦闘中は自分を含む全員に12ダメージを与える。ただしショップ内で使うと、商人に投げて100ゴールドもらえる（`FoulPotion.OnUse` の `MerchantRoom` 分岐）。ShopBridgeにはショップでポーションを使う操作が無かった。`eace30e` で `use_foul_potion` を追加し、`choose_shop` は買い物より先にこれを選ぶようにした。DLLの再ビルドが要る。
+- 最多はFOUL_POTION（27件）。戦闘中は自分を含む全員に12ダメージを与える。ただしショップ内で使うと、商人に投げて100ゴールドもらえる（`FoulPotion.OnUse` の `MerchantRoom` 分岐）。ShopBridgeにはショップでポーションを使う操作が無かった。`eace30e` で `use_foul_potion` を追加し、`choose_shop` は買い物より先にこれを選ぶようにした。DLLの再ビルドが要る。最初の版は、品物の画面を開いたままにしていたため発動しなかった（`FoulPotion.GetFoulPotionMerchantTarget` は `!inventory.IsOpen` を要求する）。`7177f39` で、投げる前に画面を閉じて後で開き直すようにした。実機確認: smoke2_foul FD7A9C8F5F seq167・168で2本を投げ、ゴールドが144→244→344に増え、その後ポーション・削除・カード2枚を買った。
 - 攻撃ポーション（Fire 20、Potion-Shaped Rock 15、Explosive Ampoule 10）で、最後の戦闘の最後のターンに、唯一の主敵（HP＋ブロック）を倒しきれた局面は0件だった。攻撃ポーションを抱えて死ぬことは、取りこぼしの証拠にならない。
 
 **ボス戦の勝敗の内訳（2026-10-12、全trace、seed＋入場HPで重複除去）。**
