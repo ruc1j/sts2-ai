@@ -2810,6 +2810,8 @@ DRAW_CARDS = {
 # Cards the agent would rarely play, so taking them only bloats the deck (e.g. Relax's 3-cost
 # block is too awkward for the greedy rollout to use consistently). Never pick these.
 UNPLAYABLE_REWARDS = {"CARD.RELAX"}
+# Strong blocks whose reward pick gets no shortage or boss-axis push (see choose_card_reward).
+UNPUSHED_BLOCK_REWARDS = {"CARD.SHRUG_IT_OFF"}
 # Keep tiered cards out of the deck until both the reward tier and combat model are registered.
 UNMODELED_REWARDS = set(CARD_TIERS) - set(CARD_NAMES)
 UNMODELED_CAP = 2
@@ -2955,7 +2957,16 @@ def choose_card_reward(observation: dict) -> dict:
         card_id = action["card_id"]
         return cards.get(card_id, {}).get("type") == "Attack" or card_id in ATTACK_REWARD_CARDS
 
+    # Shrug It Off keeps its tier but not the shortage / boss pushes. One more copy at the Act 2 boss
+    # entry (THE_INSATIABLE, 114 states, search playouts) moved the win rate by -2.0pt (SE 1.4),
+    # the same as one more Strike, and across 147 boss entries the runs holding it won 22.9pt less
+    # within the same entry-HP band. It was taken at 229 of 262 offers.
+    def reward_boss_bonus(card_id: str) -> int:
+        return 0 if card_id in UNPUSHED_BLOCK_REWARDS else _boss_card_bonus(observation, card_id)
+
     def strong_defense_bonus(card_id: str) -> int:
+        if card_id in UNPUSHED_BLOCK_REWARDS:
+            return 0
         if not (defense_needed and card_id in STRONG_BLOCK_CARDS):
             return 0
         tier = tier_score.get(CARD_TIERS.get(card_id, "D"), 0)
@@ -2970,7 +2981,7 @@ def choose_card_reward(observation: dict) -> dict:
     selected = max(actions, key=lambda action: (
         0 if over_high_cost_cap and is_high_cost(action["card_id"]) else 1,
         bool(core.get(action["card_id"])), core.get(action["card_id"], 0),
-        _boss_card_bonus(observation, action["card_id"]),
+        reward_boss_bonus(action["card_id"]),
         strong_defense_bonus(action["card_id"]),
         1 if draw_needed and action["card_id"] in DRAW_CARDS else 0,
         priority.get(action["card_id"], 0),
@@ -2983,7 +2994,7 @@ def choose_card_reward(observation: dict) -> dict:
     selected_tier = tier_score.get(CARD_TIERS.get(selected_id, "D"), 0)
     selected_supported = bool(
         core.get(selected_id)
-        or _boss_card_bonus(observation, selected_id)
+        or reward_boss_bonus(selected_id)
         or strong_defense_bonus(selected_id)
         or (draw_needed and selected_id in DRAW_CARDS)
         or (defense_needed and selected_id in DEFENSE_PRIORITY)

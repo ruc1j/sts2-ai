@@ -1916,15 +1916,15 @@ class OfficialAgentTest(unittest.TestCase):
             ]},
             "cards": [
                 {"id": "CARD.POMMEL_STRIKE", "rarity": "Rare", "cost": 1},
-                {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
+                {"id": "CARD.FLAME_BARRIER", "rarity": "Uncommon", "cost": 1},
             ],
             "legal_actions": [
                 {"type": "card_reward", "card_id": "CARD.POMMEL_STRIKE"},
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_overrides_attack_tier_when_large_deck_block_density_is_low(self) -> None:
         observation = {
@@ -1940,16 +1940,17 @@ class OfficialAgentTest(unittest.TestCase):
             "cards": [
                 {"id": "CARD.TAUNT", "rarity": "Uncommon", "cost": 1},
                 {"id": "CARD.POMMEL_STRIKE", "rarity": "Rare", "cost": 1},
-                {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
+                {"id": "CARD.FLAME_BARRIER", "rarity": "Uncommon", "cost": 1},
             ],
             "legal_actions": [
                 {"type": "card_reward", "card_id": "CARD.TAUNT"},
                 {"type": "card_reward", "card_id": "CARD.POMMEL_STRIKE"},
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        # Either strong block satisfies the override; the point is that Pommel Strike loses.
+        self.assertIn(choose_card_reward(observation)["card_id"], {"CARD.TAUNT", "CARD.FLAME_BARRIER"})
 
     def test_colossus_is_defense_priority_but_not_strong_block(self) -> None:
         # D6 fix: Colossus (5 block) should count as a defense pick, but stay out of
@@ -2091,26 +2092,39 @@ class OfficialAgentTest(unittest.TestCase):
             "run": {"boss_encounter_id": "ENCOUNTER.THE_INSATIABLE_BOSS"},
             "legal_actions": [
                 {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
+                {"type": "card_reward_alternative", "option_id": "Skip"},
+            ],
+        }
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
+
+    def test_reward_gives_shrug_it_off_no_shortage_or_boss_push(self) -> None:
+        # One more Shrug It Off at the Act 2 boss entry moved search-playout win rate by -2.0pt
+        # (same as a Strike); it keeps its tier but loses the shortage and boss-axis bonuses.
+        observation = {
+            "run": {"boss_encounter_id": "ENCOUNTER.THE_INSATIABLE_BOSS"},
+            "legal_actions": [
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
                 {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertNotEqual(choose_card_reward(observation).get("card_id"), "CARD.SHRUG_IT_OFF")
 
     def test_reward_uses_kin_boss_axis_for_strong_block(self) -> None:
         observation = {
             "run": {"boss_encounter_id": "ENCOUNTER.THE_KIN_BOSS"},
             "cards": [
                 {"id": "CARD.BLUDGEON", "rarity": "Rare", "cost": 3},
-                {"id": "CARD.SHRUG_IT_OFF", "rarity": "Uncommon", "cost": 1},
+                {"id": "CARD.FLAME_BARRIER", "rarity": "Uncommon", "cost": 1},
             ],
             "legal_actions": [
                 {"type": "card_reward", "card_id": "CARD.BLUDGEON"},
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_skips_unknown_skill(self) -> None:
         observation = {
@@ -5384,12 +5398,12 @@ class OfficialAgentTest(unittest.TestCase):
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 10 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 4},
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_prefers_higher_tier_attack_over_strong_defense(self) -> None:
         observation = {
@@ -5419,12 +5433,12 @@ class OfficialAgentTest(unittest.TestCase):
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 16 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 8},
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_prefers_strong_defense_when_block_is_only_defends(self) -> None:
         # 6 of 13 cards are block (>40%), but they are all weak Defends (5 block): fewer than
@@ -5433,12 +5447,12 @@ class OfficialAgentTest(unittest.TestCase):
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 7 + [{"id": "CARD.DEFEND_IRONCLAD"}] * 6},
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_prefers_strong_defense_when_block_is_only_iron_waves(self) -> None:
         # 6 of 13 cards are block (>40%), but Iron Wave is also only 5 block: without 2 strong
@@ -5447,12 +5461,12 @@ class OfficialAgentTest(unittest.TestCase):
         observation = {
             "player": {"deck": [{"id": "CARD.STRIKE_IRONCLAD"}] * 7 + [{"id": "CARD.IRON_WAVE"}] * 6},
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.SHRUG_IT_OFF"},
+                {"type": "card_reward", "card_id": "CARD.FLAME_BARRIER"},
                 {"type": "card_reward", "card_id": "CARD.BATTLE_TRANCE"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.SHRUG_IT_OFF")
+        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.FLAME_BARRIER")
 
     def test_reward_keeps_s_tier_offense_when_deck_is_balanced(self) -> None:
         # Balanced: 6 block of 12 cards (>40%) with 2 strong blocks (Shrug It Off x2).
