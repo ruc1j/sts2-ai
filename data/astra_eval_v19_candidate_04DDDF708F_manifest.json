@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v19",
+  "run_index": 7,
+  "arm": "candidate",
+  "seed": "04DDDF708F",
+  "source_commit": "2f9e814c49fb86b65c1d038b44a4922dca287dd8",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "4e23bcbbf36d27e391d630674a3125c2e9528972759679f12054a65113d643b7",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791800529.645853,
+  "finished": 1791800843.208092,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 354,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v19_candidate_04DDDF708F_stdout.log": "50b5902a49189c39714ed36a6a8b4ac90fee9e30ebce53e3e88c9a4f74c3e9b9",
+    "astra_eval_v19_candidate_04DDDF708F_map_ACT.GLORY.json": "d42b91d8b189acc662c9b0799652d850c4495b2d94c94666534c19d28298d2ed",
+    "astra_eval_v19_candidate_04DDDF708F_agent.jsonl": "639ba3ba98b2469bf8b874e97f24063632d59898cbe29ae21f0cdf9de7697319",
+    "astra_eval_v19_candidate_04DDDF708F_map_ACT.HIVE.json": "be23633599427873302efb74f21554a8ba5111ddd8ec0219797de520e7ddb79d",
+    "astra_eval_v19_candidate_04DDDF708F_map.json": "ff0d91feb91ab5401c52fa2b81cfe28743eae68aac753778b27d59b8e863f687",
+    "astra_eval_v19_candidate_04DDDF708F_mod.log": "d49eaac705f4d42d48d63aa33e1200998139bb2a7f6c38c5ab7b46eb97d3250b"
+  }
+}
