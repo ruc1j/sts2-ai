@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v16",
+  "run_index": 23,
+  "arm": "candidate",
+  "seed": "2EE4E2B418",
+  "source_commit": "8af98a65c62e9d409583c5a867ddd744f54ff10a",
+  "sha256": {
+    "official_agent.py": "7c1198943607aa7eb8ab0c1d76389ba99531ec575d77d4dce3f658720c6bdfd0",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "d3e6e847b7b89f354d797bbb7b00a5c5e355ea43ccae1dd96a2702c15e054ee7",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791781458.627572,
+  "finished": 1791781732.513498,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      5
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 353,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v16_candidate_2EE4E2B418_map.json": "d328ccdc3616e54ba2919635a50c4381142896231f00fe79766b8325e28fc067",
+    "astra_eval_v16_candidate_2EE4E2B418_agent.jsonl": "7184b1209ab88da5da1431aac94d49209a5b674daae9dfb7358860d8c8e1421a",
+    "astra_eval_v16_candidate_2EE4E2B418_stdout.log": "6cf814fd2baace3bc1dfb1ab4fd32e402e8fd6c8e9dd0a487c430caf05561557",
+    "astra_eval_v16_candidate_2EE4E2B418_map_ACT.HIVE.json": "4f7aeea460ef62b9f8067638b48a3968d93adbb431cf4d0bcaf2a23777471e86",
+    "astra_eval_v16_candidate_2EE4E2B418_map_ACT.GLORY.json": "1e6ad562f73b1d19d2a25f6a3108c40a56b723930c25b3cf5b0f67ec8a2f2b33",
+    "astra_eval_v16_candidate_2EE4E2B418_mod.log": "7b7885c765e48738f71b4c23f1f9b7ae56ca6ed8b0c5468cd141d1826972ae81"
+  }
+}
