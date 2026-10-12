@@ -450,6 +450,7 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 | v12 | 直行規則の停止・砂脱出の後回し・イベント点数(`efa7f63`)対`dc18fe4`、開発用20+確認用10 seed | 保留(v13・v14で再現せず、当初は到達度改善として採用): Act 3 0対0、Act 2突破 開発用7対4・確認用2対1、到達点 改善11・悪化6・同値13。詳細は[ACT2_EVAL_V12_20261012](ACT2_EVAL_V12_20261012.md) |
 | v13 | 現在のmain(`8af98a6`)対`dc18fe4`、未使用12 seed | この集合では悪化(1 seed分): Act 3 0対0、Act 2 2対2、Act 1 9対10、到達点 改善2・悪化3・同値7。v12確認用と割れたのでv14で追加確認。詳細は[ACT2_EVAL_V13_20261012](ACT2_EVAL_V13_20261012.md) |
 | v14 | v13と同じ候補対`dc18fe4`、未使用12 seed | この集合では悪化: Act 3 0対1、Act 2 3対6、Act 1 10対11。v12確認用・v13・v14の34組合算でAct 3 0対1、Act 2 7対9。v12の判定を保留に変更。詳細は[ACT2_EVAL_V14_20261012](ACT2_EVAL_V14_20261012.md) |
+| v15 | mainからイベント点数を外した版(`038b2ea`)対main、未使用12 seed | 外すと1 seed分悪化: Act 3 0対0、Act 2 2対2、Act 1 8対9。イベント点数が原因という証拠なし。詳細は[ACT2_EVAL_V15_20261012](ACT2_EVAL_V15_20261012.md) |
 
 あわせてゲーム再現の正しさの修正2件(Perfected StrikeがUltimate StrikeをStrikeとして数える、強化Ashen Strikeの上乗せ)を入れた。
 v2〜v5の監査でモデルとゲームの一致は99.8%、残った不一致はこの2件でほぼ説明できた。
