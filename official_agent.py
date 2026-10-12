@@ -1873,26 +1873,11 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
                     selected = max(setup_attacks, key=lambda action: card_value(action, "damage"))
                     rollout_decision_reason = "headbutt_setup"
             selected_card = hand.get(selected.get("hand_index"), {})
-            if (
-                obscura_present
-                and selected.get("target_id") in minion_ids
-                and selected_card.get("type") == "Attack"
-            ):
-                selected = next((action for action in actions if action.get("hand_index") == selected.get("hand_index") and action.get("target_id") == obscura_id), selected)
-                rollout_decision_reason = "obscura_focus"
-            if (
-                urgent
-                and decimillipede_focus_id is not None
-                and selected.get("target_id") in decimillipede_ids
-                and selected.get("target_id") != decimillipede_focus_id
-                and selected_card.get("type") == "Attack"
-            ):
-                selected = next((
-                    action for action in actions
-                    if action.get("hand_index") == selected.get("hand_index")
-                    and action.get("target_id") == decimillipede_focus_id
-                ), selected)
-                rollout_decision_reason = "decimillipede_focus"
+            # The Obscura and Decimillipede retargets that used to sit here moved the rollout's
+            # attack onto The Obscura / the highest-HP segment. The model already plays out
+            # Parafright's revive and Reattach, and replaying the recorded retargets through
+            # search (data/astra_*) left the fights 3.6 HP (Obscura, 49 cases, SE 0.96) and
+            # 4.5 HP (Decimillipede, 56 cases, SE 1.06) worse than keeping the search's target.
             if (
                 kin_focus_id is not None
                 and selected.get("type") == "card"

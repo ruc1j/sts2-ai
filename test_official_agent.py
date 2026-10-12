@@ -4335,7 +4335,7 @@ class OfficialAgentTest(unittest.TestCase):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
         self.assertEqual((action["card_id"], action["decision_source"]), ("CARD.SHRUG_IT_OFF", "rollout_success"))
 
-    def test_decimillipede_attack_focuses_highest_hp_segment(self) -> None:
+    def test_decimillipede_attack_keeps_the_rollout_target(self) -> None:
         back = {"type": "card", "card_id": "CARD.IRON_WAVE", "hand_index": 0, "target_id": 3}
         observation = {
             "player": {"hp": 27, "max_hp": 80, "block": 20, "energy": 1},
@@ -4351,9 +4351,10 @@ class OfficialAgentTest(unittest.TestCase):
         }
         with patch("official_agent.rollout_choice", return_value=back):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
-        self.assertEqual((action["target_id"], action["decision_reason"]), (2, "decimillipede_focus"))
+        # Retargeting to the highest-HP segment replayed 4.5 HP worse than the search's target.
+        self.assertEqual((action["target_id"], action["decision_source"]), (3, "rollout_success"))
 
-    def test_decimillipede_does_not_finish_one_segment_while_others_live(self) -> None:
+    def test_decimillipede_may_finish_one_segment_while_others_live(self) -> None:
         low_segment = {"type": "card", "card_id": "CARD.HEADBUTT", "hand_index": 0, "target_id": 1}
         observation = {
             "player": {"hp": 40, "max_hp": 80, "block": 20, "energy": 1},
@@ -4370,7 +4371,8 @@ class OfficialAgentTest(unittest.TestCase):
         }
         with patch("official_agent.rollout_choice", return_value=low_segment):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
-        self.assertEqual((action["target_id"], action["decision_reason"]), (2, "decimillipede_focus"))
+        # The model plays out Reattach, so the search's own target stands.
+        self.assertEqual(action["target_id"], 1)
 
     def test_sets_up_two_card_kill_and_keeps_energy_for_block(self) -> None:
         hand = [
@@ -4452,8 +4454,8 @@ class OfficialAgentTest(unittest.TestCase):
         }
         with patch("official_agent.rollout_choice", return_value=rolled):
             action = choose(observation, enemy_data={"monsters": []}, simulations=1)
-        self.assertEqual((action["target_id"], action["decision_reason"]), (2, "obscura_focus"))
-        self.assertEqual(action["decision_source"], "rollout_success")
+        # The reviving Parafright is still not forced as a lethal, and the search's target stands.
+        self.assertEqual((action["target_id"], action["decision_source"]), (1, "rollout_success"))
 
     def test_queen_boss_focuses_torch_head_amalgam(self) -> None:
         observation = {
