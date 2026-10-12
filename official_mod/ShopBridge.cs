@@ -257,7 +257,9 @@ internal static class ShopBridge
         for (int potionSlot = 0; potionSlot < player.PotionSlots.Count; potionSlot++)
         {
             var held = player.PotionSlots[potionSlot];
-            if (held is MegaCrit.Sts2.Core.Models.Potions.FoulPotion && !held.IsQueued && held.PassesCustomUsabilityCheck && !failedSlots.Contains(-1 - potionSlot))
+            // PassesCustomUsabilityCheck is false while the merchant inventory is open (it needs the
+            // merchant button), and this bridge keeps the inventory open; Execute closes it first.
+            if (held is MegaCrit.Sts2.Core.Models.Potions.FoulPotion && !held.IsQueued && run.CurrentRoom is MegaCrit.Sts2.Core.Rooms.MerchantRoom && !failedSlots.Contains(-1 - potionSlot))
                 legal.Add(new { type = "use_foul_potion", potion_index = potionSlot, potion_id = held.Id.ToString() });
         }
 
@@ -334,6 +336,11 @@ internal static class ShopBridge
         {
             var held = foulSlot >= 0 && foulSlot < player.PotionSlots.Count ? player.PotionSlots[foulSlot] : null;
             bool thrown = false;
+            if (held is MegaCrit.Sts2.Core.Models.Potions.FoulPotion && !held.IsQueued && room.Inventory.IsOpen)
+            {
+                AccessTools.Method(typeof(NMerchantInventory), "Close").Invoke(room.Inventory, null);
+                await Task.Delay(800, ct);
+            }
             if (held is MegaCrit.Sts2.Core.Models.Potions.FoulPotion && !held.IsQueued && held.PassesCustomUsabilityCheck)
             {
                 held.EnqueueManualUse(null);
@@ -345,6 +352,11 @@ internal static class ShopBridge
                 catch (MegaCrit.Sts2.Core.AutoSlay.AutoSlayTimeoutException)
                 {
                 }
+            }
+            if (!room.Inventory.IsOpen)
+            {
+                room.OpenInventory();
+                await Task.Delay(500, ct);
             }
             if (!thrown)
                 failedSlots.Add(-1 - foulSlot);
