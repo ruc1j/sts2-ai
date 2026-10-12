@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v16",
+  "run_index": 27,
+  "arm": "candidate",
+  "seed": "2E22D77266",
+  "source_commit": "8af98a65c62e9d409583c5a867ddd744f54ff10a",
+  "sha256": {
+    "official_agent.py": "7c1198943607aa7eb8ab0c1d76389ba99531ec575d77d4dce3f658720c6bdfd0",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "d3e6e847b7b89f354d797bbb7b00a5c5e355ea43ccae1dd96a2702c15e054ee7",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791782682.882425,
+  "finished": 1791783265.59992,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 21,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 624,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v16_candidate_2E22D77266_stdout.log": "37524f8cfd87054ba722b2db7be7bb34f3c1f00a89df6f75437df750a996912d",
+    "astra_eval_v16_candidate_2E22D77266_agent.jsonl": "0f0ab82382a05507ae1b2fe79eee60d3305d1c8d3cf221b0d48edce2f2fca8d9",
+    "astra_eval_v16_candidate_2E22D77266_map_ACT.HIVE.json": "6edd793225f0f9509d7c4455f15d17c7adfbe19140df8bba70281766f470e8a1",
+    "astra_eval_v16_candidate_2E22D77266_map.json": "24c25b5b5b308ce191aa1832955719664c9ed886bd3663d645a7c8fcf3afbd7c",
+    "astra_eval_v16_candidate_2E22D77266_mod.log": "cd8d8b256492e8c259140e45ae5594bc8f9e2385b0864823cb2d2a2bfd462d34",
+    "astra_eval_v16_candidate_2E22D77266_map_ACT.GLORY.json": "aa9406d48a24dacec8371781148ebd2e0ba5ecefa54302e45e80a8dd8f5c373a"
+  }
+}
