@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v21",
+  "run_index": 11,
+  "arm": "candidate",
+  "seed": "3E69989266",
+  "source_commit": "777a573a50790688e280917964996cd15cac35dc",
+  "sha256": {
+    "official_agent.py": "d1e678d8c27929900f708e97d53019dbfaed1bbb007e13d2e922c2bcad1519c5",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "31eecdf0deeb19d25ac8a4cb131f2a61cacddf71e9c1e5ee23cdfbf3eb899610",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791825151.2358952,
+  "finished": 1791825506.976904,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 14,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 396,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v21_candidate_3E69989266_map_ACT.HIVE.json": "72c64dd37b9aee0863b18a000060ddcf5fe34cd7dde97acbe9c6ba2518cfedf2",
+    "astra_eval_v21_candidate_3E69989266_agent.jsonl": "3dd6e53574d62d00e547c5748211c4b52a1e54a1bbb27dd59a6eed981e24ef89",
+    "astra_eval_v21_candidate_3E69989266_map_ACT.GLORY.json": "a232a50c46461dadddc1c5e69761a68770191bda4f27be51aa3ad811d8a37280",
+    "astra_eval_v21_candidate_3E69989266_stdout.log": "bbd85ccffcf8efe0057b8b31806ef08c353c6c36cb9fa83f7648918c420f1c9f",
+    "astra_eval_v21_candidate_3E69989266_map.json": "b20575162f2e764c7cb674b41f020da423da04d64c252f60d213facb15300005",
+    "astra_eval_v21_candidate_3E69989266_mod.log": "d347db283bbed8c3b803020b9f61a008695581f36a2710579959c896fb5d5fd2"
+  }
+}
