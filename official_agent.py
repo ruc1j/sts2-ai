@@ -905,6 +905,14 @@ EVENT_OPTION_SCORES = {
     # FieldOfManSizedHoles RESIST removes two cards but adds Normality (3 plays a turn cap);
     # ENTER_YOUR_HOLE only enchants a card with Perfect Fit.
     "FIELD_OF_MAN_SIZED_HOLES": {"ENTER_YOUR_HOLE": 100},
+    # TheLanternKey RETURN_THE_KEY pays 100 gold; KEEP_THE_KEY leads into a Mysterious Knight fight.
+    "THE_LANTERN_KEY": {"RETURN_THE_KEY": 100, "KEEP_THE_KEY": 0},
+    # Symbiote APPROACH enchants a card with Corrupted (2 self-damage per play); KILL_WITH_FIRE
+    # transforms a card instead.
+    "SYMBIOTE": {"KILL_WITH_FIRE": 100},
+    # TeaMaster sells Ember Tea (150 gold, Strength relic) or Bone Tea (50 gold); unaffordable
+    # options arrive as *_LOCKED and are filtered out before scoring.
+    "TEA_MASTER": {"EMBER_TEA": 100, "BONE_TEA": 60},
 }
 
 
