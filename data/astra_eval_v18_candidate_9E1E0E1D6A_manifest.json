@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v18",
+  "run_index": 0,
+  "arm": "candidate",
+  "seed": "9E1E0E1D6A",
+  "source_commit": "2f9e814c49fb86b65c1d038b44a4922dca287dd8",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "1658dfa80f98abca6149a36d7187a9bf98bbf67cae3fb45e25efebd8cc12276b",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791795598.3409102,
+  "finished": 1791796071.23986,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 20,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 566,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v18_candidate_9E1E0E1D6A_map_ACT.GLORY.json": "035261d64a3bc085aae4530702fe2ee4be7097e8a4288fe6b3ec9b6faa303428",
+    "astra_eval_v18_candidate_9E1E0E1D6A_map.json": "d74515edddbd81ce21174d75954cda09a3d5ed85023c5bf0bccd4f6494d23cbf",
+    "astra_eval_v18_candidate_9E1E0E1D6A_map_ACT.HIVE.json": "fda56d5d4a2e5c45d5500c02126ea96fd9ea8e198efd653ad33419ee29945a66",
+    "astra_eval_v18_candidate_9E1E0E1D6A_mod.log": "1c64621608cec0f752a10e478ff9fccf3e6f25c40903cb08f3ca24da9a8f92e7",
+    "astra_eval_v18_candidate_9E1E0E1D6A_stdout.log": "07f3f2f39dab46d09500c928bf31d02bcd46fd794314f0e2f217b3b60035c8ff",
+    "astra_eval_v18_candidate_9E1E0E1D6A_agent.jsonl": "5cddc70f2437e884344e6781fc0a6526c0b781314ae7a315f2a2bcb568eddbfe"
+  }
+}
