@@ -2995,11 +2995,17 @@ def choose_card_reward(observation: dict) -> dict:
     # resolved. Gate the draw exemption on draw_needed (<2 draw cards already) - otherwise a
     # deck that already has 2+ draw cards keeps taking more of them (D6: 3+ Battle Trance, 24
     # cards, 0 strong blocks) since every one of them slipped past this skip unconditionally.
+    # S/A-tier attacks are exempt as well. In the Act 2 boss fight (THE_INSATIABLE, 114 entry
+    # states, search playouts) one more strong block moved the win rate by -0.2pt while one more
+    # Strength source moved it by +5.7pt: the shortage this gate waits on does not decide that
+    # fight, and 838 of 1004 recorded Skips came from this gate. Powers stay gated - the earlier
+    # full removal (comparison v4) lost by taking off-axis Unmovable / Dark Embrace.
     if strong_block_shortage and not (
         core.get(selected_id)
         or strong_defense_bonus(selected_id)
         or selected_id in DEFENSE_PRIORITY
         or (draw_needed and selected_id in DRAW_CARDS)
+        or (is_attack_reward(selected) and selected_tier >= tier_score["A"])
     ):
         return next(action for action in observation["legal_actions"] if action.get("option_id") == "Skip")
     # Once the deck has enough cards to cover the early fights, a plain B/C/D-tier pick only
