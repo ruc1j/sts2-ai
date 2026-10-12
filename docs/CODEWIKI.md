@@ -456,6 +456,7 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 | v18 | main(`2f9e814`、補正2件除去・イベント点数・Foul換金)対`dc18fe4`、同じ新DLL、未使用6 seed | この集合では改善: Act 3 0対0、Act 2 4対0、Act 1 5対5、到達点 改善4・悪化0。6組なので確認を継続。詳細は[ACT2_EVAL_V18_20261012](ACT2_EVAL_V18_20261012.md) |
 | v19 | v18と同条件、未使用4 seed | 改善: Act 2 1対0、到達点 改善1・悪化0・同値3。v18＋v19の10組でAct 2突破5対0、改善5・悪化0。到達度改善として採用(踏破率は未確認)。詳細は[ACT2_EVAL_V19_20261012](ACT2_EVAL_V19_20261012.md) |
 | v20 | v18・v19と同条件、未使用6 seed | 単独では1 seed分悪化(Act 2 0対1、到達点 改善2・悪化1)。v18〜v20の16組でAct 2突破5対1、改善7・悪化1。採用は維持。詳細は[ACT2_EVAL_V20_20261012](ACT2_EVAL_V20_20261012.md) |
+| v21 | 強ブロック不足の見送りにS/A級攻撃札の例外(`777a573`)対main、開発用16(対照はv18〜v20候補runを再利用)+確認用12 seed | 保留(集合間で割れた): 開発用Act 2 4対5、確認用Act 1 12対11。悪化3組はいずれもAct 2でPommel Strikeを余分に取っていた。mainから戻した(`e6d659d`)。詳細は[ACT2_EVAL_V21_20261013](ACT2_EVAL_V21_20261013.md) |
 
 あわせてゲーム再現の正しさの修正2件(Perfected StrikeがUltimate StrikeをStrikeとして数える、強化Ashen Strikeの上乗せ)を入れた。
 v2〜v5の監査でモデルとゲームの一致は99.8%、残った不一致はこの2件でほぼ説明できた。
@@ -574,7 +575,8 @@ v2〜v7の117 runの死亡地点はTHE_INSATIABLE(Act 2ボス)が50件で最多�
   - 見送り1004件のうち838件は、`strong_block_shortage`（16枚以上・強ブロック3枚未満）の見送りによるものだった。Act 1でも343件。
   - この見送りの全撤廃は過去2回不採用（2026-09-08 S段位の逃げ道、2026-10-11 比較v4）。v4の悪化は、軸外の重いパワー（Unmovable、Dark Embrace）を取ったことによる。
   - そこで例外に「S/A級の攻撃札」だけを加えた（`777a573`）。変わるのは219件で、すべて見送り→攻撃札（Headbutt 70、Pommel Strike 33、Uppercut 28、Fiend Fire 26、Anger 22など）。パワー札を取る件数は0。
-  - これらの札は戦闘で63〜94%打たれている（`.dsh/g_cards_usage.md`）。比較v21で評価する。
+  - これらの札は戦闘で63〜94%打たれている（`.dsh/g_cards_usage.md`）。
+  - 比較v21の結果は保留（開発用Act 2 4対5、確認用Act 1 12対11）。mainから戻した。
 - **局所検証: ボス直前の休憩はHEALかSMITHか**（同じ114局面×6回、探索30回、`scratchpad/boss_rest.py`）。強化先は `RestBridge.SmithCardSelector` の点数で選んだ。基準の勝率は26.9%。
 
   | 選択 | 勝率の差 | SE |
