@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v21",
+  "run_index": 8,
+  "arm": "candidate",
+  "seed": "BB9869D3D3",
+  "source_commit": "777a573a50790688e280917964996cd15cac35dc",
+  "sha256": {
+    "official_agent.py": "d1e678d8c27929900f708e97d53019dbfaed1bbb007e13d2e922c2bcad1519c5",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "31eecdf0deeb19d25ac8a4cb131f2a61cacddf71e9c1e5ee23cdfbf3eb899610",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791823957.843359,
+  "finished": 1791824380.299202,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 491,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v21_candidate_BB9869D3D3_map_ACT.GLORY.json": "64c8297c6ea338b49f9a100de934ecb3d1df1ce5f8e6fe94b4847b6efc2d23eb",
+    "astra_eval_v21_candidate_BB9869D3D3_agent.jsonl": "09fff387136eaaf14404a4f9a228c41411ad58982afa1d8d51c54cd837a7eda5",
+    "astra_eval_v21_candidate_BB9869D3D3_stdout.log": "ecc6b85446b2d5440c3428666f1d71ad3a431dbf381d883676dd526bd4880613",
+    "astra_eval_v21_candidate_BB9869D3D3_map_ACT.HIVE.json": "a9aeddffe9efc449a3ebeab22cdbd61ade1b9ab4e35ba0369f96ee82e58e62b3",
+    "astra_eval_v21_candidate_BB9869D3D3_mod.log": "a0045d51aaeeffc90ba8ad20ffb11b4eb4cf45179eebf7b69a4a0cd905d4b8eb",
+    "astra_eval_v21_candidate_BB9869D3D3_map.json": "9d77a3a0a1fc23132991fbd8abceef202e592d745cb45d060937a5b093f5660c"
+  }
+}
