@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v17",
+  "run_index": 6,
+  "arm": "candidate",
+  "seed": "9E378C1DE8",
+  "source_commit": "04791ab04d80859233aba9445c7798e304d4c6ea",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "3ded3b5317fb8d52d50fa48436208695a1993474a55251cb716289d7e6e17d28"
+  },
+  "plan_sha256": "e14d1db0b98780de41dcfbb6ed7a6d501cd27318db6b5c4cea8b9a72f28813a6",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791789340.3794858,
+  "finished": 1791789997.094285,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      10
+    ],
+    "combat_wins": 20,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 658,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v17_candidate_9E378C1DE8_map.json": "b8e00336415fea4b8c8a71345905892d7cf2ba8aa8fbfe1d07d02c1f72cdca89",
+    "astra_eval_v17_candidate_9E378C1DE8_map_ACT.GLORY.json": "15d4568f42410bfa9e64210342f45f7a2f573fa3d690998e2b8771e4b551d24e",
+    "astra_eval_v17_candidate_9E378C1DE8_agent.jsonl": "83ea3dfc2fd194ee99bec42f0a2ecee3ec50e1998ac6019fe8029595340c2172",
+    "astra_eval_v17_candidate_9E378C1DE8_stdout.log": "6893b6a2385761ad3f926c5ed41edeb1a96027cb6ea82a4684f209ce8684854e",
+    "astra_eval_v17_candidate_9E378C1DE8_map_ACT.HIVE.json": "7b9a4011e249e2eb13a8116875732436adff048be6ed164b6b61b2f282cf2cea",
+    "astra_eval_v17_candidate_9E378C1DE8_mod.log": "24372befd158493e76cf2d7eebe4e5213394374c527b316446b9badec758e98c"
+  }
+}
