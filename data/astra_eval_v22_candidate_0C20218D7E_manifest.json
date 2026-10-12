@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v22",
+  "run_index": 46,
+  "arm": "candidate",
+  "seed": "0C20218D7E",
+  "source_commit": "4c03ab4abb512534da5ad5e58abb456dfb21d640",
+  "sha256": {
+    "official_agent.py": "e9dafd61e1165fd585251b7da8169df14d25c72ce2029762d6c5ef10addaf10e",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "a9326459eeab1622ca5b87f4795deaa613c68b687d1d90c79f4783adbac10f48",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791846706.0725608,
+  "finished": 1791847100.815197,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 469,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v22_candidate_0C20218D7E_agent.jsonl": "5f2f242987f417cced3e3cddc68b1782fb8b886023248b1ab70f27cf77e2dd77",
+    "astra_eval_v22_candidate_0C20218D7E_map_ACT.GLORY.json": "76282ad79f96152809a7132f4436ef35f1cd4977248e47f0c45a445414f23c79",
+    "astra_eval_v22_candidate_0C20218D7E_mod.log": "9efd244cdb45f3b8ad9dd320f777e1a0dd6ac82f40d9fb93d74b63cebab4c792",
+    "astra_eval_v22_candidate_0C20218D7E_stdout.log": "8b4fa2bff651ba9da2f1eb9bb44e0c224232365d7cef0c41edb05ff388dee25d",
+    "astra_eval_v22_candidate_0C20218D7E_map_ACT.HIVE.json": "591b5695caf9e1fcff9e9e712bfbd6262d2106437e2b0ecf474fadf0ca5b34ed",
+    "astra_eval_v22_candidate_0C20218D7E_map.json": "173bd73f3d2bcfbcdd2798db1daddcd170a6c102e77b6819982aa80693a1d4d4"
+  }
+}
