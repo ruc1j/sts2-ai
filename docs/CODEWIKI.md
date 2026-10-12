@@ -453,6 +453,7 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 | v15 | mainからイベント点数を外した版(`038b2ea`)対main、未使用12 seed | 外すと1 seed分悪化: Act 3 0対0、Act 2 2対2、Act 1 8対9。イベント点数が原因という証拠なし。詳細は[ACT2_EVAL_V15_20261012](ACT2_EVAL_V15_20261012.md) |
 | v16 | main(`8af98a6`)対`dc18fe4`、未使用20 seed | この集合では1 seed分悪化(Act 2 6対6、Act 1 17対18)。v12確認用・v13・v14・v16の54組合算でAct 3 0対1、Act 2 13対15、Act 1 45対48、到達点 改善11・悪化15。保留のまま。詳細は[ACT2_EVAL_V16_20261012](ACT2_EVAL_V16_20261012.md) |
 | v17 | `dc18fe4`・main(`04791ab`)・却下方針全部入り(`1a8e238`)の3版、新DLL、未使用8 seed | 差を検出できず: Act 3 0/0/0、Act 2 2/2/2、Act 1 7/6/6。詳細は[ACT2_EVAL_V17_20261012](ACT2_EVAL_V17_20261012.md) |
+| v18 | main(`2f9e814`、補正2件除去・イベント点数・Foul換金)対`dc18fe4`、同じ新DLL、未使用6 seed | この集合では改善: Act 3 0対0、Act 2 4対0、Act 1 5対5、到達点 改善4・悪化0。6組なので確認を継続。詳細は[ACT2_EVAL_V18_20261012](ACT2_EVAL_V18_20261012.md) |
 
 あわせてゲーム再現の正しさの修正2件(Perfected StrikeがUltimate StrikeをStrikeとして数える、強化Ashen Strikeの上乗せ)を入れた。
 v2〜v5の監査でモデルとゲームの一致は99.8%、残った不一致はこの2件でほぼ説明できた。
