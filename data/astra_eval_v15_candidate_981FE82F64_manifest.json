@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v15",
+  "run_index": 23,
+  "arm": "candidate",
+  "seed": "981FE82F64",
+  "source_commit": "038b2eacdf6c62a7b574bfac1302c4ea055e1920",
+  "sha256": {
+    "official_agent.py": "a528c4b29de7633fcf5a0b3415e427665ad7a450fffc026a7a35937b948a2d86",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "3964560c67d107ea081b938b36dd9f1bc161c35175a06ccf45ff23169788e5fd",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791773065.095712,
+  "finished": 1791773512.32614,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      7
+    ],
+    "combat_wins": 14,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 522,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v15_candidate_981FE82F64_map_ACT.GLORY.json": "cca89b0b05cb05ee501e388edde201d5e12d8d0982a8ad9c7bc61bdceb36a85b",
+    "astra_eval_v15_candidate_981FE82F64_stdout.log": "3a01170d19e215db77e0adef12a8c4eb0348c35448986c4085dc022a2538baf6",
+    "astra_eval_v15_candidate_981FE82F64_agent.jsonl": "ccc3b1e2d23f1f164d269ea0b097bfbee4fdfe38d1c2730eacbc277551cfe888",
+    "astra_eval_v15_candidate_981FE82F64_map_ACT.HIVE.json": "ead9dd2897ef438a1261c6752c269576ffff19f677992a2ded7f5143924ff726",
+    "astra_eval_v15_candidate_981FE82F64_mod.log": "cc4acb096aa2e3cc98980ec66f363e89143d714b46a80dfef4b88a86f31311f6",
+    "astra_eval_v15_candidate_981FE82F64_map.json": "82eb9273802e7ffbfa83b75e8678bc9de1306c9f3183d14c872452b6834b60fe"
+  }
+}
