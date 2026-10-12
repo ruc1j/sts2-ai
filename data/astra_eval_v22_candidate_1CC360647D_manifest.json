@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v22",
+  "run_index": 16,
+  "arm": "candidate",
+  "seed": "1CC360647D",
+  "source_commit": "4c03ab4abb512534da5ad5e58abb456dfb21d640",
+  "sha256": {
+    "official_agent.py": "e9dafd61e1165fd585251b7da8169df14d25c72ce2029762d6c5ef10addaf10e",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "a9326459eeab1622ca5b87f4795deaa613c68b687d1d90c79f4783adbac10f48",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791838772.087339,
+  "finished": 1791839118.737267,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 440,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v22_candidate_1CC360647D_agent.jsonl": "6ccb88d4628cb4ff0c2d0e2bba99baa9bb01f0725cba72ca58a07ad3bab76904",
+    "astra_eval_v22_candidate_1CC360647D_map.json": "c15bc51f1a78511372ac564b122a8851d1c7bed2b00fada7e293491bd7e2727f",
+    "astra_eval_v22_candidate_1CC360647D_stdout.log": "049d915e7ff973a9244a549315f0b7c2b25928eb58f89f2914e308d9dcfaace1",
+    "astra_eval_v22_candidate_1CC360647D_mod.log": "66695ffafa02d43fc610201eb5a3f5b25aa1743cf2fe17a7d79c89418f59f9e9",
+    "astra_eval_v22_candidate_1CC360647D_map_ACT.HIVE.json": "2492fc45de558604b869e0d04e83bcefcd154fd6b6aea03446cd299d02453aed",
+    "astra_eval_v22_candidate_1CC360647D_map_ACT.GLORY.json": "bd8040fe7026e4ed3030feceef82eeee793d890ee0e88eed7616b35adc0846e3"
+  }
+}
