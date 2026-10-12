@@ -2996,9 +2996,10 @@ def choose_card_reward(observation: dict) -> dict:
     # deck that already has 2+ draw cards keeps taking more of them (D6: 3+ Battle Trance, 24
     # cards, 0 strong blocks) since every one of them slipped past this skip unconditionally.
     # S/A-tier attacks are exempt as well. In the Act 2 boss fight (THE_INSATIABLE, 114 entry
-    # states, search playouts) one more strong block moved the win rate by -0.2pt while one more
-    # Strength source moved it by +5.7pt: the shortage this gate waits on does not decide that
-    # fight, and 838 of 1004 recorded Skips came from this gate. Powers stay gated - the earlier
+    # states, search playouts) one more Shrug It Off moved the win rate by -2.0pt (SE 1.4, the
+    # same as one more Strike) while one more Inflame / Demon Form moved it by +3.9 / +5.6pt:
+    # the shortage this gate waits on does not decide that fight, and 838 of 1004 recorded Skips
+    # came from this gate. Powers stay gated - the earlier
     # full removal (comparison v4) lost by taking off-axis Unmovable / Dark Embrace.
     if strong_block_shortage and not (
         core.get(selected_id)
