@@ -1971,32 +1971,18 @@ class OfficialAgentTest(unittest.TestCase):
 
     def test_reward_skips_off_axis_pick_when_deck_lacks_strong_block(self) -> None:
         # D6 (Act3 TEST_SUBJECT loss): a large deck stuck on 1 strong block kept taking A/S-tier
-        # off-axis picks (Anger, Headbutt, Dark Embrace, Expect a Fight) because their tier
+        # off-axis attacks (Anger, Headbutt, Dark Embrace, Expect a Fight) because their tier
         # cleared the B-tier-only Skip check below. With deck>=16 and <3 strong blocks, an
-        # unsupported non-attack pick must be skipped regardless of tier (comparison v4 lost by
-        # taking Unmovable / Dark Embrace once this gate was removed outright).
+        # unsupported pick must be skipped regardless of tier.
         observation = {
             "player": {"deck": self._d6_shortage_deck()},
-            "cards": [{"id": "CARD.UNMOVABLE", "type": "Power", "rarity": "Rare", "cost": 2}],
+            "cards": [{"id": "CARD.ANGER", "rarity": "Common", "cost": 0}],
             "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.UNMOVABLE"},
+                {"type": "card_reward", "card_id": "CARD.ANGER"},
                 {"type": "card_reward_alternative", "option_id": "Skip"},
             ],
         }
         self.assertEqual(choose_card_reward(observation)["option_id"], "Skip")
-
-    def test_reward_takes_high_tier_attack_when_deck_lacks_strong_block(self) -> None:
-        # One more strong block did not move the Act 2 boss win rate in search playouts, one more
-        # Strength source did (+5.7pt): an S/A-tier attack is not held back by the shortage.
-        observation = {
-            "player": {"deck": self._d6_shortage_deck()},
-            "cards": [{"id": "CARD.HEADBUTT", "type": "Attack", "rarity": "Common", "cost": 1}],
-            "legal_actions": [
-                {"type": "card_reward", "card_id": "CARD.HEADBUTT"},
-                {"type": "card_reward_alternative", "option_id": "Skip"},
-            ],
-        }
-        self.assertEqual(choose_card_reward(observation)["card_id"], "CARD.HEADBUTT")
 
     def test_reward_still_takes_supported_picks_when_deck_lacks_strong_block(self) -> None:
         # Same shortage as above, but core/DEFENSE_PRIORITY/DRAW_CARDS/Colossus picks must still
