@@ -40,6 +40,34 @@ internal static class DisableSteamCloudAsyncWritesPatch
     }
 }
 
+// AutoSlayer.PlayRunAsync loops `while (runState.TotalFloor < 49)` (AutoSlayConfig.maxFloor is a
+// const, so the 49 is baked into the async state machine) and abandons the run once it is reached.
+// A full run is 17 + 16 + 15 = 48 floors, but maps whose Act 2 has 18 floors hit 49 before the Act 3
+// boss (v14 control 8DF8EC394A was abandoned alive at Act 3 Floor 13). Raise the guard; it still
+// stops a runaway loop.
+[HarmonyPatch]
+internal static class RaiseAutoSlayMaxFloorPatch
+{
+    internal const int MaxFloor = 64;
+
+    private static MethodBase TargetMethod() =>
+        AccessTools.AsyncMoveNext(AccessTools.Method(typeof(AutoSlayer), "PlayRunAsync"));
+
+    private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+    {
+        foreach (CodeInstruction instruction in instructions)
+        {
+            if ((instruction.opcode == System.Reflection.Emit.OpCodes.Ldc_I4_S && Convert.ToInt32(instruction.operand) == 49)
+                || (instruction.opcode == System.Reflection.Emit.OpCodes.Ldc_I4 && Convert.ToInt32(instruction.operand) == 49))
+            {
+                yield return new CodeInstruction(System.Reflection.Emit.OpCodes.Ldc_I4, MaxFloor);
+                continue;
+            }
+            yield return instruction;
+        }
+    }
+}
+
 [ModInitializer(nameof(Initialize))]
 public static class Entry
 {
