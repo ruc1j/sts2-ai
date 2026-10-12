@@ -2473,6 +2473,12 @@ def _large_deck_addition_allowed(
 
 def choose_shop(observation: dict) -> dict:
     actions = observation.get("legal_actions", ())
+    # Foul Potion thrown at the merchant pays 100 gold before anything is bought (ShopBridge
+    # offers it only when FoulPotion.PassesCustomUsabilityCheck holds). In combat it hits every
+    # creature, the player included, for 12 - 27 lost runs still held one.
+    foul = next((action for action in actions if action.get("type") == "use_foul_potion"), None)
+    if foul is not None:
+        return foul
     removals = [action for action in actions if action.get("type") == "remove"]
     deck_cards = observation.get("deck_cards") or (observation.get("player") or {}).get("deck_cards") or ()
     deck_by_index = {

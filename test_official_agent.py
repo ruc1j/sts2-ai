@@ -6576,3 +6576,17 @@ class RandomEventOptionTest(unittest.TestCase):
     def test_dense_vegetation_rests_only_when_hurt(self) -> None:
         self.assertEqual(self._picked("DENSE_VEGETATION", ["TRUDGE_ON", "REST"], hp=40), "REST")
         self.assertEqual(self._picked("DENSE_VEGETATION", ["TRUDGE_ON", "REST"], hp=75), "TRUDGE_ON")
+
+
+class ShopFoulPotionTest(unittest.TestCase):
+    def test_throws_foul_potion_at_the_merchant_before_buying(self) -> None:
+        observation = {
+            "phase": "shop",
+            "gold": 50,
+            "legal_actions": [
+                {"type": "buy_card", "index": 0, "card_index": 0, "slot_index": 0, "card_id": "CARD.INFLAME"},
+                {"type": "use_foul_potion", "potion_index": 1, "potion_id": "POTION.FOUL_POTION"},
+                {"type": "skip"},
+            ],
+        }
+        self.assertEqual(choose_shop(observation)["type"], "use_foul_potion")

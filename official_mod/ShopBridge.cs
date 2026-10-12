@@ -252,6 +252,15 @@ internal static class ShopBridge
             }
         }
 
+        // Foul Potion thrown at the merchant pays 100 gold (FoulPotion.OnUse in a MerchantRoom);
+        // AutoSlay's shop handler never uses potions, so runs died still carrying it (27 deaths).
+        for (int potionSlot = 0; potionSlot < player.PotionSlots.Count; potionSlot++)
+        {
+            var held = player.PotionSlots[potionSlot];
+            if (held is MegaCrit.Sts2.Core.Models.Potions.FoulPotion && !held.IsQueued && held.PassesCustomUsabilityCheck && !failedSlots.Contains(-1 - potionSlot))
+                legal.Add(new { type = "use_foul_potion", potion_index = potionSlot, potion_id = held.Id.ToString() });
+        }
+
         legal.Add(new { type = "skip" });
         return new
         {
@@ -320,6 +329,29 @@ internal static class ShopBridge
             .Where(item => item.slot.Entry is MerchantPotionEntry potion && potion.Model is PotionModel)
             .Select((item, index) => new ShopSlotRef(item.slot, item.index, index, ((MerchantPotionEntry)item.slot.Entry).Model!.Id.ToString()))
             .ToArray();
+
+        if (action.Type == "use_foul_potion" && action.PotionIndex is int foulSlot)
+        {
+            var held = foulSlot >= 0 && foulSlot < player.PotionSlots.Count ? player.PotionSlots[foulSlot] : null;
+            bool thrown = false;
+            if (held is MegaCrit.Sts2.Core.Models.Potions.FoulPotion && !held.IsQueued && held.PassesCustomUsabilityCheck)
+            {
+                held.EnqueueManualUse(null);
+                try
+                {
+                    await WaitHelper.Until(() => player.Gold > goldBefore || !ReferenceEquals(player.PotionSlots[foulSlot], held), ct, TimeSpan.FromSeconds(5L), "Foul Potion was not thrown");
+                    thrown = player.Gold > goldBefore;
+                }
+                catch (MegaCrit.Sts2.Core.AutoSlay.AutoSlayTimeoutException)
+                {
+                }
+            }
+            if (!thrown)
+                failedSlots.Add(-1 - foulSlot);
+            AgentIo.Trace(new { seq = action.Seq, phase = "shop", action = "use_foul_potion", potion_id = action.PotionId, potion_index = foulSlot, thrown, gold = player.Gold, gold_before = goldBefore, deck = player.Deck.Cards.Select(card => card.Id.ToString()), decision_source = action.DecisionSource, decision_reason = action.DecisionReason });
+            // Keep shopping either way; a failed throw is excluded from the next observation.
+            return true;
+        }
 
         if (action.Type == "buy_card")
         {
