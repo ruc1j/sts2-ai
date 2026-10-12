@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v18",
+  "run_index": 11,
+  "arm": "candidate",
+  "seed": "EF715D6190",
+  "source_commit": "2f9e814c49fb86b65c1d038b44a4922dca287dd8",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "1658dfa80f98abca6149a36d7187a9bf98bbf67cae3fb45e25efebd8cc12276b",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791798503.6870341,
+  "finished": 1791798884.950956,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 447,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v18_candidate_EF715D6190_map_ACT.HIVE.json": "ddf7d0232b900d80640abc3d95d0d54e8d77afa43a1f885dc19f132c319b64eb",
+    "astra_eval_v18_candidate_EF715D6190_map_ACT.GLORY.json": "448e7a56256359b1504a9d3e226d804ce7e36d3c7aaa61aaf913b99a87d58688",
+    "astra_eval_v18_candidate_EF715D6190_agent.jsonl": "bd640349d30cee4f7029fdba3c7e6c453907c44c98364585aef6502b87e66a25",
+    "astra_eval_v18_candidate_EF715D6190_mod.log": "7bcc9116978dd712cecbdc639fb956dc9a5c8bc4116e3944b80b819a31653db0",
+    "astra_eval_v18_candidate_EF715D6190_stdout.log": "eb42f4d22fbae647a0f8b4c02cef5a4f6fbc363a8e87fcc96f931edf29a9a290",
+    "astra_eval_v18_candidate_EF715D6190_map.json": "410bb0128ac9881c1b20459d5ff66c3e17869d455d12e03d6fa7ea2099ae3886"
+  }
+}
