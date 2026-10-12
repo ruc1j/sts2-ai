@@ -577,6 +577,9 @@ v2〜v7の117 runの死亡地点はTHE_INSATIABLE(Act 2ボス)が50件で最多�
   - そこで例外に「S/A級の攻撃札」だけを加えた（`777a573`）。変わるのは219件で、すべて見送り→攻撃札（Headbutt 70、Pommel Strike 33、Uppercut 28、Fiend Fire 26、Anger 22など）。パワー札を取る件数は0。
   - これらの札は戦闘で63〜94%打たれている（`.dsh/g_cards_usage.md`）。
   - 比較v21の結果は保留（開発用Act 2 4対5、確認用Act 1 12対11）。mainから戻した。
+  - 案Gで新しく取る札を、同じ114局面に1枚足した（探索プレイアウト）。Anger +5.8pt（SE 1.5）、Pommel Strike +3.4pt（1.3）、Uppercut +1.6pt（1.7）、Fiend Fire −0.9pt（1.6）、Headbutt −4.5pt（1.7）。
+    - v21の悪化3組は、どれも候補がPommel Strikeを余分に取っていた。だがボス戦ではPommel Strikeはプラスで、その札が弱いことでは説明できない。最初の23局面では−3pt前後に見えたが、114局面でプラスに変わった。途中経過で札の良し悪しを読まないこと。
+    - Headbuttは、捨て札から山札の上へ戻す1枚をモデルがランダムに選ぶ（実際はプレイヤーが選ぶ）。そのぶん過小評価される。Strikeとの差（−2.6pt、SE約2.3）は誤差の範囲。
 - **局所検証: ボス直前の休憩はHEALかSMITHか**（同じ114局面×6回、探索30回、`scratchpad/boss_rest.py`）。強化先は `RestBridge.SmithCardSelector` の点数で選んだ。基準の勝率は26.9%。
 
   | 選択 | 勝率の差 | SE |
