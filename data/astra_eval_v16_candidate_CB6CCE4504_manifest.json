@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v16",
+  "run_index": 28,
+  "arm": "candidate",
+  "seed": "CB6CCE4504",
+  "source_commit": "8af98a65c62e9d409583c5a867ddd744f54ff10a",
+  "sha256": {
+    "official_agent.py": "7c1198943607aa7eb8ab0c1d76389ba99531ec575d77d4dce3f658720c6bdfd0",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "d3e6e847b7b89f354d797bbb7b00a5c5e355ea43ccae1dd96a2702c15e054ee7",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791783265.890641,
+  "finished": 1791783657.689339,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      12
+    ],
+    "combat_wins": 16,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 427,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v16_candidate_CB6CCE4504_map_ACT.HIVE.json": "adda4efe1bd55cd834df7a1d43aa1311c1e51f28629e8cd74fb404c546f3985a",
+    "astra_eval_v16_candidate_CB6CCE4504_agent.jsonl": "f37b0c10de0d2aab366dbc42379a40efdeddba7966a062e6f5e46aeec39a2869",
+    "astra_eval_v16_candidate_CB6CCE4504_map.json": "e995a5877f61d51fc4e82d27107676fb4a5426becf1eaa466bf8df50d1f2e5e4",
+    "astra_eval_v16_candidate_CB6CCE4504_map_ACT.GLORY.json": "163605b6df78772e6c00492f735ae0a241d6d4a113acb7e4c16664381a212551",
+    "astra_eval_v16_candidate_CB6CCE4504_stdout.log": "5b983d7deac0fbe2f2c83e298d7b6f5195997d8047e89171fd8ca8c23a113c59",
+    "astra_eval_v16_candidate_CB6CCE4504_mod.log": "31a13926d0f691ae3905ad0c9178d6f17933b9c5350e44ba180d3aa7aa6fa165"
+  }
+}
