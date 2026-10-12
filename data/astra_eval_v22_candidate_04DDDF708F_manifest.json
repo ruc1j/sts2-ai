@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v22",
+  "run_index": 33,
+  "arm": "candidate",
+  "seed": "04DDDF708F",
+  "source_commit": "4c03ab4abb512534da5ad5e58abb456dfb21d640",
+  "sha256": {
+    "official_agent.py": "e9dafd61e1165fd585251b7da8169df14d25c72ce2029762d6c5ef10addaf10e",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "a9326459eeab1622ca5b87f4795deaa613c68b687d1d90c79f4783adbac10f48",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791843219.092235,
+  "finished": 1791843539.0929549,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 356,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v22_candidate_04DDDF708F_map_ACT.GLORY.json": "d42b91d8b189acc662c9b0799652d850c4495b2d94c94666534c19d28298d2ed",
+    "astra_eval_v22_candidate_04DDDF708F_stdout.log": "3d9eb4dcebfc67a5e8e53e85003c4d5c599a2aa1ff75e77d1cc6fe9bb8088399",
+    "astra_eval_v22_candidate_04DDDF708F_mod.log": "a9212066fd1222b6e71cf094d9c798355ed94b9a919e560e026f5a2cde072cb5",
+    "astra_eval_v22_candidate_04DDDF708F_agent.jsonl": "b010456a5a228cde4caeb86e4a2ddbf37980804c94b21b4734de506fa4c41012",
+    "astra_eval_v22_candidate_04DDDF708F_map.json": "ff0d91feb91ab5401c52fa2b81cfe28743eae68aac753778b27d59b8e863f687",
+    "astra_eval_v22_candidate_04DDDF708F_map_ACT.HIVE.json": "be23633599427873302efb74f21554a8ba5111ddd8ec0219797de520e7ddb79d"
+  }
+}
