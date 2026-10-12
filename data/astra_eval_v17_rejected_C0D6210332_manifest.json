@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v17",
+  "run_index": 22,
+  "arm": "rejected",
+  "seed": "C0D6210332",
+  "source_commit": "1a8e23822c415d7f4ddf88a6ba2f269cb3bd474d",
+  "sha256": {
+    "official_agent.py": "a35f68132d0304ce1f82a14593bb5b98bae76f868d478850eaa25b6327bfab4f",
+    "combat.py": "54432890d802d6d1e2d0a28a0e6d90fd9360e7a7f3b3f0cd9402ee749e27f0e4",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "3ded3b5317fb8d52d50fa48436208695a1993474a55251cb716289d7e6e17d28"
+  },
+  "plan_sha256": "e14d1db0b98780de41dcfbb6ed7a6d501cd27318db6b5c4cea8b9a72f28813a6",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791794454.754155,
+  "finished": 1791794844.521908,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      11
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 444,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v17_rejected_C0D6210332_map_ACT.HIVE.json": "ed839400abb076d80305559f102e524420a02b09021415d5ead173618c246cab",
+    "astra_eval_v17_rejected_C0D6210332_map_ACT.GLORY.json": "f70122e5f6e22fd4a5f9b2af1ff83a72f03e7c079ea79cbfee06b04f9205d136",
+    "astra_eval_v17_rejected_C0D6210332_map.json": "ce64983f9122b7c75b5b869f93acc232dfef9e5ede2db98f0df3115c539a074a",
+    "astra_eval_v17_rejected_C0D6210332_stdout.log": "4c43f2c69fa928a756546dedc10e1e18f92d2786809ed81b9ebd30e18b6b3b25",
+    "astra_eval_v17_rejected_C0D6210332_mod.log": "f34576e48a7ddd0d144d98d05fc57e3935df62eb767062565358fd3373a83b33",
+    "astra_eval_v17_rejected_C0D6210332_agent.jsonl": "f3d7db5f66434d254f77e6c133ab1e84de4d6fca38b70b101ca41741a5d1fe71"
+  }
+}
