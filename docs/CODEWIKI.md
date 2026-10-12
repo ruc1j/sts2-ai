@@ -455,6 +455,7 @@ python .\combat.py .\data\enemies_overgrowth.json ENCOUNTER.SLIMES_WEAK --simula
 | v17 | `dc18fe4`・main(`04791ab`)・却下方針全部入り(`1a8e238`)の3版、新DLL、未使用8 seed | 差を検出できず: Act 3 0/0/0、Act 2 2/2/2、Act 1 7/6/6。詳細は[ACT2_EVAL_V17_20261012](ACT2_EVAL_V17_20261012.md) |
 | v18 | main(`2f9e814`、補正2件除去・イベント点数・Foul換金)対`dc18fe4`、同じ新DLL、未使用6 seed | この集合では改善: Act 3 0対0、Act 2 4対0、Act 1 5対5、到達点 改善4・悪化0。6組なので確認を継続。詳細は[ACT2_EVAL_V18_20261012](ACT2_EVAL_V18_20261012.md) |
 | v19 | v18と同条件、未使用4 seed | 改善: Act 2 1対0、到達点 改善1・悪化0・同値3。v18＋v19の10組でAct 2突破5対0、改善5・悪化0。到達度改善として採用(踏破率は未確認)。詳細は[ACT2_EVAL_V19_20261012](ACT2_EVAL_V19_20261012.md) |
+| v20 | v18・v19と同条件、未使用6 seed | 単独では1 seed分悪化(Act 2 0対1、到達点 改善2・悪化1)。v18〜v20の16組でAct 2突破5対1、改善7・悪化1。採用は維持。詳細は[ACT2_EVAL_V20_20261012](ACT2_EVAL_V20_20261012.md) |
 
 あわせてゲーム再現の正しさの修正2件(Perfected StrikeがUltimate StrikeをStrikeとして数える、強化Ashen Strikeの上乗せ)を入れた。
 v2〜v5の監査でモデルとゲームの一致は99.8%、残った不一致はこの2件でほぼ説明できた。
