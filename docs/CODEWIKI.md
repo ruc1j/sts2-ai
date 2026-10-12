@@ -505,6 +505,11 @@ v2〜v7の117 runの死亡地点はTHE_INSATIABLE(Act 2ボス)が50件で最多�
 | `rage_direct` | 250 | 43/50 | −2.0（SE 0.61、4対25） | 0 | 現状維持。Rageは探索より規則のほうが良い |
 | `rage_defense_direct` | 310 | 19/25 | 0.0（SE 1.15） | +5pt | 現状維持 |
 | `two_card_lethal_setup_direct` | 62 | 39/50 | +0.6（SE 0.51） | −2.6pt | 現状維持 |
+| `rollout_success / decimillipede_focus`（探索の手の対象を最大HPの節へ付け替える） | 106 | 56/60 | +4.5（SE 1.06、29対9） | +3.6pt | `e99b22a` で外した |
+| `rollout_success / obscura_focus`（探索の手の対象をObscura本体へ付け替える） | 51 | 49/50 | +3.6（SE 0.96、24対9） | +2.0pt | `e99b22a` で外した |
+| `direct_potion` | 1100 | 12/31（モデル外ポーション29件は比較不能） | −0.2（SE 0.59） | −4.2pt | 現状維持 |
+| `sandpit_draw` | 129 | 41/50 | +0.4（SE 0.50） | +3.7pt | 現状維持 |
+| `vulnerable_multi_lethal_direct`（dsh実施） | 49 | 50組 | +1.25（SE 0.71） | — | 現状維持（2SE未満） |
 
 - `sandpit_escape` は単発の判定しか見ておらず、複数枚の組み合わせで倒しきれるターンにも脱出を打っていた（5F213792B3 seq314: ボスHP54に対し、Bludgeon＋Anger 2枚で77出せた）。`e657cfb` で、手札とエナジーの最大ダメージ（ナップサック）がボスHPを超えるときは、脱出を後回しにした。全traceの脱出534件のうち、変わる判断はボスHP19〜61の局面だった。
 - 点数の無いイベントは、ゲームの `EventRoomHandler` がランダムに選ぶ（v11とrandom20の481イベントのうち114件）。HPを払う分岐がある上位イベントに点数を付けた（`7c5526c`、`5955acf`）。
