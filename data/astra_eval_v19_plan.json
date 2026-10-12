@@ -1,0 +1,116 @@
+{
+  "conditions": {
+    "game_version": "v0.107.1",
+    "game_assembly": "/Users/mao/Library/Application Support/Steam/steamapps/common/Slay the Spire 2/SlayTheSpire2.app/Contents/Resources/data_sts2_macos_arm64/sts2.dll",
+    "game_assembly_sha256": "e7ceb80669bfaf5c8fccabaa126ae2bb283aba514be5b5b55612579cfd285f18",
+    "character": "Ironclad",
+    "ascension": 0,
+    "simulations": 100,
+    "agent_max_combats": 100,
+    "stop_after_act": 3,
+    "userdata_snapshot": "/Users/mao/.sts2/userdata-pin",
+    "userdata_sha256": "99fc8fc4db13b816824117057f3ba3da60f46ff1cf54c0267d51fb62e4746752",
+    "search_rng": "observation seq; identical runner and pinned userdata for each run"
+  },
+  "rerun_rule": "Only verified external interruption/crash: retain attempt and retry same seed/version/settings once under a new tag within panel time limit. Candidate-caused failures remain reliability regressions. Unexplained missingness keeps comparison on hold.",
+  "primary_metric": "Act 3 complete / runs with verified terminal outcome, equally weighted by seed; show planned/completed/unknown counts",
+  "secondary_order": [
+    "Act 2 clear",
+    "Act 1 clear",
+    "same-seed depth improved minus worsened",
+    "same final-combat progress (docs/EVALUATION.md)"
+  ],
+  "acceptance": "docs/EVALUATION.md: both development and confirmation improve without unresolved reliability regression; otherwise hold/reject under its rules.",
+  "freeze": "Both versions stay unchanged through the panel. Newly diagnosed correctness failures end this version comparison as hold instead of silently changing source.",
+  "per_run_timeout_seconds": 1800,
+  "id": "astra_eval_v19",
+  "hypothesis": "v18と同じ条件の追加確認(未使用4 seed)",
+  "change_type": "cumulative",
+  "change": "両版に同じ新DLL(64階上限、Foul Potion換金の修正版)",
+  "versions": {
+    "control": {
+      "repo": "/tmp/sts2-eval-v18-control",
+      "commit": "dc18fe4b9046f5f2647653742eb30455a45380b1",
+      "sha256": {
+        "official_agent.py": "7848163db383898a473cff2f3c5f6c9476bc580af746677a30cb7d7fda72f7ea",
+        "combat.py": "584b3b2d81bc00cf6ccc0cb18ba970f5bb1da3bd613ce2e2f8780501548fa2e0",
+        "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+        "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+      }
+    },
+    "candidate": {
+      "repo": "/tmp/sts2-eval-v18-candidate",
+      "commit": "2f9e814c49fb86b65c1d038b44a4922dca287dd8",
+      "sha256": {
+        "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+        "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+        "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+        "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+      }
+    }
+  },
+  "development_seeds": [],
+  "confirmation_seeds": [
+    "167D814677",
+    "3D7C34D98E",
+    "C86A573ED1",
+    "04DDDF708F"
+  ],
+  "selection": {
+    "development": "なし。",
+    "confirmation": "secrets.token_hex(5).upper() x4, excluding data/ tokens and v11-v18 confirmation seeds; no outcomes inspected."
+  },
+  "repetitions_per_seed_per_version": 1,
+  "planned_runs": 8,
+  "panel_time_limit_seconds": 14400,
+  "run_order": [
+    {
+      "arm": "candidate",
+      "seed": "167D814677",
+      "tag": "astra_eval_v19_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "167D814677",
+      "tag": "astra_eval_v19_control"
+    },
+    {
+      "arm": "control",
+      "seed": "3D7C34D98E",
+      "tag": "astra_eval_v19_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "3D7C34D98E",
+      "tag": "astra_eval_v19_candidate"
+    },
+    {
+      "arm": "candidate",
+      "seed": "C86A573ED1",
+      "tag": "astra_eval_v19_candidate"
+    },
+    {
+      "arm": "control",
+      "seed": "C86A573ED1",
+      "tag": "astra_eval_v19_control"
+    },
+    {
+      "arm": "control",
+      "seed": "04DDDF708F",
+      "tag": "astra_eval_v19_control"
+    },
+    {
+      "arm": "candidate",
+      "seed": "04DDDF708F",
+      "tag": "astra_eval_v19_candidate"
+    }
+  ],
+  "seed_sets": {
+    "confirmation_fresh": [
+      "167D814677",
+      "3D7C34D98E",
+      "C86A573ED1",
+      "04DDDF708F"
+    ]
+  }
+}
