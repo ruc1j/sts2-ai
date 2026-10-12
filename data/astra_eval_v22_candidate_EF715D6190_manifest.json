@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v22",
+  "run_index": 29,
+  "arm": "candidate",
+  "seed": "EF715D6190",
+  "source_commit": "4c03ab4abb512534da5ad5e58abb456dfb21d640",
+  "sha256": {
+    "official_agent.py": "e9dafd61e1165fd585251b7da8169df14d25c72ce2029762d6c5ef10addaf10e",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": "a9326459eeab1622ca5b87f4795deaa613c68b687d1d90c79f4783adbac10f48",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791842140.094359,
+  "finished": 1791842520.695466,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 447,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v22_candidate_EF715D6190_map_ACT.HIVE.json": "ddf7d0232b900d80640abc3d95d0d54e8d77afa43a1f885dc19f132c319b64eb",
+    "astra_eval_v22_candidate_EF715D6190_map_ACT.GLORY.json": "448e7a56256359b1504a9d3e226d804ce7e36d3c7aaa61aaf913b99a87d58688",
+    "astra_eval_v22_candidate_EF715D6190_stdout.log": "26506b7db3d5f4112b22593089282a8782a1d41be965a5aded57fbb97e656a75",
+    "astra_eval_v22_candidate_EF715D6190_map.json": "410bb0128ac9881c1b20459d5ff66c3e17869d455d12e03d6fa7ea2099ae3886",
+    "astra_eval_v22_candidate_EF715D6190_mod.log": "cee38c853126e56fb764155ed807b78abab0f55a771230e478892d9acc3644e4",
+    "astra_eval_v22_candidate_EF715D6190_agent.jsonl": "bd640349d30cee4f7029fdba3c7e6c453907c44c98364585aef6502b87e66a25"
+  }
+}
