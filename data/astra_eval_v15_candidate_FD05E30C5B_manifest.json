@@ -1,0 +1,47 @@
+{
+  "panel": "astra_eval_v15",
+  "run_index": 3,
+  "arm": "candidate",
+  "seed": "FD05E30C5B",
+  "source_commit": "038b2eacdf6c62a7b574bfac1302c4ea055e1920",
+  "sha256": {
+    "official_agent.py": "a528c4b29de7633fcf5a0b3415e427665ad7a450fffc026a7a35937b948a2d86",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "1247df4c14cdbceeb44d43f974bb0637f3f7f8f58599280b935d67eb076c0ab1"
+  },
+  "plan_sha256": "3964560c67d107ea081b938b36dd9f1bc161c35175a06ccf45ff23169788e5fd",
+  "runner_sha256": "416965d143c7977529ad292db3588f753a9b93d7df0404f5c1d2c7e04b6ef9eb",
+  "simulations": 100,
+  "started": 1791768436.692791,
+  "finished": 1791768848.62021,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 516,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_eval_v15_candidate_FD05E30C5B_mod.log": "c6a84364bc9b1ac3f0ee82eb40bc7ef86d7d1f3e3080dfe00033d56ac929ef41",
+    "astra_eval_v15_candidate_FD05E30C5B_agent.jsonl": "6786b66c980cafa6175d4b14eac0ffe45436abaacf3e091d158a6a780d37bbc1",
+    "astra_eval_v15_candidate_FD05E30C5B_stdout.log": "093693872217401d189c6a76537f6ffc51aa22c80f2d599b0b667c7cfef17e46",
+    "astra_eval_v15_candidate_FD05E30C5B_map.json": "f33684b06f719b53b4049de9ed964ecfcfaa26f1f1a868005af858681080e1ab",
+    "astra_eval_v15_candidate_FD05E30C5B_map_ACT.GLORY.json": "ea859ff09b32b79c5d4fc0db48cf07bb8967a2ca4526b2170f0eeee0711c08a5",
+    "astra_eval_v15_candidate_FD05E30C5B_map_ACT.HIVE.json": "950b442c9b6f0b829d384a598f9cb390bd0ee150909f74a43b6f2de3fb52f8c7"
+  }
+}
