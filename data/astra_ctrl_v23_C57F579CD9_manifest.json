@@ -3,7 +3,7 @@
   "run_index": 3,
   "arm": "control",
   "seed": "C57F579CD9",
-  "source_commit": "HEAD",
+  "source_commit": "775f3662ff179f39e3031700b0f6f9563b29652b",
   "sha256": {
     "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
     "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
