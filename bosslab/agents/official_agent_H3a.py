@@ -4,6 +4,12 @@
 生きている間は削るので、H1 の ≤50 自己閉鎖（Amalgam を削れる手段が Amalgam を殴ることだけ）を序盤の
 能動削りで解く。Amalgam が死んだ/消えたターンは実効 HP 0 で Queen へ自己律速で切り替わる。変更殴り先のみ。
 
+N の決め方（act3_hybrid_h3_design.md、次 goal 設計で 1 本に固定）: dev2 base 盤面は 1〜2 手番目に Amalgam
+を殴って 199→158→... と削っている（act3_queenfirst_h1h2_dev2.md の手番表）。1 手番だけでは Amalgam を
+落とし切らず、2 手番で base と同じ序盤の削り込みを再現しつつ Queen 集中に early に戻る。3 手番超は Queen
+削りが落ち base へ寄り過ぎる。よって基準 N=2 に固定し、実機では N=1〜4 を sweep して掃き込み域を測る。
+手番基準なので Queen 優先の自己閉鎖にならない（H1/H3b と違い Amalgam 実効 HP に依存しない）。
+
 差分の確認: diff -u official_agent.py bosslab/agents/official_agent_H3a.py
 """
 from __future__ import annotations
@@ -35,7 +41,7 @@ from combat import (
 )
 
 
-QUEENFIRST_H3_OPEN_TURNS = 2  # turns to chip the Amalgam before committing to the Queen; tune
+QUEENFIRST_H3_OPEN_TURNS = 2  # turns chipping the Amalgam before committing to the Queen; base per design (act3_hybrid_h3_design.md), sweep 1..4 live
 CARD_NAMES = {
     "CARD.STRIKE_IRONCLAD": "Strike",
     "CARD.DEFEND_IRONCLAD": "Defend",

@@ -5,6 +5,12 @@ Amalgam の次手番の予想被ダメが HP+ブロックの QUEENFIRST_H3_DANGE
 1 手番目から発火し、H1 と違い削ることを保証する。H2（被ダメが HP+blk を超えた時だけ）より発火が早く、
 常時削りに近い。変更殴り先のみ。
 
+frac の決め方（act3_hybrid_h3_design.md、次 goal 設計で 1 本に固定）: Amalgam は Queen 戦で唯一の定常
+ダメージ源なので、自分を殺しうる水準で削るのは防御上の必須。H2 と同じ「超える」判定(>100%)では遅すぎ、
+base と H1/H2 の中間を狙うため 5 割(0.5)を基準に固定した。0.5 未満（Amalgam が自分を殺せない手番）は Queen
+に切り替わり Queen 集中が残る。実機では 0.4〜0.75 を sweep して over-invest（Amalgam 処理に割き過ぎ）と
+Queen 集中の取り分を測る。被ダメ脅威基準なので Amalgam 実効 HP に依存せず発火＝自己閉鎖しない。
+
 差分の確認: diff -u official_agent.py bosslab/agents/official_agent_H3c.py
 """
 from __future__ import annotations
@@ -36,7 +42,7 @@ from combat import (
 )
 
 
-QUEENFIRST_H3_DANGER_FRAC = 0.5  # Amalgam next-hit fraction of (hp+block) that arms the chip
+QUEENFIRST_H3_DANGER_FRAC = 0.5  # Amalgam next-hit fraction of (hp+block) that arms the chip; base per design (act3_hybrid_h3_design.md), sweep 0.4..0.75 live
 CARD_NAMES = {
     "CARD.STRIKE_IRONCLAD": "Strike",
     "CARD.DEFEND_IRONCLAD": "Defend",
