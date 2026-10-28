@@ -379,6 +379,56 @@ def summarize_continuous(trials: list[dict]) -> dict:
     }
 
 
+def load_dir_trials(path: Path) -> tuple[list[dict], dict]:
+    """1つの lab dir から信頼できる結果行と計画・†指定を読む（pass とは独立に使える）。"""
+    results = [path / "lab_results.jsonl"] if path.is_dir() else [path]
+    results = [r for r in results if r.is_file()] or list(path.glob("*/lab_results.jsonl"))
+    trials, dropped = load_trials(results)
+    planned: list[dict] = []
+    meta_path = path / "lab_meta.json"
+    if meta_path.is_file():
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        plan_file = meta.get("plan")
+        if plan_file and Path(plan_file).is_file():
+            planned = json.loads(Path(plan_file).read_text(encoding="utf-8")).get("trials", [])
+    info = {"planned": planned, "dropped": dropped, "flags": flag_specs_from_plan(planned),
+            "written": {trial["trial_id"] for trial in trials}
+            | {row.get("trial_id") for row in dropped if row.get("trial_id")},
+            "missing": [trial for trial in planned if trial["trial_id"]
+                        not in {t["trial_id"] for t in trials}],
+            "done": (path / "failures.txt").is_file()}
+    return trials, info
+
+
+def pair_comparison(base_trials: list[dict], cand_trials: list[dict]) -> dict:
+    """base dir と候補 dir を同じ spec・offset で配对する（arm 名は両 dir で "base" のまま）。
+
+    候補は -AgentScript を差し替えて別の OutDir に出すので、arm 名では区別できない。ここで
+    cand 側だけ "cand" にリネームしてから 1つの母数に混ぜ、paired_continuous に渡す。† 指定の
+    寄せ集めは main 側で両 dir の plan から行う（この関数は比較だけ返す）。
+    """
+    merged = [dict(trial, _arm="base") for trial in base_trials] + \
+             [dict(trial, _arm="cand") for trial in cand_trials]
+    flags: dict[str, list] = {}
+    comparison = paired_continuous(merged, "base", "cand")
+    return {"comparison": comparison, "flags": flags}
+
+
+def pool_better_worse(comparisons: list[dict]) -> dict:
+    """集合横断の符号検定（プールは集合ごとの判定に代わらない、EVALUATION.md）。"""
+    better = worse = tie = pairs = 0
+    for comparison in comparisons:
+        row = next((row for row in comparison["rows"] if row["metric"] == "queen_shaved"), None)
+        if not row:
+            continue
+        better += row["better"]
+        worse += row["worse"]
+        tie += row["tie"]
+        pairs += row["pairs"]
+    return {"better": better, "worse": worse, "tie": tie, "pairs": pairs,
+            "p": mcnemar_exact_p(worse, better) if (better + worse) else None}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--run", dest="runs", action="append", default=[],
@@ -387,6 +437,10 @@ def main() -> int:
     ap.add_argument("--base", default="base")
     ap.add_argument("--specs", default=str(HERE / "boss_specs.jsonl"),
                     help="spec jsonl with the recorded real-run outcome per spec")
+    ap.add_argument("--compare-pair", dest="pairs", action="append", default=[],
+                    help="LABEL=BASE_DIR:CAND_DIR を spec・offset で配对比較（複数指定可）。"
+                         "候補は別 OutDir に同じ plan で走らせたもの。最後に集合横断のプール符号検定を"
+                         "別に付ける（プールは集合ごとの判定に代わらない）")
     args = ap.parse_args()
 
     orig: dict[str, bool | None] = {}
@@ -547,6 +601,46 @@ def main() -> int:
         if drift_lines:
             out.append("- ずれの内訳:")
             out.extend(drift_lines)
+
+    if args.pairs:
+        pooled_comparisons = []
+        for entry in args.pairs:
+            label, _, paths = entry.partition("=")
+            base_dir, separator, cand_dir = paths.partition(":")
+            if not separator:
+                out += ["", f"## 候補指定の形が不正（LABEL=BASE_DIR:CAND_DIR）: {entry}", ""]
+                continue
+            base_trials, base_info = load_dir_trials(Path(base_dir))
+            cand_trials, cand_info = load_dir_trials(Path(cand_dir))
+            if not base_trials or not cand_trials:
+                out += ["", f"## {label or 'pair'}: 読み込み不足（base {len(base_trials)} 行 / "
+                            f"cand {len(cand_trials)} 行）", ""]
+                continue
+            bundle = pair_comparison(base_trials, cand_trials)
+            comparison = bundle["comparison"]
+            flags = dict(base_info["flags"])
+            for key, value in cand_info["flags"].items():
+                flags.setdefault(key, value)
+            clean = (paired_continuous(
+                [dict(t, _arm="base") for t in base_trials]
+                + [dict(t, _arm="cand") for t in cand_trials], "base", "cand",
+                exclude_specs=set(flags)) if flags else None)
+            pooled_comparisons.append(comparison)
+            base_wins = sum(1 for t in base_trials if t["result"]["won"])
+            cand_wins = sum(1 for t in cand_trials if t["result"]["won"])
+            out += ["", f"## {label or 'pair'}（base `{Path(base_dir).name}` {len(base_trials)}本 vs "
+                        f"cand `{Path(cand_dir).name}` {len(cand_trials)}本。win 記録 "
+                        f"{base_wins}→{cand_wins}）", ""]
+            out += render_continuous_comparison(comparison, "base", f"cand({label})" if label else "cand",
+                                                flags, clean)
+        if pooled_comparisons:
+            pooled = pool_better_worse(pooled_comparisons)
+            out += ["", "## 集合横断のプール符号検定（主信号: Queen削り割合）", "",
+                    f"- 配对 {pooled['pairs']} 組: 候補が優る {pooled['better']} / base が優る "
+                    f"{pooled['worse']} / 同値 {pooled['tie']}"
+                    + (f"（精密p 両側 {pooled['p']:.3f}）" if pooled["p"] is not None else "")
+                    + "。上の集合ごとの判定をこれ1本で置き換えない（EVALUATION.md: 比較する run 数と"
+                    "反復数は集合単位で揃える。プールは参考値）。"]
 
     reference = next((index for index, label in enumerate(pass_labels) if not label), 0)
     for index, label in enumerate(pass_labels):

@@ -77,6 +77,40 @@ class ContinuousMetricsTest(unittest.TestCase):
         self.assertFalse(self.mod.is_queen_panel([act2]))
 
 
+class PairComparisonTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        if not TOOL.is_file():
+            raise cls.skipTest(f"{TOOL} is missing")
+        cls.mod = load_module()
+
+    def test_pair_dirs_are_matched_by_spec_and_offset_even_with_the_same_arm_name(self) -> None:
+        base = [trial(arm="base", spec="s1", offset="0", queen_hp=400),
+                trial(arm="base", spec="s2", offset="2", queen_hp=400)]
+        cand = [trial(arm="base", spec="s1", offset="0", queen_hp=300),
+                trial(arm="base", spec="s3", offset="0", queen_hp=300)]
+        bundle = self.mod.pair_comparison(base, cand)
+        row = next(row for row in bundle["comparison"]["rows"] if row["metric"] == "queen_shaved")
+        self.assertEqual(1, row["pairs"])
+        self.assertEqual(1, row["better"])
+        # s2 には base 側しかない、s3 には cand 側しかない。両方揃う (s1, offset 0) だけ配对する。
+        self.assertEqual(2, bundle["comparison"]["not_comparable"])
+
+    def test_pooled_sign_test_adds_sets_without_replacing_them(self) -> None:
+        first = self.mod.pair_comparison(
+            [trial(arm="base", spec="s1", queen_hp=400)],
+            [trial(arm="base", spec="s1", queen_hp=200)])["comparison"]
+        second = self.mod.pair_comparison(
+            [trial(arm="base", spec="t1", queen_hp=400)],
+            [trial(arm="base", spec="t1", queen_hp=399)])["comparison"]
+        pooled = self.mod.pool_better_worse([first, second])
+        self.assertEqual(2, pooled["pairs"])
+        self.assertEqual(2, pooled["better"])
+        self.assertEqual(0, pooled["worse"])
+        self.assertGreater(pooled["p"], 0.0)
+        self.assertLess(pooled["p"], 1.0)
+
+
 class RunLabelTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
