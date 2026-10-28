@@ -1,0 +1,14 @@
+{
+  "started": "2026-10-28T16:30:36",
+  "plan": "/Users/mao/.sts2/wt-bosslab/.dsh/bosslab_act3_plan_fidelity2.json",
+  "plan_sha256": "6c79192f5b83beb35bec4ed25538a1e86bf1dfdfdb515db161d9f65b940ac6b3",
+  "mod_dll_sha256": "9a298350ec1d580a171537e90432f70f10796ab699e5181eccffd26703a1a392",
+  "agent_script": "/Users/mao/.sts2/wt-bosslab/official_agent.py",
+  "agent_script_sha256": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+  "runner_sha256": "5c41c4fc53abddb5fcae43b65529f38782fe4e880598140fc442c7a432351b8f",
+  "source_commit": "2748bc18900c14315e6ef2d8b42bf7e26ffada0d",
+  "game_dir": "/Users/mao/Library/Application Support/Steam/steamapps/common/Slay the Spire 2",
+  "agent_simulations": 100,
+  "trials_planned": 3
+}
+
