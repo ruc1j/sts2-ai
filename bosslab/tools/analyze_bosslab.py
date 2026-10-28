@@ -42,6 +42,61 @@ def band_of(hp: int) -> str:
     return "<60" if hp < 60 else "60-79" if hp < 80 else ">=80"
 
 
+_TRACE_CACHE: dict[str, list] = {}
+
+
+def trace_rows(path: Path) -> list[dict]:
+    """Read one trial's per-decision trace once (cached); an empty list when the file is absent."""
+    key = str(path)
+    cached = _TRACE_CACHE.get(key)
+    if cached is not None:
+        return cached
+    rows: list[dict] = []
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except ValueError:
+                continue
+    _TRACE_CACHE[key] = rows
+    return rows
+
+
+def hp_removed_from_trace(rows: list[dict], id_suffix: str) -> int | None:
+    """Total HP a monster lost across the trace, the §5-2 火力 definition.
+
+    Per-decrease summing telescopes to (initial HP - last HP) while the monster lives, and on a kill
+    the last row where it was seen contributes its remaining HP, so a monster that left the board is
+    counted up to its maximum and the killing blow's overkill is not added. Rows without an enemies
+    key (the final combat_end record) are skipped because the board vanished there for an unrelated
+    reason. None when the monster never shows up in the trace.
+    """
+    total = 0
+    seen = False
+    previous: float | None = None
+    for row in rows:
+        enemies = row.get("enemies")
+        if enemies is None:
+            continue
+        enemy = next((e for e in enemies if str(e.get("id", "")).endswith(id_suffix)), None)
+        if enemy is None:
+            if previous is not None:
+                total += previous
+                previous = None
+            continue
+        seen = True
+        hp = float(enemy.get("hp") or 0)
+        if previous is not None:
+            total += max(0.0, previous - hp)
+        previous = hp
+    if not seen:
+        return None
+    return int(total)
+
+
 def load_trials(paths: list[Path]) -> tuple[list[dict], list[dict]]:
     usable, dropped = [], []
     for path in paths:
@@ -65,6 +120,11 @@ def load_trials(paths: list[Path]) -> tuple[list[dict], list[dict]]:
                                 "why": ("error" if r.get("error")
                                         else f"outcome_source={res.get('outcome_source') or 'none'}")})
                 continue
+            # Firepower per turn needs the per-decision trace (the result row only carries the final
+            # enemy HP for survivors). It sits beside lab_results.jsonl in the same run dir.
+            trows = trace_rows(path.parent / f"trial_{r.get('trial_index'):04d}_agent.jsonl")
+            r["_queen_damage"] = hp_removed_from_trace(trows, QUEEN_ID_SUFFIX)
+            r["_amalgam_damage"] = hp_removed_from_trace(trows, AMALGAM_ID_SUFFIX)
             usable.append(r)
     return usable, dropped
 
@@ -233,12 +293,23 @@ def continuous_metrics(trial: dict) -> dict:
         shaved = max(0.0, min(1.0, (max_hp - float(queen.get("hp") or 0)) / max_hp))
     entry_hp = result.get("entry_player_hp")
     final_hp = result.get("final_player_hp")
+    # Firepower per turn (the two co-primary §5-2 signals): HP removed from Queen + Amalgam, and from
+    # Queen alone, each divided by this arm's own survival turns. None if the trace was unavailable or
+    # the fight ran 0 turns, so a missing value is dropped rather than read as zero.
+    turns = result.get("last_observed_turn")
+    q_dmg = trial.get("_queen_damage")
+    a_dmg = trial.get("_amalgam_damage")
+    total_dmg = None if q_dmg is None or a_dmg is None else q_dmg + a_dmg
+    firepower_total = total_dmg / turns if turns and total_dmg is not None else None
+    firepower_queen = q_dmg / turns if turns and q_dmg is not None else None
     return {
         "queen_shaved": shaved,
         "amalgam_killed": amalgam is None or won,
-        "turns": result.get("last_observed_turn"),
+        "turns": turns,
         "hp_lost": entry_hp - final_hp if entry_hp is not None and final_hp is not None else None,
         "won": won,
+        "firepower_total": firepower_total,
+        "firepower_queen": firepower_queen,
     }
 
 
@@ -247,6 +318,8 @@ def is_queen_panel(trials: list[dict]) -> bool:
 
 
 METRICS = (("queen_shaved", True, "Queen削り割合（主信号）"),
+           ("firepower_total", True, "総火力/ターン（主信号・Queen+AmalgamへのHP削除÷生存ターン）"),
+           ("firepower_queen", True, "Queen火力/ターン（主信号・QueenへのHP削除÷生存ターン）"),
            ("amalgam_killed", True, "Amalgamを倒せたか（補助）"),
            ("turns", True, "死亡ターン（補助・長いほど良い）"),
            ("hp_lost", False, "失ったHP（補助・少ないほど良い）"))
