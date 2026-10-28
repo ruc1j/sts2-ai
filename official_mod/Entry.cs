@@ -76,10 +76,11 @@ public static class Entry
     public static void Initialize()
     {
         bool autoslay = CommandLineHelper.HasArg("sts2ai-autoslay");
-        if (!autoslay && !CommandLineHelper.HasArg("unlock-ironclad-epochs"))
+        bool bosslab = CommandLineHelper.HasArg("sts2ai-bosslab");
+        if (!autoslay && !bosslab && !CommandLineHelper.HasArg("unlock-ironclad-epochs"))
             return;
 
-        if (autoslay)
+        if (autoslay || bosslab)
             new Harmony("sts2-ai.official").PatchAll();
         TaskHelper.RunSafely(StartWhenReady());
     }
@@ -110,6 +111,12 @@ public static class Entry
                 }
                 SaveManager.Instance.SaveProgressFile();
             }
+        }
+        if (CommandLineHelper.HasArg("sts2ai-bosslab"))
+        {
+            AutoSlayLog.Info("[BossLab] lab mode; AutoSlay is not started");
+            await BossLab.RunAsync();
+            return;
         }
         if (!CommandLineHelper.HasArg("sts2ai-autoslay"))
         {

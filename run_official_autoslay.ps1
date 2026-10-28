@@ -15,7 +15,9 @@ param(
     [string]$MapFile = (Join-Path $PSScriptRoot 'data/official_act1_map.json'),
     [int]$AgentSimulations = 1000,
     [switch]$Visible = $true,
-    [switch]$UnlockIroncladEpochs
+    [switch]$UnlockIroncladEpochs,
+    [switch]$BossLab,
+    [string[]]$ExtraGameArgs = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -102,7 +104,7 @@ try {
     $info.EnvironmentVariables['SteamAppId'] = '2868840'
     $info.EnvironmentVariables['SteamGameId'] = '2868840'
     if (-not $Visible) { $info.ArgumentList.Add('--headless') }
-    $info.ArgumentList.Add('--sts2ai-autoslay')
+    if ($BossLab) { $info.ArgumentList.Add('--sts2ai-bosslab') } else { $info.ArgumentList.Add('--sts2ai-autoslay') }
     $info.ArgumentList.Add("--seed=$Seed")
     $info.ArgumentList.Add("--log-file=$LogFile")
     if ($StopAfterAct) { $info.ArgumentList.Add("--stop-after-act=$StopAfterAct") }
@@ -141,6 +143,7 @@ try {
         if ($StopAfterAgent) { $info.ArgumentList.Add('--stop-after-agent=1') }
         if ($StopAfterReward) { $info.ArgumentList.Add('--stop-after-reward=1') }
     }
+    foreach ($extra in $ExtraGameArgs) { $info.ArgumentList.Add($extra) }
     $process = [Diagnostics.Process]::Start($info)
     if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
         $process.Kill($true)
