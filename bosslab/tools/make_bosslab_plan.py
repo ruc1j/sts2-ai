@@ -36,7 +36,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
 
 sys.path.insert(0, str(HERE))
-from relic_entry_effects import defer_relics_for, flag_relics_for  # noqa: E402
+from relic_entry_effects import defer_relics_for, flag_relics_for, relic_counters_are_known  # noqa: E402
 
 DEFAULT_SPECS = HERE / "boss_specs.jsonl"
 
@@ -151,6 +151,12 @@ def main() -> int:
             return False
         if args.exclude_relic and set(args.exclude_relic) & set(spec["player"]["relics"]):
             return False
+        # BossLab can only restore a threshold relic's counter when the source trace carried the
+        # relic_counters column; a counter-relic spec from an older bridge has an unknown counter, so
+        # drop it rather than silently start the fight at zero (bosslab/tools/relic_entry_effects.py).
+        if not relic_counters_are_known(spec["player"].get("relics") or (),
+                                        spec.get("relic_counters_observed", False)):
+            return False
         if args.tag_include and not any(source["tag"].startswith(prefix)
                                         for prefix in args.tag_include
                                         for source in spec["sources"]):
@@ -241,6 +247,9 @@ def main() -> int:
                     # the HP re-assert and the slot widening in BossLab.cs cover the other two
                     # families. The classification is bosslab/tools/relic_entry_effects.py.
                     "defer_relics": defer_relics_for(spec["player"]["relics"]),
+                    # Threshold counters BossLab writes back at the first decision, keyed by
+                    # relic.Id.ToString() exactly as the bridge emitted them (BossLab.RestoreRelicCounters).
+                    "relic_counters": dict(spec["player"].get("relic_counters") or {}),
                     # Relics that add a card to the opening hand on the first turn. The lab cannot
                     # reproduce which card the recorded run's RNG produced, so analyze_bosslab.py
                     # marks these specs with a dagger and reports the same signal without them.

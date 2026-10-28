@@ -96,6 +96,15 @@ def run_tool(specs: list[dict], extra_args: list[str]) -> tuple[dict, Path]:
     return plan, plan_path
 
 
+def load_entry_effects():
+    module_spec = importlib.util.spec_from_file_location(
+        "relic_entry_effects", REPO / "bosslab" / "tools" / "relic_entry_effects.py")
+    assert module_spec and module_spec.loader
+    module = importlib.util.module_from_spec(module_spec)
+    module_spec.loader.exec_module(module)
+    return module
+
+
 class BossLabPlanTest(unittest.TestCase):
     def setUp(self) -> None:
         if not TOOL.is_file():
@@ -187,6 +196,55 @@ class BossLabPlanTest(unittest.TestCase):
         self.assertEqual(["RELIC.CROSSBOW"], summary["flag_relics"])
         self.assertEqual(1, summary["trials_with_defer"])
         self.assertEqual(1, summary["trials_with_flag"])
+
+    def test_trial_carries_restored_relic_counters_from_the_spec(self) -> None:
+        """PenNib の入場カウンタが trial.relic_counters で BossLab へ渡る回帰。"""
+        spec = dict(ACT3_SPEC)
+        spec["player"] = dict(ACT3_SPEC["player"],
+                              relics=list(ACT3_SPEC["player"]["relics"]) + ["RELIC.PEN_NIB"],
+                              relic_counters={"RELIC.PEN_NIB": 7})
+        spec["relic_counters_observed"] = True
+        plan, _ = run_tool([spec], ["--arm", "base", "--max-specs", "1", "--trials-per-arm", "1"])
+        self.assertEqual({"RELIC.PEN_NIB": 7}, plan["trials"][0]["relic_counters"])
+
+    def test_counter_relic_on_an_unobserved_trace_is_dropped(self) -> None:
+        """旧ブリッジ trace のカウンタ付き spec は、unresolved が空でも plan から落とす。
+
+        relic_counters 列を持たない trace から作ると、記録カウンタが不明で BossLab は 0 から
+   戦闘を始めてしまう（10 回目の攻撃を二重/見逃し）。observed なら通す。
+        """
+        def pen_nib_spec(observed):
+            spec = dict(ACT3_SPEC)
+            spec["player"] = dict(ACT3_SPEC["player"],
+                                  relics=list(ACT3_SPEC["player"]["relics"]) + ["RELIC.PEN_NIB"],
+                                  relic_counters={"RELIC.PEN_NIB": 7})
+            if observed is not None:
+                spec["relic_counters_observed"] = observed
+            return spec
+
+        for observed in (False, None):  # explicit False and a spec predating the field
+            plan, _ = run_tool([pen_nib_spec(observed)],
+                               ["--arm", "base", "--max-specs", "5", "--trials-per-arm", "1"])
+            self.assertEqual([], plan["trials"], f"observed={observed} must drop the counter spec")
+        plan, _ = run_tool([pen_nib_spec(False)], ["--arm", "base", "--max-specs", "5",
+                                                   "--trials-per-arm", "1", "--allow-unresolved"])
+        self.assertEqual([], plan["trials"], "counter-safety is not an unresolved gate")
+        plan, _ = run_tool([pen_nib_spec(True)], ["--arm", "base", "--max-specs", "5",
+                                                  "--trials-per-arm", "1"])
+        self.assertEqual(1, len(plan["trials"]))
+
+    def test_relic_counters_are_known_helper(self) -> None:
+        ee = load_entry_effects()
+        self.assertEqual({"RELIC.PEN_NIB", "RELIC.NUNCHAKU", "RELIC.TUNING_FORK"},
+                         set(ee.RESTORABLE_COUNTER_RELICS))
+        # A player with no restorable counter relic is always safe, whatever the trace format.
+        self.assertTrue(ee.relic_counters_are_known(["RELIC.BURNING_BLOOD", "RELIC.SWORD_OF_JADE"],
+                                                    False))
+        # PENDULUM's counter drives a card draw, so it is not restorable and never gated here.
+        self.assertEqual([], ee.restorable_counter_relics(["RELIC.PENDULUM", "RELIC.CROSSBOW"]))
+        # A restorable counter relic needs the observed column; observed or not flips the answer.
+        self.assertFalse(ee.relic_counters_are_known(["RELIC.PEN_NIB"], False))
+        self.assertTrue(ee.relic_counters_are_known(["RELIC.PEN_NIB"], True))
 
 
 if __name__ == "__main__":

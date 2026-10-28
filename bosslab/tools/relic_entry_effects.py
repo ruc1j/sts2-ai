@@ -26,6 +26,16 @@ fidelity check:
     produces (and where the draw puts it) need not match the recorded run, and an entry observation
     taken before that hook predates the card entirely. Nothing here fixes it, so the plan generator
     carries these as ``flag_relics`` and analyze_bosslab.py marks the spec with a dagger.
+``restorable_counter``
+    The relic fires on a count of cards played (RELIC.PEN_NIB doubles the 10th attack, PenNib.cs:53-99;
+    RELIC.NUNCHAKU energy every N attacks, Nunchaku.cs:59-94; RELIC.TUNING_FORK block every N skills,
+    TuningFork.cs:59-106). The recorded run started the boss fight with a non-zero count that the trace
+    carries in the entry observation's ``relic_counters`` column, so BossLab writes it back at the first
+    decision instead of starting from zero. This works only for a spec whose source trace actually had
+    that column; a spec from a bridge that predates it has an unknowable counter and the plan generator
+    drops it (relic_entry_effects.relic_counters_are_known). These three are tracked in
+    ``RESTORABLE_COUNTER_RELICS``, not in ``ENTRY_EFFECTS`` below, because they need no entry hook
+    suppression.
 
 Not listed here, because they need no handling: relics that only grant a power at entry (they reproduce
 by design, and the plan generator already subtracts them from the residual power injection), and relics
@@ -230,6 +240,33 @@ def by_handling(handling: str) -> dict[str, dict]:
     return {relic: meta for relic, meta in ENTRY_EFFECTS.items() if meta["handling"] == handling}
 
 
+# Relics whose per-relic run counter the bridge already captures (CombatBridge.RelicCounters,
+# CombatBridge.cs:292-308) and BossLab writes back at the agent's first decision
+# (BossLab.RestoreRelicCounters): the combat-threshold counters, which only change WHEN a relic fires,
+# not which card the game's RNG drew. These are the only three. RELIC.PENDULUM's TurnsSeen drives a card
+# DRAW (Pendulum.cs:75-84, which card is RNG-dependent) and RELIC.PAELS_CLAW keeps its state on the
+# cards it enchants, so neither is restorable and the plan generator keeps excluding both.
+RESTORABLE_COUNTER_RELICS = ("RELIC.PEN_NIB", "RELIC.NUNCHAKU", "RELIC.TUNING_FORK")
+
+
+def restorable_counter_relics(relics) -> list[str]:
+    """Counter relics from the list whose value BossLab can restore from an observed relic_counters."""
+    return [relic for relic in relics if str(relic) in RESTORABLE_COUNTER_RELICS]
+
+
+def relic_counters_are_known(relics, observed: bool) -> bool:
+    """Whether every counter the boss entry needs is reproducible for a spec.
+
+    True when the player owns no restorable counter relic (nothing to restore, whatever the trace
+    format), or when they own one and the source trace carried the relic_counters column (observed).
+    False only for a counter-relic spec built from a bridge that predates relic_counters: there the
+    recorded counter is unknowable, and BossLab would silently start the fight with the counter at zero.
+    """
+    if not restorable_counter_relics(relics):
+        return True
+    return observed
+
+
 def _hook_body(text: str, hook: str) -> str | None:
     match = re.search(r"public override (?:async )?Task %s\([^)]*\)[^\n]*\n(.*?)\n\t\}" % re.escape(hook),
                       text, re.S)
@@ -257,8 +294,9 @@ def _adds_cards(body: str) -> bool:
 
 def expected_handling(source: Path) -> tuple[str, str] | None:
     """(handling, hook) this relic's decompiled source implies, or None when nothing here needs
-    handling. Relics carrying a [SavedProperty] are excluded from plans upstream (their run state is
-    invisible in the trace), so they are not this table's business."""
+    handling. A relic carrying a [SavedProperty] is not this table's business: either the bridge
+    captures its counter and BossLab restores it (RESTORABLE_COUNTER_RELICS), or the trace never shows
+    its state and the plan generator excludes the spec upstream."""
     text = source.read_text(encoding="utf-8", errors="replace")
     if "[SavedProperty]" in text:
         return None

@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using MegaCrit.Sts2.Core.Assets;
@@ -58,8 +59,12 @@ namespace Sts2Ai;
 /// re-asserted later still, once at the agent's first decision via CombatBridge.FirstDecisionHook, so
 /// the first turn's AfterPlayerTurnStart hooks (RELIC.ROYAL_POISON's turn-1 self damage) have already
 /// landed and the clamp is not applied to a value those hooks then subtract from a second time.
-/// What it cannot carry: a relic's own run state (Ember Tea's
-/// used-up flag, Girya's lift count) - those specs are excluded by the plan generator instead - and the
+/// A threshold relic's counter that the bridge captured (RELIC.PEN_NIB / RELIC.NUNCHAKU attacks,
+/// RELIC.TUNING_FORK skills) is written back at that same first decision (BossLab.RestoreRelicCounters),
+/// so the doubled attack / energy / block lands on the same card the recorded run hit it on. What it
+/// cannot carry: a relic's own run state the trace never shows (Ember Tea's
+/// used-up flag, Girya's lift count, or a counter relic seen in a trace from a bridge that predates
+/// relic_counters) - those specs are excluded by the plan generator instead - and the
 /// "cards played this turn" counters, so an entry observation taken after the fight had already begun
 /// plays its first recorded decision with clean counters, and relics that add cards at the first
 /// turn's start (RELIC.CROSSBOW, RELIC.TOOLBOX) will place their generated card wherever the lab's own
@@ -247,7 +252,11 @@ public static class BossLab
         // counted exactly once: for a run that also heals on entry (RELIC.PANTOGRAPH) the settle-time
         // clamp used to leave HP 4 below the recorded value. Potion belt and entry powers are already
         // settled above.
-        CombatBridge.FirstDecisionHook = () => ReapplyRecordedHp(player, trial);
+        CombatBridge.FirstDecisionHook = () =>
+        {
+            ReapplyRecordedHp(player, trial);
+            RestoreRelicCounters(player, trial);
+        };
         var bridgeTask = CombatBridge.Run(CancellationToken.None);
         LabResult fightResult;
         try
@@ -548,6 +557,48 @@ public static class BossLab
     }
 
     /// <summary>
+    /// Write back the per-relic counters the recorded entry carried (see LabTrial.RelicCounters). Run at
+    /// the agent's first decision, next to ReapplyRecordedHp, so a threshold relic fires on the same
+    /// card the recorded run fired it on: RELIC.PEN_NIB doubles the 10th attack (PenNib.cs:53-99),
+    /// RELIC.NUNCHAKU grants energy every N attacks (Nunchaku.cs:59-94), RELIC.TUNING_FORK grants block
+    /// every N skills (TuningFork.cs:59-106). The bridge captures these same counters on the way out
+    /// (CombatBridge.cs:292-308); if it emits one, BossLab restores it.
+    ///
+    /// Each of the three counter relics is identified by matching the recorded id against the attached
+    /// relic, then setting its single <c>[SavedProperty]</c> int counter through its own setter, which
+    /// keeps the game's normalization (PenNib clamps to value % 10) instead of poking the backing field.
+    /// Reflection is used because the setters are not uniformly public (PenNib and TuningFork declare
+    /// <c>private set</c>, Nunchaku a public one). A relic matched to an ambiguous entry - no, or more
+    /// than one, int SavedProperty - is skipped: those counters are not the combat-threshold kind this
+    /// restores, and the plan generator excludes such specs from the panel instead.
+    /// </summary>
+    private static void RestoreRelicCounters(Player player, LabTrial trial)
+    {
+        if (trial.RelicCounters is not { Count: > 0 })
+            return;
+        var restored = new List<string>();
+        foreach (var (key, value) in trial.RelicCounters)
+        {
+            var relic = player.Relics.FirstOrDefault(r => r.Id.ToString() == key);
+            if (relic is null)
+                continue;
+            var counter = relic.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public)
+                .Where(p => p.PropertyType == typeof(int)
+                    && p.CustomAttributes.Any(a => a.AttributeType.Name == "SavedPropertyAttribute"))
+                .ToList();
+            if (counter.Count != 1)
+                continue;
+            var setter = counter[0].GetSetMethod(nonPublic: true);
+            if (setter is null)
+                continue;
+            setter.Invoke(relic, new object[] { value });
+            restored.Add($"{key}.{counter[0].Name}={value}");
+        }
+        if (restored.Count > 0)
+            AutoSlayLog.Info($"[BossLab] restored entry relic counters: {string.Join(", ", restored)}");
+    }
+
+    /// <summary>
     /// Inject the player powers the recorded entry shows but the injected relic list does not
     /// produce by itself. Run after EnterRoomDebug so the relics' own `AfterRoomEntered` grants have
     /// already landed and are not doubled; run before the bridge's first observation so the agent
@@ -684,6 +735,17 @@ public class LabTrial
     /// carry this field behaves as before: every relic is attached before entry.
     /// </summary>
     [JsonPropertyName("defer_relics")] public List<string> DeferRelics { get; set; } = new();
+    /// <summary>
+    /// Per-relic run counters carried in the recorded entry (RELIC.PEN_NIB / RELIC.NUNCHAKU's
+    /// AttacksPlayed, RELIC.TUNING_FORK's SkillsPlayed), keyed by <c>relic.Id.ToString()</c> exactly as
+    /// the bridge emits them in its <c>relic_counters</c> observation (CombatBridge.cs:292-308). BossLab
+    /// writes them back at the agent's first decision (RestoreRelicCounters) so a counter-driven relic
+    /// triggers on the same card of the fight as the recorded run did, instead of restarting from zero.
+    /// Only specs extracted from a bridge that emitted <c>relic_counters</c> carry this; specs built from
+    /// an older trace have unknown counters and are excluded from plans upstream
+    /// (bosslab/tools/relic_entry_effects.py).
+    /// </summary>
+    [JsonPropertyName("relic_counters")] public Dictionary<string, int> RelicCounters { get; set; } = new();
     [JsonPropertyName("potions")] public List<string> Potions { get; set; } = new();
     /// <summary>
     /// Powers to inject after room entry. Amounts must already be reduced by whatever the injected
