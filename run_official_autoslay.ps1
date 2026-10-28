@@ -2,6 +2,8 @@ param(
     [string]$Seed,
     [string]$GameDir = 'E:\SteamLibrary\steamapps\common\Slay the Spire 2',
     [int]$TimeoutSeconds = 300,
+    [ValidateRange(0, 3600)]
+    [int]$IdleTimeoutSeconds = 0,
     [string]$LogFile = (Join-Path $PSScriptRoot 'data/official_autoslay.log'),
     [string]$ResultFile = (Join-Path $PSScriptRoot 'data/official_act1_result.json'),
     [ValidateRange(0, 3)]
@@ -145,10 +147,35 @@ try {
     }
     foreach ($extra in $ExtraGameArgs) { $info.ArgumentList.Add($extra) }
     $process = [Diagnostics.Process]::Start($info)
-    if (-not $process.WaitForExit($TimeoutSeconds * 1000)) {
+    # A run can also stop making progress without the wall clock expiring: if the game's action queue
+    # never drains, no new bridge file appears and the trace stays on its last line. Poll the newest
+    # write time of the files that advance during a healthy combat (agent trace, mod log, and both
+    # bridge files) and kill early when none of them moves for IdleTimeoutSeconds. 0 disables it; Act
+    # 3 decisions legitimately take up to ~4 minutes, so any threshold used must sit above that.
+    $watchPaths = @($AgentTrace, $LogFile, $observation, $action) | Where-Object { $_ }
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $stallReason = $null
+    while ($true) {
+        if ($process.WaitForExit(1000)) { break }
+        if ((Get-Date) -gt $deadline) { $stallReason = "timed out after $TimeoutSeconds seconds"; break }
+        if ($IdleTimeoutSeconds -gt 0) {
+            $newest = $null
+            foreach ($path in $watchPaths) {
+                $item = Get-Item -LiteralPath $path -ErrorAction SilentlyContinue
+                if ($item -and ($null -eq $newest -or $item.LastWriteTime -gt $newest)) {
+                    $newest = $item.LastWriteTime
+                }
+            }
+            if ($newest -and ((Get-Date) - $newest) -gt [TimeSpan]::FromSeconds($IdleTimeoutSeconds)) {
+                $stallReason = "stalled: nothing written to the trace or log for $IdleTimeoutSeconds seconds"
+                break
+            }
+        }
+    }
+    if ($stallReason) {
         $process.Kill($true)
         $process.WaitForExit()
-        throw "official simulation timed out after $TimeoutSeconds seconds; partial log: $LogFile"
+        throw "official simulation $stallReason; partial log: $LogFile"
     }
     if ($process.ExitCode) { throw "official simulation failed with exit code $($process.ExitCode); log: $LogFile" }
 } finally {

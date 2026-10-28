@@ -6,6 +6,11 @@ param(
     [string]$AgentScript = (Join-Path $PSScriptRoot 'official_agent.py'),
     [int]$AgentSimulations = 100,
     [int]$TimeoutSeconds = 300,
+    # Kill a trial whose trace/log stops advancing for this many seconds (0 = off, the default). Act 3
+    # single decisions take up to ~221s, so anything used here should sit above that; 320 worked as a
+    # suggested value in the Act 3 lab notes (.dsh/act3_boss_losses.md §7-4).
+    [ValidateRange(0, 3600)]
+    [int]$IdleTimeoutSeconds = 0,
     [int]$From = 0,
     [int]$To = -1,
     [switch]$Visible = $true,
@@ -76,6 +81,7 @@ Set-Content -LiteralPath $metaPath -Value ((ConvertTo-Json -Depth 4 ([ordered]@{
     source_commit = $commit
     game_dir = $GameDir
     agent_simulations = $AgentSimulations
+    idle_timeout_seconds = $IdleTimeoutSeconds
     trials_planned = $To - $From
 })) + "`n")
 
@@ -91,7 +97,7 @@ for ($i = $From; $i -lt $To; $i++) {
         & (Join-Path $PSScriptRoot 'run_official_autoslay.ps1') `
             -GameDir $GameDir -Seed $seed -StopAfterAct 0 -BossLab `
             -AgentScript $AgentScript -AgentMaxCombats 1 -AgentSimulations $AgentSimulations `
-            -TimeoutSeconds $TimeoutSeconds -Visible:$Visible `
+            -TimeoutSeconds $TimeoutSeconds -IdleTimeoutSeconds $IdleTimeoutSeconds -Visible:$Visible `
             -LogFile "$prefix`_mod.log" -ResultFile "$prefix`_result.json" `
             -AgentTrace "$prefix`_agent.jsonl" -AgentErrorLog "$prefix`_agent.err" `
             -MapFile "$prefix`_map.json" `
