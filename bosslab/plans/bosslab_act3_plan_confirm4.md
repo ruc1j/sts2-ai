@@ -1,6 +1,6 @@
 # BossLab trial plan
 
-- specs: `act3_boss_specs.jsonl` 全 180 件のうち選択条件を通ったもの 50 件から 12 件（order-seed `act3-confirm4` の hash 順、上位 12 件）
+- specs: `act3_boss_specs.jsonl` 全 180 件のうち選択条件を通ったもの 40 件から 12 件（order-seed `act3-confirm4` の hash 順、上位 12 件）
 - v1 の状態注入で扱えない spec（enchantment・カードの vars・relic counter・入場時 power） を除いた残りは全 spec 中 80 件
 - arms: base（単一 arm なので rotation なし）
 - require-card: なし（deck にその札を含む spec だけを選ぶ。除去 arm が実際に除去できるようにする）
@@ -12,49 +12,53 @@
 
 対象プールは `act3_boss_specs.jsonl` の QUEEN_BOSS 180 件（全員 Queen 戦闘）。まず v1 の注入で扱えない
 spec（unresolved）を落とし、次に `.dsh/bosslab_act3_used.speclist`（dev2/confirm 系で使った 26 件）と
-重複する spec を落とし、次に下の除外レリックを持つ spec を落とす。残った eligible 50 件から
+重複する spec を落とし、次に下の除外レリックを持つ spec を落とす。残った eligible 40 件から
 order-seed `act3-confirm4` の sha256(seed|spec_id) 順で上位 12 件を選ぶ。除外・選定はすべて実走の前に
 固定した。
 
-除外レリックと理由:
-- 開手札にランダム札を混ぜる系（`relic_entry_effects.py` の `flag_unfixed` 族すべて）: CROSSBOW /
-  TOOLBOX / BIG_HAT / ORANGE_DOUGH / POWER_CELL / BLESSED_ANTLER / FUNERARY_MASK / JEWELED_MASK /
-  RADIANT_PEARL。入室 hook または最初のターンの開始・ドローでゲーム側の RNG が札を生むため、lab が
-  同じ札を同じ位置に出せる保証がなく、入場状態が再現できない。leader が CROSSBOW を除いた理由（ターン
-  単位のランダム付与）を、同じ性質の全レリックに広げた。除外した結果 flag_relics は 0 件。
-- RELIC.PAELS_CLAW（ENCHANTMENT.GOOPY の供給元。以下「Goopy」）: 入室時に決まる Defend のブロック量が
-  lab で特定できず防御値がずれる。root cause は下の「Goopy ブロック 5 vs 7 の原因」。lab で直せず、除外で
-  確定した。
+除外レリックと理由（すべて「入室 hook が最初の判断で消費する RNG/状態が lab で再現不能」の系統）:
+- 開手札にランダム札を混ぜる系（`relic_entry_effects.py` の `flag_unfixed` 族すべて）: CROSSBOW / TOOLBOX /
+  BIG_HAT / ORANGE_DOUGH / POWER_CELL / BLESSED_ANTLER / FUNERARY_MASK / JEWELED_MASK / RADIANT_PEARL。入室
+  hook か最初のターンの開始・ドローでゲーム側の RNG が札を生むため、lab が同じ札を同じ位置に出せる保証が
+  ない。leader が CROSSBOW を除いた理由を同じ性質の全レリックへ拡張。flag_relics は 0 件。
+- RELIC.PAELS_CLAW（ENCHANTMENT.GOOPY の供給元）: Goopy を付与された Defend の block = 基礎 +
+  (Amount - 1)、Amount はその札のプレイ回数で増る per-card の run 状態（Goopy.cs:28-42 /
+  PaelsClaw.cs:30-46）。trace は Amount を出さず hand の block としてしか見えないため lab で特定不能
+  （block 5 vs 7、T21.2）。
+- RELIC.PENDULUM: `[SavedProperty] TurnsSeen` が 3 ターン毎に 0 へ wrap した最初のターン開始で 1 枚引く
+  （Pendulum.cs:75-90）。実走は boss 入室時にカウンタが 2 で最初のターン開始に引き→入室手札 6、lab は
+  新規レリック（TurnsSeen=0）で引かず手札 5。カウンタは trace に出ない per-relic の run 状態。
+  scan_relic_run_state.py は元来 AfterPlayerTurnStart を見ず「初手判断に影響なし」と誤分類していたため
+  自動除外されず panel に残った。走査に AfterPlayerTurnStart を追加（コミット c6a4ac7）＋ここで明示除外。
 
 対処して保持（除外しない）:
-- RELIC.STONE_CRACKER: `defer_relics` を付け入室後に付与するので、入室 hook の 2 ランダム札アップグレード
-  が二重発火しない（confirm3_fixed で deck 一致を確認済み）。この panel では 1 trial（1563989f9e55）。
-- RELIC.ROYAL_POISON: 除外しない。ターン 1 の自己被ダメージ 4 は HP 修正（コミット 927f26f、初手判断の
-  直前に記録値へ寄せる）で解消する前提。この panel の 2 件（c589d7860c35・59ed603b4b73）が修正の実機検証
-  になる。
+- RELIC.STONE_CRACKER: `defer_relics` を付け入室後に付与するので、入室 hook の 2 ランダム札アップグレードが
+  二重発火しない（confirm3_fixed で deck multiset と札の cost/値が一致、T21.3）。ただし defer により
+  StoneCracker の `StableShuffle(CombatCardSelection)`（StoneCracker.cs:20-28）が入室 hook で開戦手札の
+  RNG stream を消費しなくなり、開戦手札の中身が実走と異なる（deck 総枚数と各札の値は同じ、引かれる札だけ
+  違う）。この panel では 1 trial（1563989f9e55）。その trial の初手開戦手札の構成差は戦略の差でなく注入の
+  帰結なので、判定では開戦手札の構成・枚数の差は無視し、deck multiset と中盤以降の状態で比較する（下記）。
+- RELIC.ROYAL_POISON: 除外しない。ターン 1 の自己被ダメージ 4 は HP 修正（コミット 927f26f）で解消する前提。
+  この panel の 2 件（c589d7860c35・59ed603b4b73）が修正の実機検証になる。
 
-### Goopy ブロック 5 vs 7 の原因（デコンパイルで確定、lab では直せない）
+### 入室 hook 起因の開戦手札の差について（T21.3、confirm3_fixed 0002 = spec 83e6a3465fde で検証）
 
-`PaelsClaw.AfterObtained`（PaelsClaw.cs:30-46）は deck 内の Defend-tag 札すべてに
-`CardCmd.Enchant<Goopy>(item, 1m)` で付与し、`Goopy.EnchantBlockAdditive(originalBlock) = Amount - 1`
-（Goopy.cs:39-42）。つまり block = 基礎 block + (Amount - 1)。`PaelsClaw` 自身が入れる Amount は 1
-なので block additive は 0（基礎 block のまま）。Amount は `Goopy.AfterCardPlayed`（Goopy.cs:28-37）で
-その札を **プレイするたびに `Amount++`**（`Card.DeckVersion.Enchantment.Amount++` として run をまたぎ
-累積）。したがって実走で入室時点で block 7（基礎 5 + 2）なのは、その Goopy 付き Defend がその run で
- bosses 以前に **2 回プレイ済み**（Amount=3）だったことを意味し、lab は silent addition で Amount=1（block
- 5）から始めるので 2 足りない。
+その trial の lab 初手 hand 5 / draw 26 に対し記録（= 元trace と一致）は hand 6 / draw 25。これは元trace の
+入場観測のアーチファクトではない（fidelity: spec=元trace 一致、不一致は pile_size の hand/draw の 2 項目
+だけ、deck 31 枚 multiset と各札の cost/Block・Damage は全一致）。差は 2 つの別系統:
+- 枚数 5 vs 6: RELIC.PENDULUM が実走の最初のターン開始（カウンタ wrap）で 1 枚引いた分。lab はカウンタ
+  復元不能（per-relic run 状態、trace に出ない）で引かない。
+- 中身の差（lab=STRIKE/TAUNT 系、記録=DARK_EMBRACE/FEED/EVIL_EYE 系）: RELIC.STONE_CRACKER を defer した
+  ことで開戦手札を配る RNG stream が実走とずれ、別の 5 枚が配られる。
+どちらの開戦手札の差も札の「値・deck 内容」の誤りではなく、入室 hook の RNG / 状態を lab が再現できない
+帰結。よって STONE_CRACKER / PENDULUM を含む spec では初手の hand/draw 枚数と構成の差を採否判定で無視し
+（候補の戦略の差と扱わない）、同じ entry の base 候補間配対では両腕に同じ制約がかかるので比較の向きは
+保たれる。ただし初手そのものは異なる開戦手札からの判断になる点は弱みとして明記する。confirm4 は PENDULUM を
+除外したので、残る STONE_CRACKER 1 trial についてのみこの開戦手札構成の caveat があたる。
 
-lab で直せない理由: Amount（プレイ回数）は per-card の run 状態で、trace の入場観測には hand の札の block
- としてしか現れない（enchantment の Amount 自体は観測に出ない、`act3_boss_losses.md` §627）。hand 外の
- Defend（後に引く札）の累積 Amount は実走でも不明で、引くたびに block preview が 1 ずつずれる。hand 札
- だけ block から Amount を逆算して injection しても、引く札で同じずれが残り、完全には揃わない。これは
- `relic_entry_effects.py` が「relic 自身の run 状態（Ember Tea の used-up フラグ、Girya の lift 回数）は
- 注入できず plan generator が spec 除外で対処する」と書いている run 状態の系と同じ。よって boss entry の
- 一致が取れない組として除外して確定する。
-
-注1: プール全体で PAELS_CLAW を持つ spec は 2 件のみ（bbbfd4fc2927・2d1d3d3b4f4e）で、2 件とも CROSSBOW を
-併せ持つため CROSSBOW 除外で既に落ちており、この panel の 12 件は PAELS_CLAW を含まない（除外指定を
-RELIC.GOOPY（実在しない id）から RELIC.PAELS_CLAW に直しても選定 12 件は変わらなかった）。
+注1: プール全体で PAELS_CLAW 2 件（bbbfd4fc2927・2d1d3d3b4f4e、いずれも CROSSBOW 併せ持ち）、PENDULUM 41 件。
+PENDULUM 除外後も eligible 40 件で 12 件は埋まる。PENDULUM 除外で選定は変わり、c79980be865c・98ab6c77b59b・
+703d7333c072 の PENDULUM 3 件が落ち、75157844a09c・2f944dc24562・8aa46daede55 が入った。
 
 注2: `used.speclist` に confirm3_fixed の spec が反映されていない。59ed603b4b73 は confirm3_fixed の
 trial 0010 と同一 spec で、used.speclist に入ってないため選定された。完全に独立した新規 panel にするには
@@ -66,15 +70,15 @@ confirm3_fixed の各 spec を used.speclist へ追記してから再生成す�
 | --- | --- | --- | --- | --- | --- |
 | 8340d5737b02 | 72 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 29 | 負 | base |
 | c589d7860c35 | 53 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 18 | 負 | base |
-| c79980be865c | 65 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 28 | 負 | base |
 | 56accb541102 | 59 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 33 | 負 | base |
 | 624ae0d1306b | 90 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 24 | 負 | base |
-| 98ab6c77b59b | 72 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 27 | 負 | base |
-| 703d7333c072 | 77 | TORCH_HEAD_AMALGAM:196/QUEEN:397 | 30 | 負 | base |
 | 1563989f9e55 | 44 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 34 | 負 | base |
 | f737cab6f8b6 | 94 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 32 | 負 | base |
 | 5f6a1726cfea | 81 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 33 | 負 | base |
 | c247ea1ceac4 | 90 | TORCH_HEAD_AMALGAM:196/QUEEN:397 | 29 | 負 | base |
 | 59ed603b4b73 | 90 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 31 | 負 | base |
+| 75157844a09c | 114 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 24 | 負 | base |
+| 2f944dc24562 | 78 | TORCH_HEAD_AMALGAM:199/QUEEN:400 | 30 | 負 | base |
+| 8aa46daede55 | 111 | TORCH_HEAD_AMALGAM:199/QUEEN:399 | 27 | 負 | base |
 
 注: `deck` は pile 順を捨てた全集合（ソート順）で、戦闘開始のシャッフルはゲーム側の乱数（run seed と walked floors から決まる stream）が行う。同じ seed・同じ floor でも引く順は元の run と完全には一致しない（一致させたい場合は `.dsh/bosslab_notes.md` の「入場順を固定する」案）。

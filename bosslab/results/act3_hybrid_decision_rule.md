@@ -9,8 +9,8 @@ dev2 base/H1/H2、および新規確認 panel confirm4 の結果を読む前に�
 - **dev2**（order-seed 既知、base 完了・H1/H2 走行中）= 開発用。ここで H1/H2 のどちらを確認 panel へ
   進めるかを選ぶ（下記の「候補選定規則」）。同じ集合を何度も見て調整した後は開発用として扱い、最終
   採否の証拠には使わない。
-- **confirm4**（新規 12 組、used.speclist と重複なし、開手札ランダム付与系と RELIC.PAELS_CLAW（Goopy）除外
-  済み）= 確認用。
+- **confirm4**（新規 12 組、used.speclist と重複なし、開手札ランダム付与系・RELIC.PAELS_CLAW（Goopy）・
+  RELIC.PENDULUM（カウンタ draw）除外済み）= 確認用。
   ここで最終の採用・保留・不採用を決める（下記の「採否規則」）。候補の結果を知らずに選定済み。
 
 EVALUATION.md の採否は「開発用・確認用の両集合で改善」を要求するため、最終判定は両集合の向きが揃って
