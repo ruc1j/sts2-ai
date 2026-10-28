@@ -1,0 +1,48 @@
+{
+  "panel": "astra_ctrl_v23",
+  "run_index": 44,
+  "arm": "control",
+  "seed": "5B5EA36CCE",
+  "source_commit": "775f3662ff179f39e3031700b0f6f9563b29652b",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "8364b4edb1078a687f520cb4a6105f4d9329779df351cef57d4f9365b345dcfa",
+  "simulations": 100,
+  "started": 1793150915,
+  "finished": 1793151551,
+  "wrapper_exit": 1,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 685,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_ctrl_v23_5B5EA36CCE_agent.jsonl": "eb6f239c9903a0eff42331fd5822032eddc31e5d09ff134cc377781ee201ae8f",
+    "astra_ctrl_v23_5B5EA36CCE_map.json": "e41b7231ea916d8aa23d4328fc0f7a722573ca76dfa0d15a97aa33e1596c5267",
+    "astra_ctrl_v23_5B5EA36CCE_map_ACT.GLORY.json": "dac0cb01976c4b8c41b178a74ab134b27dd575ca0ad9f0557bc49fe74172f90f",
+    "astra_ctrl_v23_5B5EA36CCE_map_ACT.HIVE.json": "f1e47b40cb9c3b69b3d2f77140c916f5228bfa7ed1c78b19d154e56cd9e39889",
+    "astra_ctrl_v23_5B5EA36CCE_mod.log": "64ba2309dbc764ff34eb320b4d4cedef9d771ce12f07ea24c8d25c8953220127",
+    "astra_ctrl_v23_5B5EA36CCE_runmeta.json": "4f2f98cb8bd8856b80564ad35aa7985d0af5ea97085028a5bcf0a7d3ece6354c",
+    "astra_ctrl_v23_5B5EA36CCE_stdout.log": "944f8d467f2113ffd00ed5eaa0aafefc6e0684ab613822848b3a6b05d299a9dd"
+  }
+}
