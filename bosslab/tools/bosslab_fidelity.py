@@ -7,14 +7,27 @@ handed the agent matches (a) the plan entry the trial was built from and (b) the
 boss-entry observation the spec was extracted from. Any field that differs is a fidelity risk for
 win-rate comparison: it means the same nominal entry state is not actually the same state.
 
-Fields compared: player hp / max hp / block / energy / max_energy / powers, relic id list and
-counters, potions, the full deck multiset (id + upgrade + enchantment), per-pile sizes, enemy id /
-hp / max_hp / move / intents, and the turn number of the first decision.
+Fields compared: player hp / max hp / block / energy / max_energy / powers (id + amount), relic id
+list and counters, potions, the full deck multiset (id + upgrade + enchantment id), per-pile sizes,
+enemy id / hp / max_hp / move / intents, and the turn number of the first decision.
+
+Two comparisons are only made against the original run's boss-entry observation (the spec file does
+not store them), and they are what settles the Act 3 questions:
+
+  card.cost_or_values - per-card cost and Damage / Block preview values, matched by
+      (id, upgrade, enchantment). An enchantment applied with the wrong amount shows up here (cost
+      for Swift / TezcatarasEmber, Damage or Block for Nimble / Corrupted / Sharp), as does a card
+      value a run changed through invisible relic props.
+  first_decision_plays - how many cards the first recorded decision says were already played this
+      turn, on both sides. Non-zero on the original side means that entry observation was taken
+      mid-combat, and BossLab cannot restore the "played this turn" counters.
 
 Run from the worktree root:
-  python3 .dsh/bosslab_fidelity.py --trial-trace data/bosslab_test1/trial_0000_agent.jsonl \
-      --plan .dsh/bosslab_plan.json --traces-dir /Users/mao/workspace/sts2-ai/data
-  python3 .dsh/bosslab_fidelity.py --all --out-dir data/bosslab_test1 ...   # every trial in a run dir
+  python3 bosslab/tools/bosslab_fidelity.py --trial-trace data/bosslab_test1/trial_0000_agent.jsonl \
+      --plan .dsh/bosslab_plan.json --specs .dsh/boss_specs.jsonl \
+      --traces-dir /Users/mao/workspace/sts2-ai/data
+  python3 bosslab/tools/bosslab_fidelity.py --all --out-dir data/bosslab_test1 --plan ... --specs ...
+  # Act 3: --plan .dsh/bosslab_act3_plan_fidelity.json --specs .dsh/act3_boss_specs.jsonl
 """
 
 from __future__ import annotations
@@ -74,23 +87,39 @@ def first_combat_obs(trace_rows: list[dict]) -> dict | None:
     return None
 
 
+def spec_enemy_names(spec: dict) -> set:
+    """Monster name suffixes the spec's boss is made of (`{"THE_INSATIABLE"}`, `{"QUEEN", ...}`)."""
+    return {str(enemy.get("id") or "").split(".")[-1]
+            for enemy in (spec.get("enemies") or ()) if enemy.get("id")}
+
+
+def obs_enemy_names(obs: dict) -> set:
+    return {str(enemy.get("id") or "").split(".")[-1]
+            for enemy in (obs.get("enemies") or ()) if enemy.get("id")}
+
+
 def orig_boss_obs(spec: dict, traces_dir: Path) -> dict | None:
+    """The original run's boss-entry observation the spec was extracted from.
+
+    Matched by the recorded `entry_seq` when present, otherwise by the first combat in that trace
+    whose enemies include the spec's monster names. Act 2's THE_INSATIABLE and Act 3's QUEEN both
+    show up several times per trace, so a hardcoded monster name would silently compare the wrong
+    act's boss (which is what the Act 3 trials initially did).
+    """
+    names = spec_enemy_names(spec)
     for src in spec["sources"]:
         path = traces_dir / src["trace"]
         if not path.is_file():
             continue
-        for r in rows_of(path):
-            if r.get("phase") == "combat" and r.get("seq") == src.get("entry_seq"):
-                if any((e.get("id") or "").endswith("THE_INSATIABLE") for e in r.get("enemies") or []):
-                    return r
+        rows = rows_of(path)
+        for row in rows:
+            if row.get("phase") == "combat" and row.get("seq") == src.get("entry_seq"):
+                if not names or names & obs_enemy_names(row):
+                    return row
                 break
-        # fallback: first Insatiable combat in that trace
-        for r in rows_of(path):
-            if r.get("phase") == "combat" and any(
-                (e.get("id") or "").endswith("THE_INSATIABLE") for e in r.get("enemies") or []):
-                return r
-            if r.get("phase") == "combat_end":
-                continue
+        for row in rows:
+            if row.get("phase") == "combat" and names & obs_enemy_names(row):
+                return row
     return None
 
 
@@ -164,6 +193,85 @@ def compare(a: dict, b: dict) -> list[tuple[str, object, object]]:
     return rows
 
 
+CARD_VALUE_IDS = ("Damage", "Block")
+
+
+def _num(value) -> str:
+    """Canonical text for a numeric game value so pairs of cards sort and compare consistently."""
+    if value is None:
+        return ""
+    if isinstance(value, bool):
+        return str(int(value))
+    if isinstance(value, (int, float)):
+        return f"{float(value):g}"
+    return str(value)
+
+
+def card_stats(card: dict) -> tuple:
+    """A card's observable play values: cost plus the Damage / Block preview values."""
+    values = {}
+    for var in card.get("vars") or ():
+        if isinstance(var, dict) and var.get("id") in CARD_VALUE_IDS:
+            values[var["id"]] = var.get("value")
+    return (_num(card.get("cost")), _num(values.get("Damage")), _num(values.get("Block")))
+
+
+def pile_card_map(obs: dict) -> dict:
+    """Card kinds to their sorted (cost, Damage, Block) triples across all four piles."""
+    grouped = collections.defaultdict(list)
+    for key in ("hand", "draw_pile", "discard_pile", "exhaust_pile"):
+        for card in obs.get(key) or ():
+            if not isinstance(card, dict) or not card.get("id"):
+                continue
+            grouped[card_key(card)].append(card_stats(card))
+    return {name: sorted(stats) for name, stats in grouped.items()}
+
+
+def populated_card_stats(obs: dict) -> dict:
+    """Card kinds to the distinct sets of their computed (cost, Damage, Block) triples.
+
+    The bridge only carries computed values for cards the game is previewing at that moment, so most
+    cards in a pile come back with empty cost/vars. Comparing the *distinct populated* triples per
+    kind compares previewed values while ignoring which particular copies happened to be in hand
+    (the shuffle differs between the lab and the original run by design).
+    """
+    grouped = collections.defaultdict(set)
+    for key in ("hand", "draw_pile", "discard_pile", "exhaust_pile"):
+        for card in obs.get(key) or ():
+            if not isinstance(card, dict) or not card.get("id"):
+                continue
+            stats = card_stats(card)
+            if any(part != "" for part in stats):
+                grouped[card_key(card)].add(stats)
+    return {name: sorted(stats) for name, stats in grouped.items()}
+
+
+def compare_card_values(lab: dict, orig: dict) -> list:
+    """Card kinds previewed on both sides whose computed cost or Damage/Block differs.
+
+    An enchantment restored with the wrong amount lands here (its effect is a cost or value change),
+    and so does a card value a run changed through relic props the lab cannot see. Kinds that only
+    one side previewed cannot be compared, and are reported separately as `skipped`.
+    """
+    lab_cards, orig_cards = populated_card_stats(lab), populated_card_stats(orig)
+    rows = []
+    skipped = 0
+    for name in sorted(set(lab_cards) | set(orig_cards)):
+        in_lab, in_orig = name in lab_cards, name in orig_cards
+        if not (in_lab and in_orig):
+            skipped += 1
+            continue
+        if lab_cards[name] != orig_cards[name]:
+            rows.append((name, lab_cards[name], orig_cards[name]))
+    return rows, len(set(lab_cards) & set(orig_cards)), skipped
+
+
+def first_decision_plays(obs: dict | None) -> dict:
+    plays = (obs or {}).get("plays") or {}
+    return {key: value for key, value in plays.items()
+            if key in ("cards_this_turn", "attacks_this_turn", "skills_this_turn", "powers_this_turn")}
+
+
 def describe(trace: Path, plan_trial: dict, spec: dict, orig: dict | None) -> list[str]:
     lab = first_combat_obs(rows_of(trace))
     if lab is None:
@@ -188,6 +296,19 @@ def describe(trace: Path, plan_trial: dict, spec: dict, orig: dict | None) -> li
         for field, sa, ob in spec_vs_orig:
             lines.append(f"  - `{field}`: spec={_fmt(sa)} / orig={_fmt(ob)}")
         lines.append(f"- lab vs 元trace 計: {len(lab_vs_orig)} 項目")
+        value_diffs, preview_compared, preview_skipped = compare_card_values(lab, orig)
+        lines.append(f"- lab vs 元trace の preview 済みの札の cost / Damage・Block 値: 両側が preview した "
+                     f"{preview_compared} 種類のうち "
+                     f"{'全部一致' if not value_diffs else str(len(value_diffs)) + ' 種類で不一致'}"
+                     f"（片側だけの preview で比較できない札 {preview_skipped} 種類）。enchantment の "
+                     "amount 違い・relic props 起因の値変更はここで出る")
+        for name, lab_stats, orig_stats in value_diffs[:12]:
+            lines.append(f"  - `{name}`: lab={_fmt(lab_stats)} / orig={_fmt(orig_stats)}")
+        lab_plays, orig_plays = first_decision_plays(lab), first_decision_plays(orig)
+        if lab_plays != orig_plays:
+            lines.append(f"- 最初の判断行のプレイ済み counter: lab={_fmt(lab_plays)} / "
+                         f"orig={_fmt(orig_plays)}。orig 側が 0 でなければ元trace の入場観測が戦闘途中"
+                         "で、lab はこの counter を復元できない（Perfected Strike 等の初手威力がずれる）")
     else:
         lines.append("- 元trace が見つからない (sources のファイルがディスクに無い)")
     return lines
