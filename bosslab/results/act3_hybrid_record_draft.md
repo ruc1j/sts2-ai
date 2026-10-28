@@ -103,6 +103,34 @@ EVALUATION.md の記録書式に沿った草稿。confirm4 の実機結果は le
   （CROSSBOW 族・PAELS_CLAW・PENDULUM）を除外して panel から除いた（コミット 0e060c6）。修正 3 適用後の完全
   一致数が 9/12 に戻るかは実機の再照合で確定させる（draft 時点では未確認と明示）。
 
+## (a-2) confirm4 base 再照合（927f26f 反映後の DLL、2026-10-28 実測）
+
+`bosslab_fidelity.py --all` を confirm4 base（12 trial、927f26f 入り DLL）に実行。完全一致 7/12、
+不一致 5 件（証拠 `bosslab/results/act3_confirm4_fidelity.md`、原因詳説
+`bosslab/results/act3_confirm4_fidelity_causes.md`）。内訳:
+- 修正 3（HP 即時 clamp、927f26f）の検証: ROYAL_POISON を持つ 2 組（c589d7860c35・59ed603b4b73）で lab 入室
+  HP が記録 HP に一致（53/53/53・90/90/90）。修正前（confirm2/confirm3_fixed）で lab 90 vs 記録 94 の
+  不一致だった RoyalPoison ターン 1 自己ダメの二重差し引きが、実機で解消されたことを確認。
+- 残り 5 件の不一致は HP・ポーション枠起因ではなく、3 種の入場状態再現のずれ（全て spec 抽出は元 trace と
+  一致＝忠実な抽出、lab 再現側の限界）:
+  ① RELIC.PEN_NIB のカウンタ 3 件（0002・0006・0010、`relic_counters`: lab `{PEN_NIB:0}` vs spec `{}`）。
+     PenNib は攻撃カード play 毎の `AttacksPlayed % 10`（SavedProperty、10 枚目の攻撃を 2 倍）。元 trace は
+     旧ブリッジでカウンタを持たないが、攻撃 play 数から推定可（実測 0002/0006=3、0010=4）。現行 DLL 以降は
+     `CombatBridge.RelicCounters` が入場観測に出すので抽出＋書き戻しで厳密化できる。除外条件（trace に出ない
+     per-relic カウンタ）に入れても可。
+  ② RELIC.WHETSTONE（AfterObtained で deck の Attack 2 枚を升级）と RELIC.NEW_LEAF（1 枚変換）の 0007 の 1 件
+     （TAUNT/DEMON_FORM が lab で +1）。BossLab の silent add は `AfterObtained` model フックを抑えないため、
+     拾った時に一度走って記録 deck に焼き込んだ効果を入室で再適用してしまう。confirm4 で Whetstone 所持 5 件の
+     うち net で deck がずれたのは 1 件（升级が冪等な場合無変化）。upon-pickup の deck/pile 変換系を抑制する
+     家族追加で直せる。
+  ③ 0011 の Amalgam/Queen の 1 点配分（198/400 vs 記録 199/399、計 598 同一）。BossLab は敵の入室 HP を
+     `spec.enemies[].hp` から pin せず formation 生成で、加えて lab の初手観測はターン 1 の AfterPlayerTurnStart
+     フック後（927f26f 設計）に撮るため、run 記録（入室 snapshot はターン 1 フック前）と 1 点ずれる。具体源は
+     未確定（敵 HP pin で解消見込み）。
+- これら 5 件は base と候補が同じ 12 spec（同一入場状態）を流す配対比較では両腕に同じ向きで出るため、
+  配対の差（削り/win/ターン）には出ず、判定規則（4693f2e）の採否結論は動かない。絶対削り/火力の magnitude
+  だけが該当 spec で僅かにずれる（②③は spec ごとに偶然、①は 3 件）。
+
 ## (b) dev2 結果と候補選定規則の適用
 
 dev2 3-arm（base/H1/H2、`data/bosslab_act3_dev3_*`）を事前登録規則（コミット 4693f2e）に当てた集計は
@@ -134,7 +162,7 @@ hybrid_decision_rule.md（コミット 4693f2e）の採用条件をそのまま�
 - base 平均（Queen 削り / 総火力/t / Amalgam 撃破 / 生存ターン）: 未記入（実機待ち）
 - H1 平均（同上）: 未記入（実機待ち）
 - 配対 12/不能 0、符号検定 p、採用/保留/不採用: 未記入（実機待ち）
-- 927f26f 反映後の入室 HP 一致（0004/0010 相当が記録値に着地するか）: 未記入（実機待ち）
+- 927f26f 反映後の入室 HP 一致（ROYAL_POISON 組）: confirm4 base で 2/2 一致を確認（上記 (a-2)、実測済み）。
 
 ## (e) 判定の暫定文
 
