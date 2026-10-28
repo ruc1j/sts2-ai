@@ -226,3 +226,168 @@ python3 -m unittest discover -p 'test_*.py'                        # 893 tests O
 ```
 
 run の形（実機は leader）: `pwsh -File ./run_official_bosslab.ps1 -GameDir "<game dir>" -Plan .dsh/bosslab_act3_plan_dev2.json -OutDir data/bosslab_act3_dev2_queenfirst -AgentScript bosslab/agents/official_agent_queenfirst.py -AgentSimulations 100 -TimeoutSeconds 700 -IdleTimeoutSeconds 320`
+
+---
+
+## 7. ハイブリッド候補 H1/H2（事前登録採否規則、confirm4 実測で判定 保留）
+
+§1-§6 の queenfirst（常に Queen 優先）とは別の実験で、「Amalgam を倒せる状況では Amalgam を優先」する hybrid 候補 H1/H2 を dev2 で測り、事前登録した採否規則（コミット `4693f2e`、`bosslab/results/act3_hybrid_decision_rule.md`）に当てて機械判定した記録。確認用集合 confirm4 は HP 即時 clamp 修正 927f26f を含む DLL（build 済み・ゲーム未起動のまま leader が起動）で base/H1 を 12/12 完走、判定規則も leader が 1 回実行済みで判定は **保留**（`act3_hybrid_rule_applied.md`、比較 `act3_confirm4_compare.md`）。実機 run は leader が単独で回し、dsh 側はゲームを一度も起動していない。§1-§6 の実験（queenfirst）とは候補 agent と規則が違い、結果を持ち込まない。
+
+```text
+仮説・変更の種類・対象場面:
+  仮説: Queen を先に殴る（target 変更）と Queen 削りが進み Act3 踏破に効くか。Amalgam は二次ミニオン
+    （QUEEN 死亡で道連れに消える）なので、Queen 削りの補助に Amalgam 掃除を足せるかを問う。
+  変更の種類: 戦略変更（エージェントの単一ターゲット方針）。正しさの修正（忠実度）とは分離。
+  対象場面: Act3 QUEEN + Torch Head Amalgam ボス戦闘（Glory、floor 15）。
+
+旧版／候補版、ゲーム／Mod／userdata／探索条件:
+  旧版 base: official_agent.py（queen_minion_direct で Amalgam 優先）。
+  候補 H1: bosslab/agents/official_agent_H1.py（make_h_candidates.py 生成）。Amalgam 実効 HP(hp+block)
+    が 0< <=50 のときだけ Amalgam、それ以外 Queen。定数 QUEENFIRST_H1_AMALGAM_HP=50。
+  候補 H2: bosslab/agents/official_agent_H2.py。Amalgam の次手番の自由な一撃が自分を殺しうる時だけ
+    Amalgam、それ以外 Queen。変更殴り先のみ。
+  ゲーム: v0.107.1。キャラクター: Ironclad。難易度: 既定。 userdata: BossLab が記録 entry から再構築。
+  Mod: Sts2Ai.dll。dev2/dev3 3-arm は忠実度修正 131a5a0 まで（HP 即時 clamp 927f26f 未反映）で実行。
+    confirm4 は 927f26f を含む DLL。agent_script の sha256 は run_official_bosslab.ps1 が各行に記録。
+  探索: rollout 100。乱数: trial は spec_id と offset（plan の rotation）から決まる effective_seed。
+
+開発用 seed／確認用 seed、選定方法、反復数:
+  開発用（dev3 系）: plan_dev2 の QUEEN spec 12 件、base/H1/H2 を同一 entry で配対（offset 0..）。
+    dev2 base・confirm 系で計 26 spec を使用済み（.dsh/bosslab_act3_used.speclist）。
+  確認用（confirm4）: act3_boss_specs.jsonl の QUEEN のうち unresolved と使用済みを除き、開手札ランダム付与系・
+    RELIC.PAELS_CLAW（Goopy）・RELIC.PENDULUM（カウンタ draw）を除外した eligible から、order-seed
+    act3-confirm4 の sha256(seed|spec_id) 順で上位 12 件（used と重複なし）。候補の結果を知らずに対象効果・
+    過去勝利を条件に選ばない。選定は dev2 結果の前に確定（コミット 245c38c、除外 id 修正と PENDULUM 追加で
+    再生成 0e060c6）。
+  反復数: 各 arm 12 trial（1 spec×1 反復/組）。同一 seed の再走は再現性確認で独立 seed 数に数えない。
+
+予定 run 数／時間上限／再実行条件:
+  予定: 開発用 dev3 base/H1/H2 各 12（計 36、完了）、確認用 confirm4 base/H1 各 12（計 24、base/H1 完了）。
+  時間上限: trial 毎 TimeoutSeconds 700・IdleTimeoutSeconds 320。
+  再実行条件: 外部クラッシュ・中断は未完了として別 tag へ同一 spec/版/条件で再走。結果を見て有利 seed を
+    足さない、勝った時点で打ち切らない。
+
+判定に使う指標（標準から変える場合は測定前に理由を記録）:
+  標準の Act3 踏破数は lab が直接測れない（lab は 1 戦闘のみ）。よって到達点同値の最終戦の進捗として
+  Queen 削り割合（=1−最終 Queen HP/入室時最大 HP、Amalgam は Queen 進捗に合算しない）を主信号に、
+  総火力/ターン（Queen+Amalgam への総 HP 削除÷プレイヤーターン、§5-2 の 300→213 の軸）と Queen 火力/ターンを
+  副主信号、Amalgam 撃破・死亡ターン・失った HP を補助に、勝敗は母数 0 の記録。採否規則（コミット 4693f2e）は
+  削り差>0 かつ火力/ターンと win が base 以上、確認用集合で削り符号検定 p<=0.05、比較不能なし、開発用と確認用が
+  同じ向き、をすべて満たすことを採用条件に測定前に固定。
+
+計画数／完了数／不明数／外部障害／候補由来の障害:
+  dev3 base 12/12、H1 12/12、H2 12/12 完了。confirm4 base 12/12、H1 12/12 完了（計 24、leader が 927f26f 入り
+  DLL で実機実行）。全 trial で outcome_source=combat_end_trace（fallback・欠測 0）、候補由来の例外・停止は観測
+  されていない。判定規則（apply_hybrid_rule.py）は leader が 1 回だけ実行し確定済み。
+
+局所検証: 発動機会・判断差・結果差（件数と seed 数）:
+  H1 の Amalgam 掃除は dev2 で一度も発火しなかった。実走 12 trial で戦闘中の Amalgam 実効 HP の最小が
+  111〜199（1 度も 50 以下にならず、act3_dev3_interpretation.md）。queen_minion_h1 は 148 件だが全件 Queen を
+  殴った（Amalgam 単独撃破 0/12）。＝機構は dev2 では実質未試行。H2 も base との判断差は 3 手番分。
+  結果差（削り）: dev2 で H1 は 12 組中 9 増 3 減（精密両側 p=0.146）、H2 は 8 増 4 減（p=0.388）。confirm4 で
+  H1 は 12 組中 7 増 5 減（p=0.774）で、confirm4 でも Amalgam 実効 HP が 50 以下になる手番が無く Amalgam 単独撃破 0/12。
+
+全体比較: 集合ごとの Act3・2・1 突破数／母数、到達点の改善・悪化・同値:
+  lab は Act3 踏破率を測れない。win 記録は dev2 の全腕で 0/12（母数 0 の補助）。到達点（Queen 削り）改善・悪化・
+  同値: dev2 で H1 改善9 悪化3 同値0、H2 改善8 悪化4 同値0（base 比、12 組）。総火力/ターンは dev2 で base 37.4 に
+  対し H1 32.9・H2 35.7 と低下。confirm4（base 対 H1）: Queen 削り割合 平均 0.403→0.385（候補優 7 / base 優 5 /
+  同値 0、精密 p 0.774）、総火力/ターン 39.149→28.795（1 増 11 減）、Queen 火力/ターン 15.333→23.708（9 増 3 減）、
+  Amalgam 撃破 7/12→0/12、死亡ターン 8.167→6.667、失った HP 83.083→83.667、win 1→0（base が勝った spec
+  75157844a09c が 100%→68% で敗北）。配対 12/不能 0。数値は leader の確認用表 act3_confirm4_compare.md と一致。
+
+到達点同値の最終戦: 比較可能／不能な組数、形態・削った割合の差、残 HP の観測時点:
+  配対可能 12/不能 0（同一 spec×offset）。残 HP/最終 Queen HP は trace の combat_end 時点（勝 trial は撃破の
+  1 手前で trace が切れ実質撃破として扱う）。HP 即時 clamp 修正前の dev3 では idx11（ROYAL_POISON）が絶対注意対象
+  （dev3 全腕で同じ制約）。927f26f 反映後の confirm4 base では入室 HP 一致 2/2。
+
+各 seed の結果、悪化例、証拠ファイル:
+  dev2 証拠: data/bosslab_act3_dev3_{base,H1,H2}/（trace + lab_results.jsonl）、act3_dev3_compare.md、
+  act3_dev3_base_desc.md、act3_dev3_interpretation.md。confirm4 削りの向き（spec×offset、+ は H1 が上）:
+  1563989f9e55 0→29%+、2f944dc24562 0→13%+、56accb541102 25→36%+、59ed603b4b73 13→22%+、5f6a1726cfea 58→38%-、
+  624ae0d1306b 88→66%-、75157844a09c 100→68%-、8340d5737b02 18→21%+、8aa46daede55 85→70%-、c247ea1ceac4 94→46%-、
+  c589d7860c35 0→40%+、f737cab6f8b6 4→10%+（7 増 5 減）。証拠 data/bosslab_act3_confirm4_{base,H1}/ と
+  act3_confirm4_compare.md。
+
+採用／保留／不採用、その根拠と次に必要な証拠:
+  事前登録規則（コミット 4693f2e）を apply_hybrid_rule.py で leader が 1 回実行した結果、判定は **保留**
+  （act3_hybrid_rule_applied.md）。条件1（両集合で削り Δshave>0: dev2 候補優9>base優3、confirm4 候補優7>base優5）・
+  条件2（両候補の向きが dev2 で同じ）は充足。条件3（総火力/t が base 以上: dev2 H1 32.9<37.4、confirm4 H1
+  28.8<39.1）・条件4（win が base 以上: confirm4 1→0 で減）・条件5（confirm4 削り符号検定 p≤0.05: p=0.774）・
+  条件6（12 組すべて配対）は条件6 のみ充足で 3・4・5 は不充足。よって採否規則上この target 機構（hybrid）は採用しない。
+```
+
+### 7-1 忠実性（confirm4 base、927f26f 反映後の DLL、実測済み）
+
+`bosslab_fidelity.py --all` を confirm4 base（12 trial、927f26f 入り DLL）に実行。完全一致 7/12、不一致 5 件
+（証拠 `act3_confirm4_fidelity.md`、原因詳説 `act3_confirm4_fidelity_causes.md`）。
+- HP 即時 clamp（927f26f）の検証: ROYAL_POISON を持つ 2 組（c589d7860c35・59ed603b4b73）で lab 入室 HP が記録
+  HP に一致（53/53/53・90/90/90）。修正前の不一致（RoyalPoison ターン 1 自己ダメの二重差し引き）が実機で解消された。
+- 残り 5 件は HP・ポーション枠起因ではなく、3 種の入場状態再現のずれ（spec 抽出は元 trace と一致＝抽出は正しい、
+  lab 再現側の限界）: ① RELIC.PEN_NIB のカウンタ 3 件（`relic_counters` lab `{PEN_NIB:0}` vs spec `{}`。PenNib は
+  攻撃カード play 毎の `AttacksPlayed % 10` SavedProperty、10 枚目の攻撃を 2 倍。元 trace は旧ブリッジでカウンタ列が
+  無く、攻撃 play 数から推定 0002/0006=3・0010=4。§7-6 の案で新 DLL の観測から採る）。② 0007 の TAUNT/DEMON_FORM
+  +1（Whetstone の AfterObtained 強化 2 枚と NewLeaf の変換が、silent add でも `AfterObtained` model フックが走る
+  ため入室で再適用され deck がずれる。confirm4 で Whetstone 所持 5 件のうち net 変化は 1 件、強化が冪等なら無変化）。
+  ③ 0011 の Amalgam/Queen 1 点配分（198/400 vs 記録 199/399、計 598 同一。敵入室 HP を `spec.enemies[].hp` から
+  pin せず formation 生成、lab 初手観測はターン 1 の AfterPlayerTurnStart 後に撮る設計帰結。具体源未確定）。
+- これら 5 件は base と候補が同じ 12 spec（同一入場状態）を流す配対比較では両腕に同じ向きで出るため、配対の差
+  （削り/win/ターン）には出ず、判定規則（4693f2e）の採否結論は動かない（dev2 3/12・confirm2 2/12・confirm3 0/12 で確認）。
+
+### 7-2 dev2 結果と候補選定規則の適用
+
+dev2 3-arm（base/H1/H2）を事前登録規則（コミット 4693f2e）に当てた集計は `act3_dev3_compare.md`、解釈は
+`act3_dev3_interpretation.md`。削り割合は H1 0.261→0.406（9 増 3 減、p=0.146）、H2 0.261→0.360（8 増 4 減、
+p=0.388）で改善側。ただし総火力/ターンは base 37.4 に対し H1 32.9・H2 35.7 に低下、win は 0/12。選定規則（火力/
+勝利が base 以上が必須ゲート）で両候補が火力ゲートを通らず落選、hybrid は進めない。dev2 で削り差最大（H1）だけ
+記録用に confirm4 へ進めた。規則は dev2 結果を見る前に確定済み。
+
+### 7-3 H1/H2 は「Amalgam 優先」を 2 集合で実質試していない
+
+- H1: `0 < Amalgam 実効 HP <= 50` が dev2 12 trial でも confirm4 12 trial でも一度も発火せず（実効 HP 最小 111〜199、
+  `act3_dev3_interpretation.md`）、Amalgam 単独撃破 0/12。Amalgam を削る唯一の手段が Amalgam を殴ることで、既定
+  Queen 優先だと Amalgam が入場値 199 付近に留まり条件が永久に発火しない（鶏と卵）。結果 H1 は Queen 固定＝実質
+  queenfirst と同挙動。
+- H2: Amalgam の次手番の一撃が自分を殺しうる時だけ Amalgam。base との判断差は 3 手番分で、これも queenfirst と大差ない。
+- つまり「Amalgam を倒せる状況ではそちらを優先する」機構そのものが 2 集合でほぼ試行されず、試されたのは「常に
+  Queen 優先（=queenfirst）」だった。ここが未検証の空白で、次候補 H3 はこの空白を埋める（`act3_hybrid_h3_design.md`）。
+
+### 7-4 confirm4 配対比較（実測）
+
+| 指標 | 配対 | base 平均 | H1 平均 | H1 優 | base 優 | 同値 | 精密p（両側） |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Queen 削り割合（主信号） | 12 | 0.403 | 0.385 | 7 | 5 | 0 | 0.774 |
+| 総火力/ターン | 12 | 39.149 | 28.795 | 1 | 11 | 0 | – |
+| Queen 火力/ターン | 12 | 15.333 | 23.708 | 9 | 3 | 0 | – |
+| Amalgam 撃破可否（補助） | 12 | 0.583（7/12） | 0.000（0/12） | 0 | 7 | 5 | – |
+| 死亡ターン（補助） | 12 | 8.167 | 6.667 | 1 | 6 | 5 | – |
+| 失った HP（補助） | 12 | 83.083 | 83.667 | 0 | 1 | 11 | – |
+| win | 12 | 1/12 | 0/12 | – | – | – | – |
+
+配対 12/不能 0。規則の機械適用結果（`bosslab/tools/apply_hybrid_rule.py`、leader が 1 回実行、`act3_hybrid_rule_applied.md`）: 判定 **保留**。
+
+### 7-5 判定と次に必要な証拠（確定版）
+
+判定は **保留**。confirm4 でも削り符号（候補優 7>base 優 5）は dev2 と同じ向き（条件1・2 充足）だが、削りの平均
+magnitude は 0.403→0.385 に下がり、総火力/ターン 39.1→28.8 と win 1→0 が低下、confirm4 の精密 p は 0.774 で 5% 水準に
+届かず（条件3・4・5 不充足）、採否規則上この target 機構（hybrid）は採用しない。留保:
+- (a) H1 は dev2 でも confirm4 でも一度も掃除が発火せず実質 queenfirst と同じ動きで、「Amalgam を倒せる状況では
+  そちらを優先する」機構は 2 集合で実質未試行。保留は機構が効かない証拠ではなく試されていない状態の記録。
+- (b) confirm4 の忠実性は 7/12 で、残りは PEN_NIB のカウンタ（3 件）等の入場状態再現のずれ。配対比較なので両腕に
+  同じようにかかり配対の差には出ない（判定に無影響）。
+- (c) ラボは Act 3 踏破率を測れない（1 戦闘のみ）。削り割合は到達点同値の最終戦進捗の代理。
+- (d) 2 集合とも 12 組で p≤0.05 はこの母数では厳しい基準（dev2 0.146、confirm4 0.774）。
+次に必要な証拠: 「実際に Amalgam を削る」ことを保証する次候補 H3a（QUEENFIRST_H3_OPEN_TURNS=2）・H3c
+（QUEENFIRST_H3_DANGER_FRAC=0.5、実装済み・単体テスト 14 件 pass・コミット 2b6ef0f）を、使用済み spec と重複の無い
+新しい確認用集合に流して測ること（`act3_hybrid_h3_design.md`、dev2 base 手番表 `act3_queenfirst_h1h2_dev2.md`、
+H3a A=32 / H3c A=29）。踏破率はフル run パネルで別途測る。
+
+### 7-6 次の goal 準備（実装は未実施）
+
+- H3a（`bosslab/agents/official_agent_H3a.py`、QUEENFIRST_H3_OPEN_TURNS=2）と H3c（QUEENFIRST_H3_DANGER_FRAC=0.5）:
+  手番/脅威基準で Amalgam を削るので H1/H3b の「Amalgam が既に低い」前提の自己閉鎖を解く。設計は
+  `bosslab/results/act3_hybrid_h3_design.md`、単体テスト `test_bosslab_h3_agents.py`（14 件）、dev2 base 上の手番表は
+  `act3_queenfirst_h1h2_dev2.md`（H3a A=32 / H3c A=29）。実機未投入。
+- PEN_NIB 入場カウンタ: §7-1① の実装案（新 DLL の観測 `relic_counters` 列から採り、BossLab が入場時 SavedProperty
+  を書き戻す。旧ブリッジのtraceから作った confirm4 のような spec では採れない）は `act3_confirm4_fidelity_causes.md`。
+- Act 2 Shrug 再測定の忠実性棚卸し: 除外は RELIC.PENDULUM を持つ spec 1 本のみ（PANTOGRAPH×3・STONE_CRACKER×1 は
+  BossLab 処理済で除外不要、他レリック 0 件）、plan 作り直しは配対比較が成り立てば不要（`act2_shrug_fidelity_stocktake.md`）。
