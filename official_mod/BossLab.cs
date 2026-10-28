@@ -8,6 +8,7 @@ using MegaCrit.Sts2.Core.Commands;
 using MegaCrit.Sts2.Core.Random;
 using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
+using MegaCrit.Sts2.Core.Entities.Cards;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
 using MegaCrit.Sts2.Core.GameActions.Multiplayer;
@@ -45,11 +46,21 @@ namespace Sts2Ai;
 /// Injection coverage (what a trial can carry): card id + upgrade + enchantment (id and amount),
 /// relic ids, potion ids, HP / max HP, walked-floor counts, and player powers as residuals
 /// (BossLab.ApplyEntryPowers). Potions are injected as models, so the container's holders have to be
-/// rebuilt (BossLab.RefreshPotionUi) or using one throws in the game's UI layer. What it cannot
-/// carry: a relic's own run state (Ember Tea's used-up flag, Girya's lift count) - those specs are
-/// excluded by the plan generator instead - and the "cards played this turn" counters, so an entry
-/// observation taken after the fight had already begun plays its first recorded decision with clean
-/// counters.
+/// rebuilt (BossLab.RefreshPotionUi), and the belt is re-widened and any dropped potion re-added only
+/// after the fight has started (BossLab.ReensureRecordedPotions), so a relic that grew the belt in the
+/// run (RELIC.POTION_BELT, RELIC.PHIAL_HOLSTER) does not silently drop a potion (those relics raise it
+/// in AfterObtained, which silent addition skips: AddRelicInternal suppresses the RelicObtained event
+/// only, never the model hook). Relics named in `defer_relics` are attached after room entry so their
+/// own room-entry hook cannot double-apply a change the recorded deck / HP already contain
+/// (RELIC.STONE_CRACKER upgrading draw cards). Because the boss-entry heals run in a fire-and-forget
+/// combat task, the driver first waits for the fight to reach the play phase (BossLab.
+/// WaitForCombatEntrySettled) and only then re-asserts the recorded HP (BossLab.ReapplyRecordedHp).
+/// What it cannot carry: a relic's own run state (Ember Tea's
+/// used-up flag, Girya's lift count) - those specs are excluded by the plan generator instead - and the
+/// "cards played this turn" counters, so an entry observation taken after the fight had already begun
+/// plays its first recorded decision with clean counters, and relics that add cards at the first
+/// turn's start (RELIC.CROSSBOW, RELIC.TOOLBOX) will place their generated card wherever the lab's own
+/// draw RNG puts it, which need not be where the recorded run's did.
 ///
 /// Why these game APIs (decompiled v0.107.1 evidence, see .dsh/bosslab_notes.md):
 /// - RunState.CreateForNewRun accepts an arbitrary seed string: Runs/RunState.cs:272-274 (RunRngSet(seed)).
@@ -148,7 +159,7 @@ public static class BossLab
         await RunManager.Instance.SetActInternal(trial.ActIndex);
 
         var player = runState.Players[0];
-        ApplyPlayerState(player, trial);
+        var deferredRelics = ApplyPlayerState(player, trial);
 
         // Pad the walked floors so TotalFloor (Runs/RunState.cs:158) matches the recorded entry, which
         // is what the encounter's monster generation RNG is seeded from (Models/EncounterModel.cs:266-269).
@@ -173,26 +184,138 @@ public static class BossLab
 
         await RunManager.Instance.EnterRoomDebug(RoomType.Boss, MapPointType.Unassigned, encounter, showTransition: false);
 
-        // The potion container builds its holder nodes once, when the run UI initializes (before this
-        // driver injects anything), and afterwards only from the `PotionProcured` event, which
-        // `AddPotionInternal(silent: true)` deliberately does not raise. With no holder, using an
-        // injected potion throws in `NPotionContainer.RemoveUsed` (Nodes/Potions/NPotionContainer.cs:352-357,
-        // a `First` over the holders), the potion action dies, the action queue never drains, and the
-        // trial hangs until the runner's timeout. Re-initializing the container after the room is up
-        // makes it build holders for whatever is in the slots now (Nodes/Potions/NPotionContainer.cs:
-        // 197-207 reads `_player.Potions` and calls `Add(potion, isInitialization: true)`).
+        // Room entry has now run. Relics the plan listed as `defer_relics` were deliberately not
+        // added before it: their own room-entry hook already did its work in the recorded run, and
+        // the plan's deck / HP carry that result, so letting it fire again here would double-apply it
+        // with the lab's own RNG (RELIC.STONE_CRACKER upgrades 2 random draw cards at
+        // AfterRoomEntered, StoneCracker.cs:20-29, and the shuffle it consumes shifts the opening
+        // hand). Adding them now keeps them in the relic list for the fight and for the first
+        // observation while their entry hook stays silent. See bosslab/tools/relic_entry_effects.py.
+        foreach (var relic in deferredRelics)
+            player.AddRelicInternal(relic, -1, silent: true);
+        if (deferredRelics.Count > 0)
+            AutoSlayLog.Info($"[BossLab] deferred past room entry: " +
+                $"[{string.Join(", ", deferredRelics.Select(r => r.Id.Entry))}]");
+
+        // Room entry (EnterRoomDebug) has returned, but the boss fight's combat-start hooks run AFTER
+        // this driver resumes: CombatRoom starts the fight as a fire-and-forget task
+        // (CombatManager.AfterCombatRoomLoaded -> StartCombatInternal). IsInProgress flips true inside
+        // that task just before Hook.BeforeCombatStart (CombatManager.cs:401-403), which is where
+        // RELIC.PANTOGRAPH heals its HealVar (Pantograph.cs:27-33; PLANISPHERE heals on an Unknown map
+        // point, Planisphere.cs:23-31). The heal is synchronous (CreatureCmd.Heal calls HealInternal),
+        // but it lands on a different task than this one, so re-asserting the recorded HP the instant
+        // EnterRoomDebug returns lets the heal push the entry back above the recorded value (lab 114 vs
+        // spec 90). The player's opening hand is dealt in StartTurn -> SetupPlayerTurn, strictly after
+        // BeforeCombatStart, so waiting for IsInProgress plus a non-empty opening hand is a bridge-free,
+        // deterministic "all combat-start entry hooks have landed" signal before the bridge's first look.
+        await WaitForCombatEntrySettled(player);
+
+        // The potion belt is re-checked only now, after combat-start hooks have settled: a slot-gaining
+        // relic (RELIC.PHIAL_HOLSTER) grants its extra slot in AfterObtained, which silent relic
+        // addition skips (AddRelicInternal suppresses only the RelicObtained event, not the model hook),
+        // so the recorded 4-potion entry could otherwise lose its last potion to the belt cap
+        // (bosslab/tools/relic_entry_effects.py). ReensureRecordedPotions re-widens the belt to the
+        // recorded count and re-adds only the potions the room-entry hooks dropped.
+        ReensureRecordedPotions(player, trial);
+
+        // The potion container builds its holder nodes when the run UI initializes (before this driver
+        // injects anything) and afterwards only from the `PotionProcured` event, which silent addition
+        // does not raise. Without a holder, using an injected potion throws in NPotionContainer.RemoveUsed
+        // (Nodes/Potions/NPotionContainer.cs:352-357), the potion action dies, and the trial hangs until
+        // the runner's timeout. Re-initializing after the belt is ensured makes it build holders for
+        // whatever is in the slots now (Nodes/Potions/NPotionContainer.cs:197-207).
         RefreshPotionUi(runState);
 
-        // Room entry has now run, so the injected relics' own combat-entry grants have landed. Add
-        // only what the recorded entry shows on top of those, before the bridge takes its first look.
+        // The recorded HP is authoritative now that the entry heals have landed: RELIC.PANTOGRAPH /
+        // RELIC.PLANISPHERE healed on top of the recorded value in this same combat-start pass, and the
+        // recorded entry already accounts for that heal, so re-asserting cancels the double-apply.
+        ReapplyRecordedHp(player, trial);
+
+        // Room entry has run, so the injected relics' own combat-entry grants have landed. Add only
+        // what the recorded entry shows on top of those, before the bridge takes its first look.
         await ApplyEntryPowers(player, trial);
 
         // AutoSlay is not running in lab mode, so its CombatRoomHandler patch never starts the agent
-        // bridge; drive the fight with the same CombatBridge.Run it would have called.
+        // bridge; drive the fight with the same CombatBridge.Run it would have called. Started only now,
+        // after the recorded entry state has been re-asserted, so the bridge's first observation shows
+        // the recorded HP and potion belt.
         var bridgeTask = CombatBridge.Run(CancellationToken.None);
         var fightResult = await AwaitFight(player, trial, runState);
         await Task.WhenAny(bridgeTask, Task.Delay(5000));
         return fightResult;
+    }
+
+    /// <summary>
+    /// Wait until the boss fight has reached the player's decision window, so every combat-start hook
+    /// that moves HP or potion slots has already run. IsInProgress flips true in StartCombatInternal just
+    /// before BeforeCombatStart (the boss-entry heals), and the action executor stays paused until
+    /// StartTurn unpauses it after the opening draw (CombatManager.cs:397-401, 574). Requiring both
+    /// is a deterministic "combat-start hooks are done" signal that does not depend on when the
+    /// fire-and-forget combat task happens to run. Bounded so a stalled fight start cannot hang a trial.
+    /// </summary>
+    private static async Task WaitForCombatEntrySettled(Player player)
+    {
+        int waitedMs = 0;
+        while (waitedMs < 10000)
+        {
+            var combat = CombatManager.Instance;
+            if (combat is not null && combat.IsInProgress && PileType.Hand.GetPile(player).Cards.Count > 0)
+                return;
+            await Task.Delay(50);
+            waitedMs += 50;
+        }
+        AutoSlayLog.Error("[BossLab] combat did not draw its opening hand within 10 s; re-asserting the " +
+            "recorded entry state anyway (the first observation may not match the recorded run)");
+    }
+
+    /// <summary>
+    /// Make sure every potion the recorded boss entry carried is present after room entry, widening the
+    /// belt if it is short. Idempotent: a recorded potion already in a slot is left alone, so this only
+    /// adds what the combat-start hooks dropped (see the call site for RELIC.PHIAL_HOLSTER). Potions must
+    /// also get their UI holders, which <see cref="RefreshPotionUi"/> builds from the current slots.
+    /// </summary>
+    private static void ReensureRecordedPotions(Player player, LabTrial trial)
+    {
+        if (trial.Potions.Count == 0)
+            return;
+        if (trial.Potions.Count > player.MaxPotionCount)
+        {
+            int extra = trial.Potions.Count - player.MaxPotionCount;
+            player.AddToMaxPotionCount(extra);
+            AutoSlayLog.Info($"[BossLab] widened the potion belt to {player.MaxPotionCount} slots after " +
+                $"room entry for the recorded {trial.Potions.Count} potions");
+        }
+        var held = new HashSet<string>(
+            player.PotionSlots.Where(p => p is not null).Select(p => p!.Id.Entry),
+            StringComparer.OrdinalIgnoreCase);
+        int added = 0;
+        for (int i = 0; i < trial.Potions.Count; i++)
+        {
+            string id = Entry(trial.Potions[i], "POTION");
+            if (!held.Add(id))
+                continue;  // already carried, nothing to do
+            int slot = -1;
+            for (int s = 0; s < player.PotionSlots.Count; s++)
+            {
+                if (player.PotionSlots[s] is null) { slot = s; break; }
+            }
+            if (slot < 0)
+            {
+                held.Remove(id);
+                break;  // belt full of other recorded potions
+            }
+            var model = PotionModel.FromSerializable(new SerializablePotion
+            {
+                Id = new ModelId(ModelId.SlugifyCategory<PotionModel>(), id),
+                SlotIndex = slot,
+            });
+            player.AddPotionInternal(model, slot, silent: true);
+            added++;
+        }
+        if (added > 0)
+            AutoSlayLog.Info($"[BossLab] re-added {added} potion(s) dropped by room entry; belt now " +
+                $"{player.PotionSlots.Count(p => p is not null)}/{player.MaxPotionCount} for the " +
+                $"recorded {trial.Potions.Count}");
     }
 
     /// <summary>
@@ -303,16 +426,29 @@ public static class BossLab
         return last;
     }
 
-    private static void ApplyPlayerState(Player player, LabTrial trial)
+    /// <summary>
+    /// Load the recorded entry onto a fresh run: relics, potions (slots widened to fit), deck with
+    /// upgrade levels and enchantments, and HP. Returns the relics the plan marked
+    /// <c>defer_relics</c> as models that are not yet attached, so <see cref="RunTrial"/> can add
+    /// them after room entry instead of letting their entry hooks re-fire.
+    /// </summary>
+    private static List<RelicModel> ApplyPlayerState(Player player, LabTrial trial)
     {
         foreach (var relic in player.Relics.ToList())
             player.RemoveRelicInternal(relic, silent: true);
+        var deferred = new List<RelicModel>();
         foreach (string id in trial.Relics)
         {
             var model = RelicModel.FromSerializable(new SerializableRelic
             {
                 Id = new ModelId(ModelId.SlugifyCategory<RelicModel>(), Entry(id, "RELIC")),
             });
+            if (trial.DeferRelics.Any(name => Entry(name, "RELIC")
+                    .Equals(model.Id.Entry, StringComparison.OrdinalIgnoreCase)))
+            {
+                deferred.Add(model);
+                continue;
+            }
             player.AddRelicInternal(model, -1, silent: true);
         }
 
@@ -320,6 +456,17 @@ public static class BossLab
         {
             if (potion is not null)
                 player.DiscardPotionInternal(potion, silent: true);
+        }
+        if (trial.Potions.Count > player.MaxPotionCount)
+        {
+            // The relics that widen the belt raise the slot count in AfterObtained
+            // (RELIC.POTION_BELT, RELIC.PHIAL_HOLSTER's PotionSlots var, PhialHolster.cs:26-32), and
+            // silent addition skips that hook, so the recorded 4-potion entry would lose one to the
+            // 3-slot cap here. Grow the slots to the recorded count instead of dropping potions.
+            int extra = trial.Potions.Count - player.MaxPotionCount;
+            player.AddToMaxPotionCount(extra);
+            AutoSlayLog.Info($"[BossLab] widened potion slots by {extra} to {player.MaxPotionCount} " +
+                $"for the recorded {trial.Potions.Count} potions");
         }
         for (int slot = 0; slot < trial.Potions.Count && slot < player.MaxPotionCount; slot++)
         {
@@ -358,6 +505,27 @@ public static class BossLab
 
         player.Creature.SetMaxHpInternal(trial.MaxHp > 0 ? trial.MaxHp : trial.Hp);
         player.Creature.SetCurrentHpInternal(trial.Hp);
+        return deferred;
+    }
+
+    /// <summary>
+    /// Re-assert the recorded HP after room entry has run. Room entry fires the injected relics'
+    /// entry hooks, and some of them heal (RELIC.PANTOGRAPH at boss combat start with HealVar 25,
+    /// Pantograph.cs:27-33; RELIC.PLANISPHERE on entering an Unknown map point, Planisphere.cs:20-27),
+    /// which the recorded entry value already accounts for. Without this the lab would start each of
+    /// those fights above the recorded HP. Logged because it is the difference the fidelity check
+    /// needs to see.
+    /// </summary>
+    private static void ReapplyRecordedHp(Player player, LabTrial trial)
+    {
+        int hp = trial.Hp;
+        int maxHp = trial.MaxHp > 0 ? trial.MaxHp : trial.Hp;
+        if (player.Creature.MaxHp == maxHp && player.Creature.CurrentHp == hp)
+            return;
+        AutoSlayLog.Info($"[BossLab] entry hp after room-entry hooks was {player.Creature.CurrentHp}/" +
+            $"{player.Creature.MaxHp}, re-applying the recorded {hp}/{maxHp}");
+        player.Creature.SetMaxHpInternal(maxHp);
+        player.Creature.SetCurrentHpInternal(hp);
     }
 
     /// <summary>
@@ -490,6 +658,13 @@ public class LabTrial
     [JsonPropertyName("max_hp")] public int MaxHp { get; set; }
     [JsonPropertyName("deck")] public List<LabCard> Deck { get; set; } = new();
     [JsonPropertyName("relics")] public List<string> Relics { get; set; } = new();
+    /// <summary>
+    /// Relics to attach only after room entry, because their own room-entry hook already did its
+    /// work in the recorded run and the plan's deck / HP carry that result (see BossLab.RunTrial and
+    /// bosslab/tools/relic_entry_effects.py for the decompile-grounded list). A plan that does not
+    /// carry this field behaves as before: every relic is attached before entry.
+    /// </summary>
+    [JsonPropertyName("defer_relics")] public List<string> DeferRelics { get; set; } = new();
     [JsonPropertyName("potions")] public List<string> Potions { get; set; } = new();
     /// <summary>
     /// Powers to inject after room entry. Amounts must already be reduced by whatever the injected
