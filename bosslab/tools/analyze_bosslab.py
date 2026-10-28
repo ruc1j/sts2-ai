@@ -451,7 +451,10 @@ def main() -> int:
                 s = json.loads(line)
                 orig[s["spec_id"]] = s["recorded_outcome"]["won"]
 
-    pass_dirs, pass_labels = parse_run_labels(args.runs or [str(HERE.parent / "data")])
+    # `--compare-pair` alone means "only the paired base-vs-candidate tables"; falling back to the
+    # whole data/ tree would add an empty pass and boilerplate computed from zero trials.
+    default_dirs = [] if (args.pairs and not args.runs) else [str(HERE.parent / "data")]
+    pass_dirs, pass_labels = parse_run_labels(args.runs or default_dirs)
     pass_trials: list[list[dict]] = []
     all_dropped: list[dict] = []
     run_infos: list[dict] = []
@@ -693,7 +696,13 @@ def main() -> int:
                 f"- 勝率順 パス1: {order_str(rates1, order1)}",
                 f"- 向きの一致: {'一致' if agree else '不一致'}（同値 band が多いと順位は安定しない。≈ は同率）"]
     else:
-        out += ["", "## 再現性", "", "- パスが 1 本だけ。EVALUATION.md の再現性確認には同じ計画の 2 回目が必要。"]
+        if pass_trials:
+            out += ["", "## 再現性", "",
+                    "- パスが 1 本だけ。EVALUATION.md の再現性確認には同じ計画の 2 回目が必要。"]
+        else:
+            out += ["", "## 再現性", "",
+                    "- 単独 panel の集計はこの実行では指定なし（--compare-pair の配对表のみ）。集合間の"
+                    " spec 重複が 0 なら、集合そのものが独立再測定になっている。"]
 
     # T7d: per-pass arm-delta with uncertainty, and agreement of the delta's direction across
     # passes. Two passes of the same specs with disjoint offsets are independent measurements:
@@ -748,7 +757,28 @@ def main() -> int:
                     "統合したが、spec 共通ゆきの相関は残り得る（過小評価側に読む）。"]
 
     # EVALUATION.md:43 opportunity / decision / result framing, counts + seed counts
-    n_specs = len({t["spec_id"] for t in pass_trials[0]}) if pass_trials[0] else 0
+    if not pass_trials:
+        # Pair-only mode: the measured quantity is the paired continuous signal, not arm win rates.
+        total_pairs = sum(c["pairs"] for c in pooled_comparisons)
+        n_specs = len({row[0] for c in pooled_comparisons for row in c["details"]})
+        out += ["", "## 局所検証の分類 (docs/EVALUATION.md:43)", "",
+                "- 判断が変わるか / 結果が変わるか: 同じ entry（spec・offset）で base と候補を配对し、主信号は"
+                " Queen 削り割合。入場状態は plan が同じなので両側で同一。エージェントの分岐が実際に別の"
+                " target を選んだかは trace の decision_source で確認する。",
+                "- 状態にカードがある（発動機会）: 攻撃対象となる QUEEN と Amalgam が入場に居ない panel は"
+                " 0（配对できた組＝発動機会のある戦闘）。",
+                f"- seed(spec) 数: 配对 {total_pairs} 組、spec {n_specs} 件（集合間は重複除き）。1 spec あたり"
+                " arm ごとに offset ぶん繰り返す。",
+                "- 採否は集合ごとの判定で行う（上の集合別表）。プール符号検定は参考値で、集合ごとの判定に"
+                " 代えない。",
+                "",
+                "生成: `python3 bosslab/tools/analyze_bosslab.py --compare-pair \"LABEL=BASE_DIR:CAND_DIR\" "
+                "[--compare-pair ...] --out <md>`",
+                "生データ: 各 run dir の lab_results.jsonl（試行ごと 1 行、BossLab.cs が出す）"]
+        Path(args.out).write_text("\n".join(out) + "\n", encoding="utf-8")
+        print(f"wrote {args.out}: compare-pair only, pooled pairs {total_pairs}")
+        return 0
+    n_specs = len({t["spec_id"] for t in pass_trials[0]})
     out += ["", "## 局所検証の分類 (docs/EVALUATION.md:43)", "",
             "- 状態にカードがある（発動機会）: 選択 spec では base で SHRUG_IT_OFF を1枚以上持つ entry を使い、"
             "+arm で1枚増やし -arm で1枚減らす。発動機会は試行数そのもの（上の arm 別表）。",

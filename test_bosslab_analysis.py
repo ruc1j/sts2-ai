@@ -134,6 +134,51 @@ class RunLabelTest(unittest.TestCase):
         self.assertEqual([""], labels)
 
 
+class MainPairOnlyTest(unittest.TestCase):
+    """`--compare-pair` だけで呼んだときの main の形（空 pass 節と Act 2 定型文を混ぜない）."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        if not TOOL.is_file():
+            raise cls.skipTest(f"{TOOL} is missing")
+        cls.mod = load_module()
+
+    def test_compare_pair_only_writes_paired_tables_without_an_empty_pass(self) -> None:
+        import contextlib
+        import io
+        import json
+        import sys
+        import tempfile
+        from unittest import mock
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            dirs = []
+            for name, queen_hp in (("basedir", 400), ("canddir", 200)):
+                run_dir = root / name
+                run_dir.mkdir()
+                rows = [trial(arm="base", spec=spec, offset="0", queen_hp=queen_hp)
+                        for spec in ("s1", "s2")]
+                (run_dir / "lab_results.jsonl").write_text(
+                    "".join(json.dumps(row) + "\n" for row in rows), encoding="utf-8")
+                dirs.append(str(run_dir))
+            out_path = root / "sets.md"
+            argv = ["analyze_bosslab.py",
+                    "--compare-pair", f"set1={dirs[0]}:{dirs[1]}",
+                    "--out", str(out_path), "--specs", str(root / "no_specs.jsonl")]
+            with mock.patch.object(sys, "argv", argv), contextlib.redirect_stdout(io.StringIO()):
+                code = self.mod.main()
+            text = out_path.read_text(encoding="utf-8")
+
+        self.assertEqual(0, code)
+        self.assertIn("## set1（base `basedir` 2本 vs cand `canddir` 2本", text)
+        self.assertIn("集合横断のプール符号検定", text)
+        # 未指定の --run が data/ ツリー全体に化けて、 trial 0 件の空の pass 節が出る回帰。
+        self.assertNotIn("## パス 0", text)
+        self.assertNotIn("SHRUG_IT_OFF", text)
+        self.assertIn("単独 panel の集計はこの実行では指定なし", text)
+
+
 class PairedContinuousTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
