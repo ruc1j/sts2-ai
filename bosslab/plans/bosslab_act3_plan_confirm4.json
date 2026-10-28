@@ -1,0 +1,2063 @@
+{
+ "mode": "bosslab",
+ "offset_start": 2,
+ "encounters": [
+  "ENCOUNTER.QUEEN_BOSS"
+ ],
+ "character": "CHARACTER.IRONCLAD",
+ "arms": [
+  "base"
+ ],
+ "specs_selected": 12,
+ "trials_per_arm": 1,
+ "relic_entry_effects": {
+  "defer_relics": [
+   "RELIC.STONE_CRACKER"
+  ],
+  "flag_relics": [],
+  "trials_with_defer": 1,
+  "trials_with_flag": 0
+ },
+ "trials": [
+  {
+   "trial_index": 0,
+   "trial_id": "8340d5737b02|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "8340d5737b02",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "AM8C6YXHSG",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 72,
+   "max_hp": 99,
+   "deck": [
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BURNING_PACT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.EXPECT_A_FIGHT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HELLRAISER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.IMPERVIOUS",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.MAD_SCIENCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SPITE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STOKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SWORD_BOOMERANG",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.THUNDERCLAP",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.UPPERCUT",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.FISHING_ROD",
+    "RELIC.CANDELABRA",
+    "RELIC.BRONZE_SCALES",
+    "RELIC.ORICHALCUM",
+    "RELIC.YUMMY_COOKIE",
+    "RELIC.JUZU_BRACELET",
+    "RELIC.BELT_BUCKLE",
+    "RELIC.BAG_OF_MARBLES",
+    "RELIC.FIDDLE",
+    "RELIC.STRIKE_DUMMY",
+    "RELIC.BIG_MUSHROOM",
+    "RELIC.GREMLIN_HORN",
+    "RELIC.FORGOTTEN_SOUL"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.FOUL_POTION",
+    "POTION.FOUL_POTION",
+    "POTION.FOUL_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "priceband_AM8C6YXHSG_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 1,
+   "trial_id": "c589d7860c35|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "c589d7860c35",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "3169EC2E1C",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 53,
+   "max_hp": 94,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.FEEL_NO_PAIN",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SECOND_WIND",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHAME",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TRUE_GRIT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.UNMOVABLE",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.LARGE_CAPSULE",
+    "RELIC.MANGO",
+    "RELIC.CANDELABRA",
+    "RELIC.GAME_PIECE",
+    "RELIC.PAELS_FLESH",
+    "RELIC.BAG_OF_MARBLES",
+    "RELIC.IRON_CLUB",
+    "RELIC.ROYAL_POISON",
+    "RELIC.RAZOR_TOOTH",
+    "RELIC.BAG_OF_PREPARATION"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.ENERGY_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "astra_ctrl_v23_3169EC2E1C_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 2,
+   "trial_id": "c79980be865c|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "c79980be865c",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "AM8C6YXHSG",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 65,
+   "max_hp": 96,
+   "deck": [
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BASH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BREAKTHROUGH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DARK_EMBRACE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EXPECT_A_FIGHT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.MAD_SCIENCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.RAGE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.REGRET",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SECOND_WIND",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SWORD_BOOMERANG",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.ULTIMATE_DEFEND",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.FISHING_ROD",
+    "RELIC.BRONZE_SCALES",
+    "RELIC.CANDELABRA",
+    "RELIC.YUMMY_COOKIE",
+    "RELIC.JUZU_BRACELET",
+    "RELIC.VAMBRACE",
+    "RELIC.FIDDLE",
+    "RELIC.STRIKE_DUMMY",
+    "RELIC.BIG_MUSHROOM",
+    "RELIC.BAG_OF_MARBLES",
+    "RELIC.LANTERN",
+    "RELIC.PENDULUM"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "codex_smith_candidate_20260919_AM8C6YXHSG_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 3,
+   "trial_id": "56accb541102|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "56accb541102",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "N8CQ4ZKP2W",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 59,
+   "max_hp": 83,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BREAKTHROUGH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BYRD_SWOOP",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.CRIMSON_MANTLE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EXPECT_A_FIGHT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FEEL_NO_PAIN",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FORGOTTEN_RITUAL",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.MAD_SCIENCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PYRE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SQUASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 1
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.GOLDEN_PEARL",
+    "RELIC.BYRDPIP",
+    "RELIC.PEN_NIB",
+    "RELIC.ORNAMENTAL_FAN",
+    "RELIC.LANTERN",
+    "RELIC.TOASTY_MITTENS",
+    "RELIC.CANDELABRA",
+    "RELIC.RED_MASK",
+    "RELIC.ANCHOR",
+    "RELIC.VAJRA",
+    "RELIC.CENTENNIAL_PUZZLE",
+    "RELIC.FIDDLE",
+    "RELIC.PERMAFROST",
+    "RELIC.STRAWBERRY",
+    "RELIC.LETTER_OPENER"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.FORTIFIER",
+    "POTION.STRENGTH_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "act3_verify_N8CQ4ZKP2W_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 4,
+   "trial_id": "624ae0d1306b|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "624ae0d1306b",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "FD7A9C8F5F",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 90,
+   "max_hp": 114,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 1,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HAVOC",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HELLRAISER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.IRON_WAVE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STONE_ARMOR",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TORIC_TOUGHNESS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TRUE_GRIT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TRUE_GRIT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.UPPERCUT",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.LARGE_CAPSULE",
+    "RELIC.POCKETWATCH",
+    "RELIC.LANTERN",
+    "RELIC.PANTOGRAPH",
+    "RELIC.TOASTY_MITTENS",
+    "RELIC.MANGO",
+    "RELIC.SPIKED_GAUNTLETS",
+    "RELIC.BIG_MUSHROOM",
+    "RELIC.LIZARD_TAIL",
+    "RELIC.WHETSTONE"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.POWER_POTION",
+    "POTION.FOUL_POTION",
+    "POTION.FOUL_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "astra_random20_main_FD7A9C8F5F_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 5,
+   "trial_id": "98ab6c77b59b|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "98ab6c77b59b",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "FD40F6616D",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 72,
+   "max_hp": 88,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DECAY",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EXPECT_A_FIGHT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HELLRAISER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SECOND_WIND",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STONE_ARMOR",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.SOULS_POWER",
+     "enchantment_amount": 1
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.LARGE_CAPSULE",
+    "RELIC.MEAL_TICKET",
+    "RELIC.RAZOR_TOOTH",
+    "RELIC.VAJRA",
+    "RELIC.PAELS_FLESH",
+    "RELIC.DAUGHTER_OF_THE_WIND",
+    "RELIC.LETTER_OPENER",
+    "RELIC.ANCHOR",
+    "RELIC.DIAMOND_DIADEM",
+    "RELIC.PLANISPHERE",
+    "RELIC.PENDULUM"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.FIRE_POTION",
+    "POTION.SKILL_POTION",
+    "POTION.FLEX_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "astra_eval_v20_control_FD40F6616D_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 6,
+   "trial_id": "703d7333c072|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "703d7333c072",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "D6A1F8C3E5",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 77,
+   "max_hp": 79,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BODY_SLAM",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BYRD_SWOOP",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.CLUMSY",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DECAY",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DOUBT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 1,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.IRON_WAVE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.IRON_WAVE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.IRON_WAVE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SECOND_WIND",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STONE_ARMOR",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.SOULS_POWER",
+     "enchantment_amount": 1
+    },
+    {
+     "id": "CARD.UPPERCUT",
+     "upgrade": 1
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.LARGE_CAPSULE",
+    "RELIC.MOLTEN_EGG",
+    "RELIC.ORICHALCUM",
+    "RELIC.MEAT_ON_THE_BONE",
+    "RELIC.LUCKY_FYSH",
+    "RELIC.ODDLY_SMOOTH_STONE",
+    "RELIC.PAELS_FLESH",
+    "RELIC.CANDELABRA",
+    "RELIC.LOST_WISP",
+    "RELIC.STRIKE_DUMMY",
+    "RELIC.MUMMIFIED_HAND",
+    "RELIC.THROWING_AXE",
+    "RELIC.MERCURY_HOURGLASS",
+    "RELIC.BYRDPIP",
+    "RELIC.PENDULUM"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.RADIANT_TINCTURE",
+    "POTION.FIRE_POTION",
+    "POTION.SKILL_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "priceband_D6A1F8C3E5_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 7,
+   "trial_id": "1563989f9e55|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "1563989f9e55",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "SOS6XYXCNO",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 44,
+   "max_hp": 87,
+   "deck": [
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.APOTHEOSIS",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BURNING_PACT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BYRD_SWOOP",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.DOUBT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.MAD_SCIENCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.REGRET",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SETUP_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STONE_ARMOR",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STONE_ARMOR",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.UNMOVABLE",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.LARGE_CAPSULE",
+    "RELIC.STONE_CRACKER",
+    "RELIC.GORGET",
+    "RELIC.TOXIC_EGG",
+    "RELIC.WHETSTONE",
+    "RELIC.PAELS_BLOOD",
+    "RELIC.BYRDPIP",
+    "RELIC.BAG_OF_MARBLES",
+    "RELIC.STRAWBERRY",
+    "RELIC.JEWELRY_BOX",
+    "RELIC.STRIKE_DUMMY",
+    "RELIC.ODDLY_SMOOTH_STONE",
+    "RELIC.POTION_BELT"
+   ],
+   "defer_relics": [
+    "RELIC.STONE_CRACKER"
+   ],
+   "flag_relics": [],
+   "potions": [
+    "POTION.POWER_POTION",
+    "POTION.BOTTLED_POTENTIAL",
+    "POTION.WEAK_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "sweepF_SOS6XYXCNO_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 8,
+   "trial_id": "f737cab6f8b6|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "f737cab6f8b6",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "AM8C6YXHSG",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 94,
+   "max_hp": 112,
+   "deck": [
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BASH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BURNING_PACT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DECAY",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.EXPECT_A_FIGHT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HELLRAISER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.IMPERVIOUS",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.SOULS_POWER",
+     "enchantment_amount": 1
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.MAD_SCIENCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SPITE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STOKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STOMP",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STOMP",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SWORD_BOOMERANG",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.THUNDERCLAP",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.FISHING_ROD",
+    "RELIC.CANDELABRA",
+    "RELIC.BRONZE_SCALES",
+    "RELIC.ORICHALCUM",
+    "RELIC.YUMMY_COOKIE",
+    "RELIC.JUZU_BRACELET",
+    "RELIC.GORGET",
+    "RELIC.STRAWBERRY",
+    "RELIC.FIDDLE",
+    "RELIC.STRIKE_DUMMY",
+    "RELIC.BIG_MUSHROOM",
+    "RELIC.BAG_OF_MARBLES"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.COLORLESS_POTION",
+    "POTION.FLEX_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "relic_arm_AM8C6YXHSG_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 9,
+   "trial_id": "5f6a1726cfea|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "5f6a1726cfea",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "N8CQ4ZKP2W",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 81,
+   "max_hp": 81,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BREAKTHROUGH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BYRD_SWOOP",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.CRIMSON_MANTLE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EXPECT_A_FIGHT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FEEL_NO_PAIN",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FORGOTTEN_RITUAL",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.HEADBUTT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.MAD_SCIENCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.PYRE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SQUASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 1
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.GOLDEN_PEARL",
+    "RELIC.BYRDPIP",
+    "RELIC.PEN_NIB",
+    "RELIC.ORNAMENTAL_FAN",
+    "RELIC.LANTERN",
+    "RELIC.TOASTY_MITTENS",
+    "RELIC.CANDELABRA",
+    "RELIC.RED_MASK",
+    "RELIC.ANCHOR",
+    "RELIC.VAJRA",
+    "RELIC.CENTENNIAL_PUZZLE",
+    "RELIC.FIDDLE",
+    "RELIC.PERMAFROST",
+    "RELIC.STRAWBERRY",
+    "RELIC.LETTER_OPENER"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.SWIFT_POTION",
+    "POTION.POTION_OF_BINDING",
+    "POTION.FORTIFIER"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "candidate_bound_N8CQ4ZKP2W_agent.jsonl",
+     "candidate_headbutt_N8CQ4ZKP2W_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 10,
+   "trial_id": "c247ea1ceac4|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "c247ea1ceac4",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "6A8C868A07",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 90,
+   "max_hp": 107,
+   "deck": [
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.ASHEN_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BASH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BURNING_PACT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.CONFLAGRATION",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.DEMON_FORM",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.IMPERVIOUS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.IMPERVIOUS",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SPITE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.THUNDERCLAP",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TORIC_TOUGHNESS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.ULTIMATE_DEFEND",
+     "upgrade": 1
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.NEW_LEAF",
+    "RELIC.LUCKY_FYSH",
+    "RELIC.BELLOWS",
+    "RELIC.PAELS_BLOOD",
+    "RELIC.LETTER_OPENER",
+    "RELIC.MERCURY_HOURGLASS",
+    "RELIC.LANTERN",
+    "RELIC.CAPTAINS_WHEEL",
+    "RELIC.LOOMING_FRUIT",
+    "RELIC.PERMAFROST",
+    "RELIC.WHETSTONE",
+    "RELIC.BAG_OF_MARBLES"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.BLOCK_POTION",
+    "POTION.DEXTERITY_POTION",
+    "POTION.BLOCK_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "astra_eval_v17_control_6A8C868A07_agent.jsonl"
+    ]
+   }
+  },
+  {
+   "trial_index": 11,
+   "trial_id": "59ed603b4b73|base|2",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "59ed603b4b73",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "R8V2H6N4ZB",
+   "rng_offset": 2,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 90,
+   "max_hp": 94,
+   "deck": [
+    {
+     "id": "CARD.ANGER",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BASH",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.BATTLE_TRANCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 1,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.ENTHRALLED",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.EVIL_EYE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.FLAME_BARRIER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.HELLRAISER",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.HEMOKINESIS",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.INFLAME",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.PRIMAL_FORCE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.RAGE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.RAGE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.REGRET",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.SHRUG_IT_OFF",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TWIN_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.UPPERCUT",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.NEOWS_TALISMAN",
+    "RELIC.PAELS_FLESH",
+    "RELIC.RAINBOW_RING",
+    "RELIC.STRIKE_DUMMY",
+    "RELIC.PANTOGRAPH",
+    "RELIC.DAUGHTER_OF_THE_WIND",
+    "RELIC.BLOOD_SOAKED_ROSE",
+    "RELIC.BIG_MUSHROOM",
+    "RELIC.PERMAFROST",
+    "RELIC.ROYAL_POISON",
+    "RELIC.CAPTAINS_WHEEL",
+    "RELIC.ORNAMENTAL_FAN"
+   ],
+   "defer_relics": [],
+   "flag_relics": [],
+   "potions": [
+    "POTION.BLOCK_POTION",
+    "POTION.COLORLESS_POTION",
+    "POTION.SPEED_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "act3_pop2_R8V2H6N4ZB_agent.jsonl",
+     "act3_pop2_head_R8V2H6N4ZB_agent.jsonl"
+    ]
+   }
+  }
+ ]
+}
