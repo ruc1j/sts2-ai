@@ -188,15 +188,24 @@ ENTRY_STATE_RELICS = load_entry_state_relics()
 
 
 def flag_specs_from_plan(plan_trials: list[dict]) -> dict[str, list[str]]:
-    """plan の trial から spec 単位で「lab が実走とズレるとKnownのレリック」を拾う。"""
+    """plan の trial から spec 単位で「lab が実走とズレるとKnownのレリック」を拾う。
+
+    2 通りある。plan が `flag_relics` を持てばそれをそのまま使い（make_bosslab_plan.py が
+    relic_entry_effects.py の分類で書く）、持たない古い plan の従来動作として、entry_state_relics.json
+    に載る run 状態レリックを trial の relics から拾い続ける。
+    """
     flags: dict[str, set] = collections.defaultdict(set)
     for trial in plan_trials or ():
+        spec = trial.get("spec_id")
+        for relic in trial.get("flag_relics") or ():
+            relic_id = str(relic)
+            flags[spec].add(relic_id if relic_id.startswith("RELIC.") else "RELIC." + relic_id)
         for relic in trial.get("relics") or ():
             relic_id = str(relic)
             if not relic_id.startswith("RELIC."):
                 relic_id = "RELIC." + relic_id
             if relic_id in ENTRY_STATE_RELICS:
-                flags[trial.get("spec_id")].add(relic_id)
+                flags[spec].add(relic_id)
     return {spec: sorted(names) for spec, names in flags.items() if names}
 
 

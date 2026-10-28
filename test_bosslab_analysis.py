@@ -254,6 +254,19 @@ class PairedContinuousTest(unittest.TestCase):
         self.assertEqual({"s1"}, set(flags))
         self.assertEqual([relic], flags["s1"])
 
+    def test_plan_flag_relics_field_marks_specs_directly(self) -> None:
+        """plan が運ぶ flag_relics（relic_entry_effects.py の flag_unfixed 分類）も † になる。
+
+        run 状態レリックと違い、開手札を足すレリック（RELIC.CROSSBOW 等）は plan 側に載らないので、
+        plan が flag_relics を運ぶ形でしか拾えない。古い plan（フィールド無し）では従来どおり
+        relics からの run 状態レリックだけが付く。
+        """
+        planned = [{"spec_id": "s1", "relics": ["RELIC.CROSSBOW"], "flag_relics": ["RELIC.CROSSBOW"]},
+                   {"spec_id": "s2", "relics": ["RELIC.BURNING_BLOOD"], "flag_relics": []}]
+        flags = self.mod.flag_specs_from_plan(planned)
+        self.assertEqual({"s1"}, set(flags))
+        self.assertEqual(["RELIC.CROSSBOW"], flags["s1"])
+
     def test_per_arm_summary_reports_median_and_mean(self) -> None:
         summary = self.mod.summarize_continuous([
             trial(arm="base", queen_hp=400), trial(arm="base", queen_hp=200)])

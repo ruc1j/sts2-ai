@@ -161,6 +161,33 @@ class BossLabPlanTest(unittest.TestCase):
         self.assertEqual(trial["powers"], [])
         self.assertNotIn("enchantment", trial["deck"][0])
 
+    def test_trial_without_entry_effect_relics_carries_empty_lists(self) -> None:
+        plan, _ = run_tool([ACT3_SPEC], ["--arm", "base", "--max-specs", "1", "--trials-per-arm", "1"])
+        trial = plan["trials"][0]
+        self.assertEqual([], trial["defer_relics"])
+        self.assertEqual([], trial["flag_relics"])
+
+    def test_trial_carries_defer_and_flag_relics_from_the_entry_effect_table(self) -> None:
+        """STONE_CRACKER は入室後に付与、CROSSBOW は † 扱い、と plan が運ぶことの回帰。
+
+        BossLab.cs は plan の defer_relics を見てレリックを入室後に足す（入室 hook が札を強化する
+        系で、lab 側の RNG が二重に走ると hand/draw が実走とズレる）。analyze_bosslab.py は
+        flag_relics を † として扱う。
+        """
+        held = dict(ACT3_SPEC)
+        held["player"] = dict(ACT3_SPEC["player"],
+                              relics=list(ACT3_SPEC["player"]["relics"])
+                              + ["RELIC.STONE_CRACKER", "RELIC.CROSSBOW"])
+        plan, _ = run_tool([held], ["--arm", "base", "--max-specs", "1", "--trials-per-arm", "1"])
+        trial = plan["trials"][0]
+        self.assertEqual(["RELIC.STONE_CRACKER"], trial["defer_relics"])
+        self.assertEqual(["RELIC.CROSSBOW"], trial["flag_relics"])
+        summary = plan["relic_entry_effects"]
+        self.assertEqual(["RELIC.STONE_CRACKER"], summary["defer_relics"])
+        self.assertEqual(["RELIC.CROSSBOW"], summary["flag_relics"])
+        self.assertEqual(1, summary["trials_with_defer"])
+        self.assertEqual(1, summary["trials_with_flag"])
+
 
 if __name__ == "__main__":
     unittest.main()

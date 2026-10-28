@@ -29,10 +29,14 @@ import argparse
 import collections
 import hashlib
 import json
+import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent
+
+sys.path.insert(0, str(HERE))
+from relic_entry_effects import defer_relics_for, flag_relics_for  # noqa: E402
 
 DEFAULT_SPECS = HERE / "boss_specs.jsonl"
 
@@ -230,6 +234,17 @@ def main() -> int:
                     "max_hp": spec["player"]["max_hp"],
                     "deck": deck,
                     "relics": list(spec["player"]["relics"]),
+                    # Relics whose own room-entry hook already did its work in the recorded run (it
+                    # upgraded draw cards, healed, or widened the potion belt) and whose result the
+                    # trial's deck / HP / potion list carries. BossLab attaches these after
+                    # EnterRoomDebug so the hook cannot fire a second time with the lab's own RNG;
+                    # the HP re-assert and the slot widening in BossLab.cs cover the other two
+                    # families. The classification is bosslab/tools/relic_entry_effects.py.
+                    "defer_relics": defer_relics_for(spec["player"]["relics"]),
+                    # Relics that add a card to the opening hand on the first turn. The lab cannot
+                    # reproduce which card the recorded run's RNG produced, so analyze_bosslab.py
+                    # marks these specs with a dagger and reports the same signal without them.
+                    "flag_relics": flag_relics_for(spec["player"]["relics"]),
                     "potions": list(spec["potions"]),
                     # Powers the recorded entry shows that the relic list will not produce on its
                     # own. BossLab applies these after room entry (see BossLab.ApplyEntryPowers), so
@@ -242,6 +257,8 @@ def main() -> int:
                 }
                 trials.append(trial)
 
+    deferred_relics = sorted({relic for trial in trials for relic in trial["defer_relics"]})
+    flagged_relics = sorted({relic for trial in trials for relic in trial["flag_relics"]})
     plan = {
         "mode": "bosslab",
         "offset_start": args.offset_start,
@@ -250,6 +267,14 @@ def main() -> int:
         "arms": [name for name, _edits in arms],
         "specs_selected": len(selected),
         "trials_per_arm": args.trials_per_arm,
+        # What the entry-state handling in official_mod/BossLab.cs has to do for this plan
+        # (bosslab/tools/relic_entry_effects.py is the decompile-grounded classification).
+        "relic_entry_effects": {
+            "defer_relics": deferred_relics,
+            "flag_relics": flagged_relics,
+            "trials_with_defer": sum(1 for trial in trials if trial["defer_relics"]),
+            "trials_with_flag": sum(1 for trial in trials if trial["flag_relics"]),
+        },
         "trials": trials,
     }
     Path(args.out).write_text(json.dumps(plan, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -281,6 +306,12 @@ def main() -> int:
     lines += [
         f"- trials: {len(trials)}（arm 別 {dict(per_arm)}）、offset {args.offset_start}..{args.offset_start + args.trials_per_arm - 1}で乱数を振る"
         + ("（再測定計画は別の offset 範囲を使い、実効 seed を独立させる）" if args.offset_start else ""),
+        f"- 入室 hook の扱い（bosslab/tools/relic_entry_effects.py）: 入室後に付与する deferred が "
+        f"{plan['relic_entry_effects']['trials_with_defer']} trial"
+        f"（{', '.join(deferred_relics) if deferred_relics else 'なし'}）、開手札がlab で再現できない "
+        f"flag が {plan['relic_entry_effects']['trials_with_flag']} trial"
+        f"（{', '.join(flagged_relics) if flagged_relics else 'なし'}）。入場 HP とポーション枠は "
+        "BossLab.cs 側で記録値に寄せるため trial 単位の指定はない",
         f"- 実行: `pwsh -File ./run_official_bosslab.ps1 -GameDir '<game dir>' -Plan {Path(args.out).name}`",
         "",
         "## 選択された base spec",
