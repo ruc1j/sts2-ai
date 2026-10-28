@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Aggregate BossLab results into the local-verification report EVALUATION.md requires.
 
-Analysis only; no game, no repo-policy source edits. Reads one or more BossLab result files
+Analysis only; no game, no repo-policy source edits. Reads one or more BossLab result files (a QUEEN panel is judged on the
+Queen-shave axis as its primary signal with win rate kept auxiliary — see continuous_metrics below)
 (data/bosslab_*/lab_results.jsonl, each line one trial written by BossLab.cs) and reports per-arm
 win rates, the paired base-vs-+shrug and base-vs--shrug outcome per spec, the decision-opportunity /
 decision-change / result-change breakdown from docs/EVALUATION.md:43, and (when two passes are
@@ -28,6 +29,7 @@ import argparse
 import collections
 import json
 import math
+import statistics
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -160,6 +162,223 @@ def paired_counts(trials: list[dict], base: str, other: str) -> tuple[int, int, 
     return n, b, c
 
 
+# Act 3 (QUEEN) では主信号を勝敗にしない。実走の Act 3 base 勝率は約7%で床に張り付くため、
+# 候補の差が 0/12 と 1/12 の間に埋もれる。ここでは「Queen 自身の 400 HP を何%削れたか」を主信号に
+# し、Amalgam 撃破・死亡ターン・失HP を補助として同じ entry ごとに配对で比較する（EVALUATION.md の
+# 局所検証の書式。召喚物である Amalgam は Queen の進捗に混ぜず別記）。
+def load_entry_state_relics() -> set:
+    """入室時の挙動が自分の [SavedProperty] や室数に依存するレリックの一覧。
+
+    これを持つ spec は lab の新生レリックが実走が使い切った効果をもう一度発火させるので、入場状態が
+    実走とズレると分かっている。一覧は scan_relic_run_state.py がデコンパイルから作ったもの
+    （bosslab/results/entry_state_relics.json）。無ければ空集合で、† 付きの判定は行わない。
+    """
+    candidates = [root / sub for root in (HERE, HERE.parent, HERE.parents[1])
+                  for sub in (Path("bosslab") / "results" / "entry_state_relics.json",
+                              Path("results") / "entry_state_relics.json",
+                              Path(".dsh") / "relic_run_state.json")]
+    for candidate in candidates:
+        if candidate.is_file():
+            payload = json.loads(candidate.read_text(encoding="utf-8"))
+            return {str(relic) for relic in (payload.get("entry_state_relics") or {})}
+    return set()
+
+
+ENTRY_STATE_RELICS = load_entry_state_relics()
+
+
+def flag_specs_from_plan(plan_trials: list[dict]) -> dict[str, list[str]]:
+    """plan の trial から spec 単位で「lab が実走とズレるとKnownのレリック」を拾う。"""
+    flags: dict[str, set] = collections.defaultdict(set)
+    for trial in plan_trials or ():
+        for relic in trial.get("relics") or ():
+            relic_id = str(relic)
+            if not relic_id.startswith("RELIC."):
+                relic_id = "RELIC." + relic_id
+            if relic_id in ENTRY_STATE_RELICS:
+                flags[trial.get("spec_id")].add(relic_id)
+    return {spec: sorted(names) for spec, names in flags.items() if names}
+
+
+QUEEN_ID_SUFFIX = ".QUEEN"
+AMALGAM_ID_SUFFIX = "TORCH_HEAD_AMALGAM"
+QUEEN_MAX_HP = 400
+
+
+def continuous_metrics(trial: dict) -> dict:
+    """1試行分から Queen削り割合と補助指標を取り出す。
+
+    BossLab.cs が書く `enemy_hp_last_observed` は戦闘終了時に盤面へ生きている敵だけなので、行に
+    存在しない敵は死亡している。勝ちは Queen が死んだことで確定するため、削り割合は 1.0。
+    """
+    result = trial["result"]
+    enemies = list(result.get("enemy_hp_last_observed") or ())
+    queen = next((enemy for enemy in enemies if str(enemy.get("id", "")).endswith(QUEEN_ID_SUFFIX)), None)
+    amalgam = next((enemy for enemy in enemies
+                    if str(enemy.get("id", "")).endswith(AMALGAM_ID_SUFFIX)), None)
+    won = bool(result.get("won"))
+    if queen is None or won:
+        shaved = 1.0
+    else:
+        max_hp = float(queen.get("max_hp") or 0) or float(QUEEN_MAX_HP)
+        shaved = max(0.0, min(1.0, (max_hp - float(queen.get("hp") or 0)) / max_hp))
+    entry_hp = result.get("entry_player_hp")
+    final_hp = result.get("final_player_hp")
+    return {
+        "queen_shaved": shaved,
+        "amalgam_killed": amalgam is None or won,
+        "turns": result.get("last_observed_turn"),
+        "hp_lost": entry_hp - final_hp if entry_hp is not None and final_hp is not None else None,
+        "won": won,
+    }
+
+
+def is_queen_panel(trials: list[dict]) -> bool:
+    return any(str(trial.get("encounter") or "").endswith("QUEEN_BOSS") for trial in trials)
+
+
+METRICS = (("queen_shaved", True, "Queen削り割合（主信号）"),
+           ("amalgam_killed", True, "Amalgamを倒せたか（補助）"),
+           ("turns", True, "死亡ターン（補助・長いほど良い）"),
+           ("hp_lost", False, "失ったHP（補助・少ないほど良い）"))
+
+
+def paired_continuous(trials: list[dict], base: str, other: str,
+                      exclude_specs: set | None = None) -> dict:
+    """同じ entry（spec と offset）で base と候補の連続指標を比べる。
+
+    主信号の Queen削り割合だけを同値を除く符号検定にかけ（EVALUATION.md の flip 検定と同じ
+    McNemar 精密p）、補助指標は向きの件数だけ並べる。同じ entry を複数回試行した場合は arm 内で
+    平均してから配对する。
+    """
+    by_key: dict[tuple, dict[str, list[dict]]] = collections.defaultdict(
+        lambda: {base: [], other: []})
+    for trial in trials:
+        if trial["_arm"] in (base, other):
+            by_key[(trial["spec_id"], trial["_offset"])][trial["_arm"]].append(
+                continuous_metrics(trial))
+    pairs = [(spec, off, arms) for (spec, off), arms in sorted(by_key.items())
+             if arms[base] and arms[other]
+             and not (exclude_specs and spec in exclude_specs)]
+    rows = []
+    for metric, higher_better, label in METRICS:
+        base_values: list[float] = []
+        other_values: list[float] = []
+        better = worse = tie = 0
+        for _spec, _off, arms in pairs:
+            b_group = [m[metric] for m in arms[base] if m[metric] is not None]
+            o_group = [m[metric] for m in arms[other] if m[metric] is not None]
+            if not b_group or not o_group:
+                continue
+            b = sum((1 if x else 0) if isinstance(x, bool) else x for x in b_group) / len(b_group)
+            o = sum((1 if x else 0) if isinstance(x, bool) else x for x in o_group) / len(o_group)
+            base_values.append(b)
+            other_values.append(o)
+            advantage = (o - b) if higher_better else (b - o)
+            if advantage > 1e-9:
+                better += 1
+            elif advantage < -1e-9:
+                worse += 1
+            else:
+                tie += 1
+        rows.append({
+            "metric": metric, "label": label, "pairs": len(base_values),
+            "base_mean": statistics.mean(base_values) if base_values else float("nan"),
+            "other_mean": statistics.mean(other_values) if other_values else float("nan"),
+            "better": better, "worse": worse, "tie": tie,
+            "p": mcnemar_exact_p(worse, better) if metric == "queen_shaved" else None,
+        })
+    details = []
+    for spec, off, arms in pairs:
+        b = [m["queen_shaved"] for m in arms[base]]
+        o = [m["queen_shaved"] for m in arms[other]]
+        details.append((spec, off, sum(b) / len(b), sum(o) / len(o)))
+    return {"rows": rows, "details": details, "pairs": len(pairs),
+            "not_comparable": sum(1 for _key, arms in by_key.items()
+                                  if not arms[base] or not arms[other])}
+
+
+def parse_run_labels(entries: list[str]) -> tuple[list[str], list[str]]:
+    """Split `--run NAME=DIR` into (dirs, labels).
+
+    A candidate panel run under a different -AgentScript still writes arm "base" into its own result
+    file, so a label is what lets it be paired entry by entry against the reference panel. A bare
+    directory (no "=" or an existing path) keeps an empty label, and the first unlabeled pass becomes
+    the reference.
+    """
+    dirs, labels = [], []
+    for entry in entries:
+        label, separator, target = entry.partition("=")
+        if separator and not Path(entry).is_dir() and not Path(entry).is_file():
+            labels.append(label)
+            dirs.append(target)
+        else:
+            labels.append("")
+            dirs.append(entry)
+    return dirs, labels
+
+
+def render_continuous_comparison(comparison: dict, base_name: str, other_name: str,
+                                flagged: dict[str, list] | None = None,
+                                clean: dict | None = None) -> list[str]:
+    """paired_continuous の結果を EVALUATION.md の局所検証表として描く（主信号に精密p）。"""
+    lines = [f"同じ entry（spec と offset）で配对できた組: {comparison['pairs']}"
+             f"（比較不能 {comparison['not_comparable']}）", "",
+             "| 指標 | 比較組 | base 平均 | %s 平均 | 候補が優る | base が優る | 同値 | 精密p (両側) |"
+             % other_name,
+             "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for row in comparison["rows"]:
+        p_value = "–" if row["p"] is None else f"{row['p']:.3f}"
+        lines.append(f"| {row['label']} | {row['pairs']} | {row['base_mean']:.3f} | "
+                     f"{row['other_mean']:.3f} | {row['better']} | {row['worse']} | {row['tie']} | "
+                     f"{p_value} |")
+    lines += ["", f"| spec | offset | {base_name} 削り | {other_name} 削り | 向き |",
+              "| --- | --- | --- | --- | --- |"]
+    flagged = flagged or {}
+    for spec, off, b_value, o_value in comparison["details"]:
+        arrow = "+" if o_value > b_value else "-" if o_value < b_value else "="
+        mark = "†" if spec in flagged else ""
+        lines.append(f"| {spec}{mark} | {off} | {b_value:.0%} | {o_value:.0%} | {arrow} |")
+    lines += ["", "- 判定は Queen削り割合の列で見る。Amalgam は Queen の進捗に合算していない"
+              "（EVALUATION.md の召喚物の扱い）。勝敗の表はこの節の上にある補助。"]
+    if flagged:
+        lines.append(f"- † 付き spec は入室時の挙動が run 側の状態に依存するレリックを持つ "
+                     f"{len(flagged)} 件（{', '.join(sorted(flagged)[:6])}）。lab の入場状態が実走と"
+                     "ズレると分かっているもので、† を除いた数が下の clean 行。")
+    if clean is not None:
+        primary = next((row for row in clean["rows"] if row["metric"] == "queen_shaved"), None)
+        if primary:
+            lines.append(f"- † を除いた主信号の配对 {primary['pairs']} 組: 候補が優る "
+                         f"{primary['better']} / base が優る {primary['worse']} / 同値 "
+                         f"{primary['tie']}（精密p {primary['p']:.3f}）。"
+                         f"† のレリック: {', '.join(sorted({r for names in flagged.values() for r in names})[:6])}")
+    return lines
+
+
+def summarize_continuous(trials: list[dict]) -> dict:
+    """1つの arm の連続指標を要約する（母数が小さいので中央値と平均を両方出す）。"""
+    metrics = [continuous_metrics(trial) for trial in trials]
+    if not metrics:
+        return {}
+
+    def column(key):
+        return [m[key] for m in metrics if m[key] is not None]
+
+    shaved = column("queen_shaved")
+    turns = column("turns")
+    lost = column("hp_lost")
+    return {
+        "n": len(metrics),
+        "shaved_mean": statistics.mean(shaved) if shaved else float("nan"),
+        "shaved_median": statistics.median(shaved) if shaved else float("nan"),
+        "untouched": sum(1 for value in shaved if value <= 0.0),
+        "killed": sum(1 for m in metrics if m["amalgam_killed"]),
+        "turns_median": statistics.median(turns) if turns else float("nan"),
+        "hp_lost_median": statistics.median(lost) if lost else float("nan"),
+        "wins": sum(1 for m in metrics if m["won"]),
+    }
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--run", dest="runs", action="append", default=[],
@@ -178,7 +397,7 @@ def main() -> int:
                 s = json.loads(line)
                 orig[s["spec_id"]] = s["recorded_outcome"]["won"]
 
-    pass_dirs = args.runs or [str(HERE.parent / "data")]
+    pass_dirs, pass_labels = parse_run_labels(args.runs or [str(HERE.parent / "data")])
     pass_trials: list[list[dict]] = []
     all_dropped: list[dict] = []
     run_infos: list[dict] = []
@@ -199,9 +418,10 @@ def main() -> int:
             plan_file = meta.get("plan")
             if plan_file and Path(plan_file).is_file():
                 planned = json.loads(Path(plan_file).read_text(encoding="utf-8")).get("trials", [])
+        spec_flags = flag_specs_from_plan(planned)
         written = {t["trial_id"] for t in trials}
         written |= {dd["trial_id"] for dd in dropped if dd.get("trial_id")}
-        run_infos.append({"dir": p, "planned": planned,
+        run_infos.append({"dir": p, "planned": planned, "spec_flags": spec_flags,
                           "missing": [t for t in planned if t["trial_id"] not in written],
                           "dropped": dropped, "done": (p / "failures.txt").is_file()})
         pass_trials.append(trials)
@@ -261,6 +481,26 @@ def main() -> int:
             for spec, off, bw, ow in pr["rows"]:
                 arrow = "+" if ow > bw else "-" if ow < bw else "="
                 out.append(f"| {spec} | {off} | {bw:.0%} | {ow:.0%} | {arrow} |")
+        if is_queen_panel(trials):
+            out += ["", f"### パス {pi}: Act 3 連続指標（主信号 = Queen 400HP の削り割合。"
+                        "勝敗は補助）", ""]
+            for a in arms:
+                summary = summarize_continuous([t for t in trials if t["_arm"] == a])
+                if not summary:
+                    continue
+                out.append(
+                    f"- arm {a}: 試行 {summary['n']} · Queen削り 中央値 {summary['shaved_median']:.0%} / "
+                    f"平均 {summary['shaved_mean']:.0%} · 削れず終了 {summary['untouched']}本 · Amalgam撃破 "
+                    f"{rate(summary['killed'], summary['n'])} · 死亡ターン中央値 "
+                    f"{summary['turns_median']:.0f} · 失ったHP中央値 {summary['hp_lost_median']:.0f} · "
+                    f"勝ち {rate(summary['wins'], summary['n'])}")
+            for other in [a for a in arms if a != args.base]:
+                comparison = paired_continuous(trials, args.base, other)
+                flags = info["spec_flags"]
+                clean = (paired_continuous(trials, args.base, other, exclude_specs=set(flags))
+                         if flags else None)
+                out += ["", f"#### {other} vs {args.base}（同じ entry での配对比較）", ""]
+                out += render_continuous_comparison(comparison, args.base, other, flags, clean)
         # spec-by-spec arm breakdown (the seed-level detail EVALUATION.md asks to keep)
         spec_w = per_spec_wins(trials)
         out += ["", f"### パス {pi}: spec 別（各 arm の勝利数/試行数）", "",
@@ -300,9 +540,38 @@ def main() -> int:
                 "- 単発のずれは想定内（40% 勝率で base 2 試行のうち 1 勝は各 spec で約 64% の確率）。"
                 "判定したいのは systematic drift: lab base の勝率が 40% から大きく上振れし、"
                 "かつ実走敗北の spec で lab が勝つパターンが続く場合、状態忠実性の偏りを疑う。"]
+        if is_queen_panel(trials):
+            out.append("- この panel は QUEEN 戦で、base 側の実走勝率は約7%の床。上の 40% は Act 2 の"
+                       "母集団値なので、勝敗の一致・不一致より上の連続指標（Queen削り割合）を主信号に"
+                       "読む。")
         if drift_lines:
             out.append("- ずれの内訳:")
             out.extend(drift_lines)
+
+    reference = next((index for index, label in enumerate(pass_labels) if not label), 0)
+    for index, label in enumerate(pass_labels):
+        if index == reference or not pass_trials[index] or not is_queen_panel(pass_trials[index]):
+            continue
+        prefix = f"{label}/" if label else ""
+        merged = list(pass_trials[reference]) + [
+            dict(trial, _arm=f"{prefix}{trial['_arm']}") for trial in pass_trials[index]]
+        ref_arms = sorted({trial["_arm"] for trial in pass_trials[reference]})
+        cand_arms = sorted({f"{prefix}{trial['_arm']}" for trial in pass_trials[index]})
+        for arm in cand_arms:
+            original = arm[len(prefix):] if prefix else arm
+            if original not in ref_arms:
+                continue
+            flags = dict(run_infos[reference].get("spec_flags") or {})
+            for key, value in (run_infos[index].get("spec_flags") or {}).items():
+                flags.setdefault(key, value)
+            comparison = paired_continuous(merged, original, arm)
+            clean = (paired_continuous(merged, original, arm, exclude_specs=set(flags))
+                     if flags else None)
+            display = label if (label and original == args.base) else arm
+            out += ["", f"## パス {index} 候補 vs パス {reference} base"
+                        f"{'（' + label + '）' if label else ''}"
+                        "（同じ spec・offset で配对。主信号 = Queen削り割合）", ""]
+            out += render_continuous_comparison(comparison, original, display, flags, clean)
 
     if len(pass_trials) >= 2:
         out += ["", "## 再現性（パス間で勝敗の向きが一致するか）", ""]

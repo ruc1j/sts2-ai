@@ -1,0 +1,450 @@
+{
+ "entry_state_relics": {
+  "RELIC.BONE_TEA": {
+   "class": "BoneTea",
+   "saved_props": [
+    "CombatsLeft"
+   ],
+   "hooks": [
+    "AfterSideTurnStart"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/BoneTea.cs"
+  },
+  "RELIC.EMBER_TEA": {
+   "class": "EmberTea",
+   "saved_props": [
+    "CombatsLeft"
+   ],
+   "hooks": [
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/EmberTea.cs"
+  },
+  "RELIC.FAKE_HAPPY_FLOWER": {
+   "class": "FakeHappyFlower",
+   "saved_props": [
+    "TurnsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterSideTurnStart"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/FakeHappyFlower.cs"
+  },
+  "RELIC.FAKE_VENERABLE_TEA_SET": {
+   "class": "FakeVenerableTeaSet",
+   "saved_props": [
+    "GainEnergyInNextCombat"
+   ],
+   "hooks": [
+    "AfterEnergyReset",
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/FakeVenerableTeaSet.cs"
+  },
+  "RELIC.FUR_COAT": {
+   "class": "FurCoat",
+   "saved_props": [
+    "FurCoatActIndex",
+    "FurCoatCoordsSet"
+   ],
+   "hooks": [
+    "AfterCreatureAddedToCombat",
+    "AfterObtained",
+    "BeforeCombatStart"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/FurCoat.cs"
+  },
+  "RELIC.GIRYA": {
+   "class": "Girya",
+   "saved_props": [
+    "TimesLifted"
+   ],
+   "hooks": [
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/Girya.cs"
+  },
+  "RELIC.HAPPY_FLOWER": {
+   "class": "HappyFlower",
+   "saved_props": [
+    "TurnsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterSideTurnStart"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/HappyFlower.cs"
+  },
+  "RELIC.LAVA_LAMP": {
+   "class": "LavaLamp",
+   "saved_props": [
+    "TookDamageThisCombat"
+   ],
+   "hooks": [
+    "AfterDamageReceived",
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/LavaLamp.cs"
+  },
+  "RELIC.MAW_BANK": {
+   "class": "MawBank",
+   "saved_props": [
+    "HasItemBeenBought"
+   ],
+   "hooks": [
+    "AfterItemPurchased",
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/MawBank.cs"
+  },
+  "RELIC.POLLINOUS_CORE": {
+   "class": "PollinousCore",
+   "saved_props": [
+    "TurnsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterModifyingHandDraw",
+    "BeforeSideTurnStart"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/PollinousCore.cs"
+  },
+  "RELIC.SILVER_CRUCIBLE": {
+   "class": "SilverCrucible",
+   "saved_props": [
+    "TimesUsed",
+    "TreasureRoomsEntered"
+   ],
+   "hooks": [
+    "AfterModifyingCardRewardOptions",
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/SilverCrucible.cs"
+  },
+  "RELIC.TEA_OF_DISCOURTESY": {
+   "class": "TeaOfDiscourtesy",
+   "saved_props": [
+    "CombatsLeft"
+   ],
+   "hooks": [
+    "BeforeCombatStart"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/TeaOfDiscourtesy.cs"
+  },
+  "RELIC.VENERABLE_TEA_SET": {
+   "class": "VenerableTeaSet",
+   "saved_props": [
+    "GainEnergyInNextCombat"
+   ],
+   "hooks": [
+    "AfterEnergyReset",
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/VenerableTeaSet.cs"
+  },
+  "RELIC.WINGED_BOOTS": {
+   "class": "WingedBoots",
+   "saved_props": [
+    "TimesUsed"
+   ],
+   "hooks": [
+    "AfterRoomEntered"
+   ],
+   "entry_behaviour": true,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/WingedBoots.cs"
+  }
+ },
+ "other_saved_prop_relics": {
+  "RELIC.BOOK_OF_FIVE_RINGS": {
+   "class": "BookOfFiveRings",
+   "saved_props": [
+    "CardsAdded"
+   ],
+   "hooks": [
+    "AfterCardChangedPiles"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/BookOfFiveRings.cs"
+  },
+  "RELIC.BYRDPIP": {
+   "class": "Byrdpip",
+   "saved_props": [
+    "Skin"
+   ],
+   "hooks": [
+    "AfterObtained",
+    "BeforeCombatStart"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/Byrdpip.cs"
+  },
+  "RELIC.FISHING_ROD": {
+   "class": "FishingRod",
+   "saved_props": [
+    "CombatsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/FishingRod.cs"
+  },
+  "RELIC.GALACTIC_DUST": {
+   "class": "GalacticDust",
+   "saved_props": [
+    "StarsSpent"
+   ],
+   "hooks": [
+    "AfterStarsSpent"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/GalacticDust.cs"
+  },
+  "RELIC.GOLDEN_COMPASS": {
+   "class": "GoldenCompass",
+   "saved_props": [
+    "GoldenPathAct"
+   ],
+   "hooks": [
+    "AfterObtained"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/GoldenCompass.cs"
+  },
+  "RELIC.IRON_CLUB": {
+   "class": "IronClub",
+   "saved_props": [
+    "CardsPlayed"
+   ],
+   "hooks": [
+    "AfterCardPlayed"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/IronClub.cs"
+  },
+  "RELIC.LASTING_CANDY": {
+   "class": "LastingCandy",
+   "saved_props": [
+    "CombatsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/LastingCandy.cs"
+  },
+  "RELIC.LAVA_ROCK": {
+   "class": "LavaRock",
+   "saved_props": [
+    "HasTriggered"
+   ],
+   "hooks": [],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/LavaRock.cs"
+  },
+  "RELIC.LIZARD_TAIL": {
+   "class": "LizardTail",
+   "saved_props": [
+    "WasUsed"
+   ],
+   "hooks": [
+    "AfterPreventingDeath"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/LizardTail.cs"
+  },
+  "RELIC.NUNCHAKU": {
+   "class": "Nunchaku",
+   "saved_props": [
+    "AttacksPlayed"
+   ],
+   "hooks": [
+    "AfterCardPlayed"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/Nunchaku.cs"
+  },
+  "RELIC.PAELS_LEGION": {
+   "class": "PaelsLegion",
+   "saved_props": [
+    "Skin"
+   ],
+   "hooks": [
+    "AfterCardPlayed",
+    "AfterCombatEnd",
+    "AfterModifyingBlockAmount",
+    "AfterObtained",
+    "AfterSideTurnStart",
+    "BeforeCombatStart"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/PaelsLegion.cs"
+  },
+  "RELIC.PAELS_TOOTH": {
+   "class": "PaelsTooth",
+   "saved_props": [
+    "SerializableCards"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterObtained"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/PaelsTooth.cs"
+  },
+  "RELIC.PAELS_WING": {
+   "class": "PaelsWing",
+   "saved_props": [
+    "RewardsSacrificed"
+   ],
+   "hooks": [],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/PaelsWing.cs"
+  },
+  "RELIC.PEN_NIB": {
+   "class": "PenNib",
+   "saved_props": [
+    "AttacksPlayed"
+   ],
+   "hooks": [
+    "AfterCardPlayed",
+    "BeforeCardPlayed"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/PenNib.cs"
+  },
+  "RELIC.PENDULUM": {
+   "class": "Pendulum",
+   "saved_props": [
+    "TurnsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterPlayerTurnStart"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/Pendulum.cs"
+  },
+  "RELIC.PUMPKIN_CANDLE": {
+   "class": "PumpkinCandle",
+   "saved_props": [
+    "KindleCount"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterObtained"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/PumpkinCandle.cs"
+  },
+  "RELIC.SILKEN_TRESS": {
+   "class": "SilkenTress",
+   "saved_props": [
+    "IsUsed"
+   ],
+   "hooks": [
+    "AfterModifyingCardRewardOptions",
+    "AfterObtained"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/SilkenTress.cs"
+  },
+  "RELIC.SWORD_OF_STONE": {
+   "class": "SwordOfStone",
+   "saved_props": [
+    "ElitesDefeated"
+   ],
+   "hooks": [
+    "AfterCombatVictory"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/SwordOfStone.cs"
+  },
+  "RELIC.TOY_BOX": {
+   "class": "ToyBox",
+   "saved_props": [
+    "CombatsSeen"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterObtained"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/ToyBox.cs"
+  },
+  "RELIC.TUNING_FORK": {
+   "class": "TuningFork",
+   "saved_props": [
+    "SkillsPlayed"
+   ],
+   "hooks": [
+    "AfterCardPlayed"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": false,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/TuningFork.cs"
+  },
+  "RELIC.WONGOS_MYSTERY_TICKET": {
+   "class": "WongosMysteryTicket",
+   "saved_props": [
+    "CombatsFinished",
+    "GaveRelic"
+   ],
+   "hooks": [
+    "AfterCombatEnd",
+    "AfterModifyingRewards"
+   ],
+   "entry_behaviour": false,
+   "has_is_used_up": true,
+   "evidence": "MegaCrit.Sts2.Core.Models.Relics/WongosMysteryTicket.cs"
+  }
+ },
+ "note": "entry_state_relics are excluded from Act 3 plans by extract_act3_specs.py: their entry behaviour depends on a [SavedProperty] the trace never shows, so the lab's freshly created relic fires where the recorded run had already spent it (or stays silent where the recorded run still had state left). other_saved_prop_relics have run state too but no entry-time effect on the first decision; their counters, when the trace shows them, are handled as relic_counters specs instead."
+}
