@@ -44,10 +44,12 @@ namespace Sts2Ai;
 ///
 /// Injection coverage (what a trial can carry): card id + upgrade + enchantment (id and amount),
 /// relic ids, potion ids, HP / max HP, walked-floor counts, and player powers as residuals
-/// (BossLab.ApplyEntryPowers). What it cannot carry: a relic's own run state (Ember Tea's used-up
-/// flag, Girya's lift count) - those specs are excluded by the plan generator instead - and the
-/// "cards played this turn" counters, so an entry observation taken after the fight had already
-/// begun plays its first recorded decision with clean counters.
+/// (BossLab.ApplyEntryPowers). Potions are injected as models, so the container's holders have to be
+/// rebuilt (BossLab.RefreshPotionUi) or using one throws in the game's UI layer. What it cannot
+/// carry: a relic's own run state (Ember Tea's used-up flag, Girya's lift count) - those specs are
+/// excluded by the plan generator instead - and the "cards played this turn" counters, so an entry
+/// observation taken after the fight had already begun plays its first recorded decision with clean
+/// counters.
 ///
 /// Why these game APIs (decompiled v0.107.1 evidence, see .dsh/bosslab_notes.md):
 /// - RunState.CreateForNewRun accepts an arbitrary seed string: Runs/RunState.cs:272-274 (RunRngSet(seed)).
@@ -170,6 +172,16 @@ public static class BossLab
             new AutoSlayCardSelector(new Rng((uint)StringHelper.GetDeterministicHashCode(seed))));
 
         await RunManager.Instance.EnterRoomDebug(RoomType.Boss, MapPointType.Unassigned, encounter, showTransition: false);
+
+        // The potion container builds its holder nodes once, when the run UI initializes (before this
+        // driver injects anything), and afterwards only from the `PotionProcured` event, which
+        // `AddPotionInternal(silent: true)` deliberately does not raise. With no holder, using an
+        // injected potion throws in `NPotionContainer.RemoveUsed` (Nodes/Potions/NPotionContainer.cs:352-357,
+        // a `First` over the holders), the potion action dies, the action queue never drains, and the
+        // trial hangs until the runner's timeout. Re-initializing the container after the room is up
+        // makes it build holders for whatever is in the slots now (Nodes/Potions/NPotionContainer.cs:
+        // 197-207 reads `_player.Potions` and calls `Add(potion, isInitialization: true)`).
+        RefreshPotionUi(runState);
 
         // Room entry has now run, so the injected relics' own combat-entry grants have landed. Add
         // only what the recorded entry shows on top of those, before the bridge takes its first look.
@@ -371,6 +383,15 @@ public static class BossLab
             .Select(p => $"{p.Id.Entry}:{p.Amount}");
         AutoSlayLog.Info($"[BossLab] entry powers after injection: [{string.Join(", ", applied)}] " +
             $"requested [{string.Join(", ", trial.Powers.Select(p => $"{p.Id}:{p.Amount}"))}]");
+    }
+
+    /// <summary>
+    /// Rebuild the on-screen potion holders from the player's current slots. See the call site in
+    /// <see cref="RunTrial"/> for why injected potions need this before the agent may use one.
+    /// </summary>
+    private static void RefreshPotionUi(IRunState runState)
+    {
+        NRun.Instance?.GlobalUi?.TopBar?.PotionContainer?.Initialize(runState);
     }
 
     /// <summary>
