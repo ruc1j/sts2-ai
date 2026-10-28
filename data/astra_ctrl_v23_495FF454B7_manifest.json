@@ -1,0 +1,49 @@
+{
+  "panel": "astra_ctrl_v23",
+  "run_index": 72,
+  "arm": "control",
+  "seed": "495FF454B7",
+  "source_commit": "775f3662ff179f39e3031700b0f6f9563b29652b",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "8364b4edb1078a687f520cb4a6105f4d9329779df351cef57d4f9365b345dcfa",
+  "simulations": 100,
+  "started": 1793169465,
+  "finished": 1793169832,
+  "wrapper_exit": 0,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 440,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 64
+    },
+    "final_hp": 64
+  },
+  "artifacts_sha256": {
+    "astra_ctrl_v23_495FF454B7_agent.jsonl": "9648610808d7151c013c93acd7504bd789cdfae92144056a09b320afd1b2619a",
+    "astra_ctrl_v23_495FF454B7_map.json": "ac074d3a0624e8432ae8d508cdb0520f48dd5158911dc2ab91c9c7f38deab2c7",
+    "astra_ctrl_v23_495FF454B7_map_ACT.GLORY.json": "1623287389c58424e2153d0efa8c96bbc75ee37593493a3f72501501efd0a609",
+    "astra_ctrl_v23_495FF454B7_map_ACT.HIVE.json": "8a2e3e733a5a0c3d5df79bd74e079cdb0e39124dc31a63ba8791dab3eea0f2fd",
+    "astra_ctrl_v23_495FF454B7_mod.log": "4ea4740c6855b46cb32d9d80b2cfba7cf2e3315f4581ff2049088f034c09637f",
+    "astra_ctrl_v23_495FF454B7_result.json": "8b4a67fe526a5f040d9777ebd07464962571fb99215d81bb465f691196d86dae",
+    "astra_ctrl_v23_495FF454B7_runmeta.json": "831318d2ce2c661d199fcf7a446282eae335c5db95d1bd046f16924acfe8aeab",
+    "astra_ctrl_v23_495FF454B7_stdout.log": "48455260406ceb30c251d8f1430c4a79cc7281a2215fd82ce3aecdb8602e5637"
+  }
+}

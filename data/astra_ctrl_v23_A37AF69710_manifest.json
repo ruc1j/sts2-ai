@@ -1,0 +1,51 @@
+{
+  "panel": "astra_ctrl_v23",
+  "run_index": 61,
+  "arm": "control",
+  "seed": "A37AF69710",
+  "source_commit": "775f3662ff179f39e3031700b0f6f9563b29652b",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "8364b4edb1078a687f520cb4a6105f4d9329779df351cef57d4f9365b345dcfa",
+  "simulations": 100,
+  "started": 1793164350,
+  "finished": 1793164769,
+  "wrapper_exit": 1,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 20,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 494,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_ctrl_v23_A37AF69710_agent.jsonl": "3908eec211826c9a30f4e9a5c336a4e7fa324673cdf198396f6cf130b6c35d5e",
+    "astra_ctrl_v23_A37AF69710_attempt1_mod.log": "4978e8915e09752e120e0324ac7ffb4c34bf9aa058b652867824f22aa295b2af",
+    "astra_ctrl_v23_A37AF69710_attempt1_runmeta.json": "523d38478380238206d90817ec8ab28e49e90fc2925b52bbc1fa2af21bd41b1d",
+    "astra_ctrl_v23_A37AF69710_attempt1_stdout.log": "c2da6942dbb28a649b1baac54b4ec74b000bb4a3645547fb0ae9f149060e2050",
+    "astra_ctrl_v23_A37AF69710_map.json": "8386c218833460011629c346b38df191720baa19c1871111fa28b1b2b06e54d9",
+    "astra_ctrl_v23_A37AF69710_map_ACT.GLORY.json": "4dfdf8c15a7aeb3a0940a6c0e91c11da4309efca2fdb2ba8dafb6d58692b8a51",
+    "astra_ctrl_v23_A37AF69710_map_ACT.HIVE.json": "1202ec1ae9acbd3f239e8840c7572b480fe5200ee70c094d9ae18db84a90be87",
+    "astra_ctrl_v23_A37AF69710_mod.log": "c822dc70790db63ef4b5273cd343341e58c81b239c952b4402c776fc7e4ebd39",
+    "astra_ctrl_v23_A37AF69710_runmeta.json": "ddc271c959f6bdf13ccf7d831a969fdaa216b9438522c5df1e0b07d9452fa636",
+    "astra_ctrl_v23_A37AF69710_stdout.log": "38417c9569658601fa41205649864598244ecf29b71841dc3d3aa54a0dbd6597"
+  }
+}
