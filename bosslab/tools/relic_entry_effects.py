@@ -194,7 +194,12 @@ RELICS_DIR = "MegaCrit.Sts2.Core.Models.Relics"
 
 # Relics whose own run state the trace never shows (RELIC.FUR_COAT, RELIC.TEA_OF_DISCOURTESY,
 # RELIC.BONE_TEA and the other 11 in entry_state_relics.json) are dropped from plans by the spec
-# extractor before this table matters, so they are not listed above.
+# extractor before this table matters, so they are not listed above. That upstream exclusion keys on a
+# relic's [SavedProperty], so it does not catch RELIC.PAELS_CLAW: its run state lives on the *cards* it
+# enchants (Goopy.AfterCardPlayed raises the enchantment Amount once per play, Goopy.EnchantBlockAdditive
+# = Amount - 1, Goopy.cs:28-42; PaelsClaw.cs:30-46), which the trace shows only as a Defend card's block,
+# so an enchanted Defend that was played earlier in the run has more block at boss entry than the lab's
+# freshly-enchanted copy. A plan must exclude these specs via --exclude-relic RELIC.PAELS_CLAW.
 
 
 def relic_id_of_class(stem: str) -> str:

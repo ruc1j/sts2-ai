@@ -22,7 +22,9 @@ order-seed `act3-confirm4` の sha256(seed|spec_id) 順で上位 12 件を選ぶ
   RADIANT_PEARL。入室 hook または最初のターンの開始・ドローでゲーム側の RNG が札を生むため、lab が
   同じ札を同じ位置に出せる保証がなく、入場状態が再現できない。leader が CROSSBOW を除いた理由（ターン
   単位のランダム付与）を、同じ性質の全レリックに広げた。除外した結果 flag_relics は 0 件。
-- RELIC.GOOPY: 入室時に決まる Defend のブロック量が lab で特定できず防御値がずれる。
+- RELIC.PAELS_CLAW（ENCHANTMENT.GOOPY の供給元。以下「Goopy」）: 入室時に決まる Defend のブロック量が
+  lab で特定できず防御値がずれる。root cause は下の「Goopy ブロック 5 vs 7 の原因」。lab で直せず、除外で
+  確定した。
 
 対処して保持（除外しない）:
 - RELIC.STONE_CRACKER: `defer_relics` を付け入室後に付与するので、入室 hook の 2 ランダム札アップグレード
@@ -31,10 +33,30 @@ order-seed `act3-confirm4` の sha256(seed|spec_id) 順で上位 12 件を選ぶ
   直前に記録値へ寄せる）で解消する前提。この panel の 2 件（c589d7860c35・59ed603b4b73）が修正の実機検証
   になる。
 
-この計画は計画のみで実走していない。HP 修正は未ビルド（dev2 3 腕が現行 DLL で走行中のため）で、ビルドと
-実機反映は leader の合図 later。
+### Goopy ブロック 5 vs 7 の原因（デコンパイルで確定、lab では直せない）
 
-注: `used.speclist` に confirm3_fixed の spec が反映されていない。59ed603b4b73 は confirm3_fixed の
+`PaelsClaw.AfterObtained`（PaelsClaw.cs:30-46）は deck 内の Defend-tag 札すべてに
+`CardCmd.Enchant<Goopy>(item, 1m)` で付与し、`Goopy.EnchantBlockAdditive(originalBlock) = Amount - 1`
+（Goopy.cs:39-42）。つまり block = 基礎 block + (Amount - 1)。`PaelsClaw` 自身が入れる Amount は 1
+なので block additive は 0（基礎 block のまま）。Amount は `Goopy.AfterCardPlayed`（Goopy.cs:28-37）で
+その札を **プレイするたびに `Amount++`**（`Card.DeckVersion.Enchantment.Amount++` として run をまたぎ
+累積）。したがって実走で入室時点で block 7（基礎 5 + 2）なのは、その Goopy 付き Defend がその run で
+ bosses 以前に **2 回プレイ済み**（Amount=3）だったことを意味し、lab は silent addition で Amount=1（block
+ 5）から始めるので 2 足りない。
+
+lab で直せない理由: Amount（プレイ回数）は per-card の run 状態で、trace の入場観測には hand の札の block
+ としてしか現れない（enchantment の Amount 自体は観測に出ない、`act3_boss_losses.md` §627）。hand 外の
+ Defend（後に引く札）の累積 Amount は実走でも不明で、引くたびに block preview が 1 ずつずれる。hand 札
+ だけ block から Amount を逆算して injection しても、引く札で同じずれが残り、完全には揃わない。これは
+ `relic_entry_effects.py` が「relic 自身の run 状態（Ember Tea の used-up フラグ、Girya の lift 回数）は
+ 注入できず plan generator が spec 除外で対処する」と書いている run 状態の系と同じ。よって boss entry の
+ 一致が取れない組として除外して確定する。
+
+注1: プール全体で PAELS_CLAW を持つ spec は 2 件のみ（bbbfd4fc2927・2d1d3d3b4f4e）で、2 件とも CROSSBOW を
+併せ持つため CROSSBOW 除外で既に落ちており、この panel の 12 件は PAELS_CLAW を含まない（除外指定を
+RELIC.GOOPY（実在しない id）から RELIC.PAELS_CLAW に直しても選定 12 件は変わらなかった）。
+
+注2: `used.speclist` に confirm3_fixed の spec が反映されていない。59ed603b4b73 は confirm3_fixed の
 trial 0010 と同一 spec で、used.speclist に入ってないため選定された。完全に独立した新規 panel にするには
 confirm3_fixed の各 spec を used.speclist へ追記してから再生成する必要がある（leader の指示待ち）。
 
