@@ -28,7 +28,7 @@ from pathlib import Path
 ENTRY_HOOKS = {
     "BeforeCombatStart", "AfterCombatStart", "AfterRoomEntered", "BeforeSideTurnStart",
     "AfterSideTurnStart", "BeforeHandDraw", "AfterHandDraw", "BeforePlayHandStart",
-    "AfterEnergyReset", "DuringHandPlay",
+    "AfterEnergyReset", "DuringHandPlay", "AfterPlayerTurnStart",
 }
 # Kept for reference: the game APIs an entry-time hook can use to change what the first decision
 # of the fight sees (cards, powers, block/energy/heal). The classification below does not need it,
