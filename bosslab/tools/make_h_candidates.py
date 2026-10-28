@@ -144,9 +144,85 @@ H2_CONDITION = (
     '    focus_to_amalgam = queen_present and _amalgam_incoming > hp + current_block'
 )
 
+# ---------------------------------------------------------------- H3 openers (next-goal design)
+# H1/H2 gate on a state the Amalgam only reaches if it is already being chipped, so on a Queen-first
+# panel that gate never arms (see act3_dev3_interpretation.md). The H3 designs guarantee chipping the
+# Amalgam by arming on turn state or on incoming threat, not on the Amalgam's own low HP.
+
+H3A_CONDITION = (
+    '_amalgam_effhp = sum(\n'
+    '        _number(enemy_by_id[cid].get("hp")) + _number(enemy_by_id[cid].get("block"))\n'
+    '        for cid in amalgam_ids if cid in enemy_by_id\n'
+    '    )\n'
+    '    _turn = int(_number(observation.get("turn")) or 0)\n'
+    '    focus_to_amalgam = queen_present and 0 < _amalgam_effhp and _turn <= QUEENFIRST_H3_OPEN_TURNS'
+)
+
+H3A_HEADER = (
+    '"""BossLab 候補エージェント H3a 序盤 Amalgam 削り型（official_agent.py のコピー）。\n'
+    '\n'
+    '最初の QUEENFIRST_H3_OPEN_TURNS プレイヤーターンだけ Amalgam を殴り、以降は Queen を殴る。Amalgam が\n'
+    '生きている間は削るので、H1 の ≤50 自己閉鎖（Amalgam を削れる手段が Amalgam を殴ることだけ）を序盤の\n'
+    '能動削りで解く。Amalgam が死んだ/消えたターンは実効 HP 0 で Queen へ自己律速で切り替わる。変更殴り先のみ。\n'
+    '\n'
+    '差分の確認: diff -u official_agent.py bosslab/agents/official_agent_H3a.py\n'
+    '"""'
+)
+H3A_CONSTANT = (
+    'QUEENFIRST_H3_OPEN_TURNS = 2  # turns to chip the Amalgam before committing to the Queen; tune'
+)
+
+H3C_CONDITION = (
+    '_amalgam_incoming = sum(enemy_incoming.get(cid, 0) for cid in amalgam_ids)\n'
+    '    _amalgam_effhp = sum(\n'
+    '        _number(enemy_by_id[cid].get("hp")) + _number(enemy_by_id[cid].get("block"))\n'
+    '        for cid in amalgam_ids if cid in enemy_by_id\n'
+    '    )\n'
+    '    focus_to_amalgam = queen_present and _amalgam_effhp > 0 and _amalgam_incoming >= QUEENFIRST_H3_DANGER_FRAC * (hp + current_block)'
+)
+
+H3C_HEADER = (
+    '"""BossLab 候補エージェント H3c 危険前に削り型（official_agent.py のコピー）。\n'
+    '\n'
+    'Amalgam の次手番の予想被ダメが HP+ブロックの QUEENFIRST_H3_DANGER_FRAC 割以上で、かつ Amalgam が\n'
+    '生きている間だけ Amalgam を殴り、それ以外 Queen を殴る。自 HP 基準なので Amalgam 実効 HP が低くなくても\n'
+    '1 手番目から発火し、H1 と違い削ることを保証する。H2（被ダメが HP+blk を超えた時だけ）より発火が早く、\n'
+    '常時削りに近い。変更殴り先のみ。\n'
+    '\n'
+    '差分の確認: diff -u official_agent.py bosslab/agents/official_agent_H3c.py\n'
+    '"""'
+)
+H3C_CONSTANT = (
+    'QUEENFIRST_H3_DANGER_FRAC = 0.5  # Amalgam next-hit fraction of (hp+block) that arms the chip'
+)
+
+H3B_CONDITION = (
+    '_amalgam_effhp = sum(\n'
+    '        _number(enemy_by_id[cid].get("hp")) + _number(enemy_by_id[cid].get("block"))\n'
+    '        for cid in amalgam_ids if cid in enemy_by_id\n'
+    '    )\n'
+    '    focus_to_amalgam = queen_present and 0 < _amalgam_effhp <= QUEENFIRST_H3_AMALGAM_HP'
+)
+H3B_HEADER = (
+    '"""BossLab 候補エージェント H3b 閾値上げ型（official_agent.py のコピー）。H1 と同じ形、閾値のみ変更。\n'
+    '\n'
+    'Amalgam 実効残 HP が QUEENFIRST_H3_AMALGAM_HP 以下なら Amalgam、それ以外 Queen。H1(=50) を 150 に上げて\n'
+    'トリガー発火を検証する診断用。入場 199 から Queen 優先で削らなければ 150 にも届かず発火しない可能性が\n'
+    '高い（自己閉鎖の診断）。変更殴り先と閾値のみ。\n'
+    '\n'
+    '差分の確認: diff -u official_agent.py bosslab/agents/official_agent_H3b.py\n'
+    '"""'
+)
+H3B_CONSTANT = (
+    'QUEENFIRST_H3_AMALGAM_HP = 150  # raised Amalgam-effhp ceiling (diagnostic vs H1=50)'
+)
+
 for fname, tag, cond, header, constant in [
     ("official_agent_H1.py", "h1", H1_CONDITION, H1_HEADER, H1_CONSTANT),
     ("official_agent_H2.py", "h2", H2_CONDITION, H2_HEADER, None),
+    ("official_agent_H3a.py", "h3a", H3A_CONDITION, H3A_HEADER, H3A_CONSTANT),
+    ("official_agent_H3b.py", "h3b", H3B_CONDITION, H3B_HEADER, H3B_CONSTANT),
+    ("official_agent_H3c.py", "h3c", H3C_CONDITION, H3C_HEADER, H3C_CONSTANT),
 ]:
     out = build(fname, tag, cond, header, constant)
     path = OUT_DIR / fname

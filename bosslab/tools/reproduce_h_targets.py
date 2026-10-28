@@ -42,6 +42,9 @@ MODELS = {
     "queenfirst": load("queenfirst", AGENTS / "official_agent_queenfirst.py"),
     "H1": load("h1", AGENTS / "official_agent_H1.py"),
     "H2": load("h2", AGENTS / "official_agent_H2.py"),
+    "H3a": load("h3a", AGENTS / "official_agent_H3a.py"),
+    "H3b": load("h3b", AGENTS / "official_agent_H3b.py"),
+    "H3c": load("h3c", AGENTS / "official_agent_H3c.py"),
 }
 
 
@@ -105,13 +108,14 @@ def main() -> int:
         "",
         "各手番の最初の観測で Amalgam 実効HP / Amalgam の予想被ダメを算出し、その手番の攻撃判断が",
         "Amalgam(A) か Queen(Q) か (それ以外=防御/ターン終了/ポーション/強化=『-』) を各ポリシーで再現。",
-        "H1閾値=50（下調べの初回撃破可能HP上限）。H2閾値=その手番のHP+ブロック。4ポリシーとも同じ観測に",
-        "流し、enemy_data無しの決定的heuristic再現（Queen短絡とfocused_minionsが殴り先を決める。純粋な",
-        "rollout任せの手番は本表の外、4ポリシーで同じ挙動なので候補間の差には寄与しない）。",
+        "H1閾値=50、H2=その手番のHP+ブロック、H3a=最初のQUEENFIRST_H3_OPEN_TURNS(2)ターンだけA、",
+        "H3b=実効HP<=150でA（閾値上げの診断）、H3c=Amalgam予想被ダメが(HP+blk)の5割以上でA（危険前に削り）。",
+        "全ポリシー同じ観測に流し、enemy_data無しの決定的heuristic再現（Queen短絡とfocused_minionsが殴り先を決める）。",
         "",
     ]
     totals = {k: {"A": 0, "Q": 0, "none": 0, "other": 0, "gone": 0} for k in MODELS}
-    diff_turns = {"H1_vs_base": 0, "H2_vs_base": 0, "H1_vs_Q": 0, "H2_vs_Q": 0}
+    COLS = list(MODELS)
+    diff_turns = {k: {"vs_base": 0, "vs_Q": 0} for k in MODELS}
     n_turns = 0
 
     for path in sorted(REPO.glob(f"data/{RUN}/trial_*_agent.jsonl")):
@@ -127,8 +131,8 @@ def main() -> int:
                 entry["picks"][k].add(replay(row, m))
         lines.append(f"## trial {path.name.split('_')[1]}  ({path.stem.split('_agent')[0]})")
         lines.append("")
-        lines.append("| turn | Amalgam実効HP | Amalgam予想被ダメ | HP+blk | base | Qfirst | H1 | H2 |")
-        lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
+        lines.append("| turn | Amalgam実効HP | Amalgam予想被ダメ | HP+blk | " + " | ".join(COLS) + " |")
+        lines.append("| --- | --- | --- | --- | " + " | ".join("---" for _ in COLS) + " |")
         for t in sorted(per_turn):
             entry = per_turn[t]
             eff, inc = first_metrics(entry["first"])
@@ -146,17 +150,14 @@ def main() -> int:
             row_cells = {k: verdict(k) for k in MODELS}
             for k, v in row_cells.items():
                 totals[k][v if v in totals[k] else "other"] += 1
-            b, q, h1, h2 = row_cells["base"], row_cells["queenfirst"], row_cells["H1"], row_cells["H2"]
+            b, q = row_cells["base"], row_cells["queenfirst"]
             n_turns += 1
-            if h1 != b:
-                diff_turns["H1_vs_base"] += 1
-            if h2 != b:
-                diff_turns["H2_vs_base"] += 1
-            if h1 != q:
-                diff_turns["H1_vs_Q"] += 1
-            if h2 != q:
-                diff_turns["H2_vs_Q"] += 1
-            lines.append(f"| {t} | {eff} | {inc} | {surv} | {b} | {q} | {h1} | {h2} |")
+            for k in COLS:
+                if row_cells[k] != b:
+                    diff_turns[k]["vs_base"] += 1
+                if row_cells[k] != q:
+                    diff_turns[k]["vs_Q"] += 1
+            lines.append(f"| {t} | {eff} | {inc} | {surv} | " + " | ".join(row_cells[k] for k in COLS) + " |")
         lines.append("")
 
     lines.append("## 集計")
@@ -165,12 +166,17 @@ def main() -> int:
     lines.append(f"- Amalgam(A)/Queen(Q) 選択: " + "  ".join(
         f"{k} A={totals[k]['A']} Q={totals[k]['Q']} 攻撃以外={totals[k]['none']+totals[k]['other']+totals[k]['gone']}"
         for k in MODELS))
-    lines.append(f"- base と異なる手番: H1 {diff_turns['H1_vs_base']} / H2 {diff_turns['H2_vs_base']}")
-    lines.append(f"- queenfirst と異なる手番: H1 {diff_turns['H1_vs_Q']} / H2 {diff_turns['H2_vs_Q']}")
+    for k in COLS:
+        if k == "base":
+            continue
+        lines.append(f"- {k}: base と異なる手番 {diff_turns[k]['vs_base']}  queenfirst と異なる手番 {diff_turns[k]['vs_Q']}")
     Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {args.out}")
-    print("  turns", n_turns, "diff vs base", diff_turns["H1_vs_base"], diff_turns["H2_vs_base"],
-          "diff vs queenfirst", diff_turns["H1_vs_Q"], diff_turns["H2_vs_Q"])
+    for k in COLS:
+        if k == "base":
+            continue
+        print(f"  {k}: vs base {diff_turns[k]['vs_base']}  vs queenfirst {diff_turns[k]['vs_Q']}  "
+              f"A={totals[k]['A']} Q={totals[k]['Q']}")
     return 0
 
 
