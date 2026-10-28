@@ -81,6 +81,8 @@ internal static class CombatBridge
         [property: JsonPropertyName("decision_source")] string? DecisionSource,
         [property: JsonPropertyName("decision_reason")] string? DecisionReason) : IAgentAction;
 
+    public static System.Action? FirstDecisionHook;
+
     public static async Task Run(CancellationToken ct)
     {
         while (!CombatManager.Instance.IsInProgress)
@@ -88,12 +90,30 @@ internal static class CombatBridge
 
         var run = RunManager.Instance.DebugOnlyGetState() ?? throw new InvalidOperationException("run state unavailable");
         var player = LocalContext.GetMe(run) ?? throw new InvalidOperationException("local player unavailable");
+        bool firstDecision = true;
         while (CombatManager.Instance.IsInProgress)
         {
             while (CombatManager.Instance.IsInProgress && player.PlayerCombatState?.Phase != PlayerTurnPhase.Play)
                 await Task.Delay(50, ct);
             if (!CombatManager.Instance.IsInProgress)
                 break;
+
+            // Run the pending clamp once, at the agent's first decision: the Play phase is reached only
+            // after the opening hand is dealt and after this turn's AfterPlayerTurnStart hooks land
+            // (RELIC.ROYAL_POISON deals its turn-1 self damage just before Play). Asserting the recorded
+            // HP here, rather than before the bridge starts, means a turn-1 entry-damage relic is not
+            // subtracted a second time on top of the recorded value. AutoSlay leaves the hook null, so
+            // this block is a no-op outside the boss lab.
+            if (firstDecision)
+            {
+                firstDecision = false;
+                var hook = FirstDecisionHook;
+                if (hook is not null)
+                {
+                    FirstDecisionHook = null;
+                    hook();
+                }
+            }
 
             int seq = AgentIo.NextSequence();
             var (action, legal) = await Exchange(run, player, seq, ct);

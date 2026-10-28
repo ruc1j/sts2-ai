@@ -54,7 +54,10 @@ namespace Sts2Ai;
 /// own room-entry hook cannot double-apply a change the recorded deck / HP already contain
 /// (RELIC.STONE_CRACKER upgrading draw cards). Because the boss-entry heals run in a fire-and-forget
 /// combat task, the driver first waits for the fight to reach the play phase (BossLab.
-/// WaitForCombatEntrySettled) and only then re-asserts the recorded HP (BossLab.ReapplyRecordedHp).
+/// WaitForCombatEntrySettled) before re-checking the potion belt and entry powers. The recorded HP is
+/// re-asserted later still, once at the agent's first decision via CombatBridge.FirstDecisionHook, so
+/// the first turn's AfterPlayerTurnStart hooks (RELIC.ROYAL_POISON's turn-1 self damage) have already
+/// landed and the clamp is not applied to a value those hooks then subtract from a second time.
 /// What it cannot carry: a relic's own run state (Ember Tea's
 /// used-up flag, Girya's lift count) - those specs are excluded by the plan generator instead - and the
 /// "cards played this turn" counters, so an entry observation taken after the fight had already begun
@@ -226,21 +229,37 @@ public static class BossLab
         // whatever is in the slots now (Nodes/Potions/NPotionContainer.cs:197-207).
         RefreshPotionUi(runState);
 
-        // The recorded HP is authoritative now that the entry heals have landed: RELIC.PANTOGRAPH /
-        // RELIC.PLANISPHERE healed on top of the recorded value in this same combat-start pass, and the
-        // recorded entry already accounts for that heal, so re-asserting cancels the double-apply.
-        ReapplyRecordedHp(player, trial);
+        // The recorded HP is no longer re-asserted here. Between this point and the agent's first
+        // decision the first player turn still fires its AfterPlayerTurnStart hooks (RELIC.ROYAL_POISON
+        // deals a turn-1 self-damage), which would then subtract from the just-restored recorded value a
+        // second time. The clamp runs at the first decision instead, via CombatBridge.FirstDecisionHook,
+        // after those hooks have landed. Potion slots and entry powers above do not move again, so only
+        // HP had to be deferred.
 
         // Room entry has run, so the injected relics' own combat-entry grants have landed. Add only
         // what the recorded entry shows on top of those, before the bridge takes its first look.
         await ApplyEntryPowers(player, trial);
 
         // AutoSlay is not running in lab mode, so its CombatRoomHandler patch never starts the agent
-        // bridge; drive the fight with the same CombatBridge.Run it would have called. Started only now,
-        // after the recorded entry state has been re-asserted, so the bridge's first observation shows
-        // the recorded HP and potion belt.
+        // bridge; drive the fight with the same CombatBridge.Run it would have called. The recorded HP is
+        // re-asserted by FirstDecisionHook at the agent's first decision, after the first player turn's
+        // AfterPlayerTurnStart hooks have landed, so a turn-1 entry-damage relic (RELIC.ROYAL_POISON) is
+        // counted exactly once: for a run that also heals on entry (RELIC.PANTOGRAPH) the settle-time
+        // clamp used to leave HP 4 below the recorded value. Potion belt and entry powers are already
+        // settled above.
+        CombatBridge.FirstDecisionHook = () => ReapplyRecordedHp(player, trial);
         var bridgeTask = CombatBridge.Run(CancellationToken.None);
-        var fightResult = await AwaitFight(player, trial, runState);
+        LabResult fightResult;
+        try
+        {
+            fightResult = await AwaitFight(player, trial, runState);
+        }
+        finally
+        {
+            // If the fight ended before any decision (e.g. an immediate loss) the hook was never
+            // consumed; clear it so it cannot fire against the next combat.
+            CombatBridge.FirstDecisionHook = null;
+        }
         await Task.WhenAny(bridgeTask, Task.Delay(5000));
         return fightResult;
     }
