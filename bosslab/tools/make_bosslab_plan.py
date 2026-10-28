@@ -58,6 +58,20 @@ def parse_arm(text: str) -> tuple[str, list[tuple[str, str, int]]]:
     return name, edits
 
 
+def card_view_for_trial(card: dict) -> dict:
+    """Trial-side card entry: id + upgrade, plus the enchantment when the spec carries one.
+
+    `enchantment_amount` comes from the game's own sources (BossLab reads it into
+    SerializableCard.Enchantment). Specs whose enchantment amount is unknown carry 0 and the harness
+    uses the enchantment's default of 1; the real-machine fidelity check is what confirms it.
+    """
+    out = {"id": card["id"], "upgrade": card["upgrade"]}
+    if card.get("enchantment"):
+        out["enchantment"] = card["enchantment"]
+        out["enchantment_amount"] = int(card.get("enchantment_amount") or 0)
+    return out
+
+
 def apply_arm(deck: list[dict], edits: list[tuple[str, str, int]]) -> tuple[list[dict], list[str]]:
     notes = []
     out = list(deck)
@@ -107,6 +121,9 @@ def main() -> int:
                              "the lab and re-grant their combat-start effect the real run had already "
                              "spent; see .dsh/bosslab_fidelity.md")
     parser.add_argument("--order-seed", dest="order_seed", default="bosslab")
+    parser.add_argument("--skip-specs", dest="skip_specs", default="",
+                        help="file of spec_ids to drop before selection (one per line); used to keep "
+                             "a confirmation panel disjoint from the development panel")
     parser.add_argument("--spec-ids", dest="spec_ids", default="",
                         help="file of spec_ids, one per line; when set, use exactly these specs in "
                              "this order (ignoring band/outcome/require-card/unresolved filters). "
@@ -165,7 +182,11 @@ def main() -> int:
         selected: list[dict] = [specs_by_id[i] for i in ids]
         eligible = selected
     else:
-        eligible = [spec for spec in all_specs if usable(spec)]
+        skip_ids = set()
+        if args.skip_specs:
+            skip_ids = {line.strip() for line in Path(args.skip_specs).read_text(encoding="utf-8").splitlines()
+                        if line.strip()}
+        eligible = [spec for spec in all_specs if usable(spec) and spec["spec_id"] not in skip_ids]
         # Deterministic selection: hash-order so a different --order-seed draws a different panel, and
         # the same seed always reproduces the same trial list. With --per-band, take that many from each
         # HP band so the three arms see a balanced mix of easy and hard entries.
@@ -187,7 +208,7 @@ def main() -> int:
             order = [arm for arm in arms[(spec_index + offset) % len(arms):]] + arms[:(spec_index + offset) % len(arms)]
             for name, edits in order:
                 deck, notes = apply_arm(
-                    [{"id": card["id"], "upgrade": card["upgrade"]} for card in
+                    [card_view_for_trial(card) for card in
                      sorted((card for pile in spec["piles"].values() for card in pile),
                             key=lambda card: (card["id"], card["upgrade"]))],
                     edits)
@@ -210,6 +231,10 @@ def main() -> int:
                     "deck": deck,
                     "relics": list(spec["player"]["relics"]),
                     "potions": list(spec["potions"]),
+                    # Powers the recorded entry shows that the relic list will not produce on its
+                    # own. BossLab applies these after room entry (see BossLab.ApplyEntryPowers), so
+                    # the relic-granted part must not be repeated here.
+                    "powers": list(spec.get("entry_powers_residual") or []),
                     "recorded": {
                         "won": spec["recorded_outcome"]["won"],
                         "traces": [source["trace"] for source in spec["sources"]],

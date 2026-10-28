@@ -10,10 +10,12 @@ using MegaCrit.Sts2.Core.Combat;
 using MegaCrit.Sts2.Core.Context;
 using MegaCrit.Sts2.Core.Entities.Creatures;
 using MegaCrit.Sts2.Core.Entities.Players;
+using MegaCrit.Sts2.Core.GameActions.Multiplayer;
 using MegaCrit.Sts2.Core.Helpers;
 using MegaCrit.Sts2.Core.Map;
 using MegaCrit.Sts2.Core.Models;
 using MegaCrit.Sts2.Core.Models.Characters;
+using MegaCrit.Sts2.Core.Models.Powers;
 using MegaCrit.Sts2.Core.Nodes;
 using MegaCrit.Sts2.Core.Runs;
 using MegaCrit.Sts2.Core.Rooms;
@@ -23,10 +25,15 @@ using MegaCrit.Sts2.Core.Unlocks;
 namespace Sts2Ai;
 
 /// <summary>
-/// Fixed-entry Act 2 boss lab: builds a run state from a recorded boss entry (deck, HP, relics,
-/// potions, run seed, floors walked), jumps straight into the boss encounter with
-/// <c>RunManager.EnterRoomDebug</c>, lets the existing agent bridge play the fight, and writes one
-/// JSONL result line per trial.
+/// Fixed-entry boss lab: builds a run state from a recorded boss entry (deck with enchantments,
+/// HP, relics, potions, entry powers, run seed, floors walked), jumps straight into the boss
+/// encounter with <c>RunManager.EnterRoomDebug</c>, lets the existing agent bridge play the fight,
+/// and writes one JSONL result line per trial.
+///
+/// The Act 2 boss (THE_INSATIABLE, floor 16 of the 17-row Hive maps) was the first target; the
+/// Act 3 boss (QUEEN + Torch Head Amalgam, floor 15 of the 15-row Glory maps) uses the same path
+/// with act_index 2 and the plan's own act_floor / history_per_act, so nothing here is Act-specific
+/// beyond the encounter id.
 ///
 /// One trial per game process in this version: the boss fight's ending (reward screens on a win,
 /// the game over screen on a loss) is not driven here, so the trial records the result as soon as
@@ -34,6 +41,13 @@ namespace Sts2Ai;
 /// <see cref="Entry"/>’s stop-after-act path does. The runner script relaunches the game with the
 /// next trial index; see .dsh/bosslab_notes.md for the in-process loop that should replace this
 /// once the post-combat screens are observed in-game.
+///
+/// Injection coverage (what a trial can carry): card id + upgrade + enchantment (id and amount),
+/// relic ids, potion ids, HP / max HP, walked-floor counts, and player powers as residuals
+/// (BossLab.ApplyEntryPowers). What it cannot carry: a relic's own run state (Ember Tea's used-up
+/// flag, Girya's lift count) - those specs are excluded by the plan generator instead - and the
+/// "cards played this turn" counters, so an entry observation taken after the fight had already
+/// begun plays its first recorded decision with clean counters.
 ///
 /// Why these game APIs (decompiled v0.107.1 evidence, see .dsh/bosslab_notes.md):
 /// - RunState.CreateForNewRun accepts an arbitrary seed string: Runs/RunState.cs:272-274 (RunRngSet(seed)).
@@ -45,6 +59,14 @@ namespace Sts2Ai;
 ///   to the recorded floor reproduces the same boss composition.
 /// - EnterRoomDebug overrides the room type from the encounter model: Runs/RunManager.cs:995-997, and
 ///   clears screens/exits rooms before entering: Runs/RunManager.cs:990-1035.
+/// - CardModel.FromSerializable applies SerializableCard.Enchantment through EnchantInternal +
+///   ModifyCard + FinalizeUpgradeInternal: Models/CardModel.cs:2216-2240, so an enchantment set on
+///   the serializable card survives into the deck.
+/// - PowerCmd.Apply is a direct async apply (not a queued action): Commands/PowerCmd.cs:67, so it can
+///   be awaited from this driver after room entry to land a residual power before the first decision.
+/// - A boss composition that includes a MinionPower carrier (the Queen's Torch Head Amalgam) needs
+///   no special case: EnterRoomDebug builds the formation from the encounter, and the secondary
+///   enemy auto-dies when the primary does (Entities/Creatures/Creature.cs:245-268).
 /// </summary>
 public static class BossLab
 {
@@ -148,6 +170,10 @@ public static class BossLab
             new AutoSlayCardSelector(new Rng((uint)StringHelper.GetDeterministicHashCode(seed))));
 
         await RunManager.Instance.EnterRoomDebug(RoomType.Boss, MapPointType.Unassigned, encounter, showTransition: false);
+
+        // Room entry has now run, so the injected relics' own combat-entry grants have landed. Add
+        // only what the recorded entry shows on top of those, before the bridge takes its first look.
+        await ApplyEntryPowers(player, trial);
 
         // AutoSlay is not running in lab mode, so its CombatRoomHandler patch never starts the agent
         // bridge; drive the fight with the same CombatBridge.Run it would have called.
@@ -299,16 +325,103 @@ public static class BossLab
             // RunState.LoadCard registers the card with the run and sets its owner; a bare
             // CardModel.FromSerializable leaves Owner null, which RunState.Contains dereferences
             // while EnterRoomDebug iterates the hook listeners.
+            //
+            // The enchantment goes in through the same serializable object: FromSerializable reads
+            // `Enchantment` and runs EnchantInternal + ModifyCard + FinalizeUpgradeInternal
+            // (CardModel.cs:2216-2240), so the card comes back with the recorded enchantment effect
+            // (Nimble / Corrupted / SoulsPower / TezcatarasEmber ...) rather than dropping it.
             var model = player.RunState.LoadCard(new SerializableCard
             {
                 Id = new ModelId(ModelId.SlugifyCategory<CardModel>(), Entry(card.Id, "CARD")),
                 CurrentUpgradeLevel = card.Upgrade,
+                Enchantment = string.IsNullOrEmpty(card.Enchantment) ? null : new SerializableEnchantment
+                {
+                    Id = new ModelId(ModelId.SlugifyCategory<EnchantmentModel>(),
+                                       Entry(card.Enchantment, "ENCHANTMENT")),
+                    Amount = card.EnchantmentAmount > 0 ? card.EnchantmentAmount : 1,
+                },
             }, player);
             player.Deck.AddInternal(model, -1, silent: true);
         }
 
         player.Creature.SetMaxHpInternal(trial.MaxHp > 0 ? trial.MaxHp : trial.Hp);
         player.Creature.SetCurrentHpInternal(trial.Hp);
+    }
+
+    /// <summary>
+    /// Inject the player powers the recorded entry shows but the injected relic list does not
+    /// produce by itself. Run after EnterRoomDebug so the relics' own `AfterRoomEntered` grants have
+    /// already landed and are not doubled; run before the bridge's first observation so the agent
+    /// sees the same state the recorded run saw.
+    ///
+    /// The plan generator computes each amount as (recorded entry amount - amount the relic list is
+    /// expected to grant), so a positive amount here is genuinely leftover state: a power a card put
+    /// on the player during an earlier fight, or a relic whose grant is not an entry hook.
+    /// </summary>
+    private static async Task ApplyEntryPowers(Player player, LabTrial trial)
+    {
+        foreach (LabPower power in trial.Powers)
+        {
+            if (power.Amount <= 0)
+                continue;
+            string id = Entry(power.Id, "POWER");
+            await ApplyOnePower(player, id, power.Amount);
+        }
+        var applied = player.Creature.Powers
+            .Select(p => $"{p.Id.Entry}:{p.Amount}");
+        AutoSlayLog.Info($"[BossLab] entry powers after injection: [{string.Join(", ", applied)}] " +
+            $"requested [{string.Join(", ", trial.Powers.Select(p => $"{p.Id}:{p.Amount}"))}]");
+    }
+
+    /// <summary>
+    /// `PowerCmd.Apply` is generic over the power class, so the ids a plan can name are listed here.
+    /// Adding a new power to a plan means adding its case; an unknown id is logged and skipped
+    /// rather than thrown, so one unmapped power does not fail an entire trial set.
+    /// </summary>
+    private static async Task ApplyOnePower(Player player, string id, int amount)
+    {
+        var context = new ThrowingPlayerChoiceContext();
+        var creature = player.Creature;
+        switch (id)
+        {
+            case "STRENGTH_POWER":
+                await PowerCmd.Apply<StrengthPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "DEXTERITY_POWER":
+                await PowerCmd.Apply<DexterityPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "PLATING_POWER":
+                await PowerCmd.Apply<PlatingPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "THORNS_POWER":
+                await PowerCmd.Apply<ThornsPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "VIGOR_POWER":
+                await PowerCmd.Apply<VigorPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "FEEL_NO_PAIN_POWER":
+                await PowerCmd.Apply<FeelNoPainPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "FLAME_BARRIER_POWER":
+                await PowerCmd.Apply<FlameBarrierPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "HELLRAISER_POWER":
+                await PowerCmd.Apply<HellraiserPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "RUPTURE_POWER":
+                await PowerCmd.Apply<RupturePower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "RAGE_POWER":
+                await PowerCmd.Apply<RagePower>(context, creature, amount, creature, null, silent: true);
+                break;
+            case "NO_DRAW_POWER":
+                await PowerCmd.Apply<NoDrawPower>(context, creature, amount, creature, null, silent: true);
+                break;
+            default:
+                AutoSlayLog.Error($"[BossLab] power {id} has no injection case; entry state will differ " +
+                    "from the recorded run");
+                break;
+        }
     }
 
     private static string EffectiveSeed(LabTrial trial) =>
@@ -357,12 +470,33 @@ public class LabTrial
     [JsonPropertyName("deck")] public List<LabCard> Deck { get; set; } = new();
     [JsonPropertyName("relics")] public List<string> Relics { get; set; } = new();
     [JsonPropertyName("potions")] public List<string> Potions { get; set; } = new();
+    /// <summary>
+    /// Powers to inject after room entry. Amounts must already be reduced by whatever the injected
+    /// relic list grants on its own, or the power lands twice (the entry-firing relics re-run their
+    /// AfterRoomEntered hook here). Relics whose own entry grant depends on run state
+    /// (`RELIC.EMBER_TEA`'s IsUsedUp, `RELIC.GIRYA`'s TimesLifted) are handled by excluding those
+    /// specs from a plan, not by injection.
+    /// </summary>
+    [JsonPropertyName("powers")] public List<LabPower> Powers { get; set; } = new();
 }
 
 public class LabCard
 {
     [JsonPropertyName("id")] public string Id { get; set; } = "";
     [JsonPropertyName("upgrade")] public int Upgrade { get; set; }
+    /// <summary>Enchantment id (`ENCHANTMENT.NIMBLE`); empty when the card carries none.</summary>
+    [JsonPropertyName("enchantment")] public string Enchantment { get; set; } = "";
+    [JsonPropertyName("enchantment_amount")] public int EnchantmentAmount { get; set; } = 1;
+}
+
+/// <summary>
+/// A player power to inject into the combat after room entry, expressed as the residual amount the
+/// relic list does not produce on its own (see BossLab.ApplyEntryPowers).
+/// </summary>
+public class LabPower
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = "";
+    [JsonPropertyName("amount")] public int Amount { get; set; }
 }
 
 public class LabLine
