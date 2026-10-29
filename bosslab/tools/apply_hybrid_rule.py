@@ -538,5 +538,105 @@ def main() -> int:
     return 0
 
 
+# ---------------------------------------------------------------- separate entry: judge one candidate on confirm5 (T39)
+# decide() above selects a single candidate from dev then confirms it (the H1/H2 flow). This entry judges
+# each H3a/H3c candidate independently against the same frozen 4693f2e conditions 1-6 plus prerequisite G,
+# given its dev5 delta, its confirm5 delta (None until the confirm5 run finishes), and the firing inputs for
+# both panels. The rule text is unchanged; only the branch order is per-candidate. confirm5 deltas that are
+# None make conditions 1/3/4/5/6 report "未実行" and the verdict 保留 (provisional), exactly like decide().
+
+def _fire_pair(fire: dict | None, threshold: int) -> bool | None:
+    """Whether prerequisite G is met on one panel; None when that panel has no firing input yet."""
+    if not fire or fire.get("pairs", 0) == 0:
+        return None
+    return bool(fire.get("fired", 0) >= threshold)
+
+
+def _sign(d: dict | None) -> int:
+    if d is None:
+        return 0
+    return 0 if d["Δshave"] == 0 else (1 if d["Δshave"] > 0 else -1)
+
+
+def judge_candidate(dev: dict, confirm: dict | None, fire_dev: dict | None,
+                    fire_confirm: dict | None, *, threshold: int = G_THRESHOLD) -> dict:
+    """Verdict for one candidate (採用/保留/不採用) reproducing 4693f2e conditions 1,3,4,5,6 + prerequisite G."""
+    gd = _fire_pair(fire_dev, threshold)
+    gc = _fire_pair(fire_confirm, threshold)
+    g_pass = (gd is True and gc is True)
+    g_status = "未実行" if (gd is None or gc is None) else ("充足" if g_pass else "不充足")
+
+    pending = confirm is None  # 確認用 panel not measured yet
+    cond: dict = {"G": (None if g_status == "未実行" else g_pass)}
+    if pending:
+        for k in (1, 3, 4, 5, 6):
+            cond[k] = None
+    else:
+        cond[1] = bool(dev["Δshave"] > 0 and confirm["Δshave"] > 0)
+        cond[3] = bool(dev["Δfp"] is not None and confirm["Δfp"] is not None
+                       and dev["Δfp"] >= 0 and confirm["Δfp"] >= 0)
+        cond[4] = bool(dev["Δwin"] >= 0 and confirm["Δwin"] >= 0)
+        cond[5] = bool(confirm["p"] is not None and confirm["p"] <= 0.05)
+        cond[6] = bool(dev["not_comparable"] == 0 and confirm["not_comparable"] == 0
+                       and dev["pairs"] > 0 and dev["pairs"] == confirm["pairs"])
+        direction_match = (_sign(dev) == _sign(confirm)) and _sign(confirm) != 0
+
+    # verdict precedence: prerequisite G -> 不採用 (REJECT) -> 採用 (conditions 1,3,4,5,6) -> 保留 (KEEP).
+    if pending:
+        verdict, reason = "保留", "確認用（confirm5）の実行待ち。dev5 の結果のみで暫定。"
+    elif g_status == "不充足":
+        verdict, reason = "保留", "前提 G（両集合で firing_C ≥ %d）を満たさず測定不能。" % threshold
+    else:
+        shave_worse_both = (dev["Δshave"] <= 0 and confirm["Δshave"] <= 0)
+        shave_and_fp_worse = ((dev["Δshave"] < 0 and dev["Δfp"] is not None and dev["Δfp"] < 0)
+                              or (confirm["Δshave"] < 0 and confirm["Δfp"] is not None and confirm["Δfp"] < 0))
+        if shave_worse_both or shave_and_fp_worse:
+            verdict, reason = "不採用", ("削り割合が dev5・confirm5 の両集合で `Δshave ≤ 0`、または削りが悪化して"
+                                         "かつ 総火力/ターン も base を下回った。base 継続。")
+        elif all(cond[k] for k in (1, 3, 4, 5, 6)):
+            verdict, reason = "採用", "条件1,3,4,5,6 と前提 G を満たす。EVALUATION.md §採用。"
+        else:
+            unmet = [str(k) for k in (1, 3, 4, 5, 6) if cond[k] is not True]
+            verdict, reason = "保留", "条件 " + "・".join(unmet) + " を満たさない（向きの不一致・p>0.05・配対不足等）。"
+
+    return {"verdict": verdict, "reason": reason, "cond": cond, "g_status": g_status,
+            "gd": gd, "gc": gc, "direction_match": cond.get(1) if not pending else None,
+            "dev": dev, "confirm": confirm, "fire_dev": fire_dev, "fire_confirm": fire_confirm,
+            "threshold": threshold}
+
+
+def format_candidate_report(label: str, res: dict) -> str:
+    """Wording for one candidate's verdict: 発火率・削り割合・総火力/ターン・勝ち・配対・各条件・dev5との向きの一致."""
+    dev, confirm = res["dev"], res["confirm"]
+    thr = res["threshold"]
+    L = [f"### 候補 {label}: 判定 **{res['verdict']}**", "", f"- 理由: {res['reason']}"]
+
+    def fire_line(tag, fire):
+        if not fire or fire.get("pairs", 0) == 0:
+            return f"- 発火率({tag}): 実行データ無し"
+        return (f"- 発火率({tag}): firing_C = {fire['fired']}/{fire['pairs']} 組"
+                f"（閾値 {thr}、skipped {fire.get('skipped_missing_trace', 0)}）")
+
+    L += ["", fire_line("dev5", res["fire_dev"]), fire_line("confirm5", res["fire_confirm"]),
+          f"- 前提 G（両集合で ≥{thr}）: {res['g_status']}", ""]
+
+    def delta_line(tag, d):
+        if d is None:
+            return f"- {tag}: 未実行（確認用待ち）"
+        p = "–" if d["p"] is None else f"{d['p']:.3f}"
+        fp = "–" if d["Δfp"] is None else f"{d['Δfp']:+.1f}"
+        return (f"- {tag}: Δshave {d['Δshave']:+d}（候補優{d['better']}/base優{d['worse']}/同値{d['tie']}, p={p}） "
+                f"Δfp {fp}（base {d['fp_base']:.1f}→cand {d['fp_cand']:.1f}） Δwin {d['Δwin']:+d}"
+                f"（base {d['base_wins']}→cand {d['cand_wins']}） 配対 {d['pairs']}・比較不能 {d['not_comparable']}")
+
+    L += [delta_line("dev5", dev), delta_line("confirm5", confirm), ""]
+    L.append("- dev5 と confirm5 の削り割合の向きの一致: "
+             + ("一致" if res["cond"].get(1) else "未実行" if confirm is None else "不一致"))
+    for k in (1, 3, 4, 5, 6):
+        status = _status(res["cond"][k])
+        L.append(f"  - 条件{k}: {status}（原文は上の引用を参照）")
+    return "\n".join(L)
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
