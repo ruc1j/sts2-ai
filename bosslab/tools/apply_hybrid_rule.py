@@ -144,6 +144,9 @@ def _attack_slots(trace_path: Path) -> collections.Counter:
 def _trial_index_map(lab_path: Path) -> dict:
     """(spec_id, offset) -> trial_index, from a run dir's lab_results.jsonl (BossLab writes trial_id as
     "<spec>|<arm>|<offset>")."""
+    lab_path = Path(lab_path)
+    if not lab_path.is_file():  # a run dir that never started has no results file
+        return {}
     usable, _dropped = A.load_trials([lab_path])
     out = {}
     for r in usable:
@@ -167,6 +170,65 @@ def pair_attack_target_diff(base_dir: Path, cand_dir: Path) -> dict:
         if bs != cs:
             fired += 1
             detail.append((key[0], key[1], dict(bs), dict(cs)))
+    return {"pairs": len(shared), "fired": fired, "skipped_missing_trace": skipped, "fired_detail": detail}
+
+
+def _attack_slots_by_turn(trace_path: Path) -> dict[int, collections.Counter]:
+    """Per-turn multiset of enemy slots this run focused single-target Attacks on.
+
+    Same selection rule as `_attack_slots` (single-target Attack card plays only, AoE has target_id
+    null), but kept split by the trace's ``turn`` field so a caller can report WHICH turns diverged,
+    not only that the whole fight did. A threat-based arm that arms mid-fight shows up only on its
+    later turns, so grouping by turn is how firing is located to specific rounds.
+    """
+    by_turn: dict[int, collections.Counter] = {}
+    for obs in _trace_rows(trace_path):
+        if obs.get("type") != "card" or obs.get("target_id") is None:
+            continue
+        hi = obs.get("hand_index")
+        hand = obs.get("hand") or ()
+        if hi is None or hi >= len(hand) or (hand[hi] or {}).get("type") != "Attack":
+            continue
+        tid = obs["target_id"]
+        slot = None
+        for enemy in (obs.get("enemies") or ()):
+            if isinstance(enemy, dict) and enemy.get("combat_id") == tid:
+                slot = enemy.get("slot")
+                break
+        if slot is None:  # fall back to a 1-based index into enemies if combat_id did not match
+            enemies = obs.get("enemies") or ()
+            if isinstance(tid, int) and 1 <= tid <= len(enemies):
+                slot = enemies[tid - 1].get("slot")
+        if slot is None:
+            continue
+        by_turn.setdefault(int(obs.get("turn") or 0), collections.Counter())[slot] += 1
+    return by_turn
+
+
+def pair_attack_target_turns(base_dir: Path, cand_dir: Path) -> dict:
+    """Whole-fight firing count plus, for each fired pair, the turn numbers where targets diverged.
+
+    A pair counts as fired if any turn's single-target attack-slot multiset differs from base. The
+    returned fired/pairs match `pair_attack_target_diff` exactly (same shared keys, same skip rule), so
+    this is the same measure with the diverging rounds located; `fired_detail` carries ``(spec, offset,
+    [turns])`` instead of the raw slot counters.
+    """
+    base_map = _trial_index_map(Path(base_dir) / "lab_results.jsonl")
+    cand_map = _trial_index_map(Path(cand_dir) / "lab_results.jsonl")
+    shared = sorted(set(base_map) & set(cand_map))
+    fired, detail, skipped = 0, [], 0
+    for key in shared:
+        bt = Path(base_dir) / f"trial_{base_map[key]:04d}_agent.jsonl"
+        ct = Path(cand_dir) / f"trial_{cand_map[key]:04d}_agent.jsonl"
+        if not (bt.is_file() and ct.is_file()):
+            skipped += 1
+            continue
+        bturn = _attack_slots_by_turn(bt)
+        cturn = _attack_slots_by_turn(ct)
+        turns = sorted(t for t in set(bturn) | set(cturn) if bturn.get(t) != cturn.get(t))
+        if turns:
+            fired += 1
+            detail.append((key[0], key[1], turns))
     return {"pairs": len(shared), "fired": fired, "skipped_missing_trace": skipped, "fired_detail": detail}
 
 
@@ -224,7 +286,8 @@ def decide(dev: dict, confirm: dict | None, cands_dev: list, *, firing: dict | N
         # No candidate reached the dev-side firing threshold: every candidate behaved like base, so the
         # mechanism is not exercised at all. This is a definitive 保留 (測定不能), not provisional, and not
         # 不採用 - Δshave against a silent candidate tells us nothing about the rule.
-        return {"chosen": None, "branch": SELECT_NOFIRE, "cond": {"G": False}, "dev": dev,
+        return {"chosen": None, "branch": SELECT_NOFIRE, "cond": {"G": False, 1: None, 2: None, 3: None,
+                        4: None, 5: None, 6: None}, "dev": dev,
                 "confirm": confirm, "verdict": "保留",
                 "reason": "dev2 で発火基準を満たす候補が無く測定不能（全候補が base と同一動作）",
                 "firing": firing, "threshold": threshold,
