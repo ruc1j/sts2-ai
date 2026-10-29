@@ -80,7 +80,7 @@ leader が進めており（base 完了、H3a / H3c 走行中）、数値は結�
   殴り先が違った。`firing_C`（base と殴り先が違ったか）は 12/12 だが、arm の意図した削り規則が作動した数は 0。
 - ここから「候補の特別規則が実際に作動していること」を測定の前提に格上げした。`firing_C` は arm の作動そのもの
   ではなく base との差だけを見る指標なので、規則の作動由来か既定反転由来かを解読する補助として trace flag
-  `decision_source` の `_amalgam` 决策数を使い、採否の必須条件は `firing_C ≥ 4` のみにした。flag 読みは results の
+  `decision_source` の `_amalgam` を選んだ回数を、規則の作動由来か既定反転由来かを見る補助として使い、採否の必須条件は `firing_C ≥ 4` のみにした。flag 読みは results の
   解釈メモに留める。H3a / H3c は danger 起点にして、第一手で発火しない H3c の発火 0 化けを避けた。
 
 ## 8.7 判定に使う指標（標準から変えた点と測定前の理由）
@@ -100,34 +100,56 @@ leader が進めており（base 完了、H3a / H3c 走行中）、数値は結�
 | 集合 | 計画(試行) | 完了 | 不明 | 備考 |
 | --- | --- | --- | --- | --- |
 | fid5 忠実性 | 12 | 12 | 0 | 一致 10 / 不一致 2（原因 8.4）。外部障害なし |
-| dev5_swap base | 12 | 12 | 0 | 完了（leader） |
-| dev5_swap H3a | 12 | 走行中 | — | 実機で流し中。結果待ち |
-| dev5_swap H3c | 12 | 走行中 | — | 実機で流し中。結果待ち |
-| confirm5_swap base+選定 arm | 12+12 | 0 | — | dev5 の選定結果待ちで未開始 |
+| dev5_swap base | 12 | 12 | 0 | 完了（leader、run dir `data/bosslab_act3_dev5_base`） |
+| dev5_swap H3a | 12 | 12 | 0 | 完了（leader、`_H3a`）。発火 11/12。外部障害なし |
+| dev5_swap H3c | 12 | 12 | 0 | 完了（leader、`_H3c`）。発火 12/12。外部障害なし |
+| confirm5_swap base+H3a+H3c | 12×3 | 進行 | — | dev5 凍結後、leader が base→H3a→H3c の順に流し中（約2時間半）。base dir 着手直後 |
 
 外部障害・候補由来の障害は現状なし。同一 trial の例外・通信停止は結果行の `outcome_source != combat_end_trace` で
 droppable とし、配対不能として母数に残す（`analyze_bosslab.load_trials`）。
 
-## 8.9 結果（空欄・dev5 実測待ち）
+## 8.9 結果（dev5 は実測、確認用 confirm5 は空欄）
 
-- dev5_swap base 対 H3a: Δshave = （空）、Δfp = （空）、Δwin = （空）、firing_C = （空）、精密 p = （空）
-- dev5_swap base 対 H3c（0.5）: 同上（空）
-- dev5_swap base 対 H3c（0.3、追加候補）: 未実施（dev5 で A/B を測ってから決める。`act3_dev5_first_extra_candidate.md`）
-- 到達点同値の最終戦（Queen 削り割合）の比較可能／不能な組数: （空）。欠測 trace の組は配対不能として数える。
-- 確認用 confirm5_swap の結果: 未開始。
+dev5_swap（run dir `data/bosslab_act3_dev5_base` / `_H3a` / `_H3c`、`bosslab/tools/dev5_report.py` と
+`bosslab/tools/trace_turn_diff.py` の実測。集計は `bosslab/results/act3_dev5_report.md`、戦闘別解析は
+`act3_dev5_h3a_analysis.md`）:
+
+- dev5_swap base 対 H3a（序盤 N=2 ターン Queen 集中）: 前提 G 発火 `firing_C = 11/12`（充足）。
+  Queen 削り割合の配対 候補優5 / base優5 / 同値2（`Δshave = 0`、精密二側 p = 1.000）。
+  総火力/ターン 42.6 → 37.6（`Δfp` 約 −5.0）。勝ち 2 → 1（`Δwin = −1`）。比較可能 12 / 不能 0。
+  → `Δshave > 0` を満たさず条件充足でない。
+- dev5_swap base 対 H3c（期待ダメージ 0.5 閾値で Queen 集中）: 前提 G 発火 `firing_C = 12/12`（充足）。
+  Queen 削り割合 候補優6 / base優5 / 同値1（`Δshave = +1`、p = 1.000）。総火力/ターン 42.6 → 42.3（`Δfp` 約 −0.3）。
+  生存ターン 7.3 → 6.2。勝ち 2 → 1（`Δwin = −1`）。比較可能 12 / 不能 0。
+  → `Δshave > 0` だが `Δfp < 0` と `Δwin < 0` を満たさず条件充足でない。
+- dev5_swap base 対 H3c（0.3、追加候補）: 未実施。dev5 で H3c（0.5）が条件を通過しなかったため上げない
+  （`act3_dev5_first_extra_candidate.md` dev5 実測後の見直し）。
+- 到達点同値の最終戦（Queen 削り割合）の比較可能／不能な組数: dev5 は 両 arm とも 12 組すべて配対不能 0。
+- dev5 の結論: base が Amalgam を先に倒し切る構成が強い。base は 12 組中 8 組で Amalgam を撃破し、撃破後に
+  Amalgam の攻撃が止まって体力を保ち Queen を削った。H3a が Amalgam を倒せたのは 1/12 だけ（詳細とターン表は
+  `act3_dev5_h3a_analysis.md`）。上 8.6 の仮説（Queen 集中が削りを上げる）は dev5 では支持されなかった。
+- dev5 後の凍結: 両 arm が前提 G を満たすが 4693f2e の条件充足を満たさず、調整は 0 組合せのまま凍結
+  （`act3_h3_freeze.md`、leader commit 92569ca。凍結ファイル sha256 を同 doc に記録）。
+- 確認用 confirm5_swap の結果: （空欄・実行待ち）。
 
 ## 8.10 判定と次に必要な証拠
 
-- 判定: 未確定（保留）。dev5_swap の結果が出て、前提 G（`firing_C ≥ 4`）と `Δshave > 0・Δfp ≥ 0・Δwin ≥ 0` を満たす
-  arm があるかを見る。
+- dev5 の判定: 調整 0 組合せで凍結（`act3_h3_freeze.md`、92569ca）。両 arm が前提 G は満たすが 4693f2e の
+  条件充足（`Δshave > 0・Δfp ≥ 0・Δwin ≥ 0`）を満たさず、base 継続。H3a は `Δshave = 0`、H3c は `Δshave > 0`
+  でも `Δfp` と `Δwin` が負。上 8.9 の実測どおり。
+- 確認用の判定入口（T39 追加、規則は変更せず機械的に 1 回適用）: `bosslab/tools/confirm5_report.py`。dev5 と
+  confirm5 の base / H3a / H3c を入力に、候補ごとに 4693f2e の条件1,3,4,5,6 と前提 G（両集合で `firing_C ≥ 4`）、
+  dev5 と confirm5 の削り割合の向きの一致を見て 採用／保留／不採用 を出す。confirm5 の候補 dir ができるまでは
+  確認用側は 未実行（保留）。判定文言と純粋ロジックは `apply_hybrid_rule.judge_candidate`（単体テスト
+  `test_confirm5_judge.py`）。結果を見てから規則を変えない。
 - 次に必要な証拠:
-  1. dev5_swap base / H3a / H3c の各 turn 番号つきの全ターン発火件数と、Queen 削り割合の配対差（1 コマンドで
-     `python3 bosslab/tools/dev5_report.py --base data/bosslab_act3_dev5_swap_base --cand H3a=..._H3a --cand
-     H3c05=..._H3c --out bosslab/results/act3_dev5_tuning_report.md`）。
-  2. dev5 でゲートを通過した arm があれば、その 1 arm だけ confirm5_swap へ進めて同じ向きか確認する。通過する
-     arm が無ければ hybrid は保留。H3c（0.5）が通った場合のみ、閾値 0.3 の追加候補を感度確認として上げる。
-  3. 忠実性 2 件の書き戻し hook は、default off のまま fid5 の 2 spec（8aa46daede55 / e030d2f11e5f）で
-     `STS2_BOSSLAB_RESTORE_ENTRY_STATE=1` を立てて再走し、一致するか確かめる（手順は 8.11 と codewiki 草案）。
+  1. confirm5_swap base / H3a / H3c の 12 組が揃った時点で `confirm5_report.py` を 1 回走らせ、候補ごとの
+     採否を機械的に確定する。採用は dev5・confirm5 両集合で `Δshave > 0`、両集合 `Δfp ≥ 0`／`Δwin ≥ 0`、
+     confirm5 の p ≤ 0.05、配対 12 組、前提 G 両集合 ≥4、候補間の dev5 の向きの一致（条件2）。
+  2. confirm5 base が揃った時点で忠実性照合（下 8.11 の 1 行）。`RELIC.ROYAL_POISON` 所持組の lab hp が記録 hp に
+     一致するか（HP clamp 修正 927f26f の成否）もここで確認する。
+  3. 忠実性 2 件の書き戻し hook は default off のまま fid5 の 2 spec（8aa46daede55 / e030d2f11e5f）で
+     `STS2_BOSSLAB_RESTORE_ENTRY_STATE=1` を立てて再走し、一致するか確かめる（手順は codewiki 草案）。
 
 ## 8.11 生成・再現手順（実機は leader）
 
@@ -140,18 +162,33 @@ python3 bosslab/tools/make_bosslab_plan.py --specs .dsh/act3_boss_specs.jsonl --
   --offset-start 0 --spec-ids bosslab/plans/bosslab_act3_confirm5_swap.speclist \
   --out bosslab/plans/bosslab_act3_plan_confirm5_swap.json --md bosslab/plans/bosslab_act3_plan_confirm5_swap.md
 
-# dev5 評価（run dir が揃った時点で 1 コマンド）
+# dev5 評価（run dir が揃った時点で 1 コマンド。run dir 名は plan の dev5_swap ではなく dev5）
 python3 bosslab/tools/dev5_report.py \
-  --base data/bosslab_act3_dev5_swap_base \
-  --cand H3a=data/bosslab_act3_dev5_swap_H3a \
-  --cand H3c05=data/bosslab_act3_dev5_swap_H3c \
-  --out bosslab/results/act3_dev5_tuning_report.md
+  --base data/bosslab_act3_dev5_base \
+  --cand H3a=data/bosslab_act3_dev5_H3a \
+  --cand H3c=data/bosslab_act3_dev5_H3c \
+  --out bosslab/results/act3_dev5_report.md
+# 戦闘別のターン照合（殴り先が別れた turn、Amalgam 撃破内訳）
+python3 bosslab/tools/trace_turn_diff.py --base data/bosslab_act3_dev5_base \
+  --cand data/bosslab_act3_dev5_H3a --all --out bosslab/results/act3_dev5_h3a_turn_diff.md
 
-# dev5 の arm 実行（H3c 0.3 を足す場合は同じ plan で env だけ差し替え。実機は leader）
+# dev5 の arm 実行（同じ plan で env だけ差し替えて H3c 0.3 も可。実機は leader）
 #   pwsh -File ./run_official_bosslab.ps1 -GameDir "<game dir>" \
-#     -Plan bosslab/plans/bosslab_act3_plan_dev5_swap.json -OutDir data/bosslab_act3_dev5_swap_H3a \
+#     -Plan bosslab/plans/bosslab_act3_plan_dev5_swap.json -OutDir data/bosslab_act3_dev5_H3a \
 #     -AgentScript bosslab/agents/official_agent_H3a.py ...
-#   H3c 0.3: -AgentScript bosslab/agents/official_agent_H3c.py かつ env QUEENFIRST_H3_DANGER_FRAC=0.3
+#   H3c: -AgentScript bosslab/agents/official_agent_H3c.py（env QUEENFIRST_H3_DANGER_FRAC=0.3 で追加候補）
 
-python3 -m unittest discover -p 'test_*.py'   # 960 tests OK（2026-10-29 時点）
+# confirm5 の忠実性照合（base が揃った時点で 1 行。flag 所持組の HP 漂移 = 927f26f の成否）
+python3 bosslab/tools/confirm_fidelity_report.py --out-dir data/bosslab_act3_confirm5_base \
+  --plan bosslab/plans/bosslab_act3_plan_confirm5_swap.json --specs .dsh/act3_boss_specs.jsonl \
+  --flag RELIC.ROYAL_POISON --out bosslab/results/act3_confirm5_fidelity.md
+
+# confirm5 判定（3 候補 dir が揃った時点で 1 回だけ機械的に適用。結果を見て規則を変えない）
+python3 bosslab/tools/confirm5_report.py \
+  --dev-base data/bosslab_act3_dev5_base --confirm-base data/bosslab_act3_confirm5_base \
+  --cand H3a=data/bosslab_act3_dev5_H3a=data/bosslab_act3_confirm5_H3a \
+  --cand H3c=data/bosslab_act3_dev5_H3c=data/bosslab_act3_confirm5_H3c \
+  --out bosslab/results/act3_confirm5_judgment.md
+
+python3 -m unittest discover -p 'test_*.py'   # 973 tests OK（2026-10-29、T39 時点）
 ```
