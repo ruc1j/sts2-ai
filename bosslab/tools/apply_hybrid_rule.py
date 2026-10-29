@@ -17,6 +17,8 @@ script be validated on dev2 alone before confirm4 is looked at. Usage:
 from __future__ import annotations
 
 import argparse
+import collections
+import json
 import sys
 from pathlib import Path
 
@@ -38,6 +40,8 @@ SELECT_ONE = "片方だけ条件充足: その候補を confirm4 へ進める。
 SELECT_NONE = ("どちらも条件充足でない: hybrid を進めない（両候補を落とす）。confirm4 には base に対して dev2 で最も "
                "`Δshave > 0` を満たす候補を 1 つだけ進め、採否規則で 不採用 を確定する（充足候補が無い場合の"
                "記録用。hybrid 機構自体を却下するかは採否規則の「両候補同じ向き」条項で決める）。")
+SELECT_NOFIRE = ("前提 G により、dev2 で発火基準（base との全ターンの殴り先差分）を満たす候補が無い: 全候補が base と"
+                 "同一動作＝測定不能。採否を出さず保留にする（発火しない候補の Δshave は機構を検定しない）。")
 CONDITIONS = {
     1: "**採用**（すべてを満たす）: 1. C* が confirm4 の主信号 削り割合で `Δshave > 0`（候補優 > base 優）、かつ dev2 でも `Δshave > 0`（両集合で同じ向き＝機構が頑健。EVALUATION.md §採用）。",
     2: "2. 両候補 H1/H2 の **削り割合の向きが dev2 で同じ**（ともに `Δshave > 0`）。H1 が良く H2 が悪い等の割れは機構頑健でなく採用しない。",
@@ -51,6 +55,20 @@ REJECT = ("**不採用**（いずれか）: C* が削り割合で dev2・confirm
           "（HP 修正後も fidelity の一致が取れない、lab 例外、配対不能）。→ base の継続。")
 KEEP = ("**保留**: 削り割合は確認用で改善したが火力/wins/両集合の向き/p≤0.05/頑健性のどれかを満たさない；"
         "H1 と H2 の向きが dev2 で割れた；配対不足・欠測・同値で主信号がどちらにも傾かない。")
+
+# ---------------------------------------------------------------- firing prerequisite (added, T34)
+# The confirm4 run showed candidates that never diverged from base on the target choice were judged on
+# Δshave even though the mechanism never engaged (act3_h3_firing_model.md). Condition G measures firing
+# as the number of paired (spec, offset) entries where the candidate chose a DIFFERENT attack target
+# (殴り先) than base across the whole fight - not only the first decision - so a threat-based arm that
+# arms mid-fight is counted too. A candidate below the threshold is treated as 測定不能 (保留), never
+# 不採用, because comparing a silent candidate to base is not evidence about the mechanism.
+G_THRESHOLD = 4
+FIRING = ("**前提 G（発火率、判定の前に検査）**: 候補 C について、同じ spec・offset の base trace と突き合わせ、"
+          "全ターンのうち base と別の単独攻撃の殴り先（敵 slot）を選んだ組数 `firing_C` を数える。dev2 と確認用の"
+          f"両集合で `firing_C ≥ {G_THRESHOLD}` を満たさない候補は充足候補から外す。候補が 0 件しかない、または"
+          "G を満たす候補が無い panel は**測定不能 = 保留**（不採用ではない）。候補規則が作動せず base と同一動作で、"
+          "主指標の効果を検定できないため。")
 
 
 def load_relabel(label: str, lab_path: Path) -> tuple[list, list]:
@@ -83,6 +101,75 @@ def sufficed(d: dict) -> bool:
     return bool(d["Δshave"] > 0 and d["Δfp"] is not None and d["Δfp"] >= 0 and d["Δwin"] >= 0)
 
 
+# ---------------------------------------------------------------- firing (target-choice divergence)
+# firing_C = how many paired (spec, offset) entries chose a different single-target attack destination
+# than base across the whole fight. Read straight from the recorded per-trial agent traces (each line =
+# one observation plus the action the agent took on it); no new game run is needed. Only single-target
+# attacks count as an "attack target" (AoE plays have target_id null and hit everyone, so they do not
+# express a 殴り先 choice). The compare is against the base trace on the SAME entry (spec + rng offset),
+# exactly the pairing analyze_bosslab uses for Δshave.
+def _trace_rows(path: Path):
+    with open(path, encoding="utf-8-sig", errors="replace") as handle:
+        for line in handle:
+            line = line.strip()
+            if line:
+                yield json.loads(line)
+
+
+def _attack_slots(trace_path: Path) -> collections.Counter:
+    """Multiset of enemy slots this run focused single-target Attacks on, over the whole fight."""
+    slots = collections.Counter()
+    for obs in _trace_rows(trace_path):
+        if obs.get("type") != "card" or obs.get("target_id") is None:
+            continue
+        hi = obs.get("hand_index")
+        hand = obs.get("hand") or ()
+        if hi is None or hi >= len(hand) or (hand[hi] or {}).get("type") != "Attack":
+            continue
+        tid = obs["target_id"]
+        slot = None
+        for enemy in (obs.get("enemies") or ()):
+            if isinstance(enemy, dict) and enemy.get("combat_id") == tid:
+                slot = enemy.get("slot")
+                break
+        if slot is None:  # fall back to a 1-based index into enemies if combat_id did not match
+            enemies = obs.get("enemies") or ()
+            if isinstance(tid, int) and 1 <= tid <= len(enemies):
+                slot = enemies[tid - 1].get("slot")
+        if slot is not None:
+            slots[slot] += 1
+    return slots
+
+
+def _trial_index_map(lab_path: Path) -> dict:
+    """(spec_id, offset) -> trial_index, from a run dir's lab_results.jsonl (BossLab writes trial_id as
+    "<spec>|<arm>|<offset>")."""
+    usable, _dropped = A.load_trials([lab_path])
+    out = {}
+    for r in usable:
+        out[(r["spec_id"], r.get("_offset"))] = r.get("trial_index")
+    return out
+
+
+def pair_attack_target_diff(base_dir: Path, cand_dir: Path) -> dict:
+    """Compare base and candidate attack targets per paired entry; report the firing count."""
+    base_map = _trial_index_map(Path(base_dir) / "lab_results.jsonl")
+    cand_map = _trial_index_map(Path(cand_dir) / "lab_results.jsonl")
+    shared = sorted(set(base_map) & set(cand_map))
+    fired, detail, skipped = 0, [], 0
+    for key in shared:
+        bt = Path(base_dir) / f"trial_{base_map[key]:04d}_agent.jsonl"
+        ct = Path(cand_dir) / f"trial_{cand_map[key]:04d}_agent.jsonl"
+        if not (bt.is_file() and ct.is_file()):
+            skipped += 1
+            continue
+        bs, cs = _attack_slots(bt), _attack_slots(ct)
+        if bs != cs:
+            fired += 1
+            detail.append((key[0], key[1], dict(bs), dict(cs)))
+    return {"pairs": len(shared), "fired": fired, "skipped_missing_trace": skipped, "fired_detail": detail}
+
+
 def select_candidate(dev: dict, cands_dev: list) -> tuple:
     """Apply the dev2 candidate-selection rule. Returns (chosen or None, branch_text)."""
     passed = {c for c in cands_dev if sufficed(dev[c])}
@@ -108,16 +195,40 @@ def select_candidate(dev: dict, cands_dev: list) -> tuple:
     return cands[0], SELECT_NONE
 
 
-def decide(dev: dict, confirm: dict | None, cands_dev: list) -> dict:
+def decide(dev: dict, confirm: dict | None, cands_dev: list, *, firing: dict | None = None,
+           threshold: int = G_THRESHOLD) -> dict:
     """Pure branch logic: returns chosen candidate, selection branch, per-condition results and verdict.
 
     `confirm` may be None (確認用 not yet measured) -> conditions 1/3/4 (the confirm side) and 5/6 report
     None so the verdict is 保留（暫定）. A condition value is True/False when measurable, None when it
     depends on an unmeasured confirm set.
+
+    `firing` (optional, added T34) adds prerequisite condition G. It is
+    `{"dev": {label: pair_attack_target_diff(...)}, "confirm": {label: ...} | None}`. A candidate only
+    competes for selection when its dev-side whole-fight attack-target divergence reaches `threshold`, and
+    the verdict additionally requires confirm-side divergence once measured. A candidate below threshold is
+    保留 (測定不能), never 不採用 (a silent candidate is not evidence about the mechanism). With `firing=None`
+    the rule behaves exactly as the frozen 4693f2e 1-6 version.
     """
-    chosen, branch = select_candidate(dev, cands_dev)
+    firing_dev = (firing or {}).get("dev") or {}
+    firing_confirm = (firing or {}).get("confirm")
+    use_g = bool(firing)
+    sel_cands = cands_dev
+    if use_g:
+        sel_cands = [x for x in cands_dev if firing_dev.get(x, {}).get("fired", 0) >= threshold]
+    chosen, branch = select_candidate(dev, sel_cands)
     have_confirm = bool(confirm) and chosen is not None and chosen in confirm
     c = {}
+
+    if use_g and not sel_cands:
+        # No candidate reached the dev-side firing threshold: every candidate behaved like base, so the
+        # mechanism is not exercised at all. This is a definitive 保留 (測定不能), not provisional, and not
+        # 不採用 - Δshave against a silent candidate tells us nothing about the rule.
+        return {"chosen": None, "branch": SELECT_NOFIRE, "cond": {"G": False}, "dev": dev,
+                "confirm": confirm, "verdict": "保留",
+                "reason": "dev2 で発火基準を満たす候補が無く測定不能（全候補が base と同一動作）",
+                "firing": firing, "threshold": threshold,
+                "c1_dev": False, "c3_dev": False, "c4_dev": False}
 
     # 1: Δshave>0 in dev AND confirm
     c1_dev = chosen is not None and dev[chosen]["Δshave"] > 0
@@ -147,7 +258,17 @@ def decide(dev: dict, confirm: dict | None, cands_dev: list) -> dict:
     else:
         c[6] = None
 
-    accept = [c[1], c[2], c[3], c[4], c[5], c[6]]
+    # G (firing prerequisite): dev-side and confirm-side whole-fight attack-target divergence.
+    if use_g:
+        g_dev = chosen is not None and firing_dev.get(chosen, {}).get("fired", 0) >= threshold
+        if firing_confirm is not None:
+            g_confirm = chosen is not None and firing_confirm.get(chosen, {}).get("fired", 0) >= threshold
+        else:
+            g_confirm = None
+        c["G"] = None if g_confirm is None else (g_dev and g_confirm)
+        accept = [c["G"], c[1], c[2], c[3], c[4], c[5], c[6]]
+    else:
+        accept = [c[1], c[2], c[3], c[4], c[5], c[6]]
 
     # verdict
     if any(x is None for x in accept):
@@ -155,6 +276,14 @@ def decide(dev: dict, confirm: dict | None, cands_dev: list) -> dict:
     elif all(accept):
         verdict = "採用"
     else:
+        if use_g and c.get("G") is False:
+            verdict = "保留"
+            reason = ("dev2 で発火基準（全ターンの殴り先差分）を満たす候補が無く測定不能"
+                      if chosen is None else
+                      "選択候補が発火基準（全ターンの殴り先差分）に満たず測定不能（base と同一動作）")
+            return {"chosen": chosen, "branch": branch, "cond": c, "dev": dev, "confirm": confirm,
+                    "verdict": verdict, "reason": reason, "firing": firing, "threshold": threshold,
+                    "c1_dev": c1_dev, "c3_dev": c3_dev, "c4_dev": c4_dev}
         reject_all_shave = (chosen is not None and dev[chosen]["Δshave"] <= 0
                             and have_confirm and confirm[chosen]["Δshave"] <= 0)
         reject_both_primary = (chosen is not None and have_confirm
@@ -174,10 +303,12 @@ def decide(dev: dict, confirm: dict | None, cands_dev: list) -> dict:
             verdict = "保留"
             reason = "採用条件のどれかを満たさない中間（火力/wins/両集合の向き/p/頑健性）"
         return {"chosen": chosen, "branch": branch, "cond": c, "dev": dev, "confirm": confirm,
-                "verdict": verdict, "reason": reason,
+                "verdict": verdict, "reason": reason, "firing": firing, "threshold": threshold,
                 "c1_dev": c1_dev, "c3_dev": c3_dev, "c4_dev": c4_dev}
     return {"chosen": chosen, "branch": branch, "cond": c, "dev": dev, "confirm": confirm,
-            "verdict": verdict, "reason": "採用条件 1〜6 すべて充足",
+            "verdict": verdict,
+            "reason": "採用条件 1〜6 すべて充足" + ("（前提 G の発火率も両集合で充足）" if use_g else ""),
+            "firing": firing, "threshold": threshold,
             "c1_dev": c1_dev, "c3_dev": c3_dev, "c4_dev": c4_dev}
 
 
@@ -217,16 +348,42 @@ def format_report(res: dict, cands_dev: list) -> str:
             detail = f"  → confirm4 {_status(c[n])}"
         L.append(f"条件{n}: {CONDITIONS[n]}")
         L.append(detail)
+    firing = res.get("firing")
+    if firing:
+        thr = res.get("threshold", G_THRESHOLD)
+        L.append("")
+        L.append("# 前提 G（発火率、判定の前に検査。実装: apply_hybrid_rule.firing）")
+        L.append(f"引用: {FIRING}")
+        L.append("測り方: 同じ spec・offset の base trace との配対で、全ターンの単独攻撃の殴り先（敵 slot）"
+                 f"が base と異なる組数。閾値 firing_C ≥ {thr}（dev2・確認用両集合）。")
+        for x in cands_dev:
+            dv = (firing.get("dev") or {}).get(x)
+            cf = firing.get("confirm")
+            ds = f"{dv['fired']}/{dv['pairs']}" if dv else "?"
+            if cf is None:
+                cs = "未実行（確認用待ち）"
+            elif x in cf:
+                cs = f"{cf[x]['fired']}/{cf[x]['pairs']}"
+            else:
+                cs = "?"
+            extra = ""
+            if dv and dv.get("skipped_missing_trace"):
+                extra = f"（trace 欠落で照合できず {dv['skipped_missing_trace']} 組）"
+            L.append(f"- {x}: dev2 発火 {ds}、確認用 発火 {cs}{extra}")
+        L.append(f"前提 G 総合: {_status(c.get('G'))}（選定は dev2 の発火 ≥{thr} の候補のみ対象）")
     L.append("")
     if res["verdict"].startswith("保留（暫定"):
         L.append("判定: 保留（暫定）。確認用（confirm4）の条件1・3〜6が未実行のため最終判定は保留。")
         L.append(f"  dev2 側: C*={chosen}; 条件2(頑健性)={_status(c[2])}")
+        if firing:
+            L.append(f"  前提 G(発火率): {_status(c.get('G'))}（確認用の発火照合待ち）")
         if chosen and not sufficed(dev[chosen]):
             L.append("  dev2 で C* は火力/wins ゲートを通っていない → 記録用送付。最終は確認用で確定。")
         L.append(f"引用(保留): {KEEP}")
     elif res["verdict"] == "採用":
-        L.append("判定: 採用（最終戦の進捗改善として採用、踏破率・到達点の向上は未確認）。")
-        L.append(f"引用(採用): {CONDITIONS[1]} ほか 1〜6 すべて充足")
+        gtxt = "（前提 G の発火率も両集合で充足）" if firing else ""
+        L.append(f"判定: 採用（最終戦の進捗改善として採用、踏破率・到達点の向上は未確認）。{gtxt}")
+        L.append(f"引用(採用): {CONDITIONS[1]} ほか 1〜6 すべて充足" + ("、前提 G" if firing else ""))
     elif res["verdict"] == "不採用":
         L.append(f"判定: 不採用（{res['reason']}）。")
         L.append(f"引用(不採用): {REJECT}")
@@ -248,6 +405,29 @@ def confirm_ok(n: int, confirm: dict, chosen: str):
     if n == 4:
         return d["Δwin"] >= 0
     return None
+
+
+def firing_from_dirs(args, cands_dev: list, *, have_confirm: bool) -> dict:
+    """Build the G-clause firing input from the LABEL=DIR panel dirs on the command line."""
+    def pairs(entries):
+        out = []
+        for e in entries:
+            label, sep, target = e.partition("=")
+            if sep:
+                out.append((label, Path(target)))
+        return out
+
+    dev = {}
+    for label, d in pairs(args.dev):
+        if label in cands_dev:
+            dev[label] = pair_attack_target_diff(Path(args.dev_base), d)
+    confirm = None
+    if have_confirm:
+        confirm = {}
+        for label, d in pairs(args.confirm):
+            if label in cands_dev:
+                confirm[label] = pair_attack_target_diff(Path(args.confirm_base), d)
+    return {"dev": dev, "confirm": confirm}
 
 
 def main() -> int:
@@ -289,7 +469,8 @@ def main() -> int:
             if any(r["_arm"] == x for r in confirm_trials):
                 confirm[x] = candidate_delta(confirm_trials, BASE_LABEL, x)
 
-    res = decide(dev, confirm, cands_dev)
+    res = decide(dev, confirm, cands_dev,
+                 firing=firing_from_dirs(args, cands_dev, have_confirm=bool(args.confirm_base)))
     print(format_report(res, cands_dev))
     return 0
 

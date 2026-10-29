@@ -1466,7 +1466,7 @@ def _choose(observation: dict, enemy_data: dict | None = None, simulations: int 
         best_block = max((card_value(action, "block") for action in defenses), default=0)
         # Partial block can still save a lethal turn; it need not absorb the whole hit.
         if (not urgent or best_block < remaining) and not (remaining >= hp and defense_can_survive):
-            return _tag_action(max(queen_focusable, key=lambda action: card_value(action, "damage")), "queen_minion_h3c")
+            return _tag_action(max(queen_focusable, key=lambda action: card_value(action, "damage")), ("queen_minion_h3c_amalgam" if focus_to_amalgam else "queen_minion_h3c_queen"))
 
     ovicopter = next((enemy for enemy in enemy_by_id.values() if enemy.get("id") == "MONSTER.OVICOPTER"), None)
     if lethal and ovicopter and not any(ovicopter in lethal_targets(action) for action in lethal):

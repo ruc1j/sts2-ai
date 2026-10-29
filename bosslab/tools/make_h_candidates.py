@@ -51,7 +51,8 @@ TAG_TOKENS = [
 ]
 
 
-def build(name: str, tag: str, condition: str, header: str, extra_constant: str | None) -> str:
+def build(name: str, tag: str, condition: str, header: str, extra_constant: str | None,
+          focus_flag: bool = False) -> str:
     src = text
     count = 0
 
@@ -82,9 +83,17 @@ def build(name: str, tag: str, condition: str, header: str, extra_constant: str 
         '    queen_minion_ids = (amalgam_ids if focus_to_amalgam else queen_ids) if queen_present else set()\n'
     )
     sub(OLD_MINION, new_minion, 1)
-    # tags renamed so the trace is distinguishable from base and queenfirst
+    # tags renamed so the trace is distinguishable from base and queenfirst. For the focus arms
+    # (H3a/H3c) the queen_minion short-circuit additionally records WHICH enemy it aimed at, so the
+    # special-rule state is explicit in the trace without pairing against base: a decision_source of
+    # "queen_minion_<tag>_queen" is a divergence from the amalgam-focused base (mirrors the firing_C
+    # target-diff in apply_hybrid_rule and the arming rate in act3_h3_firing_model.md).
     for old, tmpl in TAG_TOKENS:
-        sub(old, tmpl.format(TAG=tag), 1)
+        if focus_flag and old == '"queen_minion_direct"':
+            sub(old, '("queen_minion_' + tag + '_amalgam" if focus_to_amalgam else '
+                      '"queen_minion_' + tag + '_queen")', 1)
+        else:
+            sub(old, tmpl.format(TAG=tag), 1)
     # forced-kill priority follows the same focus decision
     new_focused = (
         '    # [' + tag.upper() + ' candidate] Force a lethal Amalgam kill only when this fight is the one\n'
@@ -231,14 +240,14 @@ H3B_CONSTANT = (
     'QUEENFIRST_H3_AMALGAM_HP = 150  # raised Amalgam-effhp ceiling (diagnostic vs H1=50)'
 )
 
-for fname, tag, cond, header, constant in [
-    ("official_agent_H1.py", "h1", H1_CONDITION, H1_HEADER, H1_CONSTANT),
-    ("official_agent_H2.py", "h2", H2_CONDITION, H2_HEADER, None),
-    ("official_agent_H3a.py", "h3a", H3A_CONDITION, H3A_HEADER, H3A_CONSTANT),
-    ("official_agent_H3b.py", "h3b", H3B_CONDITION, H3B_HEADER, H3B_CONSTANT),
-    ("official_agent_H3c.py", "h3c", H3C_CONDITION, H3C_HEADER, H3C_CONSTANT),
+for fname, tag, cond, header, constant, focus_flag in [
+    ("official_agent_H1.py", "h1", H1_CONDITION, H1_HEADER, H1_CONSTANT, False),
+    ("official_agent_H2.py", "h2", H2_CONDITION, H2_HEADER, None, False),
+    ("official_agent_H3a.py", "h3a", H3A_CONDITION, H3A_HEADER, H3A_CONSTANT, True),
+    ("official_agent_H3b.py", "h3b", H3B_CONDITION, H3B_HEADER, H3B_CONSTANT, False),
+    ("official_agent_H3c.py", "h3c", H3C_CONDITION, H3C_HEADER, H3C_CONSTANT, True),
 ]:
-    out = build(fname, tag, cond, header, constant)
+    out = build(fname, tag, cond, header, constant, focus_flag)
     path = OUT_DIR / fname
     path.write_text(out, encoding="utf-8")
     print(f"wrote {path} ({len(out.splitlines())} lines)")
