@@ -160,11 +160,55 @@ def _best_affordable_damage(hand: list, energy) -> int:
     return total
 
 
+def _turn_nonattack_energy(rs: list) -> int:
+    """Energy this turn spent on played Skill/Power cards (block-preferred proxy). Rows record the action taken."""
+    total = 0
+    for r in rs:
+        if r.get("type") != "card":
+            continue
+        idx = r.get("hand_index")
+        card = next((c for c in (r.get("hand") or []) if c.get("index") == idx), None)
+        if card and card.get("type") in ("Skill", "Power"):
+            cost = card.get("cost")
+            total += cost if isinstance(cost, int) and cost > 0 else 0
+    return total
+
+
+def earlier_room(rows: list, kill_turn) -> dict | None:
+    """On the turn before the kill, could the hand's max attack damage have finished the remaining Amalgam HP?
+
+    This asks only whether killing one turn earlier was damage-feasible (ignoring block/defense value), and
+    how much of that turn's energy went to block/utility instead of attacks — the raw material for an
+    attack-over-block judgment hypothesis, not a causal result.
+    """
+    if kill_turn is None or kill_turn < 2:
+        return None
+    turn_rows = defaultdict(list)
+    for r in rows:
+        turn_rows[r["turn"]].append(r)
+    rs = turn_rows.get(kill_turn - 1) or []
+    if not rs:
+        return None
+    start_am = _amalgam_hp(rs[0])
+    if start_am is None:
+        return None
+    end_am = _amalgam_hp(rs[-1])
+    end_am = 0 if end_am is None else end_am
+    energy = (rs[0].get("player") or {}).get("energy")
+    if not isinstance(energy, int):
+        energy = (rs[0].get("player") or {}).get("max_energy") or 0
+    playable = _best_affordable_damage(rs[0].get("hand") or [], energy)
+    return {"prev_turn": kill_turn - 1, "amalgam_remaining": start_am, "max_attack_damage": playable,
+            "dealt_that_turn": start_am - end_am, "room_to_kill_earlier": playable >= start_am,
+            "nonattack_energy": _turn_nonattack_energy(rs)}
+
+
 def analyze_trial(rows: list) -> dict:
     k = kill_info(rows)
     d = deck_composition(rows)
     m = missed_kills(rows)
     k.update(d); k.update(m)
+    k["earlier"] = earlier_room(rows, k["kill_turn"]) if k.get("killed") else None
     return k
 
 
@@ -229,6 +273,36 @@ def render(dirs: list[Path], trials: list[dict]) -> str:
           "- 意味: 手札に Amalgam を仕留めうる攻撃ダメージがあったのに、そのターンで仕留め切れていない。"
           "block/overkill を引いていない近似なので、実損はこの以下。取りこぼしが大きい組ほど撃破が遅いなら、"
           "「Amalgam を早く倒す」余地は、殴り先を変えずとも手札の出し方（複数回撃ち・取りこぼし）にありうる。", ""]
+
+    # near-death kills: was finishing the Amalgam one turn earlier damage-feasible?
+    near = [t for t in killed if isinstance(t["hp_at_kill"], int) and t["hp_at_kill"] <= 20 and t.get("earlier")]
+    L += ["## 瀕死で倒した組（撃破ターン開始時の体力 20 以下）で、1 ターン早く倒す余地があったか", "",
+          "| dir | spec | 撃破ターン | 体力 | 前ターンの Amalgam 残り | 前ターンの出せた最大攻撃 | 前ターン実与 | "
+          "残り体力を攻撃で潰せたか | 前ターンの非攻撃(防御)に割いたエネルギー |", "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"]
+    for t in near:
+        e = t["earlier"]
+        L.append(f"| {Path(t['_dir']).name} | {t['_spec']} | {t['kill_turn']} | {t['hp_at_kill']} | "
+                 f"{e['amalgam_remaining']} | {e['max_attack_damage']} | {e['dealt_that_turn']} | "
+                 f"{'Yes' if e['room_to_kill_earlier'] else 'No'} | {e['nonattack_energy']} |")
+    room_ct = sum(1 for t in near if t["earlier"]["room_to_kill_earlier"])
+    spent_ct = sum(1 for t in near if t["earlier"]["room_to_kill_earlier"] and t["earlier"]["nonattack_energy"] > 0)
+    exceeded = sum(1 for t in near if t["earlier"]["dealt_that_turn"] > t["earlier"]["max_attack_damage"])
+    L += ["", f"- 瀕死撃破 {len(near)} 組。前ターンに Amalgam 残り体力を攻撃だけで潰せた可能性が模型上ある組: {room_ct} 組。そのうち前ターンで防御・支援にエネルギーを割っていた組: {spent_ct} 組。",
+          f"- 前ターン実与ダメージが模型の最大攻撃ダメージを超えた組が {exceeded}/{len(near)}。出せた最大攻撃は hand 起点・block/overkill・複数回撃ち・途中の補充を無視すると下限なので、実与がそれを上回る組は Amalgam にすでに全力で攻撃を割いていたことを意味する（模型が火力を過小評価している）。",
+          f"- 候補の仮説と実測の対応: base の Amalgam 集中規則 `queen_minion_direct` は Amalgam を削りつつ防御も優先する。瀕死撃破の多くで前ターンに Amalgam へ最大級の実与ダメージを入れており、ブロックより攻撃を優先して 1 ターン短縮できた明確な余地は見つからなかった（模型上の余地は {room_ct} 組のみで、それも防御への割り込みは {spent_ct}）。瀕死の要因は Amalgam 残りの集中攻撃や Queen の圧による被弾（耐久）で、minion への攻撃不足ではない。model は火力の下限なので防御の取り分と実損は次の実機検証で確かめる（因果は未確認）。", ""]
+
+    # conclusion (kept in-source so regeneration reproduces it)
+    L += ["## 「Amalgam をより早く倒す」は次 goal 候補として成立つか（1 段落、候補の仮説）", "",
+          "48 組の実測から、Queen 戦闘の意思決定を変えて Amalgam を早く倒す余地は薄い。倒せた組と倒せなかった組で、"
+          "攻撃カード数と開始エネルギーはほぼ変わらず、同じ手札から出せる攻撃ダメージもほぼ取り逃がしていない（上 c）。"
+          "dev5 で H3a/H3c（Queen へ殴り先を変える規則）が中性〜マイナスだった（`act3_dev5_h3a_analysis.md`）のと同じ"
+          "方向で、殴り先を変えず火力を引き出す余地は小さい。差がともなっていたのは Skill（主に Block）カード数と開始"
+          "強化の有無で、倒せなさは防御不足で体力が尽きる事態と対応する（相関で因果は主張しない）。Amalgam を早く倒す"
+          "余地があるとすれば、Queen 戦闘の出し方ではなく、防御を持たせる・火力を足すデッキを途中で手に入れる側にある。"
+          "lab は boss 入場固定でデッキを作れないので、この余地は Act 3 の報酬選択・昇格（フル run）で作る話で、固定入場"
+          "1 戦闘の lab では作り出せない。見込みは Queen 戦闘内の方針変更としては低い。次の goal にするならフル run "
+          "パネル（`next_goal_candidates.md` の現 3 相当）で測るべきで、必要な実機時間は大（run 全体を多数 seed で完走）。"
+          "lab の配対代理では判定材料は出ない。", ""]
     return "\n".join(L)
 
 

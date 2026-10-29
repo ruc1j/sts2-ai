@@ -81,5 +81,42 @@ class MissedKillsTest(unittest.TestCase):
         self.assertFalse(T.missed_kills(rows)["had_missed"])  # 18 < 199 remaining, never a lethal opportunity
 
 
+class EarlierRoomTest(unittest.TestCase):
+    def test_flags_a_prior_turn_where_attack_could_have_finished_the_remaining_hp(self):
+        # Amalgam killed on turn 3; on turn 2 it had 50 HP and the hand held a 60-damage attack (energy 2),
+        # but a Skill (block) was also played for 1 energy -> attack-over-block had room to end it a turn sooner.
+        hand2 = [{"index": 0, "id": "CARD.A", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 60}]},
+                 {"index": 1, "id": "CARD.S", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 5}]}]
+        skill_only = [{"index": 0, "id": "CARD.S", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 5}]}]
+        # trace rows are sequential states: row0 is before playing the Attack, row1 after, then the block is played.
+        rows = [{**_row(2, ahp=50, ph=90, energy=2, hand=hand2), "hand_index": 0},
+                {**_row(2, ahp=30, ph=90, energy=1, hand=skill_only), "hand_index": 0}]
+        e = T.earlier_room(rows, kill_turn=3)
+        self.assertTrue(e["room_to_kill_earlier"])         # 60 playable (from start-of-turn hand) >= 50 remaining
+        self.assertEqual(e["amalgam_remaining"], 50)
+        self.assertEqual(e["dealt_that_turn"], 20)
+        self.assertEqual(e["nonattack_energy"], 1)          # the block Skill was played (once)
+
+    def test_no_room_when_prior_hand_damage_fell_short(self):
+        hand = [{"index": 0, "id": "CARD.SMALL", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 18}]}]
+        rows = [{**_row(2, ahp=199, ph=90, energy=3, hand=hand), "hand_index": 0},
+                {**_row(2, ahp=181, ph=90, energy=2, hand=hand), "hand_index": 0}]
+        self.assertFalse(T.earlier_room(rows, kill_turn=3)["room_to_kill_earlier"])  # 18 < 199 remaining
+
+    def test_returns_none_when_no_prior_turn(self):
+        rows = [_row(1, ahp=50)]
+        self.assertIsNone(T.earlier_room(rows, kill_turn=1))
+
+
+class NonattackEnergyTest(unittest.TestCase):
+    def test_counts_only_skill_and_power_plays_for_that_turn(self):
+        hand = [{"index": 0, "id": "CARD.SK", "type": "Skill", "cost": 1, "vars": [{"id": "Block", "value": 5}]},
+                {"index": 1, "id": "CARD.ATK", "type": "Attack", "cost": 1, "vars": [{"id": "Damage", "value": 9}]}]
+        rows = [{**_row(1, ahp=100, ph=90, energy=3, hand=hand), "hand_index": 0},   # played the Skill (1 energy)
+                {**_row(1, ahp=91, ph=90, energy=2, hand=hand), "hand_index": 1},    # played the Attack (ignored)
+                {**_row(1, ahp=91, ph=90, energy=2, hand=hand), "type": "end_turn"}]  # end turn (ignored)
+        self.assertEqual(T._turn_nonattack_energy(rows), 1)
+
+
 if __name__ == "__main__":
     unittest.main()
