@@ -50,3 +50,25 @@ python3 bosslab/tools/dev5_report.py \
 各 arm について (a) 全ターン発火と発火ターン、(b) Queen削りの配対差と符号検定 p、(c) 総火力/ターン と生存ターン、
 (d) 4693f2e のゲート（Δshave>0・Δfp≥0・Δwin≥0 と前提 G）が出る。run dir が途中で止まっていても、欠けた arm は
 「実行データ無し」として扱い、落ちない。
+
+## dev5 実測後の見直し（2026-10-29、H3a 結果）
+
+H3a（N=2）が走った。発火 11/12、Queen 削り 候補優5/base優5/同値2（Δshave = 0）、総火力/ターン 42.6→37.6、
+勝ち 2→1。戦闘別のターン照合は `bosslab/results/act3_dev5_h3a_analysis.md`。
+
+- H3a の敗因は「Queen を早く狙いすぎ、Amalgam を倒し切る前に手を引いた」こと。base が強いのは Amalgam を
+  殴り切って倒してから Queen へ移る点で、base は Amalgam を倒した戦闘でその攻撃を止めて体力を保っている。
+- 配対 12 組で、cand（H3a）が Amalgam を倒せたのは 1 組だけ（両者が勝った 4c69c357dcda）。base は 8 組で倒した。
+  base の勝ち 2 組は、base が Amalgam を倒してから Queen を削った組。H3a が削ったのに倒せなかった 11 組で、
+  残った Amalgam が毎ターン 22〜63 を刻み cand の体力を削った（詳細は上の doc）。
+- N=1 の是非: 妥当でない。N=1 は Amalgam をより早く放置するので、上の敗因を強める方向。実測で N=2 でも
+  cand の Amalgam 撃破は 1/12 なので、N=1 では 0 に近づく。H3a 形を残すなら N を上げる（N=3、Amalgam を
+  長く殴る）側のほうがマシ。
+- 妥当な方向は Amalgam 撃破の可否で Queen へ切る側（H3c 系）。追加候補 C（H3c danger 閾値 0.3）も、実質
+  「Queen へ早く切る」側なので今回の実測と逆方向。C の見直し:
+  - B（H3c 0.5）が dev5 で Amalgam を倒せる見込みのあるターン以降に Queen へ移り、`Δshave > 0` を満たして
+    Δfp/Δwin を落とすなら、その arm を confirm5_swap へ進める。
+  - B が Amalgam を倒す前に Queen へ切って Δwin を落とすなら、閾値を緩める（0.3、C）ではなく逆に厳しくする
+    （Queen へ切る条件を「Amalgam を倒せる/倒した」に寄せる）方向で試す。C（0.3）は上げない。
+  - いずれも dev5 側の測定で、H3c の実測（走行中）を待ってから決める。次の測定は `dev5_report.py` で H3c を
+    base と並べて (a)〜(d) を読む（run dir 名は dev5_swap ではなく dev5）。
