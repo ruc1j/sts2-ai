@@ -256,6 +256,7 @@ public static class BossLab
         {
             ReapplyRecordedHp(player, trial);
             RestoreRelicCounters(player, trial);
+            RestoreRecordedEntryState(player, trial);  // gated: default off (see RestoreEntryStateEnabled)
         };
         var bridgeTask = CombatBridge.Run(CancellationToken.None);
         LabResult fightResult;
@@ -599,6 +600,153 @@ public static class BossLab
     }
 
     /// <summary>
+    /// Toggle for the enemy-HP / pile write-back (see <see cref="RestoreRecordedEntryState">). Off unless
+    /// the plan sets <c>restore_entry_state</c> on the trial, or the game was launched with the
+    /// <c>STS2_BOSSLAB_RESTORE_ENTRY_STATE=1</c> environment variable. Default OFF: the confirm measurement
+    /// of this run must stay on the old behaviour, so an un-flagged plan is byte-identical to before.
+    /// </summary>
+    private static bool RestoreEntryStateEnabled(LabTrial trial)
+    {
+        if (trial.RestoreEntryState)
+            return true;
+        string? v = System.Environment.GetEnvironmentVariable("STS2_BOSSLAB_RESTORE_ENTRY_STATE");
+        return v is not null && (v == "1" || v.Equals("true", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Write the recorded boss-entry combat state back over what the combat-start hooks just produced, at
+    /// the agent's first decision - the same hook point as <see cref="ReapplyRecordedHp"> and
+    /// <see cref="RestoreRelicCounters">, so it runs once the boss-entry hooks (BeforeCombatStart heals,
+    /// RELIC.FORGOTTEN_SOUL's exhausted-card damage to a random enemy, RELIC.BLESSED_ANTLER's turn-1 Dazed
+    /// into the hand) have already fired. Gated off by default (see <see cref="RestoreEntryStateEnabled">);
+    /// the fidelity divergence these two relics caused is analysed in
+    /// bosslab/results/act3_fid5_mismatch_causes.md, and the exclusion path (dropping the spec) is the
+    /// current fix. This hook is the alternative fix - re-assert the recorded state instead of excluding -
+    /// kept behind a flag until it is validated on those two specs on the real game.
+    ///
+    /// Covers the two things those entry hooks mutate that the rest of BossLab does not already restore:
+    /// the enemy creatures' HP (ForgottenSoul burns one random enemy) and the composition and draw order
+    /// of the combat piles (BlessedAntler / Crossbow-style relics put a random card into the opening hand).
+    /// Piles are rewritten with silent add / remove so a relocated card does not re-trigger its own hooks.
+    /// </summary>
+    private static void RestoreRecordedEntryState(Player player, LabTrial trial)
+    {
+        if (!RestoreEntryStateEnabled(trial))
+            return;
+        if (trial.Enemies.Count == 0 && trial.Piles.Count == 0)
+            return;
+        RestoreRecordedEnemyHp(player, trial);
+        RestoreRecordedPiles(player, trial);
+    }
+
+    /// <summary>
+    /// Re-assert each recorded enemy's HP onto the live combat creature, matched by monster id (the
+    /// <c>ModelId</c> the bridge reports, normalised through <see cref="Entry">). Uses the same
+    /// <c>SetMaxHpInternal</c> / <c>SetCurrentHpInternal</c> as the player-HP path so the write lands after
+    /// the boss-entry heals instead of being pushed back above the recorded value. An enemy with no match
+    /// is skipped, not fatal: a plan may predate a form transition or a minion the recorded run had not
+    /// yet spawned at first observation.
+    /// </summary>
+    private static void RestoreRecordedEnemyHp(Player player, LabTrial trial)
+    {
+        if (trial.Enemies.Count == 0)
+            return;
+        var state = CombatManager.Instance.DebugOnlyGetState();
+        if (state is null)
+            return;
+        var applied = new List<string>();
+        foreach (LabRecordedEnemy rec in trial.Enemies)
+        {
+            var enemy = state.Enemies.FirstOrDefault(e =>
+                Entry(e.ModelId.ToString(), "MONSTER") == Entry(rec.Id, "MONSTER"));
+            if (enemy is null)
+                continue;
+            var creature = state.GetCreature(enemy.CombatId);
+            if (creature is null)
+                continue;
+            int maxHp = rec.MaxHp > 0 ? rec.MaxHp : rec.Hp;
+            if (creature.MaxHp == maxHp && creature.CurrentHp == rec.Hp)
+                continue;
+            creature.SetMaxHpInternal(maxHp);
+            creature.SetCurrentHpInternal(rec.Hp);
+            applied.Add($"{Entry(rec.Id, "MONSTER")}={rec.Hp}/{maxHp}");
+        }
+        if (applied.Count > 0)
+            AutoSlayLog.Info($"[BossLab] re-asserted recorded enemy hp after combat-start hooks: " +
+                $"{string.Join(", ", applied)}");
+    }
+
+    /// <summary>
+    /// Rebuild the combat piles (draw / hand / discard / exhaust) to the recorded entry layout, so the
+    /// opening hand and draw order match the recorded run instead of whatever the relic entry hooks
+    /// shuffled or injected. Every card instance already in these piles is pulled out once, the piles are
+    /// cleared silently, then each recorded pile is refilled in order with a still-unused instance that has
+    /// the same id / upgrade / enchantment - matching by identity key, then reference, so duplicate
+    /// copies are not confused. Instances no recorded pile claims go back on top of the draw pile in their
+    /// original relative order. AddInternal / RemoveInternal with <c>silent: true</c> bypass the card's own
+    /// hooks, so a moved card neither re-enters the hand twice nor re-fires an on-draw effect.
+    /// </summary>
+    private static void RestoreRecordedPiles(Player player, LabTrial trial)
+    {
+        if (trial.Piles.Count == 0)
+            return;
+        var live = new[] { PileType.Draw, PileType.Hand, PileType.Discard, PileType.Exhaust };
+        var pool = live.SelectMany(pt => pt.GetPile(player).Cards.ToList()).ToList();  // instances, not copies
+        foreach (var pt in live)
+            pt.GetPile(player).Clear(silent: true);
+        var used = new HashSet<CardModel>(ReferenceEqualityComparer.Instance);
+        var log = new List<string>();
+        int unmatched = 0;
+        foreach (LabRecordedPile rec in trial.Piles)
+        {
+            if (!Enum.TryParse(rec.PileType, ignoreCase: true, out PileType pt) || !live.Contains(pt))
+            {
+                AutoSlayLog.Error($"[BossLab] recorded pile type '{rec.PileType}' is not a combat pile, " +
+                    "skipping it");
+                continue;
+            }
+            var dest = pt.GetPile(player);
+            foreach (LabCard card in rec.Cards)
+            {
+                var inst = pool.FirstOrDefault(c => !used.Contains(c) && CardKey(c) == RecKey(card));
+                if (inst is null)
+                {
+                    unmatched++;  // recorded card has no live instance (plan / deck mismatch)
+                    continue;
+                }
+                dest.AddInternal(inst, -1, silent: true);  // append: preserves recorded order
+                used.Add(inst);
+            }
+            log.Add($"{pt}:{rec.Cards.Count}");
+        }
+        foreach (var inst in pool)  // any card no recorded pile claimed: back to draw top, original order
+        {
+            if (used.Add(inst))
+                PileType.Draw.GetPile(player).AddInternal(inst, 0, silent: true);
+        }
+        AutoSlayLog.Info($"[BossLab] rebuilt combat piles to the recorded entry ({string.Join(", ", log)})" +
+            (unmatched > 0 ? $"; {unmatched} recorded card(s) had no live instance" : "") +
+            $"; draw top now {PileType.Draw.GetPile(player).Cards.Count}, " +
+            $"hand {PileType.Hand.GetPile(player).Cards.Count}");
+    }
+
+    /// <summary>Identity of a live card: normalised id, upgrade level, enchantment id and amount.</summary>
+    private static (string Id, int Upgrade, string Ench, int EnchAmount) CardKey(CardModel card)
+    {
+        var ench = card.Enchantment;
+        return (Entry(card.Id.ToString(), "CARD"), card.CurrentUpgradeLevel,
+                ench is null ? "" : Entry(ench.Id.ToString(), "ENCHANTMENT"), ench?.Amount ?? 1);
+    }
+
+    /// <summary>The same identity for a recorded plan card, in <see cref="CardKey">'s normalised form.</summary>
+    private static (string Id, int Upgrade, string Ench, int EnchAmount) RecKey(LabCard card)
+    {
+        return (Entry(card.Id, "CARD"), card.Upgrade,
+                string.IsNullOrEmpty(card.Enchantment) ? "" : Entry(card.Enchantment, "ENCHANTMENT"),
+                card.EnchantmentAmount > 0 ? card.EnchantmentAmount : 1);
+    }
+
+    /// <summary>
     /// Inject the player powers the recorded entry shows but the injected relic list does not
     /// produce by itself. Run after EnterRoomDebug so the relics' own `AfterRoomEntered` grants have
     /// already landed and are not doubled; run before the bridge's first observation so the agent
@@ -755,6 +903,20 @@ public class LabTrial
     /// specs from a plan, not by injection.
     /// </summary>
     [JsonPropertyName("powers")] public List<LabPower> Powers { get; set; } = new();
+
+    /// <summary>
+    /// Opt-in flag to re-assert the recorded enemy HP and combat-pile layout at the agent's first
+    /// decision (BossLab.RestoreRecordedEntryState). Off by default so the confirm measurement of this run
+    /// keeps the existing behaviour; the global <c>STS2_BOSSLAB_RESTORE_ENTRY_STATE</c> environment
+    /// variable also enables it without editing a plan.
+    /// </summary>
+    [JsonPropertyName("restore_entry_state")] public bool RestoreEntryState { get; set; }
+
+    /// <summary>Recorded enemy HP to write back, keyed the same way the bridge emits enemy ids.</summary>
+    [JsonPropertyName("enemies")] public List<LabRecordedEnemy> Enemies { get; set; } = new();
+
+    /// <summary>Recorded combat piles (draw / hand / discard / exhaust) to rebuild, in draw order.</summary>
+    [JsonPropertyName("piles")] public List<LabRecordedPile> Piles { get; set; } = new();
 }
 
 public class LabCard
@@ -774,6 +936,28 @@ public class LabPower
 {
     [JsonPropertyName("id")] public string Id { get; set; } = "";
     [JsonPropertyName("amount")] public int Amount { get; set; }
+}
+
+/// <summary>
+/// A recorded enemy's HP at boss entry, to re-assert after the combat-start hooks run (see
+/// BossLab.RestoreRecordedEnemyHp). <c>id</c> uses the same <c>MONSTER.NAME</c> form the bridge reports.
+/// </summary>
+public class LabRecordedEnemy
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = "";
+    [JsonPropertyName("hp")] public int Hp { get; set; }
+    [JsonPropertyName("max_hp")] public int MaxHp { get; set; }
+}
+
+/// <summary>
+/// One recorded combat pile and the cards it held at boss entry, in pile order (see
+/// BossLab.RestoreRecordedPiles). <c>pile_type</c> is "draw" / "hand" / "discard" / "exhaust"; the cards
+/// reuse <see cref="LabCard">'s id / upgrade / enchantment fields so identity matching stays consistent
+/// with the deck rebuild.</summary>
+public class LabRecordedPile
+{
+    [JsonPropertyName("pile_type")] public string PileType { get; set; } = "";
+    [JsonPropertyName("cards")] public List<LabCard> Cards { get; set; } = new();
 }
 
 public class LabLine
