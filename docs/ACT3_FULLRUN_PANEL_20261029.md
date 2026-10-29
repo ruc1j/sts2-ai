@@ -60,3 +60,11 @@ Skill枚数が多い層ほど削りと撃破が多く、入場HPでは差が見�
 - Queen削り割合は、Queen戦の最後に観測したQueen HPから求めた下限である。Queenが複数形態を持つ場合の扱いは `docs/EVALUATION.md` に従う。
 - 本数の見積もりは、パネル全体の到達率が将来も変わらないという仮定に基づく。
 - dshがtraceから別の方法で数え直した結果（`bosslab/results/act3_fullrun_inventory_check.md`、bosslab 83e5b36）は、Act 3入場45・Queen戦33・踏破1で完全に一致した。使用済みseedは801個（`act3_fullrun_used_seeds.txt`）で、第2段階の新規seedはこの外から選ぶ。
+
+## 第2段階の事前登録（2026-10-29）
+
+- 目的: base（commit 775f366と方針コードが同一のmain、arm=control）で、新規136 seedをAct 3まで完走させる（`-StopAfterAct 3`）。
+- seed規則: `sha256("act3-fullrun-panel-v1-{i}")` の先頭10桁（大文字）を、i=0から順に、使用済み801 seedと既出を除いて136個採る。結果を条件にしない。seed表は `data/act3fullrun_seeds.txt`。
+- 実行: `data/run_ctrl_accum.sh <deadline> <seeds> astra_ctrl_v24`。1本ずつ、異常（タイムアウト、trace欠落、方針コードの差分）で停止する。
+- 日時: 2026-10-29 開始、予定約10.6時間（136本×約281秒）。deadlineは開始から11時間。
+- 主信号: Act 3踏破率（補助）、Queen削り割合、Amalgam撃破の有無、死亡ターン。既存の `astra_ctrl_v23`（Queen戦33 run）と同条件なので、合算して解析する。ただし合算前に、2群の分布が大きく違わないことを確認する。
