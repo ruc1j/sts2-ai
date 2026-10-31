@@ -1,0 +1,333 @@
+{
+ "mode": "bosslab",
+ "offset_start": 0,
+ "encounters": [
+  "ENCOUNTER.QUEEN_BOSS"
+ ],
+ "character": "CHARACTER.IRONCLAD",
+ "arms": [
+  "base"
+ ],
+ "specs_selected": 12,
+ "trials_per_arm": 1,
+ "relic_entry_effects": {
+  "defer_relics": [
+   "RELIC.STONE_CRACKER"
+  ],
+  "flag_relics": [
+   "RELIC.BLESSED_ANTLER"
+  ],
+  "trials_with_defer": 2,
+  "trials_with_flag": 1
+ },
+ "trials": [
+  {
+   "trial_index": 0,
+   "trial_id": "e030d2f11e5f|base|0",
+   "arm": "base",
+   "mutation_notes": [],
+   "spec_id": "e030d2f11e5f",
+   "encounter": "ENCOUNTER.QUEEN_BOSS",
+   "character": "CHARACTER.IRONCLAD",
+   "run_seed": "2872AB854A",
+   "rng_offset": 0,
+   "act_index": 2,
+   "act_floor": 15,
+   "ascension": 0,
+   "history_per_act": [
+    17,
+    16,
+    14
+   ],
+   "hp": 77,
+   "max_hp": 101,
+   "deck": [
+    {
+     "id": "CARD.BASH",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.BLOODLETTING",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.COLOSSUS",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DAZED",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DAZED",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DAZED",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.DEFEND_IRONCLAD",
+     "upgrade": 0,
+     "enchantment": "ENCHANTMENT.NIMBLE",
+     "enchantment_amount": 2
+    },
+    {
+     "id": "CARD.EXTERMINATE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FEEL_NO_PAIN",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.FIEND_FIRE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.INFERNAL_BLADE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.PERFECTED_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.POMMEL_STRIKE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.RUPTURE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.SETUP_STRIKE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.STRIKE_IRONCLAD",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TAUNT",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 0
+    },
+    {
+     "id": "CARD.TREMBLE",
+     "upgrade": 1
+    },
+    {
+     "id": "CARD.TWIN_STRIKE",
+     "upgrade": 0
+    }
+   ],
+   "relics": [
+    "RELIC.BURNING_BLOOD",
+    "RELIC.SCROLL_BOXES",
+    "RELIC.ORICHALCUM",
+    "RELIC.RED_MASK",
+    "RELIC.LUCKY_FYSH",
+    "RELIC.PAELS_FLESH",
+    "RELIC.GREMLIN_HORN",
+    "RELIC.WAR_PAINT",
+    "RELIC.BLESSED_ANTLER",
+    "RELIC.HORN_CLEAT",
+    "RELIC.PETRIFIED_TOAD",
+    "RELIC.PARRYING_SHIELD",
+    "RELIC.BIG_MUSHROOM"
+   ],
+   "defer_relics": [],
+   "relic_counters": {},
+   "flag_relics": [
+    "RELIC.BLESSED_ANTLER"
+   ],
+   "potions": [
+    "POTION.RADIANT_TINCTURE",
+    "POTION.POTION_SHAPED_ROCK",
+    "POTION.FIRE_POTION"
+   ],
+   "powers": [],
+   "recorded": {
+    "won": false,
+    "traces": [
+     "astra_eval_v13_candidate_2872AB854A_agent.jsonl"
+    ]
+   },
+   "restore_entry_state": true,
+   "enemies": [
+    {
+     "id": "MONSTER.TORCH_HEAD_AMALGAM",
+     "hp": 199,
+     "max_hp": 199
+    },
+    {
+     "id": "MONSTER.QUEEN",
+     "hp": 400,
+     "max_hp": 400
+    }
+   ],
+   "piles": [
+    {
+     "pile_type": "hand",
+     "cards": [
+      {
+       "id": "CARD.FIEND_FIRE",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.DAZED",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.POMMEL_STRIKE",
+       "upgrade": 0
+      }
+     ]
+    },
+    {
+     "pile_type": "draw",
+     "cards": [
+      {
+       "id": "CARD.STRIKE_IRONCLAD",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.STRIKE_IRONCLAD",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.STRIKE_IRONCLAD",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.TREMBLE",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.DAZED",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.TREMBLE",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.PERFECTED_STRIKE",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.TAUNT",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.RUPTURE",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.TAUNT",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.DEFEND_IRONCLAD",
+       "upgrade": 0,
+       "enchantment": "ENCHANTMENT.NIMBLE",
+       "enchantment_amount": 2
+      },
+      {
+       "id": "CARD.TWIN_STRIKE",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.RUPTURE",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.STRIKE_IRONCLAD",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.STRIKE_IRONCLAD",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.SETUP_STRIKE",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.FEEL_NO_PAIN",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.COLOSSUS",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.BLOODLETTING",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.INFERNAL_BLADE",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.POMMEL_STRIKE",
+       "upgrade": 1
+      },
+      {
+       "id": "CARD.DAZED",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.EXTERMINATE",
+       "upgrade": 0
+      },
+      {
+       "id": "CARD.BASH",
+       "upgrade": 1
+      }
+     ]
+    },
+    {
+     "pile_type": "discard",
+     "cards": []
+    },
+    {
+     "pile_type": "exhaust",
+     "cards": []
+    }
+   ]
+  }
+ ]
+}
