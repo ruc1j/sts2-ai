@@ -682,8 +682,8 @@ public static class BossLab
     /// shuffled or injected. Every card instance already in these piles is pulled out once, the piles are
     /// cleared silently, then each recorded pile is refilled in order with a still-unused instance that has
     /// the same id / upgrade / enchantment - matching by identity key, then reference, so duplicate
-    /// copies are not confused. Instances no recorded pile claims go back on top of the draw pile in their
-    /// original relative order. AddInternal / RemoveInternal with <c>silent: true</c> bypass the card's own
+    /// copies are not confused. Instances no recorded pile claims are dropped when every recorded card was matched
+    /// (hook-added extras), otherwise they go back on top of the draw pile in their original relative order. AddInternal / RemoveInternal with <c>silent: true</c> bypass the card's own
     /// hooks, so a moved card neither re-enters the hand twice nor re-fires an on-draw effect.
     /// </summary>
     private static void RestoreRecordedPiles(Player player, LabTrial trial)
@@ -719,13 +719,23 @@ public static class BossLab
             }
             log.Add($"{pt}:{rec.Cards.Count}");
         }
-        foreach (var inst in pool)  // any card no recorded pile claimed: back to draw top, original order
+        // Every recorded card found its live instance, so the record is complete: an instance still unclaimed
+        // was added by an entry hook (BLESSED_ANTLER's Dazed) and is not in the recorded run's piles. Drop
+        // it. When a recorded card had no instance the plan and deck disagree, so keep the old behaviour of
+        // returning the leftovers to the draw top rather than guessing which are stray.
+        int dropped = 0;
+        foreach (var inst in pool)  // any card no recorded pile claimed
         {
-            if (used.Add(inst))
-                PileType.Draw.GetPile(player).AddInternal(inst, 0, silent: true);
+            if (!used.Add(inst))
+                continue;
+            if (unmatched == 0)
+                dropped++;
+            else
+                PileType.Draw.GetPile(player).AddInternal(inst, 0, silent: true);  // original relative order
         }
         AutoSlayLog.Info($"[BossLab] rebuilt combat piles to the recorded entry ({string.Join(", ", log)})" +
             (unmatched > 0 ? $"; {unmatched} recorded card(s) had no live instance" : "") +
+            (dropped > 0 ? $"; dropped {dropped} unrecorded hook-added card(s)" : "") +
             $"; draw top now {PileType.Draw.GetPile(player).Cards.Count}, " +
             $"hand {PileType.Hand.GetPile(player).Cards.Count}");
     }
