@@ -76,6 +76,21 @@ def card_view_for_trial(card: dict) -> dict:
     return out
 
 
+PILE_TYPES = (("hand", "hand"), ("draw_pile", "draw"), ("discard_pile", "discard"), ("exhaust_pile", "exhaust"))
+
+
+def entry_state_for_trial(spec: dict) -> dict:
+    """Recorded enemy HP and combat piles for BossLab.RestoreRecordedEntryState (opt-in per plan)."""
+    return {
+        "restore_entry_state": True,
+        "enemies": [{"id": e["id"], "hp": e["hp"], "max_hp": e.get("max_hp") or e["hp"]}
+                    for e in spec["enemies"]],
+        "piles": [{"pile_type": pile_type,
+                   "cards": [card_view_for_trial(card) for card in spec["piles"][key]]}
+                  for key, pile_type in PILE_TYPES],
+    }
+
+
 def apply_arm(deck: list[dict], edits: list[tuple[str, str, int]]) -> tuple[list[dict], list[str]]:
     notes = []
     out = list(deck)
@@ -137,6 +152,9 @@ def main() -> int:
                         help="one-line provenance of how the --spec-ids list was chosen; written to "
                              "the md as the selection criterion (EVALUATION.md traceability)")
     parser.add_argument("--character", default=None, help="override the character id (default: from specs)")
+    parser.add_argument("--restore-entry-state", dest="restore_entry_state", action="store_true",
+                        help="emit the recorded enemy HP and combat piles per trial and switch on the "
+                             "boss-entry write-back in BossLab.cs (default off: the plan stays byte-identical)")
     args = parser.parse_args()
 
     arms = [parse_arm(text) for text in (args.arms or ["base"])]
@@ -264,6 +282,8 @@ def main() -> int:
                         "traces": [source["trace"] for source in spec["sources"]],
                     },
                 }
+                if args.restore_entry_state:
+                    trial.update(entry_state_for_trial(spec))
                 trials.append(trial)
 
     deferred_relics = sorted({relic for trial in trials for relic in trial["defer_relics"]})

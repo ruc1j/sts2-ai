@@ -134,6 +134,22 @@ class BossLabPlanTest(unittest.TestCase):
         # Only the leftover power is injected; Strength 3 comes from the injected relic list itself.
         self.assertEqual(trial["powers"], [{"id": "POWER.RAGE_POWER", "amount": 5}])
 
+    def test_restore_entry_state_is_opt_in_and_carries_enemies_and_piles(self) -> None:
+        spec = dict(ACT3_SPEC)
+        spec["enemies"] = [{"id": "MONSTER.QUEEN", "hp": 400, "max_hp": 400}]
+        base_args = ["--arm", "base", "--max-specs", "1", "--trials-per-arm", "1"]
+        plain, _ = run_tool([spec], base_args)
+        for key in ("restore_entry_state", "enemies", "piles"):
+            self.assertNotIn(key, plain["trials"][0])
+        plan, _ = run_tool([spec], base_args + ["--restore-entry-state"])
+        trial = plan["trials"][0]
+        self.assertTrue(trial["restore_entry_state"])
+        self.assertEqual(trial["enemies"], [{"id": "MONSTER.QUEEN", "hp": 400, "max_hp": 400}])
+        self.assertEqual([p["pile_type"] for p in trial["piles"]], ["hand", "draw", "discard", "exhaust"])
+        # Only the entry-state keys differ from the plain plan.
+        extra = {"restore_entry_state", "enemies", "piles"}
+        self.assertEqual({k: v for k, v in trial.items() if k not in extra}, plain["trials"][0])
+
     def test_unresolved_spec_is_dropped_without_the_flag(self) -> None:
         blocked = dict(ACT3_SPEC)
         blocked["unresolved"] = ["relic_counters"]
