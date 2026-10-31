@@ -1,0 +1,11 @@
+killed 34 not 25
+Amalgam killed at turn 34 (6.0, 6, 7)
+player HP at that point 34 (22.5, 15, 34)
+Queen HP at that point 34 (386.5, 365, 400)
+post-kill turns survived 34 (2.0, 0, 3)
+post-kill Queen dmg/turn (≥1 turn) 23 (35.3, 28.0, 44.3)
+post-kill HP loss/turn 23 (7.3, 4.7, 14.3)
+required Queen dmg/turn to have killed within observed window (125.0, 98.7, 354.0)
+not-killed: turns (6, 5, 6) amalgam hp at end (68, 49, 85) queen hp at end (391, 367, 400)
+total dmg/turn (avg over turns observed) (31.1, 25.2, 36.6)
+{1: (59, 45.0), 2: (59, 42.4), 3: (57, 32.3), 4: (53, 33.9), 5: (47, 35.8), 6: (33, 34.2), 7: (26, 30.3), 8: (16, 34.3)}

@@ -1,0 +1,14 @@
+Act3 entrants v23                  runs= 45 Block offered= 367 taken= 168 (45.8%) other=146 skip=53
+Act3 entrants v24                  runs= 38 Block offered= 314 taken= 158 (50.3%) other=106 skip=50
+Act3 entrants ALL                  runs= 83 Block offered= 681 taken= 326 (47.9%) other=252 skip=103
+Queen fights ALL                   runs= 59 Block offered= 483 taken= 236 (48.9%) other=173 skip=74
+median Skills at Queen entry 10
+Queen, Skills < median             runs= 17 Block offered= 110 taken=  48 (43.6%) other=36 skip=26
+Queen, Skills >= median            runs= 42 Block offered= 373 taken= 188 (50.4%) other=137 skip=48
+rest options (Act3 entrants whole run): {'SMITH': 367, 'HEAL': 371, 'HATCH': 17}
+Queen entry potions mean 2.44 left at end mean 0.15 fights with potion left>0: 9 / 59
+entry HP/max med 0.9540229885057471 upgraded in deck med 10 deck med 28
+Block cards in deck: median 8  lo n=28 shave med 0.162 | hi n=31 shave med 0.170
+upgraded cards: median 10  lo n=29 shave med 0.177 | hi n=30 shave med 0.166
+skills: median 10  lo n=17 shave med 0.110 | hi n=42 shave med 0.174
+entry HP: median 77  lo n=29 shave med 0.150 | hi n=30 shave med 0.170

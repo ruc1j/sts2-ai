@@ -1,0 +1,18 @@
+{'runs': 271, 'vantom_fought': 269, 'vantom_won': 227, 'insatiable_fought': 176, 'insatiable_won': 83}
+--- Act 1
+ 269 fights  42 lost  15.6%  entryHP med 80  VANTOM
+  46 fights   2 lost   4.3%  entryHP med 78  BYGONE_EFFIGY
+--- Act 2
+ 176 fights  93 lost  52.8%  entryHP med 80  THE_INSATIABLE
+  31 fights   9 lost  29.0%  entryHP med 76  DECIMILLIPEDE_SEGMENT_BACK+DECIMILLIPEDE_SEGMENT_FRONT+DECIMILLIPEDE_SEGMENT_MIDDLE
+  63 fights   7 lost  11.1%  entryHP med 64  THE_OBSCURA
+  54 fights   6 lost  11.1%  entryHP med 68  BOWLBUG_ROCK+BOWLBUG_SILK+SLUMBERING_BEETLE
+  73 fights   5 lost   6.8%  entryHP med 69  LOUSE_PROGENITOR
+  61 fights   4 lost   6.6%  entryHP med 75  MYTE+MYTE
+  63 fights   4 lost   6.3%  entryHP med 71  CHOMPER+CHOMPER
+  27 fights   4 lost  14.8%  entryHP med 72  ENTOMANCER
+  75 fights   4 lost   5.3%  entryHP med 71  HUNTER_KILLER
+  70 fights   3 lost   4.3%  entryHP med 71  OVICOPTER
+  42 fights   2 lost   4.8%  entryHP med 79  INFESTED_PRISM
+  60 fights   2 lost   3.3%  entryHP med 71  SPINY_TOAD
+  60 fights   1 lost   1.7%  entryHP med 68  EXOSKELETON+EXOSKELETON+EXOSKELETON+EXOSKELETON
