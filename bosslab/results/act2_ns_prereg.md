@@ -27,7 +27,7 @@
 
 ## 訂正（開発用を1回流して全trialが失敗したあと。結果は1件も出ていない）
 
-抽出ツールが \`encounter_hint\` に敵id（\`MONSTER.THE_INSATIABLE\`）を入れていたため、開発用の24 trialがすべて約4秒で \`ModelNotFoundException: Model id=ENCOUNTER.\` で失敗した（\`ENCOUNTER.THE_INSATIABLE_BOSS\` が正しい）。spec 176件の \`encounter_hint\` を直し（抽出ツールの定数も直し）、同じspec選定で2つのplanを作り直した。選定（spec、アーム、規則）は変わらない。変わったのはplanのハッシュだけである。
+抽出ツールが `encounter_hint` に敵id（`MONSTER.THE_INSATIABLE`）を入れていたため、開発用の24 trialがすべて約4秒で `ModelNotFoundException: Model id=ENCOUNTER.` で失敗した（`ENCOUNTER.THE_INSATIABLE_BOSS` が正しい）。spec 176件の `encounter_hint` を直し（抽出ツールの定数も直し）、同じspec選定で2つのplanを作り直した。選定（spec、アーム、規則）は変わらない。変わったのはplanのハッシュだけである。
 
 ## 固定するファイルのハッシュ（sha256、訂正後）
 
