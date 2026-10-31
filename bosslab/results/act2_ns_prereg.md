@@ -37,3 +37,16 @@ eb0405ac3068b5d01d1922ea1db13540bfccae7bfd0723632b4c986b720ca001  bosslab/plans/
 61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c  official_agent
 4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b  combat.py
 ```
+
+## 追試（rng_offset 1、2026-10-31、追試を流す前に登録）
+
+目的: 開発用（Δshave +5）と確認用（−3）で向きが割れたのが、ゲーム側の乱数のばらつきかを見る。spec、アーム、エージェント、DLL、規則は変えず、24 specを rng_offset 1 でもう一度流す（base/noshrugとも）。
+
+- plan: `bosslab/plans/bosslab_act2_plan_ns_rep1_dev.json`（開発用と同じ12 spec）と `..._rep1_conf.json`（確認用と同じ12 spec）。元のplanから `rng_offset` と `trial_id` の末尾だけを0から1に変えた。発火の前提、判定規則（4693f2e、G''、`judge_candidate` を1回だけ機械的に呼ぶ）は上のとおり。`ns_report.py --dev rep1_dev --confirm rep1_conf` で判定する。
+- 読み方: 追試の判定は、元の結果とは別の独立した判定として記録する。元の判定（不採用）は書き換えない。合算（offset 0と1の48組）の符号は記述として併記する。
+- 固定するファイルのハッシュ（sha256）:
+
+```
+9f3b3dfe2e3b4a8cb101cdf8eb43a143e1d0cb919914ec292882ba5bdcb54f48  bosslab/plans/bosslab_act2_plan_ns_rep1_dev.json
+4400cc6be146d9be3974cca486a16683861eb9ee90cb25b776b4e41fbe44c11c  bosslab/plans/bosslab_act2_plan_ns_rep1_conf.json
+```
