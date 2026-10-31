@@ -25,11 +25,15 @@
 
 前回の事前登録（4693f2e）の規則1〜6を、noshrugをbaseと比べて適用する。主信号は、ボスを削った割合の差（Δshave、候補優の組数−base優の組数）と総火力/ターンの差（Δfp）。条件は、Δshave>0、Δfp≥0、Δwin≥0、確認用でp≤0.05、開発用と確認用で方向が一致、組が欠けていない（比較不能0、開発用・確認用とも12組）、発火の前提G''。判定は `apply_hybrid_rule.judge_candidate` を機械的に1回だけ呼び、結果を見て規則を直さない。
 
-## 固定するファイルのハッシュ（sha256）
+## 訂正（開発用を1回流して全trialが失敗したあと。結果は1件も出ていない）
+
+抽出ツールが \`encounter_hint\` に敵id（\`MONSTER.THE_INSATIABLE\`）を入れていたため、開発用の24 trialがすべて約4秒で \`ModelNotFoundException: Model id=ENCOUNTER.\` で失敗した（\`ENCOUNTER.THE_INSATIABLE_BOSS\` が正しい）。spec 176件の \`encounter_hint\` を直し（抽出ツールの定数も直し）、同じspec選定で2つのplanを作り直した。選定（spec、アーム、規則）は変わらない。変わったのはplanのハッシュだけである。
+
+## 固定するファイルのハッシュ（sha256、訂正後）
 
 ```
-cee3ba930e975e968972a79939abc148116bf14a3a795bf5c076ec55b87300b9  bosslab/plans/
-6d4eb9e48dbb2845a6f332befce8dd1562203c6cd52c0a0de60f2d3dde5645b2  bosslab/plans/
+c0b495bc50baafe627522a0007aecbd41650c8f1fb5cf6501c8d126260dd2441  bosslab/plans/
+eb0405ac3068b5d01d1922ea1db13540bfccae7bfd0723632b4c986b720ca001  bosslab/plans/
 61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c  official_agent
 4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b  combat.py
 ```

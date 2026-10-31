@@ -50,7 +50,7 @@ ENTER = re.compile(
 SEED_LINE = re.compile(r"\[AutoSlay\] Starting run with seed=([A-Z0-9]+)")
 COMBAT_KINDS = ("Monster", "Elite", "Boss")
 BOSS_MONSTER = None
-ENCOUNTER_HINT = "ENCOUNTER.QUEEN_BOSS"
+ENCOUNTER_HINT = "ENCOUNTER.THE_INSATIABLE_BOSS"
 ACT_INDEX = 1
 PILE_KEYS = ("hand", "draw_pile", "discard_pile", "exhaust_pile")
 COMPUTED_VARS = entry_lib.__dict__.get("COMPUTED_VARS", {
