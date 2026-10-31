@@ -798,3 +798,14 @@ dev5 の結果待ちの間に、この hook が二重発火を直せるかを fi
 
 `official_mod/BossLab.cs` に hook と plan フィールドを書いた。ビルド・実機は未実行（このセッションは lab と解析
 のみ担当）。Python 側の忠実性観測から `enemies` / `piles` を plan へ書き出す工程は未着手。suite 960 OK。
+
+## 2026-10-31: Act 3フルrunパネル、入場状態書き戻し、Block札追加、Act 2 Shrug加点外し再測定
+
+詳細は[ACT3_FULLRUN_PANEL_20261029](ACT3_FULLRUN_PANEL_20261029.md)と[BOSSLAB_20261028](BOSSLAB_20261028.md)。実装と結果は`bosslab`ブランチ(9de0cdf)にある。いずれも標本が小さく、結論は仮説として読むこと。
+
+- **Act 3フルrunパネル(base、v23とv24の合算271 run、hung 1本除外)**: Act 3到達83、Queen戦59、踏破1/83。Amalgam撃破35/59、Queen削り中央値17%、死亡ターン中央値7。介入候補は報酬選択(中) > 強化(小〜中) > ポーション(ほぼなし)の順。
+- **C 入場状態書き戻し**: 採用(条件つき)。忠実性は11/12で、基準の10/12を下回らない。`--restore-entry-state`は既定off。
+- **A Block札をQueen入場デッキに足す対照実験**: add4は不採用(効かない)。add2は発火3/6で前提の4組に届かず保留。
+- **B 報酬方針のフルrunパネル**: Aが「効く」にならなかったため実施せず(保留)。
+- **Act 2 Shrug It Off加点外し(noshrug)再測定**(ポーション欠落修正後のラボ): 不採用。発火は開発用6/12、確認用8/12。開発用はΔ削り+5、確認用は−3で向きが割れ、24組の勝ちはbase 9、noshrug 11。これは凍結規則の出力であり、「差を検出せず」と読むのが妥当。アームは未強化Shrugを1枚外す代理で、ラボの勝ち数は実機のAct 2突破率ではない。
+- **落とし穴**: 抽出ツールのencounter idは`ENCOUNTER.THE_INSATIABLE_BOSS`でなければならない(`MONSTER.THE_INSATIABLE`だと全trialが`ModelNotFoundException`で約4秒で落ちる)。pile内のカードは`type: null`なので、種別は手札の観測から作る表で引く。
