@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 0,
+  "arm": "candidate",
+  "seed": "36533CCA96",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793731853,
+  "finished": 1793732173,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      5
+    ],
+    "combat_wins": 14,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 424,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_36533CCA96_agent.jsonl": "330fa7972eb2addb2048fe88e2bb5139f8836193111af790d1dbf618231a114a",
+    "astra_clear5_c1_36533CCA96_map.json": "36171ecda4ea7551eb3bafa2611910cd6eff4db5add7b2a64c4e6ec3fc8b2053",
+    "astra_clear5_c1_36533CCA96_map_ACT.GLORY.json": "503f532747b0fe5f57963c5cac1545f5bc12c5fa3e7bfede2638ea36bb2a57de",
+    "astra_clear5_c1_36533CCA96_map_ACT.HIVE.json": "29ce7f723a3a8a82b35f878c1e623bbac043cc2ae5cd0e511a2269cb6b77300f",
+    "astra_clear5_c1_36533CCA96_mod.log": "bd9804595bcd5a3a947f690cd0d8f1a43f8335d06a42845ce1179478b86fba6e",
+    "astra_clear5_c1_36533CCA96_runmeta.json": "32b1c98ce152affe7dc6da10d1d1d27630fb7c641281a8cc49986b5698ceb9a1",
+    "astra_clear5_c1_36533CCA96_stdout.log": "e5fc86cb4558246355689ec9a7ddb3efb93a55de6c354984f281df76aa161136"
+  }
+}
