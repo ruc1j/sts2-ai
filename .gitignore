@@ -34,6 +34,7 @@ data/*_trace.jsonl
 data/*_agent.jsonl
 data/*_map.json
 data/*_mapdebug.jsonl
+data/*_runmeta.json
 data/dashboard.html
 data/dashboard_gen.log
 data/*_observations.jsonl
