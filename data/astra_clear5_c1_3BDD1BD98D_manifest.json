@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 71,
+  "arm": "candidate",
+  "seed": "3BDD1BD98D",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793749677,
+  "finished": 1793750008,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      6
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 425,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_3BDD1BD98D_agent.jsonl": "d36239da3accc908d0a24cd11b785acf8b007655d4d8e99f1d6d6a5d02eee48b",
+    "astra_clear5_c1_3BDD1BD98D_map.json": "26b84306222be869d7eb0f0185adf924916fa399d2af43ddbdc5ea4b714a5c9d",
+    "astra_clear5_c1_3BDD1BD98D_map_ACT.GLORY.json": "187a71c858870f36dd8a0ec052730a5d80acb50b0ce988b1c4a7d7a52b4d02fa",
+    "astra_clear5_c1_3BDD1BD98D_map_ACT.HIVE.json": "2deb03d4e62a85fd8253442e083212478d57cc41c731e99fc19cfd60b83e7345",
+    "astra_clear5_c1_3BDD1BD98D_mod.log": "f75ecbbb3a8daa65ec71108004cd09eaf9c5a3ef1a3511f2852cae2291b4baf8",
+    "astra_clear5_c1_3BDD1BD98D_runmeta.json": "0810875214dda060bf312551ea671f6418f97719b85ab5292eb50d6e0350245a",
+    "astra_clear5_c1_3BDD1BD98D_stdout.log": "1c2752b4eadfd460a6b705668f6e3e1ae3e6a093f92763a4d1a8ec02b6aa2d63"
+  }
+}
