@@ -399,6 +399,170 @@ def section_scaling(fights):
     return "\n".join(lines)
 
 
+def str_trials(str_dir):
+    """One row per lab trial of the str3 experiment (base / str3 pairs)."""
+    out = []
+    meta = json.loads(Path(str_dir, "lab_results.jsonl").read_text())
+    return meta
+
+
+def str_summary(str_dir):
+    import glob as _glob
+    arms = {}
+    with open(os.path.join(str_dir, "lab_results.jsonl"), encoding="utf-8") as f:
+        for line in f:
+            rec = json.loads(line)
+            arms[rec["trial_index"]] = rec["trial_id"]
+    trials = []
+    for path in sorted(_glob.glob(os.path.join(str_dir, "trial_*_agent.jsonl"))):
+        index = int(os.path.basename(path).split("_")[1])
+        spec, arm, offset = arms[index].split("|")
+        combat, end = queen_slice(read_rows(path))
+        if not combat:
+            continue
+        types = {c.get("id"): c.get("type") for r in combat for c in (r.get("hand") or [])}
+        dealt_q = dealt_a = 0.0
+        attacks = 0
+        attack_damage = []
+        setup = 0
+        strength = []
+        for i, row in enumerate(combat[:-1]):
+            nxt = combat[i + 1]
+            prev = {e.get("id"): float(e.get("hp") or 0)
+                    for e in (row.get("enemies") or [])}
+            cur = {e.get("id"): float(e.get("hp") or 0)
+                   for e in (nxt.get("enemies") or [])}
+            for key, hp in prev.items():
+                loss = max(0.0, hp - cur.get(key, hp))
+                if "QUEEN" in key:
+                    dealt_q += loss
+                elif "AMALGAM" in key:
+                    dealt_a += loss
+            cid = row.get("card_id")
+            if cid and types.get(cid) == "Attack":
+                attacks += 1
+                loss_here = sum(max(0.0, hp - cur.get(k, hp)) for k, hp in prev.items())
+                attack_damage.append(loss_here)
+            elif cid in ("CARD.INFLAME", "CARD.DEMON_FORM", "CARD.RUPTURE"):
+                setup += 1
+            for power in ((row.get("player") or {}).get("powers") or []):
+                if "STRENGTH" in str(power.get("id", "")):
+                    strength.append(power.get("amount") or 0)
+        enemies = (combat[-1].get("enemies") or [])
+        trials.append({
+            "spec": spec, "arm": arm,
+            "turns": max(r.get("turn") or 0 for r in combat),
+            "queen_removed": A.hp_removed_from_trace(combat, QUEEN) or 0,
+            "amalgam_removed": A.hp_removed_from_trace(combat, AMALGAM) or 0,
+            "dealt_queen": dealt_q,
+            "dealt_amalgam": dealt_a,
+            "attacks": attacks,
+            "dmg_per_attack": (statistics.mean(attack_damage)
+                               if attack_damage else None),
+            "setup": setup,
+            "max_strength": max(strength) if strength else 0,
+            "amalgam_killed": not any("AMALGAM" in str(e.get("id", "")) for e in enemies),
+        })
+    return trials
+
+
+def section_str3(str_dir, fights=None):
+    trials = str_summary(str_dir)
+    lines = []
+    n_pairs = len({(t["spec"], t["arm"]) for t in trials}) // 2
+    lines.append(f"対象: `bosslab_act3_str_conf` の {len(trials)} trial（{n_pairs} 組、base と str3）。"
+                 f"trace から計器を独立に計算し直した。")
+    lines.append("")
+
+    def arm(name):
+        return [t for t in trials if t["arm"] == name]
+
+    def fp(t):
+        return (t["queen_removed"] + t["amalgam_removed"]) / t["turns"] if t["turns"] else None
+
+    lines.append("### 3-1 まず計器の再現")
+    lines.append("| 指標 | base | str3 |")
+    lines.append("| --- | --- | --- |")
+    for label, fn in (
+        ("総火力/ターン（removed合計÷ターン、trial平均）", lambda t: fp(t)),
+        ("消したHP合計（Queen+Amalgam、trial平均）", lambda t: t["queen_removed"] + t["amalgam_removed"]),
+        ("生存ターン（trial平均）", lambda t: t["turns"]),
+        ("Queenのみ削り（trial平均）", lambda t: t["queen_removed"]),
+        ("Amalgamのみ削り（trial平均）", lambda t: t["amalgam_removed"]),
+        ("攻撃の回数（trial平均）", lambda t: t["attacks"]),
+        ("攻撃1回あたりのダメージ（trial平均）", lambda t: t["dmg_per_attack"]),
+        ("INFLAME/DEMON_FORM/RUPTURE使用回数", lambda t: t["setup"]),
+        ("最大Strength（中央値）", lambda t: t["max_strength"]),
+    ):
+        b = [fn(t) for t in arm("base") if fn(t) is not None]
+        c = [fn(t) for t in arm("str3") if fn(t) is not None]
+        if not b or not c:
+            continue
+        med = "中央値" in label
+        bv = statistics.median(b) if med else statistics.mean(b)
+        cv = statistics.median(c) if med else statistics.mean(c)
+        lines.append(f"| {label} | {bv:.2f} | {cv:.2f} |")
+
+    # ratio of means vs mean of ratios
+    b = arm("base"); c = arm("str3")
+    rb = sum(t["queen_removed"] + t["amalgam_removed"] for t in b) / sum(t["turns"] for t in b)
+    rc = sum(t["queen_removed"] + t["amalgam_removed"] for t in c) / sum(t["turns"] for t in c)
+    lines.append("")
+    lines.append(f"比の平均と平均の比は一致しない。removed合計をターン合計で割ると base {rb:.2f} → str3 {rc:.2f}"
+                 f"（差 {rc-rb:+.2f}）、trialごとの比の平均では "
+                 f"{statistics.mean([fp(t) for t in b]):.2f} → {statistics.mean([fp(t) for t in c]):.2f}"
+                 f"（差 {statistics.mean([fp(t) for t in c]) - statistics.mean([fp(t) for t in b]):+.2f}）。"
+                 f"報告の 38.8→37.2 は後者。")
+
+    lines.append("")
+    lines.append("### 3-2 分母か分子か")
+    tb = statistics.mean([t["turns"] for t in b])
+    tc = statistics.mean([t["turns"] for t in c])
+    lines.append(f"- 生存ターンは base {tb:.2f} → str3 {tc:.2f} で差がない。分母は下がっていない。")
+    lines.append(f"- 分子（Queen+Amalgamの削り）は base {statistics.mean([t['queen_removed']+t['amalgam_removed'] for t in b]):.1f}"
+                 f" → str3 {statistics.mean([t['queen_removed']+t['amalgam_removed'] for t in c]):.1f} で減っている。")
+    lines.append(f"- 内訳は Queen {statistics.mean([t['queen_removed'] for t in b]):.1f}→"
+                 f"{statistics.mean([t['queen_removed'] for t in c]):.1f}、"
+                 f"Amalgam {statistics.mean([t['amalgam_removed'] for t in b]):.1f}→"
+                 f"{statistics.mean([t['amalgam_removed'] for t in c]):.1f}。"
+                 f"Amalgamは最大HP 199で頭打ちになる。")
+    lines.append(f"- Amalgam撃破は base {sum(1 for t in b if t['amalgam_killed'])}/{len(b)}、"
+                 f"str3 {sum(1 for t in c if t['amalgam_killed'])}/{len(c)}。")
+    lines.append(f"- 攻撃1回あたりのダメージは {statistics.mean([t['dmg_per_attack'] for t in b]):.2f} → "
+                 f"{statistics.mean([t['dmg_per_attack'] for t in c]):.2f} で、上がっている。"
+                 f"最大Strengthの中央値は {statistics.median([t['max_strength'] for t in b]):.1f} → "
+                 f"{statistics.median([t['max_strength'] for t in c]):.1f}。")
+
+    lines.append("")
+    lines.append("### 3-3 組ごとの内訳")
+    lines.append("| spec | base removed | str3 removed | 差 | baseターン | str3ターン |")
+    lines.append("| --- | --- | --- | --- | --- | --- |")
+    by = defaultdict(dict)
+    for t in trials:
+        by[t["spec"]][t["arm"]] = t
+    deltas = []
+    for spec, arms in sorted(by.items()):
+        if "base" not in arms or "str3" not in arms:
+            continue
+        bt, ct = arms["base"], arms["str3"]
+        br = bt["queen_removed"] + bt["amalgam_removed"]
+        cr = ct["queen_removed"] + ct["amalgam_removed"]
+        deltas.append(cr - br)
+        lines.append(f"| {spec} | {br:.0f} | {cr:.0f} | {cr-br:+.0f} | {bt['turns']} | {ct['turns']} |")
+    lines.append("")
+    lines.append(f"- 悪化 {sum(1 for d in deltas if d < 0)} 組、改善 {sum(1 for d in deltas if d > 0)} 組、"
+                 f"同値 {sum(1 for d in deltas if d == 0)} 組。")
+    lines.append("")
+    lines.append("読み: 「Strength +4で総火力/ターンが下がった」は、攻撃1回あたりのダメージが下がったという意味ではない。"
+                 "分子が Queen と Amalgam の合算で、Amalgam が最大HP 199で頭打ちになるため、"
+                 "Amalgam に寄ったダメージが総火力に反映されにくい。str3 では Amalgam 撃破が1組増え、"
+                 "Queen への削りが34減っている（同じ組で同時に起きた差で、因果は主張しない）。"
+                 "加えて比の平均は短い戦闘（3ターン死亡）を過大評価する。交絡として、str3 はデッキが3枚多く、"
+                 "セットアップ使用が0.33→2.08回に増えており、エネルギーとドローの配分も変わっている。"
+                 "したがって 38.8→37.2 は「1枚あたりの打点の低下」ではなく、対象配分と指標の作り方の差として読む。")
+    return "\n".join(lines)
+
+
 def _rho_text(xs, ys):
     pairs = [(x, y) for x, y in zip(xs, ys) if x is not None and y is not None]
     if len(pairs) < 3:
@@ -411,6 +575,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("section", choices=["calib", "scaling", "str3", "reward", "all"])
     ap.add_argument("--data-dir", default="/Users/mao/workspace/sts2-ai/data")
+    ap.add_argument("--str-dir", default=str(HERE.parent.parent / "data" / "bosslab_act3_str_conf"))
     args = ap.parse_args(argv)
 
     fights = load_fights(args.data_dir)
@@ -422,6 +587,8 @@ def main(argv=None):
         out.append(section_calib(fights))
     if args.section in ("scaling", "all"):
         out.append(section_scaling(fights))
+    if args.section in ("str3", "all"):
+        out.append(section_str3(args.str_dir))
     print("\n\n".join(out))
     return 0
 
