@@ -93,7 +93,8 @@ def split_name(name):
     return None
 
 
-def scan(data_dir):
+def scan(data_dir, extra=None):
+    """Index the files on disk plus (optionally) the members of old archives."""
     runs = {}
     unmatched = []
     for name in sorted(os.listdir(data_dir)):
@@ -120,12 +121,48 @@ def scan(data_dir):
         run["bytes"] += st.st_size
         run["first_mtime"] = min(run["first_mtime"], st.st_mtime)
         run["last_mtime"] = max(run["last_mtime"], st.st_mtime)
+
+    for item in extra or ():
+        name = os.path.basename(item["rel"])
+        parsed = split_name(name)
+        if parsed is None:
+            unmatched.append({"name": name, "bytes": item["bytes"],
+                              "mtime": item["mtime"], "archived_to": item["archive"]})
+            continue
+        key, panel, seed, kind, record = parsed
+        run = runs.setdefault(key, {
+            "panel": panel, "seed": seed, "files": {}, "bytes": 0,
+            "first_mtime": item["mtime"], "last_mtime": item["mtime"],
+        })
+        run["files"][kind] = {"bytes": item["bytes"], "mtime": item["mtime"],
+                              "record": record, "path": name,
+                              "archived_to": item["archive"]}
+        run["bytes"] += item["bytes"]
+        run["first_mtime"] = min(run["first_mtime"], item["mtime"])
+        run["last_mtime"] = max(run["last_mtime"], item["mtime"])
     return runs, unmatched
+
+
+def archived_members(data_dir):
+    """Members listed in data/_archive/INDEX.json, as scan() extras."""
+    path = os.path.join(data_dir, "_archive", "INDEX.json")
+    if not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        index = json.load(f)
+    out = []
+    for name, record in index.get("archives", {}).items():
+        for rel, meta in record.get("members", {}).items():
+            out.append({"rel": rel, "bytes": meta.get("bytes", 0),
+                        "mtime": meta.get("mtime", 0),
+                        "archive": record.get("path", name)})
+    return out
 
 
 def enrich(data_dir, run):
     """Attach the run record (manifest/runmeta/result) and log-derived outcome."""
-    files = run["files"]
+    files = {k: v for k, v in run["files"].items()
+             if os.path.exists(os.path.join(data_dir, v["path"]))}
     manifest = None
     if "manifest.json" in files:
         raw = read_json(os.path.join(data_dir, files["manifest.json"]["path"]))
@@ -246,7 +283,7 @@ def main(argv=None):
     ap.add_argument("--pretty", action="store_true", default=True)
     args = ap.parse_args(argv)
 
-    runs, unmatched = scan(args.dir)
+    runs, unmatched = scan(args.dir, archived_members(args.dir))
     for run in runs.values():
         enrich(args.dir, run)
     index = summarize(runs, unmatched, args.dir)
