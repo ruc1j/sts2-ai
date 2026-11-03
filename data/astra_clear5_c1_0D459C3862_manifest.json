@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 63,
+  "arm": "candidate",
+  "seed": "0D459C3862",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793747328,
+  "finished": 1793747992,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 22,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 694,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_0D459C3862_agent.jsonl": "a4dd239db8208b9b096d62b59d758311bc4871d48671e6a599c5dceec1fb0c71",
+    "astra_clear5_c1_0D459C3862_map.json": "cbcbd581dadc1c16a3bff4a0f482673ea516f71c15adccaf8f1deadfaca21e0d",
+    "astra_clear5_c1_0D459C3862_map_ACT.GLORY.json": "a721d9c3edec8b3301fa9722dc264da867dd4363eba9de94145ea969cbdf905a",
+    "astra_clear5_c1_0D459C3862_map_ACT.HIVE.json": "5ddde6248c098625edf4f094706d313a92e83966bc57d443f35f7fbbf538a7bd",
+    "astra_clear5_c1_0D459C3862_mod.log": "34330d60ab27d9c53748b9f9d88a24a73c5de319d6fcc5e494b62aaae680fa0c",
+    "astra_clear5_c1_0D459C3862_runmeta.json": "c3e48a5de328c3b2093368ff9be3e8454b5fe76d83b7e3ad7348dea640282e0c",
+    "astra_clear5_c1_0D459C3862_stdout.log": "616f75a00e340187b5c9ff5c9c6bbe4a67450f265f204af41a3adceb2a48affb"
+  }
+}
