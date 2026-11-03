@@ -1,0 +1,24 @@
+[
+ {
+  "won": false,
+  "turns": 11,
+  "decisions": 46,
+  "player_hp": -2,
+  "sec_per_decision": 1.729440098223479,
+  "queen_shave": 0.38749999999999996,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_038CDAC87B_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 10,
+  "decisions": 46,
+  "player_hp": -2,
+  "sec_per_decision": 2.7834669144257256,
+  "queen_shave": 0.27249999999999996,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_161F480E76_agent.jsonl",
+  "offset": 0
+ }
+]
