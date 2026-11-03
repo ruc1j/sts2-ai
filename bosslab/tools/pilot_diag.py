@@ -563,6 +563,178 @@ def section_str3(str_dir, fights=None):
     return "\n".join(lines)
 
 
+CLEAR_RUNS = (
+    ("file", "astra_ctrl_v23_495FF454B7_agent.jsonl"),
+    ("tar", "2026-09.tar.gz", "act3_recheck_2675e82_N8CQ4ZKP2W_agent.jsonl"),
+    ("tar", "2026-09.tar.gz", "candidate_vulnlethal_N8CQ4ZKP2W_agent.jsonl"),
+    ("tar", "2026-10.tar.gz", "astra_eval_v1_candidate_N8CQ4ZKP2W_agent.jsonl"),
+    ("tar", "2026-10.tar.gz", "astra_eval_v10_candidate_DD1018C7FF_agent.jsonl"),
+    ("tar", "2026-10.tar.gz", "astra_eval_v14_control_8D95FF5CE9_agent.jsonl"),
+    ("tar", "2026-10.tar.gz", "astra_eval_v6_candidate_E8282AC0A7_agent.jsonl"),
+)
+EXTRA_CLEARS = (
+    ("tar", "2026-09.tar.gz", "candidate_last_hp_selfdamage_H2LV6ZJ4XW_agent.jsonl"),
+    ("tar", "2026-10.tar.gz", "smoke_v17_FD7A9C8F5F_agent.jsonl"),
+)
+
+STRENGTH_SRC = {"CARD.RUPTURE", "CARD.INFLAME", "CARD.DEMON_FORM", "CARD.LIMIT_BREAK"}
+ENERGY_SRC = {"CARD.BLOODLETTING", "CARD.SEEING_RED", "CARD.OFFERING"}
+MULTI_HIT = {"CARD.SWORD_BOOMERANG", "CARD.WHIRLWIND", "CARD.ANGER",
+             "CARD.POMMEL_STRIKE", "CARD.TWIN_STRIKE"}
+DRAW_SRC = {"CARD.BATTLE_TRANCE", "CARD.HELLRAISER", "CARD.OFFERING",
+            "CARD.POMMEL_STRIKE", "CARD.SHRUG_IT_OFF"}
+
+
+def _read_run(desc, data_dir):
+    if desc[0] == "file":
+        path = os.path.join(data_dir, desc[1])
+        return read_rows(path)
+    import tarfile
+    with tarfile.open(os.path.join(data_dir, "_archive", desc[1]), "r:gz") as tar:
+        handle = tar.extractfile(desc[2])
+        text = handle.read().decode("utf-8", "replace")
+    return [json.loads(line) for line in text.splitlines() if line.strip()]
+
+
+def _entry_of(rows):
+    for row in rows:
+        if row.get("phase") != "combat":
+            continue
+        if any(str(e.get("id", "")).endswith(QUEEN) for e in row.get("enemies") or []):
+            cards = ((row.get("draw_pile") or []) + (row.get("hand") or [])
+                     + (row.get("discard_pile") or []) + (row.get("exhaust_pile") or []))
+            player = row.get("player") or {}
+            return {
+                "ids": [c.get("id") for c in cards],
+                "relics": list(player.get("relics") or []),
+                "max_energy": player.get("max_energy"),
+                "hp": player.get("hp"),
+                "upgrades": sum(1 for c in cards if c.get("upgrade")),
+                "cards": len(cards),
+            }
+    return None
+
+
+def section_reward(fights, data_dir):
+    groups = {"clear": [], "low": [], "rest": []}
+    for desc in CLEAR_RUNS:
+        entry = _entry_of(_read_run(desc, data_dir))
+        if entry:
+            groups["clear"].append(entry)
+    for f in fights:
+        if f["shave"] is None:
+            continue
+        row = f["combat"][0]
+        cards = ((row.get("draw_pile") or []) + (row.get("hand") or [])
+                 + (row.get("discard_pile") or []) + (row.get("exhaust_pile") or []))
+        entry = {
+            "ids": [c.get("id") for c in cards],
+            "relics": list((row.get("player") or {}).get("relics") or []),
+            "max_energy": (row.get("player") or {}).get("max_energy"),
+            "hp": (row.get("player") or {}).get("hp"),
+            "upgrades": sum(1 for c in cards if c.get("upgrade")),
+            "cards": len(cards),
+        }
+        groups["low" if f["shave"] < 0.3 else "rest"].append(entry)
+
+    def presence(group, key):
+        count = Counter()
+        for entry in group:
+            count.update(set(entry[key]))
+        return count
+
+    lines = []
+    lines.append(f"比較: Act 3踏破 run（記録の7本） 対 Queen削り0.3未満の14戦（v23+v24） 対 残り45戦。"
+                 f"デッキはQueen入場時の手札・山札・捨て札・廃棄札のカードID。")
+    lines.append("")
+    lines.append("踏破 run の内訳（7本）: `astra_ctrl_v23_495FF454B7`、`N8CQ4ZKP2W` が3本"
+                 "（act3_recheck / candidate_vulnlethal / astra_eval_v1_candidate）、"
+                 "`astra_eval_v10_candidate_DD1018C7FF`、`astra_eval_v14_control_8D95FF5CE9`、"
+                 "`astra_eval_v6_candidate_E8282AC0A7`。")
+    lines.append("")
+    lines.append("生ログの走査では、踏破した trace は全部で15本、seedの種類では9本だった。"
+                 "記録の7本に入らない踏破が2本ある: `candidate_last_hp_selfdamage_H2LV6ZJ4XW`（2026-09）と"
+                 "`smoke_v17_FD7A9C8F5F`（2026-10）。どちらも Neow から始まる完全な run で、Queen戦の"
+                 "`combat_end.won=true` で終わっている。")
+    lines.append("")
+    lines.append("### 5-1 札の有無（件数）")
+    lines.append("| カード | 踏破 7本 | 削り<0.3 14戦 | 残り 45戦 |")
+    lines.append("| --- | --- | --- | --- |")
+    pc = presence(groups["clear"], "ids")
+    pl_ = presence(groups["low"], "ids")
+    pr = presence(groups["rest"], "ids")
+    keys = set(pc) | set(pl_) | set(pr)
+    ranked = sorted(keys, key=lambda k: (-(pc.get(k, 0) - 0.3 * pl_.get(k, 0)), -pc.get(k, 0)))
+    for key in ranked[:14]:
+        lines.append(f"| {key.replace('CARD.', '')} | {pc.get(key, 0)}/7 | {pl_.get(key, 0)}/14 | "
+                     f"{pr.get(key, 0)}/45 |")
+
+    lines.append("")
+    lines.append("### 5-2 組み合わせ（件数）")
+    lines.append("| 組み合わせ | 踏破 7本 | 削り<0.3 14戦 | 残り 45戦 |")
+    lines.append("| --- | --- | --- | --- |")
+    def all_of(ids, needed):
+        return needed <= ids
+
+    def any_of(ids, pool):
+        return bool(ids & pool)
+
+    combos = (
+        ("Strength源（どれか1枚）", lambda ids: any_of(ids, STRENGTH_SRC)),
+        ("RUPTURE 単独", lambda ids: "CARD.RUPTURE" in ids),
+        ("RUPTURE + CRIMSON_MANTLE", lambda ids: all_of(ids, {"CARD.RUPTURE", "CARD.CRIMSON_MANTLE"})),
+        ("RUPTURE + MAD_SCIENCE", lambda ids: all_of(ids, {"CARD.RUPTURE", "CARD.MAD_SCIENCE"})),
+        ("FORGOTTEN_RITUAL + RUPTURE", lambda ids: all_of(ids, {"CARD.FORGOTTEN_RITUAL", "CARD.RUPTURE"})),
+        ("Strength源 + エネルギー源", lambda ids: any_of(ids, STRENGTH_SRC) and any_of(ids, ENERGY_SRC)),
+        ("Strength源 + ドロー源", lambda ids: any_of(ids, STRENGTH_SRC) and any_of(ids, DRAW_SRC)),
+        ("RUPTURE + CRIMSON_MANTLE + MAD_SCIENCE", lambda ids: all_of(
+            ids, {"CARD.RUPTURE", "CARD.CRIMSON_MANTLE", "CARD.MAD_SCIENCE"})),
+    )
+    for label, pred in combos:
+        counts = [sum(1 for e in group if pred(set(e["ids"])))
+                  for group in (groups["clear"], groups["low"], groups["rest"])]
+        lines.append(f"| {label} | {counts[0]}/7 | {counts[1]}/14 | {counts[2]}/45 |")
+
+    lines.append("")
+    lines.append("### 5-3 エネルギー源とレリック")
+    lines.append("| 指標 | 踏破 7本 | 削り<0.3 14戦 | 残り 45戦 |")
+    lines.append("| --- | --- | --- | --- |")
+    for label, fn, fmt in (
+        ("最大エネルギー 平均", lambda g: statistics.mean([e["max_energy"] for e in g]), "{:.2f}"),
+        ("入場HP 平均", lambda g: statistics.mean([e["hp"] for e in g]), "{:.1f}"),
+        ("デッキ枚数 平均", lambda g: statistics.mean([e["cards"] for e in g]), "{:.1f}"),
+        ("強化枚数 平均", lambda g: statistics.mean([e["upgrades"] for e in g]), "{:.1f}"),
+        ("レリック数 平均", lambda g: statistics.mean([len(e["relics"]) for e in g]), "{:.1f}"),
+    ):
+        lines.append(f"| {label} | " + " | ".join(
+            fmt.format(fn(g)) for g in (groups["clear"], groups["low"], groups["rest"])) + " |")
+    rel = {name: [presence(g, "relics").get(name, 0)
+                  for g in (groups["clear"], groups["low"], groups["rest"])]
+           for name in ("RELIC.STRAWBERRY", "RELIC.LANTERN", "RELIC.ANCHOR",
+                        "RELIC.GOLDEN_PEARL", "RELIC.LETTER_OPENER")}
+    for name, counts in rel.items():
+        lines.append(f"| {name.replace('RELIC.', '')} | {counts[0]}/7 | {counts[1]}/14 | {counts[2]}/45 |")
+    energy_relics = [r for e in groups["clear"] + groups["low"] + groups["rest"]
+                     for r in e["relics"] if "ENERGY" in str(r)]
+    lines.append(f"| エネルギー系レリック | {len(energy_relics)} 件（全群合計） | | |")
+
+    lines.append("")
+    lines.append("### 5-4 交絡（この比較で言えないこと）")
+    lines.append("- 踏破7本は2026-09-10〜10-28 の別々の方針版で走った run で、削り<0.3 の14戦は v23/v24（10-28以降）だけ。"
+                 "時代と方針版が揃っていない。")
+    lines.append("- 踏破 run は結果で選んでいる。持ち物の差は勝因の候補であって、勝因そのものではない。")
+    lines.append("- `N8CQ4ZKP2W` の3本は同じ seed で、デッキもほぼ同一。独立な標本は実質5本。"
+                 "上の「4/7」は2種類のデッキ（495FF454B7 と N8CQ4ZKP2W）を数えている。")
+    lines.append("- 踏破 run の入場HPは平均90.1で、削り<0.3 の68.3より高い。Act 1〜2を健全に抜けた選択の差が"
+                 "そのままデッキ差に見えている可能性がある。")
+    lines.append("- 削り<0.3 の14戦は「到達はしたが削れなかった」集団で、Act 3に来られなかった run は含まない。")
+    lines.append("")
+    lines.append("読み: 単札では RUPTURE が 5/7 対 2/14、組み合わせでは RUPTURE+CRIMSON_MANTLE が 4/7 対 0/14、"
+                 "RUPTURE+MAD_SCIENCE が 4/7 対 0/14。ただし標本は実質5本で、時代と入場HPの交絡が大きい。"
+                 "報酬方針の候補にするなら、この差を「勝ち筋の仮説」として事前登録し、フルrunで測る必要がある。")
+    return "\n".join(lines)
+
+
 def _rho_text(xs, ys):
     pairs = [(x, y) for x, y in zip(xs, ys) if x is not None and y is not None]
     if len(pairs) < 3:
@@ -589,6 +761,8 @@ def main(argv=None):
         out.append(section_scaling(fights))
     if args.section in ("str3", "all"):
         out.append(section_str3(args.str_dir))
+    if args.section in ("reward", "all"):
+        out.append(section_reward(fights, args.data_dir))
     print("\n\n".join(out))
     return 0
 
