@@ -266,7 +266,9 @@ def main(argv=None):
     args = ap.parse_args(argv)
     data_dir = args.data or os.path.join(args.main, "data")
     cand = load_runs(data_dir, args.cand)
-    control = load_runs(data_dir, args.control)
+    # Compare only same-seed controls: the panel's 136 runs would otherwise set the
+    # baseline from seeds the candidate never ran, which is not a paired comparison.
+    control = {s: v for s, v in load_runs(data_dir, args.control).items() if s in cand}
     paired = []
     for seed in sorted(cand):
         if seed in control:
