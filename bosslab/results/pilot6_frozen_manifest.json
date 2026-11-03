@@ -1,0 +1,9 @@
+{
+ "commit": "8422e56 \u90e8\u54c13: Demon Form\u3092\u30dc\u30b9\u62261-2\u30bf\u30fc\u30f3\u76ee\u306b\u5148\u51fa\u3057\u3059\u308b\u898f\u5247",
+ "dirty": "",
+ "sha256": {
+  "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+  "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+  "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+ }
+}
