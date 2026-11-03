@@ -70,23 +70,27 @@ def queen_slice(rows):
 
 
 def fight_metrics(combat, end):
-    removed = 0.0
-    for suffix in (QUEEN, AMALGAM):
-        val = A.hp_removed_from_trace(combat, suffix) or 0
-        removed += val
-    max_hp = 0.0
-    for suffix in (QUEEN, AMALGAM):
+    """Queen-only shave is the EVALUATION.md metric; the Queen+Amalgam sum is a
+    different number (the 599 denominator) and is kept under its own name."""
+    removed = {}
+    max_hp = {}
+    for suffix, key in ((QUEEN, "queen"), (AMALGAM, "amalgam")):
+        removed[key] = A.hp_removed_from_trace(combat, suffix) or 0
         first = next((next((e for e in (r.get("enemies") or [])
                             if str(e.get("id", "")).endswith(suffix)), None)
                       for r in combat), None)
-        if first:
-            max_hp += float(first.get("max_hp") or 0)
+        max_hp[key] = float(first.get("max_hp") or 0) if first else 0.0
+    combined_removed = removed["queen"] + removed["amalgam"]
+    combined_max = max_hp["queen"] + max_hp["amalgam"]
     turns = max((r.get("turn") or 0) for r in combat) if combat else 0
     won = bool(end and end.get("won"))
     return {
-        "removed": removed,
-        "max_hp": max_hp,
-        "shave": (removed / max_hp) if max_hp else None,
+        "removed": combined_removed,
+        "max_hp": combined_max,
+        "queen_removed": removed["queen"],
+        "amalgam_removed": removed["amalgam"],
+        "shave": (removed["queen"] / max_hp["queen"]) if max_hp["queen"] else None,
+        "shave_combined": (combined_removed / combined_max) if combined_max else None,
         "turns": turns,
         "won": won,
     }
@@ -176,7 +180,7 @@ def section_calib(fights):
     rho = spearman(vals, shaves)
     lines.append(f"- 1手目 search_value の中央値 {statistics.median(vals):+.3f}"
                  f"（範囲 {min(vals):+.3f}〜{max(vals):+.3f}）")
-    lines.append(f"- 1手目値と削り割合の Spearman ρ = {rho:+.3f}（n={n}）" if rho is not None else "- 相関は算出不能")
+    lines.append(f"- 1手目値とQueen削り割合（Queen単独）の Spearman ρ = {rho:+.3f}（n={n}）" if rho is not None else "- 相関は算出不能")
     win = [f for f in lit if f["won"]]
     lose = [f for f in lit if not f["won"]]
     if win and lose:
@@ -245,7 +249,11 @@ def section_calib(fights):
     lines.append(f"- 1手目値と初期手札枚数の ρ = {_rho_text(vals, atk)}（代理指標として弱い）")
     turns = [f["turns"] for f in lit]
     lines.append(f"- 1手目値と生存ターンの ρ = {_rho_text(vals, turns)}")
-    lines.append(f"- 削り割合と生存ターンの ρ = {_rho_text(shaves, turns)}")
+    lines.append(f"- Queen削り割合と生存ターンの ρ = {_rho_text(shaves, turns)}")
+    combined = [f["shave_combined"] for f in lit]
+    lines.append(f"- 参考: Queen+Amalgam合算の削り割合（分母599）は 中央値 "
+                 f"{statistics.median([x for x in combined if x is not None]):.3f}。"
+                 f"EVALUATION.mdの主信号ではないので、以下の比較はQueen単独で行う。")
 
     lines.append("")
     lines.append("### 1-5 評価値は戦闘中に動くか")
@@ -644,8 +652,10 @@ def section_reward(fights, data_dir):
         return count
 
     lines = []
-    lines.append(f"比較: Act 3踏破 run（記録の7本） 対 Queen削り0.3未満の14戦（v23+v24） 対 残り45戦。"
-                 f"デッキはQueen入場時の手札・山札・捨て札・廃棄札のカードID。")
+    n_low = len(groups["low"])
+    n_rest = len(groups["rest"])
+    lines.append(f"比較: Act 3踏破 run（記録の7本） 対 Queen削り0.3未満の{n_low}戦（v23+v24） 対 残り{n_rest}戦。"
+                 f"削りはQueen単独（EVALUATION.mdの主信号）。デッキはQueen入場時の手札・山札・捨て札・廃棄札のカードID。")
     lines.append("")
     lines.append("踏破 run の内訳（7本）: `astra_ctrl_v23_495FF454B7`、`N8CQ4ZKP2W` が3本"
                  "（act3_recheck / candidate_vulnlethal / astra_eval_v1_candidate）、"
@@ -658,7 +668,7 @@ def section_reward(fights, data_dir):
                  "`combat_end.won=true` で終わっている。")
     lines.append("")
     lines.append("### 5-1 札の有無（件数）")
-    lines.append("| カード | 踏破 7本 | 削り<0.3 14戦 | 残り 45戦 |")
+    lines.append(f"| カード | 踏破 7本 | 削り<0.3 {n_low}戦 | 残り {n_rest}戦 |")
     lines.append("| --- | --- | --- | --- |")
     pc = presence(groups["clear"], "ids")
     pl_ = presence(groups["low"], "ids")
@@ -666,12 +676,12 @@ def section_reward(fights, data_dir):
     keys = set(pc) | set(pl_) | set(pr)
     ranked = sorted(keys, key=lambda k: (-(pc.get(k, 0) - 0.3 * pl_.get(k, 0)), -pc.get(k, 0)))
     for key in ranked[:14]:
-        lines.append(f"| {key.replace('CARD.', '')} | {pc.get(key, 0)}/7 | {pl_.get(key, 0)}/14 | "
-                     f"{pr.get(key, 0)}/45 |")
+        lines.append(f"| {key.replace('CARD.', '')} | {pc.get(key, 0)}/7 | {pl_.get(key, 0)}/{n_low} | "
+                     f"{pr.get(key, 0)}/{n_rest} |")
 
     lines.append("")
     lines.append("### 5-2 組み合わせ（件数）")
-    lines.append("| 組み合わせ | 踏破 7本 | 削り<0.3 14戦 | 残り 45戦 |")
+    lines.append(f"| 組み合わせ | 踏破 7本 | 削り<0.3 {n_low}戦 | 残り {n_rest}戦 |")
     lines.append("| --- | --- | --- | --- |")
     def all_of(ids, needed):
         return needed <= ids
@@ -693,11 +703,11 @@ def section_reward(fights, data_dir):
     for label, pred in combos:
         counts = [sum(1 for e in group if pred(set(e["ids"])))
                   for group in (groups["clear"], groups["low"], groups["rest"])]
-        lines.append(f"| {label} | {counts[0]}/7 | {counts[1]}/14 | {counts[2]}/45 |")
+        lines.append(f"| {label} | {counts[0]}/7 | {counts[1]}/{n_low} | {counts[2]}/{n_rest} |")
 
     lines.append("")
     lines.append("### 5-3 エネルギー源とレリック")
-    lines.append("| 指標 | 踏破 7本 | 削り<0.3 14戦 | 残り 45戦 |")
+    lines.append(f"| 指標 | 踏破 7本 | 削り<0.3 {n_low}戦 | 残り {n_rest}戦 |")
     lines.append("| --- | --- | --- | --- |")
     for label, fn, fmt in (
         ("最大エネルギー 平均", lambda g: statistics.mean([e["max_energy"] for e in g]), "{:.2f}"),
@@ -713,7 +723,7 @@ def section_reward(fights, data_dir):
            for name in ("RELIC.STRAWBERRY", "RELIC.LANTERN", "RELIC.ANCHOR",
                         "RELIC.GOLDEN_PEARL", "RELIC.LETTER_OPENER")}
     for name, counts in rel.items():
-        lines.append(f"| {name.replace('RELIC.', '')} | {counts[0]}/7 | {counts[1]}/14 | {counts[2]}/45 |")
+        lines.append(f"| {name.replace('RELIC.', '')} | {counts[0]}/7 | {counts[1]}/{n_low} | {counts[2]}/{n_rest} |")
     energy_relics = [r for e in groups["clear"] + groups["low"] + groups["rest"]
                      for r in e["relics"] if "ENERGY" in str(r)]
     lines.append(f"| エネルギー系レリック | {len(energy_relics)} 件（全群合計） | | |")
