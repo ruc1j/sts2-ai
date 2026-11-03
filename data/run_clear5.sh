@@ -35,6 +35,7 @@ for seed in ${(f)"$(<$seeds_file)"}; do
   print -- "RESULT ${seed} exit=${code} secs=$((end-start)) ${usab}"
   # Exit 1 is the game's normal exit after a death (run_official_autoslay.ps1 rethrows it), so only a
   # timeout, a missing trace, or an unusable trace counts as an anomaly.
+  if [[ -n "${POST_RUN:-}" ]]; then "$POST_RUN" "$tag" "$seed" "$repo"; post=$?; (( post == 2 )) && { print -- "STOP preregistered rule after ${seed}"; exit 0; }; fi
   if grep -q "timed out after" "${prefix}_stdout.log" || [[ ! -s "${prefix}_agent.jsonl" ]] || [[ "$usab" == *"✗"* ]]; then print -- "ANOMALY timeout/missing/unusable trace for ${seed}"; exit 1; fi
 done
 print -- "ACCUM DONE ${tag}"
