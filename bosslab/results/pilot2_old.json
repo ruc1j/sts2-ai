@@ -1,0 +1,5402 @@
+[
+ {
+  "kind": "?",
+  "seq": 420,
+  "action": "card:0@None",
+  "card_id": "CARD.IMPERVIOUS",
+  "power": false,
+  "error": null,
+  "elapsed": 4.250399112701416
+ },
+ {
+  "kind": "?",
+  "seq": 424,
+  "action": "card:1@1",
+  "card_id": "CARD.TREMBLE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.5023860931396484
+ },
+ {
+  "kind": "?",
+  "seq": 428,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 4.100313186645508
+ },
+ {
+  "kind": "?",
+  "seq": 432,
+  "action": "card:4@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 4.389964818954468
+ },
+ {
+  "kind": "?",
+  "seq": 436,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.587459087371826
+ },
+ {
+  "kind": "?",
+  "seq": 440,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.569911003112793
+ },
+ {
+  "kind": "?",
+  "seq": 444,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.556056022644043
+ },
+ {
+  "kind": "?",
+  "seq": 448,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9249930381774902
+ },
+ {
+  "kind": "?",
+  "seq": 452,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6031990051269531
+ },
+ {
+  "kind": "?",
+  "seq": 456,
+  "action": "card:5@2",
+  "card_id": "CARD.THRASH",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0658140182495117
+ },
+ {
+  "kind": "?",
+  "seq": 331,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 5.072026014328003
+ },
+ {
+  "kind": "?",
+  "seq": 334,
+  "action": "card:2@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 5.147026300430298
+ },
+ {
+  "kind": "?",
+  "seq": 337,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 4.776448726654053
+ },
+ {
+  "kind": "?",
+  "seq": 340,
+  "action": "card:3@1",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 5.308013677597046
+ },
+ {
+  "kind": "?",
+  "seq": 343,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 4.410773754119873
+ },
+ {
+  "kind": "?",
+  "seq": 346,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.279558181762695
+ },
+ {
+  "kind": "?",
+  "seq": 349,
+  "action": "card:2@1",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8623697757720947
+ },
+ {
+  "kind": "?",
+  "seq": 352,
+  "action": "card:3@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.27614593505859375
+ },
+ {
+  "kind": "?",
+  "seq": 355,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.0846109390258789
+ },
+ {
+  "kind": "?",
+  "seq": 358,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6793341636657715
+ },
+ {
+  "kind": "?",
+  "seq": 429,
+  "action": "card:4@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 2.1702139377593994
+ },
+ {
+  "kind": "?",
+  "seq": 431,
+  "action": "card:1@2",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1795809268951416
+ },
+ {
+  "kind": "?",
+  "seq": 433,
+  "action": "card:1@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8297317028045654
+ },
+ {
+  "kind": "?",
+  "seq": 435,
+  "action": "card:1@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6253008842468262
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "card:0@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3096990585327148
+ },
+ {
+  "kind": "?",
+  "seq": 439,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0615999698638916
+ },
+ {
+  "kind": "?",
+  "seq": 441,
+  "action": "card:0@1",
+  "card_id": "CARD.TREMBLE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9052200317382812
+ },
+ {
+  "kind": "?",
+  "seq": 443,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.700139045715332
+ },
+ {
+  "kind": "?",
+  "seq": 445,
+  "action": "card:2@None",
+  "card_id": "CARD.SWORD_BOOMERANG",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2835566997528076
+ },
+ {
+  "kind": "?",
+  "seq": 447,
+  "action": "card:2@None",
+  "card_id": "CARD.IMPERVIOUS",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1444010734558105
+ },
+ {
+  "kind": "?",
+  "seq": 470,
+  "action": "card:4@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.131850004196167
+ },
+ {
+  "kind": "?",
+  "seq": 471,
+  "action": "card:5@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6874890327453613
+ },
+ {
+  "kind": "?",
+  "seq": 472,
+  "action": "card:5@2",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5446348190307617
+ },
+ {
+  "kind": "?",
+  "seq": 473,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.474595069885254
+ },
+ {
+  "kind": "?",
+  "seq": 474,
+  "action": "card:3@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9919209480285645
+ },
+ {
+  "kind": "?",
+  "seq": 475,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.572803020477295
+ },
+ {
+  "kind": "?",
+  "seq": 476,
+  "action": "card:3@2",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9617428779602051
+ },
+ {
+  "kind": "?",
+  "seq": 477,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9671838283538818
+ },
+ {
+  "kind": "?",
+  "seq": 478,
+  "action": "card:3@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0004229545593262
+ },
+ {
+  "kind": "?",
+  "seq": 479,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0738029479980469
+ },
+ {
+  "kind": "?",
+  "seq": 426,
+  "action": "card:2@None",
+  "card_id": "CARD.IMPERVIOUS",
+  "power": false,
+  "error": null,
+  "elapsed": 4.389555215835571
+ },
+ {
+  "kind": "?",
+  "seq": 430,
+  "action": "card:3@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.4630889892578125
+ },
+ {
+  "kind": "?",
+  "seq": 434,
+  "action": "card:7@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.426379203796387
+ },
+ {
+  "kind": "?",
+  "seq": 438,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3253250122070312
+ },
+ {
+  "kind": "?",
+  "seq": 442,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.665102005004883
+ },
+ {
+  "kind": "?",
+  "seq": 446,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.100227117538452
+ },
+ {
+  "kind": "?",
+  "seq": 450,
+  "action": "card:1@None",
+  "card_id": "CARD.IMPERVIOUS",
+  "power": false,
+  "error": null,
+  "elapsed": 2.287626028060913
+ },
+ {
+  "kind": "?",
+  "seq": 454,
+  "action": "card:1@2",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2250816822052002
+ },
+ {
+  "kind": "?",
+  "seq": 458,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9329919815063477
+ },
+ {
+  "kind": "?",
+  "seq": 462,
+  "action": "card:3@2",
+  "card_id": "CARD.BYRD_SWOOP",
+  "power": false,
+  "error": null,
+  "elapsed": 0.24863386154174805
+ },
+ {
+  "kind": "?",
+  "seq": 593,
+  "action": "card:1@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 4.512662887573242
+ },
+ {
+  "kind": "?",
+  "seq": 595,
+  "action": "card:0@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 4.375094890594482
+ },
+ {
+  "kind": "?",
+  "seq": 597,
+  "action": "card:3@None",
+  "card_id": "CARD.METAMORPHOSIS",
+  "power": false,
+  "error": null,
+  "elapsed": 4.279403209686279
+ },
+ {
+  "kind": "?",
+  "seq": 599,
+  "action": "card:3@None",
+  "card_id": "CARD.CONFLAGRATION",
+  "power": false,
+  "error": null,
+  "elapsed": 3.820484161376953
+ },
+ {
+  "kind": "?",
+  "seq": 601,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.6670122146606445
+ },
+ {
+  "kind": "?",
+  "seq": 603,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 3.462562084197998
+ },
+ {
+  "kind": "?",
+  "seq": 605,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.426725149154663
+ },
+ {
+  "kind": "?",
+  "seq": 607,
+  "action": "card:0@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 2.6432299613952637
+ },
+ {
+  "kind": "?",
+  "seq": 609,
+  "action": "card:0@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7627677917480469
+ },
+ {
+  "kind": "?",
+  "seq": 611,
+  "action": "card:5@1",
+  "card_id": "CARD.BYRD_SWOOP",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2460050582885742
+ },
+ {
+  "kind": "?",
+  "seq": 442,
+  "action": "card:4@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8534986972808838
+ },
+ {
+  "kind": "?",
+  "seq": 443,
+  "action": "card:3@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.465829849243164
+ },
+ {
+  "kind": "?",
+  "seq": 444,
+  "action": "card:2@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4994752407073975
+ },
+ {
+  "kind": "?",
+  "seq": 445,
+  "action": "card:1@None",
+  "card_id": "CARD.THUNDERCLAP",
+  "power": false,
+  "error": null,
+  "elapsed": 1.402529001235962
+ },
+ {
+  "kind": "?",
+  "seq": 446,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.4131340980529785
+ },
+ {
+  "kind": "?",
+  "seq": 447,
+  "action": "card:2@2",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 1.207509994506836
+ },
+ {
+  "kind": "?",
+  "seq": 448,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.009943962097168
+ },
+ {
+  "kind": "?",
+  "seq": 449,
+  "action": "card:3@2",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.066087007522583
+ },
+ {
+  "kind": "?",
+  "seq": 450,
+  "action": "card:4@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.0398757457733154
+ },
+ {
+  "kind": "?",
+  "seq": 451,
+  "action": "card:4@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5375783443450928
+ },
+ {
+  "kind": "?",
+  "seq": 444,
+  "action": "card:3@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.600829839706421
+ },
+ {
+  "kind": "?",
+  "seq": 446,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.830138921737671
+ },
+ {
+  "kind": "?",
+  "seq": 448,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2667748928070068
+ },
+ {
+  "kind": "?",
+  "seq": 450,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2715277671813965
+ },
+ {
+  "kind": "?",
+  "seq": 452,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8283400535583496
+ },
+ {
+  "kind": "?",
+  "seq": 454,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.824012041091919
+ },
+ {
+  "kind": "?",
+  "seq": 456,
+  "action": "card:0@2",
+  "card_id": "CARD.HEMOKINESIS",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5794248580932617
+ },
+ {
+  "kind": "?",
+  "seq": 458,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.7675940990447998
+ },
+ {
+  "kind": "?",
+  "seq": 460,
+  "action": "card:1@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.018050193786621
+ },
+ {
+  "kind": "?",
+  "seq": 462,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8805909156799316
+ },
+ {
+  "kind": "?",
+  "seq": 394,
+  "action": "card:4@None",
+  "card_id": "CARD.STOMP",
+  "power": false,
+  "error": null,
+  "elapsed": 3.8625450134277344
+ },
+ {
+  "kind": "?",
+  "seq": 397,
+  "action": "card:2@None",
+  "card_id": "CARD.STOMP",
+  "power": false,
+  "error": null,
+  "elapsed": 4.222460985183716
+ },
+ {
+  "kind": "?",
+  "seq": 400,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.641644239425659
+ },
+ {
+  "kind": "?",
+  "seq": 403,
+  "action": "card:5@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 3.180633783340454
+ },
+ {
+  "kind": "?",
+  "seq": 406,
+  "action": "card:3@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9685781002044678
+ },
+ {
+  "kind": "?",
+  "seq": 409,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.0820040702819824
+ },
+ {
+  "kind": "?",
+  "seq": 412,
+  "action": "card:2@1",
+  "card_id": "CARD.BYRD_SWOOP",
+  "power": false,
+  "error": null,
+  "elapsed": 2.101280927658081
+ },
+ {
+  "kind": "?",
+  "seq": 415,
+  "action": "card:2@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5264310836791992
+ },
+ {
+  "kind": "?",
+  "seq": 418,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.2202298641204834
+ },
+ {
+  "kind": "?",
+  "seq": 421,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.4551429748535156
+ },
+ {
+  "kind": "?",
+  "seq": 428,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.810838222503662
+ },
+ {
+  "kind": "?",
+  "seq": 429,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 6.210572957992554
+ },
+ {
+  "kind": "?",
+  "seq": 430,
+  "action": "card:3@2",
+  "card_id": "CARD.FIEND_FIRE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.74802303314209
+ },
+ {
+  "kind": "?",
+  "seq": 431,
+  "action": "card:3@2",
+  "card_id": "CARD.FIEND_FIRE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.936951160430908
+ },
+ {
+  "kind": "?",
+  "seq": 432,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.7825682163238525
+ },
+ {
+  "kind": "?",
+  "seq": 433,
+  "action": "card:2@2",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.878406047821045
+ },
+ {
+  "kind": "?",
+  "seq": 434,
+  "action": "card:2@2",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3311312198638916
+ },
+ {
+  "kind": "?",
+  "seq": 435,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2756311893463135
+ },
+ {
+  "kind": "?",
+  "seq": 436,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.28883695602417
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.236884832382202
+ },
+ {
+  "kind": "?",
+  "seq": 410,
+  "action": "card:4@None",
+  "card_id": "CARD.WHIRLWIND",
+  "power": false,
+  "error": null,
+  "elapsed": 3.21128511428833
+ },
+ {
+  "kind": "?",
+  "seq": 413,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.833747148513794
+ },
+ {
+  "kind": "?",
+  "seq": 416,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1561601161956787
+ },
+ {
+  "kind": "?",
+  "seq": 419,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.4574661254882812
+ },
+ {
+  "kind": "?",
+  "seq": 422,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.447972297668457
+ },
+ {
+  "kind": "?",
+  "seq": 425,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.7783660888671875
+ },
+ {
+  "kind": "?",
+  "seq": 428,
+  "action": "card:2@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.0649468898773193
+ },
+ {
+  "kind": "?",
+  "seq": 431,
+  "action": "card:0@None",
+  "card_id": "CARD.BREAKTHROUGH",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3649327754974365
+ },
+ {
+  "kind": "?",
+  "seq": 434,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0283730030059814
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "card:1@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 0.816288948059082
+ },
+ {
+  "kind": "?",
+  "seq": 405,
+  "action": "card:2@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 4.367972135543823
+ },
+ {
+  "kind": "?",
+  "seq": 409,
+  "action": "card:0@None",
+  "card_id": "CARD.JUGGLING",
+  "power": true,
+  "error": null,
+  "elapsed": 7.752942800521851
+ },
+ {
+  "kind": "?",
+  "seq": 413,
+  "action": "card:3@None",
+  "card_id": "CARD.STONE_ARMOR",
+  "power": true,
+  "error": null,
+  "elapsed": 4.707560062408447
+ },
+ {
+  "kind": "?",
+  "seq": 417,
+  "action": "card:4@None",
+  "card_id": "CARD.IMPERVIOUS",
+  "power": false,
+  "error": null,
+  "elapsed": 4.1880412101745605
+ },
+ {
+  "kind": "?",
+  "seq": 421,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.405194044113159
+ },
+ {
+  "kind": "?",
+  "seq": 425,
+  "action": "card:4@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.8209421634674072
+ },
+ {
+  "kind": "?",
+  "seq": 429,
+  "action": "card:3@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 3.0592682361602783
+ },
+ {
+  "kind": "?",
+  "seq": 433,
+  "action": "card:2@None",
+  "card_id": "CARD.COLOSSUS",
+  "power": false,
+  "error": null,
+  "elapsed": 3.4362659454345703
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.4984161853790283
+ },
+ {
+  "kind": "?",
+  "seq": 441,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7100780010223389
+ },
+ {
+  "kind": "?",
+  "seq": 432,
+  "action": "card:0@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 5.167992115020752
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "card:4@1",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.854691982269287
+ },
+ {
+  "kind": "?",
+  "seq": 442,
+  "action": "card:1@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.4706759452819824
+ },
+ {
+  "kind": "?",
+  "seq": 447,
+  "action": "card:3@None",
+  "card_id": "CARD.COLOSSUS",
+  "power": false,
+  "error": null,
+  "elapsed": 3.4125730991363525
+ },
+ {
+  "kind": "?",
+  "seq": 452,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.334066152572632
+ },
+ {
+  "kind": "?",
+  "seq": 457,
+  "action": "card:6@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8996820449829102
+ },
+ {
+  "kind": "?",
+  "seq": 462,
+  "action": "card:3@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6911859512329102
+ },
+ {
+  "kind": "?",
+  "seq": 467,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.077423095703125
+ },
+ {
+  "kind": "?",
+  "seq": 472,
+  "action": "card:1@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0787379741668701
+ },
+ {
+  "kind": "?",
+  "seq": 477,
+  "action": "card:6@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5710961818695068
+ },
+ {
+  "kind": "?",
+  "seq": 443,
+  "action": "card:2@2",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.091620922088623
+ },
+ {
+  "kind": "?",
+  "seq": 444,
+  "action": "card:3@2",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1472041606903076
+ },
+ {
+  "kind": "?",
+  "seq": 445,
+  "action": "card:2@2",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 2.067868232727051
+ },
+ {
+  "kind": "?",
+  "seq": 446,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.0047051906585693
+ },
+ {
+  "kind": "?",
+  "seq": 447,
+  "action": "card:2@2",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9405477046966553
+ },
+ {
+  "kind": "?",
+  "seq": 448,
+  "action": "card:2@2",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4708919525146484
+ },
+ {
+  "kind": "?",
+  "seq": 449,
+  "action": "card:0@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2549731731414795
+ },
+ {
+  "kind": "?",
+  "seq": 450,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.1959469318389893
+ },
+ {
+  "kind": "?",
+  "seq": 451,
+  "action": "card:4@2",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5509591102600098
+ },
+ {
+  "kind": "?",
+  "seq": 452,
+  "action": "card:0@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.30218982696533203
+ },
+ {
+  "kind": "?",
+  "seq": 636,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 6.073709964752197
+ },
+ {
+  "kind": "?",
+  "seq": 640,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 6.387902021408081
+ },
+ {
+  "kind": "?",
+  "seq": 644,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 5.229276895523071
+ },
+ {
+  "kind": "?",
+  "seq": 648,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 5.16082501411438
+ },
+ {
+  "kind": "?",
+  "seq": 652,
+  "action": "card:2@None",
+  "card_id": "CARD.RUPTURE",
+  "power": true,
+  "error": null,
+  "elapsed": 3.905350923538208
+ },
+ {
+  "kind": "?",
+  "seq": 656,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.389430046081543
+ },
+ {
+  "kind": "?",
+  "seq": 660,
+  "action": "card:4@None",
+  "card_id": "CARD.UNMOVABLE",
+  "power": true,
+  "error": null,
+  "elapsed": 3.40553617477417
+ },
+ {
+  "kind": "?",
+  "seq": 664,
+  "action": "card:4@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.2425811290740967
+ },
+ {
+  "kind": "?",
+  "seq": 668,
+  "action": "card:4@None",
+  "card_id": "CARD.COLOSSUS",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9789741039276123
+ },
+ {
+  "kind": "?",
+  "seq": 672,
+  "action": "card:0@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4471092224121094
+ },
+ {
+  "kind": "?",
+  "seq": 391,
+  "action": "card:2@2",
+  "card_id": "CARD.ULTIMATE_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.833933115005493
+ },
+ {
+  "kind": "?",
+  "seq": 394,
+  "action": "card:2@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.448491096496582
+ },
+ {
+  "kind": "?",
+  "seq": 397,
+  "action": "card:5@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9720659255981445
+ },
+ {
+  "kind": "?",
+  "seq": 400,
+  "action": "card:3@2",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3989839553833008
+ },
+ {
+  "kind": "?",
+  "seq": 403,
+  "action": "card:2@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.5178959369659424
+ },
+ {
+  "kind": "?",
+  "seq": 406,
+  "action": "card:2@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9090418815612793
+ },
+ {
+  "kind": "?",
+  "seq": 409,
+  "action": "card:0@None",
+  "card_id": "CARD.HOWL_FROM_BEYOND",
+  "power": false,
+  "error": null,
+  "elapsed": 2.0433080196380615
+ },
+ {
+  "kind": "?",
+  "seq": 412,
+  "action": "card:2@1",
+  "card_id": "CARD.HEMOKINESIS",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2921040058135986
+ },
+ {
+  "kind": "?",
+  "seq": 415,
+  "action": "card:1@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1382720470428467
+ },
+ {
+  "kind": "?",
+  "seq": 418,
+  "action": "card:3@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.3120310306549072
+ },
+ {
+  "kind": "?",
+  "seq": 398,
+  "action": "card:0@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.698000907897949
+ },
+ {
+  "kind": "?",
+  "seq": 400,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 7.655585765838623
+ },
+ {
+  "kind": "?",
+  "seq": 402,
+  "action": "card:4@None",
+  "card_id": "CARD.RUPTURE",
+  "power": true,
+  "error": null,
+  "elapsed": 3.682227849960327
+ },
+ {
+  "kind": "?",
+  "seq": 404,
+  "action": "card:5@None",
+  "card_id": "CARD.RUPTURE",
+  "power": true,
+  "error": null,
+  "elapsed": 3.254934072494507
+ },
+ {
+  "kind": "?",
+  "seq": 406,
+  "action": "card:0@None",
+  "card_id": "CARD.PRIMAL_FORCE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1304078102111816
+ },
+ {
+  "kind": "?",
+  "seq": 408,
+  "action": "card:2@2",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 4.695786952972412
+ },
+ {
+  "kind": "?",
+  "seq": 410,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 3.600130081176758
+ },
+ {
+  "kind": "?",
+  "seq": 412,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 4.11902379989624
+ },
+ {
+  "kind": "?",
+  "seq": 414,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.3715598583221436
+ },
+ {
+  "kind": "?",
+  "seq": 416,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.472358226776123
+ },
+ {
+  "kind": "?",
+  "seq": 343,
+  "action": "card:2@None",
+  "card_id": "CARD.BREAKTHROUGH",
+  "power": false,
+  "error": null,
+  "elapsed": 3.329026222229004
+ },
+ {
+  "kind": "?",
+  "seq": 345,
+  "action": "card:2@None",
+  "card_id": "CARD.BREAKTHROUGH",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1111769676208496
+ },
+ {
+  "kind": "?",
+  "seq": 347,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.814197063446045
+ },
+ {
+  "kind": "?",
+  "seq": 349,
+  "action": "card:3@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3711349964141846
+ },
+ {
+  "kind": "?",
+  "seq": 351,
+  "action": "card:4@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 2.268225908279419
+ },
+ {
+  "kind": "?",
+  "seq": 353,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.7599492073059082
+ },
+ {
+  "kind": "?",
+  "seq": 355,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6571969985961914
+ },
+ {
+  "kind": "?",
+  "seq": 357,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.5158469676971436
+ },
+ {
+  "kind": "?",
+  "seq": 359,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2467222213745117
+ },
+ {
+  "kind": "?",
+  "seq": 361,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9831650257110596
+ },
+ {
+  "kind": "?",
+  "seq": 455,
+  "action": "card:2@2",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.7074339389801025
+ },
+ {
+  "kind": "?",
+  "seq": 459,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 3.3954451084136963
+ },
+ {
+  "kind": "?",
+  "seq": 463,
+  "action": "card:4@None",
+  "card_id": "CARD.STONE_ARMOR",
+  "power": true,
+  "error": null,
+  "elapsed": 2.752793073654175
+ },
+ {
+  "kind": "?",
+  "seq": 467,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.7897369861602783
+ },
+ {
+  "kind": "?",
+  "seq": 471,
+  "action": "card:4@1",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2402448654174805
+ },
+ {
+  "kind": "?",
+  "seq": 475,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.8475408554077148
+ },
+ {
+  "kind": "?",
+  "seq": 479,
+  "action": "card:4@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.94889497756958
+ },
+ {
+  "kind": "?",
+  "seq": 483,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0242571830749512
+ },
+ {
+  "kind": "?",
+  "seq": 487,
+  "action": "card:0@2",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 0.508357048034668
+ },
+ {
+  "kind": "?",
+  "seq": 491,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6846871376037598
+ },
+ {
+  "kind": "?",
+  "seq": 477,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.9320456981658936
+ },
+ {
+  "kind": "?",
+  "seq": 481,
+  "action": "card:5@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.6408658027648926
+ },
+ {
+  "kind": "?",
+  "seq": 485,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.6252548694610596
+ },
+ {
+  "kind": "?",
+  "seq": 489,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.383798599243164
+ },
+ {
+  "kind": "?",
+  "seq": 493,
+  "action": "card:2@None",
+  "card_id": "CARD.RAGE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.897878885269165
+ },
+ {
+  "kind": "?",
+  "seq": 497,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2262699604034424
+ },
+ {
+  "kind": "?",
+  "seq": 501,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.6273789405822754
+ },
+ {
+  "kind": "?",
+  "seq": 505,
+  "action": "card:3@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5459940433502197
+ },
+ {
+  "kind": "?",
+  "seq": 509,
+  "action": "card:3@None",
+  "card_id": "CARD.BURNING_PACT",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7944629192352295
+ },
+ {
+  "kind": "?",
+  "seq": 513,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.48812103271484375
+ },
+ {
+  "kind": "?",
+  "seq": 450,
+  "action": "card:0@2",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 3.7798829078674316
+ },
+ {
+  "kind": "?",
+  "seq": 454,
+  "action": "card:0@None",
+  "card_id": "CARD.BREAKTHROUGH",
+  "power": false,
+  "error": null,
+  "elapsed": 4.362011194229126
+ },
+ {
+  "kind": "?",
+  "seq": 458,
+  "action": "card:2@None",
+  "card_id": "CARD.SWORD_BOOMERANG",
+  "power": false,
+  "error": null,
+  "elapsed": 4.685633897781372
+ },
+ {
+  "kind": "?",
+  "seq": 462,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 5.762391090393066
+ },
+ {
+  "kind": "?",
+  "seq": 466,
+  "action": "card:3@None",
+  "card_id": "CARD.COLOSSUS",
+  "power": false,
+  "error": null,
+  "elapsed": 4.129205942153931
+ },
+ {
+  "kind": "?",
+  "seq": 470,
+  "action": "card:4@None",
+  "card_id": "CARD.SWORD_BOOMERANG",
+  "power": false,
+  "error": null,
+  "elapsed": 3.708392858505249
+ },
+ {
+  "kind": "?",
+  "seq": 474,
+  "action": "card:3@1",
+  "card_id": "CARD.TREMBLE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.884813070297241
+ },
+ {
+  "kind": "?",
+  "seq": 478,
+  "action": "card:3@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.439128875732422
+ },
+ {
+  "kind": "?",
+  "seq": 482,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3725838661193848
+ },
+ {
+  "kind": "?",
+  "seq": 486,
+  "action": "card:2@1",
+  "card_id": "CARD.TREMBLE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2315940856933594
+ },
+ {
+  "kind": "?",
+  "seq": 431,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.9294791221618652
+ },
+ {
+  "kind": "?",
+  "seq": 433,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.3159430027008057
+ },
+ {
+  "kind": "?",
+  "seq": 435,
+  "action": "card:3@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 3.6703031063079834
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "card:2@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 3.2576799392700195
+ },
+ {
+  "kind": "?",
+  "seq": 439,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.938364028930664
+ },
+ {
+  "kind": "?",
+  "seq": 441,
+  "action": "card:3@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4417011737823486
+ },
+ {
+  "kind": "?",
+  "seq": 443,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.1994922161102295
+ },
+ {
+  "kind": "?",
+  "seq": 445,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1703770160675049
+ },
+ {
+  "kind": "?",
+  "seq": 447,
+  "action": "card:2@None",
+  "card_id": "CARD.BURNING_PACT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0544970035552979
+ },
+ {
+  "kind": "?",
+  "seq": 449,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9962210655212402
+ },
+ {
+  "kind": "?",
+  "seq": 464,
+  "action": "card:6@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.785720109939575
+ },
+ {
+  "kind": "?",
+  "seq": 467,
+  "action": "card:5@None",
+  "card_id": "CARD.THUNDERCLAP",
+  "power": false,
+  "error": null,
+  "elapsed": 3.917292833328247
+ },
+ {
+  "kind": "?",
+  "seq": 470,
+  "action": "card:0@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.319693088531494
+ },
+ {
+  "kind": "?",
+  "seq": 473,
+  "action": "card:3@2",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6156120300292969
+ },
+ {
+  "kind": "?",
+  "seq": 476,
+  "action": "card:0@None",
+  "card_id": "CARD.HOWL_FROM_BEYOND",
+  "power": false,
+  "error": null,
+  "elapsed": 1.653562068939209
+ },
+ {
+  "kind": "?",
+  "seq": 479,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3841509819030762
+ },
+ {
+  "kind": "?",
+  "seq": 482,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.2950739860534668
+ },
+ {
+  "kind": "?",
+  "seq": 485,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9206252098083496
+ },
+ {
+  "kind": "?",
+  "seq": 488,
+  "action": "card:0@None",
+  "card_id": "CARD.STOKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8535606861114502
+ },
+ {
+  "kind": "?",
+  "seq": 491,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.2517430782318115
+ },
+ {
+  "kind": "?",
+  "seq": 456,
+  "action": "card:2@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.8645598888397217
+ },
+ {
+  "kind": "?",
+  "seq": 459,
+  "action": "card:1@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.411245107650757
+ },
+ {
+  "kind": "?",
+  "seq": 462,
+  "action": "card:2@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 2.927546977996826
+ },
+ {
+  "kind": "?",
+  "seq": 465,
+  "action": "card:0@2",
+  "card_id": "CARD.FIEND_FIRE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2889537811279297
+ },
+ {
+  "kind": "?",
+  "seq": 468,
+  "action": "card:0@None",
+  "card_id": "CARD.BREAKTHROUGH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3903799057006836
+ },
+ {
+  "kind": "?",
+  "seq": 471,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9708490371704102
+ },
+ {
+  "kind": "?",
+  "seq": 474,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0629169940948486
+ },
+ {
+  "kind": "?",
+  "seq": 477,
+  "action": "card:0@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5337212085723877
+ },
+ {
+  "kind": "?",
+  "seq": 480,
+  "action": "card:3@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.544583797454834
+ },
+ {
+  "kind": "?",
+  "seq": 483,
+  "action": "card:5@2",
+  "card_id": "CARD.SPITE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.06280088424682617
+ },
+ {
+  "kind": "?",
+  "seq": 502,
+  "action": "card:0@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.455007076263428
+ },
+ {
+  "kind": "?",
+  "seq": 505,
+  "action": "card:0@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.8943309783935547
+ },
+ {
+  "kind": "?",
+  "seq": 508,
+  "action": "card:2@None",
+  "card_id": "CARD.ULTIMATE_DEFEND",
+  "power": false,
+  "error": null,
+  "elapsed": 3.670163154602051
+ },
+ {
+  "kind": "?",
+  "seq": 511,
+  "action": "card:3@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 3.3285889625549316
+ },
+ {
+  "kind": "?",
+  "seq": 514,
+  "action": "card:2@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 2.6915690898895264
+ },
+ {
+  "kind": "?",
+  "seq": 517,
+  "action": "card:3@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.7324559688568115
+ },
+ {
+  "kind": "?",
+  "seq": 520,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.4324119091033936
+ },
+ {
+  "kind": "?",
+  "seq": 523,
+  "action": "card:2@None",
+  "card_id": "CARD.RUPTURE",
+  "power": true,
+  "error": null,
+  "elapsed": 1.4852867126464844
+ },
+ {
+  "kind": "?",
+  "seq": 526,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6543617248535156
+ },
+ {
+  "kind": "?",
+  "seq": 529,
+  "action": "card:3@1",
+  "card_id": "CARD.FEED",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5374281406402588
+ },
+ {
+  "kind": "?",
+  "seq": 483,
+  "action": "card:2@2",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9669020175933838
+ },
+ {
+  "kind": "?",
+  "seq": 485,
+  "action": "card:2@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1336851119995117
+ },
+ {
+  "kind": "?",
+  "seq": 487,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.283721923828125
+ },
+ {
+  "kind": "?",
+  "seq": 489,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4859750270843506
+ },
+ {
+  "kind": "?",
+  "seq": 491,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.129800796508789
+ },
+ {
+  "kind": "?",
+  "seq": 493,
+  "action": "card:1@2",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0440797805786133
+ },
+ {
+  "kind": "?",
+  "seq": 495,
+  "action": "card:1@2",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3339848518371582
+ },
+ {
+  "kind": "?",
+  "seq": 497,
+  "action": "card:0@None",
+  "card_id": "CARD.BREAKTHROUGH",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7180628776550293
+ },
+ {
+  "kind": "?",
+  "seq": 499,
+  "action": "card:2@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.6073858737945557
+ },
+ {
+  "kind": "?",
+  "seq": 501,
+  "action": "card:4@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.11811089515686035
+ },
+ {
+  "kind": "?",
+  "seq": 448,
+  "action": "card:3@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.902125120162964
+ },
+ {
+  "kind": "?",
+  "seq": 452,
+  "action": "card:1@2",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 3.457402229309082
+ },
+ {
+  "kind": "?",
+  "seq": 456,
+  "action": "card:2@None",
+  "card_id": "CARD.COLOSSUS",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1175973415374756
+ },
+ {
+  "kind": "?",
+  "seq": 460,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.3737242221832275
+ },
+ {
+  "kind": "?",
+  "seq": 464,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.4532909393310547
+ },
+ {
+  "kind": "?",
+  "seq": 468,
+  "action": "card:3@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3699867725372314
+ },
+ {
+  "kind": "?",
+  "seq": 472,
+  "action": "card:3@2",
+  "card_id": "CARD.MAUL",
+  "power": false,
+  "error": null,
+  "elapsed": 1.529421091079712
+ },
+ {
+  "kind": "?",
+  "seq": 476,
+  "action": "card:0@2",
+  "card_id": "CARD.MAUL",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1604070663452148
+ },
+ {
+  "kind": "?",
+  "seq": 480,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9852809906005859
+ },
+ {
+  "kind": "?",
+  "seq": 484,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.827786922454834
+ },
+ {
+  "kind": "?",
+  "seq": 443,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.094594717025757
+ },
+ {
+  "kind": "?",
+  "seq": 448,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.702960968017578
+ },
+ {
+  "kind": "?",
+  "seq": 453,
+  "action": "card:1@2",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 2.0877230167388916
+ },
+ {
+  "kind": "?",
+  "seq": 458,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.5547759532928467
+ },
+ {
+  "kind": "?",
+  "seq": 463,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.3028512001037598
+ },
+ {
+  "kind": "?",
+  "seq": 468,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8649981021881104
+ },
+ {
+  "kind": "?",
+  "seq": 473,
+  "action": "card:1@2",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.354078769683838
+ },
+ {
+  "kind": "?",
+  "seq": 478,
+  "action": "card:1@2",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2493948936462402
+ },
+ {
+  "kind": "?",
+  "seq": 483,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.8949530124664307
+ },
+ {
+  "kind": "?",
+  "seq": 488,
+  "action": "card:1@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.38051891326904297
+ },
+ {
+  "kind": "?",
+  "seq": 547,
+  "action": "card:1@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.4795680046081543
+ },
+ {
+  "kind": "?",
+  "seq": 550,
+  "action": "card:0@None",
+  "card_id": "CARD.APOTHEOSIS",
+  "power": false,
+  "error": null,
+  "elapsed": 3.089078187942505
+ },
+ {
+  "kind": "?",
+  "seq": 553,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.293283224105835
+ },
+ {
+  "kind": "?",
+  "seq": 556,
+  "action": "card:4@None",
+  "card_id": "CARD.STAMPEDE",
+  "power": true,
+  "error": null,
+  "elapsed": 3.2380430698394775
+ },
+ {
+  "kind": "?",
+  "seq": 559,
+  "action": "card:3@None",
+  "card_id": "CARD.INFERNAL_BLADE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.7173502445220947
+ },
+ {
+  "kind": "?",
+  "seq": 562,
+  "action": "card:4@2",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.718301773071289
+ },
+ {
+  "kind": "?",
+  "seq": 565,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.9172818660736084
+ },
+ {
+  "kind": "?",
+  "seq": 568,
+  "action": "card:0@None",
+  "card_id": "CARD.HOWL_FROM_BEYOND",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8110058307647705
+ },
+ {
+  "kind": "?",
+  "seq": 571,
+  "action": "card:2@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9489650726318359
+ },
+ {
+  "kind": "?",
+  "seq": 574,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5189018249511719
+ },
+ {
+  "kind": "?",
+  "seq": 551,
+  "action": "card:1@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1171960830688477
+ },
+ {
+  "kind": "?",
+  "seq": 554,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.708087921142578
+ },
+ {
+  "kind": "?",
+  "seq": 557,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.0225720405578613
+ },
+ {
+  "kind": "?",
+  "seq": 560,
+  "action": "card:4@2",
+  "card_id": "CARD.ULTIMATE_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.040391206741333
+ },
+ {
+  "kind": "?",
+  "seq": 563,
+  "action": "card:3@2",
+  "card_id": "CARD.FEED",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1462299823760986
+ },
+ {
+  "kind": "?",
+  "seq": 566,
+  "action": "card:3@2",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8729569911956787
+ },
+ {
+  "kind": "?",
+  "seq": 569,
+  "action": "card:0@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.671778917312622
+ },
+ {
+  "kind": "?",
+  "seq": 572,
+  "action": "card:3@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2324459552764893
+ },
+ {
+  "kind": "?",
+  "seq": 575,
+  "action": "card:2@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3515160083770752
+ },
+ {
+  "kind": "?",
+  "seq": 578,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.05014228820800781
+ },
+ {
+  "kind": "?",
+  "seq": 334,
+  "action": "card:2@None",
+  "card_id": "CARD.STAMPEDE",
+  "power": true,
+  "error": null,
+  "elapsed": 3.9649360179901123
+ },
+ {
+  "kind": "?",
+  "seq": 348,
+  "action": "card:0@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.4636549949645996
+ },
+ {
+  "kind": "?",
+  "seq": 362,
+  "action": "card:2@1",
+  "card_id": "CARD.SETUP_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.596440076828003
+ },
+ {
+  "kind": "?",
+  "seq": 252,
+  "action": "card:0@1",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.91542911529541
+ },
+ {
+  "kind": "?",
+  "seq": 264,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.9048020839691162
+ },
+ {
+  "kind": "?",
+  "seq": 276,
+  "action": "card:0@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.058135986328125
+ },
+ {
+  "kind": "?",
+  "seq": 286,
+  "action": "card:3@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.743637800216675
+ },
+ {
+  "kind": "?",
+  "seq": 300,
+  "action": "card:4@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9934961795806885
+ },
+ {
+  "kind": "?",
+  "seq": 314,
+  "action": "card:3@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1169178485870361
+ },
+ {
+  "kind": "?",
+  "seq": 222,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.878403902053833
+ },
+ {
+  "kind": "?",
+  "seq": 236,
+  "action": "card:3@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7250549793243408
+ },
+ {
+  "kind": "?",
+  "seq": 250,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7594771385192871
+ },
+ {
+  "kind": "?",
+  "seq": 369,
+  "action": "card:4@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.0846080780029297
+ },
+ {
+  "kind": "?",
+  "seq": 385,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.9812941551208496
+ },
+ {
+  "kind": "?",
+  "seq": 401,
+  "action": "card:1@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4102520942687988
+ },
+ {
+  "kind": "?",
+  "seq": 298,
+  "action": "potion:None@1",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 4.435879945755005
+ },
+ {
+  "kind": "?",
+  "seq": 311,
+  "action": "card:1@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.7204830646514893
+ },
+ {
+  "kind": "?",
+  "seq": 324,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.266740083694458
+ },
+ {
+  "kind": "?",
+  "seq": 314,
+  "action": "card:1@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7734363079071045
+ },
+ {
+  "kind": "?",
+  "seq": 318,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.6804249286651611
+ },
+ {
+  "kind": "?",
+  "seq": 322,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.5330789089202881
+ },
+ {
+  "kind": "?",
+  "seq": 255,
+  "action": "card:3@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 2.338120222091675
+ },
+ {
+  "kind": "?",
+  "seq": 269,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.0251829624176025
+ },
+ {
+  "kind": "?",
+  "seq": 283,
+  "action": "card:0@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3108718395233154
+ },
+ {
+  "kind": "?",
+  "seq": 278,
+  "action": "card:2@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.102663040161133
+ },
+ {
+  "kind": "?",
+  "seq": 288,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.039217233657837
+ },
+ {
+  "kind": "?",
+  "seq": 298,
+  "action": "card:2@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5660781860351562
+ },
+ {
+  "kind": "?",
+  "seq": 313,
+  "action": "card:1@None",
+  "card_id": "CARD.EXTERMINATE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.097079038619995
+ },
+ {
+  "kind": "?",
+  "seq": 328,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.3031868934631348
+ },
+ {
+  "kind": "?",
+  "seq": 343,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.480051040649414
+ },
+ {
+  "kind": "?",
+  "seq": 307,
+  "action": "card:3@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8722460269927979
+ },
+ {
+  "kind": "?",
+  "seq": 321,
+  "action": "card:1@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1750640869140625
+ },
+ {
+  "kind": "?",
+  "seq": 335,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.908980131149292
+ },
+ {
+  "kind": "?",
+  "seq": 304,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.6638309955596924
+ },
+ {
+  "kind": "?",
+  "seq": 316,
+  "action": "card:5@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8547019958496094
+ },
+ {
+  "kind": "?",
+  "seq": 328,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0224356651306152
+ },
+ {
+  "kind": "?",
+  "seq": 277,
+  "action": "card:3@None",
+  "card_id": "CARD.UNMOVABLE",
+  "power": true,
+  "error": null,
+  "elapsed": 2.4555020332336426
+ },
+ {
+  "kind": "?",
+  "seq": 290,
+  "action": "card:0@None",
+  "card_id": "CARD.EXPECT_A_FIGHT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0603609085083008
+ },
+ {
+  "kind": "?",
+  "seq": 303,
+  "action": "card:0@None",
+  "card_id": "CARD.EXPECT_A_FIGHT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.023116111755371
+ },
+ {
+  "kind": "?",
+  "seq": 322,
+  "action": "card:3@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.543213129043579
+ },
+ {
+  "kind": "?",
+  "seq": 333,
+  "action": "card:3@None",
+  "card_id": "CARD.STAMPEDE",
+  "power": true,
+  "error": null,
+  "elapsed": 1.9294872283935547
+ },
+ {
+  "kind": "?",
+  "seq": 344,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.5485291481018066
+ },
+ {
+  "kind": "?",
+  "seq": 257,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.5020580291748047
+ },
+ {
+  "kind": "?",
+  "seq": 272,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.725255012512207
+ },
+ {
+  "kind": "?",
+  "seq": 287,
+  "action": "card:1@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.6243069171905518
+ },
+ {
+  "kind": "?",
+  "seq": 370,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1980080604553223
+ },
+ {
+  "kind": "?",
+  "seq": 381,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.543060779571533
+ },
+ {
+  "kind": "?",
+  "seq": 392,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.2386550903320312
+ },
+ {
+  "kind": "?",
+  "seq": 263,
+  "action": "card:1@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1959478855133057
+ },
+ {
+  "kind": "?",
+  "seq": 276,
+  "action": "card:1@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3246848583221436
+ },
+ {
+  "kind": "?",
+  "seq": 289,
+  "action": "card:2@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1398491859436035
+ },
+ {
+  "kind": "?",
+  "seq": 282,
+  "action": "card:4@None",
+  "card_id": "CARD.PYRE",
+  "power": true,
+  "error": null,
+  "elapsed": 2.1797409057617188
+ },
+ {
+  "kind": "?",
+  "seq": 293,
+  "action": "card:1@1",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 1.552095890045166
+ },
+ {
+  "kind": "?",
+  "seq": 304,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.6893088817596436
+ },
+ {
+  "kind": "?",
+  "seq": 280,
+  "action": "card:3@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.034872055053711
+ },
+ {
+  "kind": "?",
+  "seq": 293,
+  "action": "card:6@1",
+  "card_id": "CARD.BYRD_SWOOP",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2429900169372559
+ },
+ {
+  "kind": "?",
+  "seq": 306,
+  "action": "card:1@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.006277084350586
+ },
+ {
+  "kind": "?",
+  "seq": 262,
+  "action": "card:1@1",
+  "card_id": "CARD.FIEND_FIRE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.693709135055542
+ },
+ {
+  "kind": "?",
+  "seq": 272,
+  "action": "card:3@None",
+  "card_id": "CARD.OFFERING",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2007181644439697
+ },
+ {
+  "kind": "?",
+  "seq": 282,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.7289187908172607
+ },
+ {
+  "kind": "?",
+  "seq": 289,
+  "action": "card:4@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.129491806030273
+ },
+ {
+  "kind": "?",
+  "seq": 298,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.2528927326202393
+ },
+ {
+  "kind": "?",
+  "seq": 307,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3189330101013184
+ },
+ {
+  "kind": "?",
+  "seq": 381,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.927642822265625
+ },
+ {
+  "kind": "?",
+  "seq": 394,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.0627119541168213
+ },
+ {
+  "kind": "?",
+  "seq": 407,
+  "action": "card:1@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8805592060089111
+ },
+ {
+  "kind": "?",
+  "seq": 280,
+  "action": "card:0@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 4.3604278564453125
+ },
+ {
+  "kind": "?",
+  "seq": 301,
+  "action": "card:4@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 2.400083065032959
+ },
+ {
+  "kind": "?",
+  "seq": 322,
+  "action": "card:1@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6872150897979736
+ },
+ {
+  "kind": "?",
+  "seq": 292,
+  "action": "card:2@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9179892539978027
+ },
+ {
+  "kind": "?",
+  "seq": 304,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1748528480529785
+ },
+ {
+  "kind": "?",
+  "seq": 316,
+  "action": "card:3@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9285440444946289
+ },
+ {
+  "kind": "?",
+  "seq": 305,
+  "action": "card:0@None",
+  "card_id": "CARD.HELLRAISER",
+  "power": true,
+  "error": null,
+  "elapsed": 3.3424508571624756
+ },
+ {
+  "kind": "?",
+  "seq": 313,
+  "action": "card:3@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8408010005950928
+ },
+ {
+  "kind": "?",
+  "seq": 321,
+  "action": "card:0@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3668451309204102
+ },
+ {
+  "kind": "?",
+  "seq": 304,
+  "action": "card:0@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9101979732513428
+ },
+ {
+  "kind": "?",
+  "seq": 312,
+  "action": "card:0@1",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5245511531829834
+ },
+ {
+  "kind": "?",
+  "seq": 320,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8356900215148926
+ },
+ {
+  "kind": "?",
+  "seq": 252,
+  "action": "card:0@1",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 3.2084689140319824
+ },
+ {
+  "kind": "?",
+  "seq": 268,
+  "action": "card:2@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.378681182861328
+ },
+ {
+  "kind": "?",
+  "seq": 284,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2997801303863525
+ },
+ {
+  "kind": "?",
+  "seq": 422,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.821320056915283
+ },
+ {
+  "kind": "?",
+  "seq": 442,
+  "action": "card:0@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.484916925430298
+ },
+ {
+  "kind": "?",
+  "seq": 462,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6204416751861572
+ },
+ {
+  "kind": "?",
+  "seq": 256,
+  "action": "card:5@1",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 2.4593870639801025
+ },
+ {
+  "kind": "?",
+  "seq": 267,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.2629737854003906
+ },
+ {
+  "kind": "?",
+  "seq": 278,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6813890933990479
+ },
+ {
+  "kind": "?",
+  "seq": 359,
+  "action": "card:4@1",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.101088047027588
+ },
+ {
+  "kind": "?",
+  "seq": 363,
+  "action": "card:2@None",
+  "card_id": "CARD.JUGGLING",
+  "power": true,
+  "error": null,
+  "elapsed": 0.9777772426605225
+ },
+ {
+  "kind": "?",
+  "seq": 367,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.5102078914642334
+ },
+ {
+  "kind": "?",
+  "seq": 273,
+  "action": "card:4@1",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.6994009017944336
+ },
+ {
+  "kind": "?",
+  "seq": 285,
+  "action": "card:0@1",
+  "card_id": "CARD.SETUP_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3741109371185303
+ },
+ {
+  "kind": "?",
+  "seq": 297,
+  "action": "card:3@1",
+  "card_id": "CARD.SETUP_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9772789478302002
+ },
+ {
+  "kind": "?",
+  "seq": 351,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.286349058151245
+ },
+ {
+  "kind": "?",
+  "seq": 365,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.090385913848877
+ },
+ {
+  "kind": "?",
+  "seq": 379,
+  "action": "card:0@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.541189193725586
+ },
+ {
+  "kind": "?",
+  "seq": 405,
+  "action": "card:2@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 3.758159875869751
+ },
+ {
+  "kind": "?",
+  "seq": 420,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.146768808364868
+ },
+ {
+  "kind": "?",
+  "seq": 435,
+  "action": "card:1@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3383259773254395
+ },
+ {
+  "kind": "?",
+  "seq": 266,
+  "action": "card:0@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.455778121948242
+ },
+ {
+  "kind": "?",
+  "seq": 273,
+  "action": "card:3@None",
+  "card_id": "CARD.HELLRAISER",
+  "power": true,
+  "error": null,
+  "elapsed": 2.1373419761657715
+ },
+ {
+  "kind": "?",
+  "seq": 280,
+  "action": "card:1@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2785379886627197
+ },
+ {
+  "kind": "?",
+  "seq": 331,
+  "action": "card:1@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9397687911987305
+ },
+ {
+  "kind": "?",
+  "seq": 346,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.2418031692504883
+ },
+ {
+  "kind": "?",
+  "seq": 361,
+  "action": "card:0@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3488998413085938
+ },
+ {
+  "kind": "?",
+  "seq": 232,
+  "action": "card:0@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1484529972076416
+ },
+ {
+  "kind": "?",
+  "seq": 243,
+  "action": "card:1@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2286829948425293
+ },
+ {
+  "kind": "?",
+  "seq": 254,
+  "action": "card:1@None",
+  "card_id": "CARD.FRANTIC_ESCAPE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.024996042251587
+ },
+ {
+  "kind": "?",
+  "seq": 316,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.4978277683258057
+ },
+ {
+  "kind": "?",
+  "seq": 323,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.8808481693267822
+ },
+ {
+  "kind": "?",
+  "seq": 330,
+  "action": "card:1@1",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 1.643575668334961
+ },
+ {
+  "kind": "?",
+  "seq": 309,
+  "action": "card:4@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.5920400619506836
+ },
+ {
+  "kind": "?",
+  "seq": 326,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.742629051208496
+ },
+ {
+  "kind": "?",
+  "seq": 343,
+  "action": "card:2@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1337761878967285
+ },
+ {
+  "kind": "?",
+  "seq": 310,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.7769668102264404
+ },
+ {
+  "kind": "?",
+  "seq": 326,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.835176944732666
+ },
+ {
+  "kind": "?",
+  "seq": 342,
+  "action": "card:2@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4922771453857422
+ },
+ {
+  "kind": "?",
+  "seq": 270,
+  "action": "card:4@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 2.6119959354400635
+ },
+ {
+  "kind": "?",
+  "seq": 280,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.8646690845489502
+ },
+ {
+  "kind": "?",
+  "seq": 290,
+  "action": "card:1@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8192989826202393
+ },
+ {
+  "kind": "?",
+  "seq": 132,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9364211559295654
+ },
+ {
+  "kind": "?",
+  "seq": 143,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8162708282470703
+ },
+ {
+  "kind": "?",
+  "seq": 154,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8421041965484619
+ },
+ {
+  "kind": "?",
+  "seq": 97,
+  "action": "card:1@None",
+  "card_id": "CARD.CRIMSON_MANTLE",
+  "power": true,
+  "error": null,
+  "elapsed": 2.795883893966675
+ },
+ {
+  "kind": "?",
+  "seq": 109,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.272550106048584
+ },
+ {
+  "kind": "?",
+  "seq": 121,
+  "action": "card:4@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.18760085105896
+ },
+ {
+  "kind": "?",
+  "seq": 105,
+  "action": "card:1@None",
+  "card_id": "CARD.RAGE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2184901237487793
+ },
+ {
+  "kind": "?",
+  "seq": 116,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0110268592834473
+ },
+ {
+  "kind": "?",
+  "seq": 127,
+  "action": "potion:None@1",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.30590105056762695
+ },
+ {
+  "kind": "?",
+  "seq": 107,
+  "action": "card:4@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.5216917991638184
+ },
+ {
+  "kind": "?",
+  "seq": 118,
+  "action": "card:3@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6087732315063477
+ },
+ {
+  "kind": "?",
+  "seq": 129,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6856660842895508
+ },
+ {
+  "kind": "?",
+  "seq": 125,
+  "action": "card:3@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 2.363265037536621
+ },
+ {
+  "kind": "?",
+  "seq": 132,
+  "action": "card:2@None",
+  "card_id": "CARD.BATTLE_TRANCE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.847890853881836
+ },
+ {
+  "kind": "?",
+  "seq": 139,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0098540782928467
+ },
+ {
+  "kind": "?",
+  "seq": 124,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.30891227722168
+ },
+ {
+  "kind": "?",
+  "seq": 141,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 3.6363730430603027
+ },
+ {
+  "kind": "?",
+  "seq": 158,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.9234509468078613
+ },
+ {
+  "kind": "?",
+  "seq": 141,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.0618348121643066
+ },
+ {
+  "kind": "?",
+  "seq": 154,
+  "action": "card:0@1",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3723039627075195
+ },
+ {
+  "kind": "?",
+  "seq": 167,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9189682006835938
+ },
+ {
+  "kind": "?",
+  "seq": 86,
+  "action": "card:3@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.332421064376831
+ },
+ {
+  "kind": "?",
+  "seq": 99,
+  "action": "card:4@1",
+  "card_id": "CARD.TWIN_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6148910522460938
+ },
+ {
+  "kind": "?",
+  "seq": 112,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.5866639614105225
+ },
+ {
+  "kind": "?",
+  "seq": 151,
+  "action": "card:2@None",
+  "card_id": "CARD.CASCADE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1646981239318848
+ },
+ {
+  "kind": "?",
+  "seq": 163,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.2453529834747314
+ },
+ {
+  "kind": "?",
+  "seq": 175,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.011871099472046
+ },
+ {
+  "kind": "?",
+  "seq": 131,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1540138721466064
+ },
+ {
+  "kind": "?",
+  "seq": 145,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.214585781097412
+ },
+ {
+  "kind": "?",
+  "seq": 159,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.744455099105835
+ },
+ {
+  "kind": "?",
+  "seq": 150,
+  "action": "card:2@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.4711508750915527
+ },
+ {
+  "kind": "?",
+  "seq": 164,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.891353130340576
+ },
+ {
+  "kind": "?",
+  "seq": 178,
+  "action": "card:4@None",
+  "card_id": "CARD.COLOSSUS",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5249037742614746
+ },
+ {
+  "kind": "?",
+  "seq": 146,
+  "action": "card:4@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 3.435647964477539
+ },
+ {
+  "kind": "?",
+  "seq": 159,
+  "action": "card:1@1",
+  "card_id": "CARD.SPITE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.386949062347412
+ },
+ {
+  "kind": "?",
+  "seq": 172,
+  "action": "card:1@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0237069129943848
+ },
+ {
+  "kind": "?",
+  "seq": 137,
+  "action": "card:0@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 2.185900926589966
+ },
+ {
+  "kind": "?",
+  "seq": 151,
+  "action": "card:1@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.003221035003662
+ },
+ {
+  "kind": "?",
+  "seq": 165,
+  "action": "card:2@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0943989753723145
+ },
+ {
+  "kind": "?",
+  "seq": 151,
+  "action": "card:0@1",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.2453110218048096
+ },
+ {
+  "kind": "?",
+  "seq": 165,
+  "action": "card:0@1",
+  "card_id": "CARD.TAUNT",
+  "power": false,
+  "error": null,
+  "elapsed": 2.2965407371520996
+ },
+ {
+  "kind": "?",
+  "seq": 179,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.8610317707061768
+ },
+ {
+  "kind": "?",
+  "seq": 136,
+  "action": "card:4@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.300868034362793
+ },
+ {
+  "kind": "?",
+  "seq": 150,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.016324996948242
+ },
+ {
+  "kind": "?",
+  "seq": 164,
+  "action": "card:0@None",
+  "card_id": "CARD.TORIC_TOUGHNESS",
+  "power": false,
+  "error": null,
+  "elapsed": 1.264742136001587
+ },
+ {
+  "kind": "?",
+  "seq": 109,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9436538219451904
+ },
+ {
+  "kind": "?",
+  "seq": 124,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7331440448760986
+ },
+ {
+  "kind": "?",
+  "seq": 139,
+  "action": "card:0@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7437078952789307
+ },
+ {
+  "kind": "?",
+  "seq": 105,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.7810580730438232
+ },
+ {
+  "kind": "?",
+  "seq": 116,
+  "action": "card:3@None",
+  "card_id": "CARD.BLOODLETTING",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6141948699951172
+ },
+ {
+  "kind": "?",
+  "seq": 127,
+  "action": "card:2@None",
+  "card_id": "CARD.SWORD_BOOMERANG",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8438880443572998
+ },
+ {
+  "kind": "?",
+  "seq": 109,
+  "action": "card:1@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.791426181793213
+ },
+ {
+  "kind": "?",
+  "seq": 122,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.7272450923919678
+ },
+ {
+  "kind": "?",
+  "seq": 135,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.4972772598266602
+ },
+ {
+  "kind": "?",
+  "seq": 116,
+  "action": "card:2@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.7339038848876953
+ },
+ {
+  "kind": "?",
+  "seq": 131,
+  "action": "card:1@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.569838047027588
+ },
+ {
+  "kind": "?",
+  "seq": 146,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0756769180297852
+ },
+ {
+  "kind": "?",
+  "seq": 170,
+  "action": "card:4@1",
+  "card_id": "CARD.FIEND_FIRE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.6399779319763184
+ },
+ {
+  "kind": "?",
+  "seq": 189,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.7891359329223633
+ },
+ {
+  "kind": "?",
+  "seq": 208,
+  "action": "card:4@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8913359642028809
+ },
+ {
+  "kind": "?",
+  "seq": 141,
+  "action": "card:2@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 4.0057532787323
+ },
+ {
+  "kind": "?",
+  "seq": 155,
+  "action": "card:3@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.678560972213745
+ },
+ {
+  "kind": "?",
+  "seq": 169,
+  "action": "card:0@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1526248455047607
+ },
+ {
+  "kind": "?",
+  "seq": 118,
+  "action": "card:3@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 2.892460823059082
+ },
+ {
+  "kind": "?",
+  "seq": 128,
+  "action": "card:1@1",
+  "card_id": "CARD.TREMBLE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1379058361053467
+ },
+ {
+  "kind": "?",
+  "seq": 138,
+  "action": "card:1@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7927289009094238
+ },
+ {
+  "kind": "?",
+  "seq": 112,
+  "action": "card:4@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.362856864929199
+ },
+ {
+  "kind": "?",
+  "seq": 133,
+  "action": "card:1@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.6881070137023926
+ },
+ {
+  "kind": "?",
+  "seq": 154,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.4400436878204346
+ },
+ {
+  "kind": "?",
+  "seq": 116,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1924591064453125
+ },
+ {
+  "kind": "?",
+  "seq": 124,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6452839374542236
+ },
+ {
+  "kind": "?",
+  "seq": 132,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9838821887969971
+ },
+ {
+  "kind": "?",
+  "seq": 144,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 4.677393913269043
+ },
+ {
+  "kind": "?",
+  "seq": 162,
+  "action": "card:4@None",
+  "card_id": "CARD.RAGE",
+  "power": false,
+  "error": null,
+  "elapsed": 2.7930209636688232
+ },
+ {
+  "kind": "?",
+  "seq": 180,
+  "action": "card:4@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1008591651916504
+ },
+ {
+  "kind": "?",
+  "seq": 116,
+  "action": "card:1@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 4.104789733886719
+ },
+ {
+  "kind": "?",
+  "seq": 133,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.4883458614349365
+ },
+ {
+  "kind": "?",
+  "seq": 150,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7569777965545654
+ },
+ {
+  "kind": "?",
+  "seq": 129,
+  "action": "card:0@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 3.0760953426361084
+ },
+ {
+  "kind": "?",
+  "seq": 144,
+  "action": "card:2@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 2.1354730129241943
+ },
+ {
+  "kind": "?",
+  "seq": 159,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.143406867980957
+ },
+ {
+  "kind": "?",
+  "seq": 188,
+  "action": "card:2@None",
+  "card_id": "CARD.RAGE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.393470048904419
+ },
+ {
+  "kind": "?",
+  "seq": 208,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 2.9245221614837646
+ },
+ {
+  "kind": "?",
+  "seq": 228,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.2893638610839844
+ },
+ {
+  "kind": "?",
+  "seq": 107,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.1946520805358887
+ },
+ {
+  "kind": "?",
+  "seq": 122,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.1125500202178955
+ },
+ {
+  "kind": "?",
+  "seq": 137,
+  "action": "card:0@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7624599933624268
+ },
+ {
+  "kind": "?",
+  "seq": 105,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.222831964492798
+ },
+ {
+  "kind": "?",
+  "seq": 120,
+  "action": "card:1@1",
+  "card_id": "CARD.DISMANTLE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.571991205215454
+ },
+ {
+  "kind": "?",
+  "seq": 135,
+  "action": "card:1@None",
+  "card_id": "CARD.WHIRLWIND",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8710751533508301
+ },
+ {
+  "kind": "?",
+  "seq": 105,
+  "action": "card:4@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.2140450477600098
+ },
+ {
+  "kind": "?",
+  "seq": 116,
+  "action": "potion:None@1",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 2.3851499557495117
+ },
+ {
+  "kind": "?",
+  "seq": 127,
+  "action": "card:5@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8821449279785156
+ },
+ {
+  "kind": "?",
+  "seq": 145,
+  "action": "card:4@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 3.369213819503784
+ },
+ {
+  "kind": "?",
+  "seq": 162,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.956465721130371
+ },
+ {
+  "kind": "?",
+  "seq": 179,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.1422679424285889
+ },
+ {
+  "kind": "?",
+  "seq": 93,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 3.3479630947113037
+ },
+ {
+  "kind": "?",
+  "seq": 105,
+  "action": "card:1@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7589738368988037
+ },
+ {
+  "kind": "?",
+  "seq": 117,
+  "action": "card:3@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.0590028762817383
+ },
+ {
+  "kind": "?",
+  "seq": 125,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.441351890563965
+ },
+ {
+  "kind": "?",
+  "seq": 136,
+  "action": "card:0@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.6007182598114014
+ },
+ {
+  "kind": "?",
+  "seq": 147,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7406389713287354
+ },
+ {
+  "kind": "?",
+  "seq": 129,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 3.071247100830078
+ },
+ {
+  "kind": "?",
+  "seq": 142,
+  "action": "card:4@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.7921578884124756
+ },
+ {
+  "kind": "?",
+  "seq": 155,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.082219123840332
+ },
+ {
+  "kind": "?",
+  "seq": 119,
+  "action": "card:5@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 3.2487690448760986
+ },
+ {
+  "kind": "?",
+  "seq": 129,
+  "action": "card:2@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.425752878189087
+ },
+ {
+  "kind": "?",
+  "seq": 139,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.1770219802856445
+ },
+ {
+  "kind": "?",
+  "seq": 139,
+  "action": "card:1@None",
+  "card_id": "CARD.HELLRAISER",
+  "power": true,
+  "error": null,
+  "elapsed": 2.564954996109009
+ },
+ {
+  "kind": "?",
+  "seq": 149,
+  "action": "card:1@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.5603950023651123
+ },
+ {
+  "kind": "?",
+  "seq": 159,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5732319355010986
+ },
+ {
+  "kind": "?",
+  "seq": 168,
+  "action": "card:4@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 3.696014165878296
+ },
+ {
+  "kind": "?",
+  "seq": 183,
+  "action": "card:3@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9703750610351562
+ },
+ {
+  "kind": "?",
+  "seq": 198,
+  "action": "card:2@1",
+  "card_id": "CARD.TREMBLE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.247056007385254
+ },
+ {
+  "kind": "?",
+  "seq": 103,
+  "action": "card:0@None",
+  "card_id": "CARD.JUGGLING",
+  "power": true,
+  "error": null,
+  "elapsed": 3.4057791233062744
+ },
+ {
+  "kind": "?",
+  "seq": 113,
+  "action": "card:4@None",
+  "card_id": "CARD.FLAME_BARRIER",
+  "power": false,
+  "error": null,
+  "elapsed": 1.755202054977417
+ },
+ {
+  "kind": "?",
+  "seq": 123,
+  "action": "card:1@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.9062099456787109
+ },
+ {
+  "kind": "?",
+  "seq": 92,
+  "action": "card:3@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.615234851837158
+ },
+ {
+  "kind": "?",
+  "seq": 103,
+  "action": "card:1@None",
+  "card_id": "CARD.INFLAME",
+  "power": true,
+  "error": null,
+  "elapsed": 1.8876619338989258
+ },
+ {
+  "kind": "?",
+  "seq": 114,
+  "action": "card:1@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.146456241607666
+ },
+ {
+  "kind": "?",
+  "seq": 55,
+  "action": "card:3@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7562639713287354
+ },
+ {
+  "kind": "?",
+  "seq": 190,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2009351253509521
+ },
+ {
+  "kind": "?",
+  "seq": 4,
+  "action": "card:1@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8880929946899414
+ },
+ {
+  "kind": "?",
+  "seq": 12,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.23121213912963867
+ },
+ {
+  "kind": "?",
+  "seq": 433,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.8011939525604248
+ },
+ {
+  "kind": "?",
+  "seq": 27,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.547781229019165
+ },
+ {
+  "kind": "?",
+  "seq": 173,
+  "action": "card:1@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.8554329872131348
+ },
+ {
+  "kind": "?",
+  "seq": 350,
+  "action": "card:5@None",
+  "card_id": "CARD.TRUE_GRIT",
+  "power": false,
+  "error": null,
+  "elapsed": 0.3739898204803467
+ },
+ {
+  "kind": "?",
+  "seq": 234,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.9763588905334473
+ },
+ {
+  "kind": "?",
+  "seq": 3,
+  "action": "card:2@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5949299335479736
+ },
+ {
+  "kind": "?",
+  "seq": 214,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 1.0428881645202637
+ },
+ {
+  "kind": "?",
+  "seq": 88,
+  "action": "card:1@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.10946822166442871
+ },
+ {
+  "kind": "?",
+  "seq": 233,
+  "action": "card:4@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1802749633789062
+ },
+ {
+  "kind": "?",
+  "seq": 150,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.896245002746582
+ },
+ {
+  "kind": "?",
+  "seq": 113,
+  "action": "card:2@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.2934451103210449
+ },
+ {
+  "kind": "?",
+  "seq": 35,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.3998091220855713
+ },
+ {
+  "kind": "?",
+  "seq": 77,
+  "action": "card:2@1",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5544917583465576
+ },
+ {
+  "kind": "?",
+  "seq": 67,
+  "action": "card:1@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.3139944076538086
+ },
+ {
+  "kind": "?",
+  "seq": 261,
+  "action": "card:0@3",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5373501777648926
+ },
+ {
+  "kind": "?",
+  "seq": 218,
+  "action": "card:7@1",
+  "card_id": "CARD.BLUDGEON",
+  "power": false,
+  "error": null,
+  "elapsed": 0.2987861633300781
+ },
+ {
+  "kind": "?",
+  "seq": 136,
+  "action": "card:1@2",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 0.14002323150634766
+ },
+ {
+  "kind": "?",
+  "seq": 403,
+  "action": "card:0@None",
+  "card_id": "CARD.HELLRAISER",
+  "power": true,
+  "error": null,
+  "elapsed": 0.8483128547668457
+ },
+ {
+  "kind": "?",
+  "seq": 226,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 2.3072681427001953
+ },
+ {
+  "kind": "?",
+  "seq": 327,
+  "action": "card:2@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.09750175476074219
+ },
+ {
+  "kind": "?",
+  "seq": 52,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.29546427726745605
+ },
+ {
+  "kind": "?",
+  "seq": 22,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.8163468837738037
+ },
+ {
+  "kind": "?",
+  "seq": 8,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.37885594367980957
+ },
+ {
+  "kind": "?",
+  "seq": 54,
+  "action": "card:1@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.2810540199279785
+ },
+ {
+  "kind": "?",
+  "seq": 464,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.15433192253112793
+ },
+ {
+  "kind": "?",
+  "seq": 63,
+  "action": "card:1@5",
+  "card_id": "CARD.ANGER",
+  "power": false,
+  "error": null,
+  "elapsed": 0.206956148147583
+ },
+ {
+  "kind": "?",
+  "seq": 106,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.3350520133972168
+ },
+ {
+  "kind": "?",
+  "seq": 152,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6665878295898438
+ },
+ {
+  "kind": "?",
+  "seq": 99,
+  "action": "card:4@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 1.9217400550842285
+ },
+ {
+  "kind": "?",
+  "seq": 41,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.17780494689941406
+ },
+ {
+  "kind": "?",
+  "seq": 432,
+  "action": "potion:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.21310091018676758
+ },
+ {
+  "kind": "?",
+  "seq": 63,
+  "action": "card:1@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5023889541625977
+ },
+ {
+  "kind": "?",
+  "seq": 15,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.12292885780334473
+ },
+ {
+  "kind": "?",
+  "seq": 290,
+  "action": "card:2@2",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.11457300186157227
+ },
+ {
+  "kind": "?",
+  "seq": 437,
+  "action": "card:1@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 1.3973197937011719
+ },
+ {
+  "kind": "?",
+  "seq": 287,
+  "action": "card:4@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.4228839874267578
+ },
+ {
+  "kind": "?",
+  "seq": 111,
+  "action": "card:1@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.4672739505767822
+ },
+ {
+  "kind": "?",
+  "seq": 25,
+  "action": "card:0@None",
+  "card_id": "CARD.DEFEND_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.2623867988586426
+ },
+ {
+  "kind": "?",
+  "seq": 331,
+  "action": "card:3@1",
+  "card_id": "CARD.ULTIMATE_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.3539402484893799
+ },
+ {
+  "kind": "?",
+  "seq": 49,
+  "action": "card:1@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 0.20904803276062012
+ },
+ {
+  "kind": "?",
+  "seq": 370,
+  "action": "card:2@1",
+  "card_id": "CARD.UPPERCUT",
+  "power": false,
+  "error": null,
+  "elapsed": 1.1403429508209229
+ },
+ {
+  "kind": "?",
+  "seq": 192,
+  "action": "card:3@1",
+  "card_id": "CARD.POMMEL_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5533549785614014
+ },
+ {
+  "kind": "?",
+  "seq": 294,
+  "action": "card:1@1",
+  "card_id": "CARD.IRON_WAVE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7810280323028564
+ },
+ {
+  "kind": "?",
+  "seq": 76,
+  "action": "card:3@1",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.12284374237060547
+ },
+ {
+  "kind": "?",
+  "seq": 87,
+  "action": "card:1@1",
+  "card_id": "CARD.BASH",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2810521125793457
+ },
+ {
+  "kind": "?",
+  "seq": 361,
+  "action": "card:2@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.43871498107910156
+ },
+ {
+  "kind": "?",
+  "seq": 264,
+  "action": "card:2@None",
+  "card_id": "CARD.SECOND_WIND",
+  "power": false,
+  "error": null,
+  "elapsed": 0.594843864440918
+ },
+ {
+  "kind": "?",
+  "seq": 385,
+  "action": "card:1@1",
+  "card_id": "CARD.BYRD_SWOOP",
+  "power": false,
+  "error": null,
+  "elapsed": 0.4566042423248291
+ },
+ {
+  "kind": "?",
+  "seq": 43,
+  "action": "card:2@None",
+  "card_id": "CARD.EVIL_EYE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.2219388484954834
+ },
+ {
+  "kind": "?",
+  "seq": 94,
+  "action": "card:0@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 1.2514891624450684
+ },
+ {
+  "kind": "?",
+  "seq": 86,
+  "action": "card:3@None",
+  "card_id": "CARD.SHRUG_IT_OFF",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5387649536132812
+ },
+ {
+  "kind": "?",
+  "seq": 145,
+  "action": "card:0@1",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5771927833557129
+ },
+ {
+  "kind": "?",
+  "seq": 544,
+  "action": "card:0@3",
+  "card_id": "CARD.STRIKE_IRONCLAD",
+  "power": false,
+  "error": null,
+  "elapsed": 0.5345191955566406
+ },
+ {
+  "kind": "?",
+  "seq": 474,
+  "action": "end_turn:None@None",
+  "card_id": null,
+  "power": false,
+  "error": null,
+  "elapsed": 0.6962840557098389
+ },
+ {
+  "kind": "?",
+  "seq": 66,
+  "action": "card:2@1",
+  "card_id": "CARD.HEADBUTT",
+  "power": false,
+  "error": null,
+  "elapsed": 0.1274428367614746
+ },
+ {
+  "kind": "?",
+  "seq": 92,
+  "action": "card:1@3",
+  "card_id": "CARD.PERFECTED_STRIKE",
+  "power": false,
+  "error": null,
+  "elapsed": 0.7154090404510498
+ }
+]
