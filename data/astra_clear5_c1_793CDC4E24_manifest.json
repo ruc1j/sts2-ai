@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 60,
+  "arm": "candidate",
+  "seed": "793CDC4E24",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793746263,
+  "finished": 1793746637,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 13,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 476,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_793CDC4E24_agent.jsonl": "a781b9b280d2ae1bab7a2787e0788dc25df31eb4585f064286ed19861ae5ce4b",
+    "astra_clear5_c1_793CDC4E24_map.json": "83be514db87477f659518da45dfed8e93b222d67a615300fd74caf015ce4c266",
+    "astra_clear5_c1_793CDC4E24_map_ACT.GLORY.json": "852ba6b9ded1729b2e74705aa7bade7755e55c248d93e25cd6e23b40786e0db9",
+    "astra_clear5_c1_793CDC4E24_map_ACT.HIVE.json": "4d4d9ce02ecf76dc1abe9f0d0ed01bb2d86f0c7cf0f84d9363d8c7852f13e422",
+    "astra_clear5_c1_793CDC4E24_mod.log": "2a1c76d54e51089a7e4948aabdb58c62a59a9c93883425cff3f1d49e5cff3ab5",
+    "astra_clear5_c1_793CDC4E24_runmeta.json": "0d417275702927934c91c212598bf9bf67bf90e5dd58c40eca5a6f19bfac9d9b",
+    "astra_clear5_c1_793CDC4E24_stdout.log": "f23562d7e3af3b5612db8741d1bda3f112bd0d2f399e2d0b1d157f1cdb160e84"
+  }
+}
