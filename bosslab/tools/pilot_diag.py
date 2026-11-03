@@ -724,9 +724,16 @@ def section_reward(fights, data_dir):
                         "RELIC.GOLDEN_PEARL", "RELIC.LETTER_OPENER")}
     for name, counts in rel.items():
         lines.append(f"| {name.replace('RELIC.', '')} | {counts[0]}/7 | {counts[1]}/{n_low} | {counts[2]}/{n_rest} |")
-    energy_relics = [r for e in groups["clear"] + groups["low"] + groups["rest"]
-                     for r in e["relics"] if "ENERGY" in str(r)]
-    lines.append(f"| エネルギー系レリック | {len(energy_relics)} 件（全群合計） | | |")
+    # Energy relics in this game do not carry "ENERGY" in the id: the two that co-occur with
+    # max_energy 4 in the panel are BLOOD_SOAKED_ROSE (4/4) and WHISPERING_EARRING (7/7), so the
+    # old substring filter reported zero. Count the effect instead of the name.
+    for label, pred in (
+        ("最大エネルギー4の run", lambda e: (e["max_energy"] or 0) >= 4),
+        ("BLOOD_SOAKED_ROSE", lambda e: "RELIC.BLOOD_SOAKED_ROSE" in e["relics"]),
+        ("WHISPERING_EARRING", lambda e: "RELIC.WHISPERING_EARRING" in e["relics"]),
+    ):
+        counts = [sum(1 for e in g if pred(e)) for g in (groups["clear"], groups["low"], groups["rest"])]
+        lines.append(f"| {label} | {counts[0]}/7 | {counts[1]}/{n_low} | {counts[2]}/{n_rest} |")
 
     lines.append("")
     lines.append("### 5-4 交絡（この比較で言えないこと）")

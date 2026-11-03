@@ -208,9 +208,9 @@ Queen+Amalgam の合算（分母599）は別の量なので `shave_combined`（�
 | WHIRLWIND | 2/7 | 2/44 | 1/15 |
 | FEEL_NO_PAIN | 3/7 | 6/44 | 2/15 |
 | BREAKTHROUGH | 4/7 | 10/44 | 4/15 |
+| BYRDONIS_EGG | 1/7 | 0/44 | 2/15 |
 | ONE_TWO_PUNCH | 1/7 | 0/44 | 0/15 |
 | FINESSE | 1/7 | 0/44 | 0/15 |
-| BYRDONIS_EGG | 1/7 | 0/44 | 2/15 |
 | BYRD_SWOOP | 3/7 | 7/44 | 4/15 |
 | EXPECT_A_FIGHT | 3/7 | 7/44 | 1/15 |
 
@@ -239,7 +239,9 @@ Queen+Amalgam の合算（分母599）は別の量なので `shave_combined`（�
 | ANCHOR | 4/7 | 11/44 | 3/15 |
 | GOLDEN_PEARL | 3/7 | 5/44 | 1/15 |
 | LETTER_OPENER | 3/7 | 4/44 | 2/15 |
-| エネルギー系レリック | 0 件（全群合計） | | |
+| 最大エネルギー4の run | 0/7 | 11/44 | 4/15 |
+| BLOOD_SOAKED_ROSE | 0/7 | 4/44 | 0/15 |
+| WHISPERING_EARRING | 0/7 | 4/44 | 3/15 |
 
 ### 5-4 交絡（この比較で言えないこと）
 - 踏破7本は2026-09-10〜10-28 の別々の方針版で走った run で、削り<0.3 の14戦は v23/v24（10-28以降）だけ。時代と方針版が揃っていない。
