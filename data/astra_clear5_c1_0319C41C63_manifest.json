@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 4,
+  "arm": "candidate",
+  "seed": "0319C41C63",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793732643,
+  "finished": 1793733037,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 525,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_0319C41C63_agent.jsonl": "5a4f3ba4c4f4d7f0f77f4b947fcd2c1eac86238644263975ec7cb2f2926c7ec8",
+    "astra_clear5_c1_0319C41C63_map.json": "37876530f4e5ffd84cad11b56fde479e7a330ccc90ea3416980d3a92eb306cf9",
+    "astra_clear5_c1_0319C41C63_map_ACT.GLORY.json": "add66890cdcb71189a4ae1b548773d3b6021508ed0bd139e68ec28ea98ee6cd3",
+    "astra_clear5_c1_0319C41C63_map_ACT.HIVE.json": "ac6d5915c16677fdfa05eca2b6f3a399ddb17d9c3f22a34279a15ffe83812c3b",
+    "astra_clear5_c1_0319C41C63_mod.log": "4d445f7b988c70e6b6870d7ad32d7655e574876266bc9d93ae0798b7f8ae0531",
+    "astra_clear5_c1_0319C41C63_runmeta.json": "a2319ee1911bf89df43d4ff7b0e6d5c78eaf49ab152ab8c4b4d0b2ca657c43e5",
+    "astra_clear5_c1_0319C41C63_stdout.log": "16404ccd0b25cb0f70c35d0cbffb883b672acd14d0a7b75096b4d55ec366c12f"
+  }
+}
