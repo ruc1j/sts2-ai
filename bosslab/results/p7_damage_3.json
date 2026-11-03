@@ -1,0 +1,222 @@
+[
+ {
+  "won": false,
+  "turns": 6,
+  "decisions": 21,
+  "player_hp": -9,
+  "sec_per_decision": 0.947561502456665,
+  "queen_shave": 0.39249999999999996,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_038CDAC87B_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 8,
+  "decisions": 35,
+  "player_hp": -3,
+  "sec_per_decision": 1.297170305252075,
+  "queen_shave": 0.39749999999999996,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_161F480E76_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 6,
+  "decisions": 26,
+  "player_hp": -18,
+  "sec_per_decision": 0.48027630952688366,
+  "queen_shave": 0.37250000000000005,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_23A7CEECF7_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 4,
+  "decisions": 11,
+  "player_hp": 0,
+  "sec_per_decision": 0.4733866344798695,
+  "queen_shave": 0.22250000000000003,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_3169EC2E1C_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 27,
+  "player_hp": -7,
+  "sec_per_decision": 0.9236935686182093,
+  "queen_shave": 0.22999999999999998,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_41ACBF0DEA_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 6,
+  "decisions": 24,
+  "player_hp": 0,
+  "sec_per_decision": 1.235779047012329,
+  "queen_shave": 0.235,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_42A34FA0F2_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 5,
+  "decisions": 14,
+  "player_hp": -19,
+  "sec_per_decision": 0.47159368651253836,
+  "queen_shave": 0.14249999999999996,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_465F76FB32_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 26,
+  "player_hp": -3,
+  "sec_per_decision": 0.7496244999078604,
+  "queen_shave": 0.18999999999999995,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_469AAE3BED_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 8,
+  "decisions": 25,
+  "player_hp": -1,
+  "sec_per_decision": 0.9213314723968505,
+  "queen_shave": 0.22999999999999998,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_46E15BFA6F_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 6,
+  "decisions": 15,
+  "player_hp": -13,
+  "sec_per_decision": 0.5858050982157389,
+  "queen_shave": 0.1775,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_4952AC25C0_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 20,
+  "player_hp": -5,
+  "sec_per_decision": 0.6520888090133667,
+  "queen_shave": 0.12749999999999995,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_495FF454B7_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 10,
+  "decisions": 39,
+  "player_hp": -3,
+  "sec_per_decision": 0.8331535168183155,
+  "queen_shave": 0.17500000000000004,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_4B07AC4E2A_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 9,
+  "decisions": 44,
+  "player_hp": -12,
+  "sec_per_decision": 1.2772770632397046,
+  "queen_shave": 0.1975,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_50B404C802_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 4,
+  "decisions": 14,
+  "player_hp": -6,
+  "sec_per_decision": 0.4524369921003069,
+  "queen_shave": 0.27749999999999997,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_562858EF63_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 28,
+  "player_hp": -4,
+  "sec_per_decision": 1.4919217399188451,
+  "queen_shave": 0.14249999999999996,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_5B5EA36CCE_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 5,
+  "decisions": 15,
+  "player_hp": -5,
+  "sec_per_decision": 0.7482294082641602,
+  "queen_shave": 0.3375,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_5E58E8A550_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 26,
+  "player_hp": -1,
+  "sec_per_decision": 0.8526881474715012,
+  "queen_shave": 0.245,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_67A743CCD8_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 21,
+  "player_hp": 0,
+  "sec_per_decision": 0.762349457967849,
+  "queen_shave": 0.16500000000000004,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_7042706FD5_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 10,
+  "decisions": 36,
+  "player_hp": -4,
+  "sec_per_decision": 0.9134867058859931,
+  "queen_shave": 0.17500000000000004,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_7CA7B893D4_agent.jsonl",
+  "offset": 0
+ },
+ {
+  "won": false,
+  "turns": 7,
+  "decisions": 24,
+  "player_hp": -4,
+  "sec_per_decision": 0.9617061018943787,
+  "queen_shave": 0.2875,
+  "kind": "QUEEN",
+  "seed": "astra_ctrl_v23_81E19F92F4_agent.jsonl",
+  "offset": 0
+ }
+]
