@@ -61,3 +61,52 @@
 - 1手目から最終決定までの値の変化: 中央値 -0.050、+0.3以上動いた戦闘 1、−0.3以下 4（n=53）。
 - 1回でも正の値が出た戦闘は 4/58。
 
+
+## 2. スケーリング札の扱い
+
+対象: Queen戦 59 戦の全決定行。手札に現れた Power札とStrength系の札（DEMON_FORM / INFLAME / RUPTURE / LIMIT_BREAK / FLEX / SPOT_WEAKNESS）を、ターン×札の単位で数えた。
+
+### 2-1 札ごとの内訳
+| カード | 手札にあったターン | 打った | 打てたのに打たない | エネルギー不足 |
+| --- | --- | --- | --- | --- |
+| INFLAME | 39 | 34 | 4 | 1 |
+| STONE_ARMOR | 31 | 11 | 20 | 0 |
+| HELLRAISER | 24 | 16 | 5 | 3 |
+| CRIMSON_MANTLE | 21 | 4 | 15 | 2 |
+| RUPTURE | 19 | 13 | 4 | 2 |
+| UNMOVABLE | 16 | 3 | 12 | 1 |
+| FEEL_NO_PAIN | 13 | 5 | 8 | 0 |
+| MAD_SCIENCE | 8 | 1 | 7 | 0 |
+| PYRE | 7 | 1 | 6 | 0 |
+| STAMPEDE | 6 | 1 | 5 | 0 |
+| JUGGLING | 3 | 1 | 2 | 0 |
+| DEMON_FORM | 3 | 1 | 2 | 0 |
+| DARK_EMBRACE | 1 | 1 | 0 | 0 |
+| FASTEN | 1 | 1 | 0 | 0 |
+| VICIOUS | 1 | 0 | 1 | 0 |
+| AGGRESSION | 1 | 1 | 0 | 0 |
+
+### 2-2 打てたのに打たなかったときの手
+- 該当 91 件のうち、同じターンに別の札を打っていた 90 件、何も打たずにターンを終えた 1 件。
+- 代わりに打った札の上位: STRIKE_IRONCLAD 37、POMMEL_STRIKE 31、SHRUG_IT_OFF 19、DEFEND_IRONCLAD 19、BASH 16、ANGER 14、IRON_WAVE 14、PERFECTED_STRIKE 11。
+- そのターン終了時の残りエネルギー: 中央値 0、0のターン 69/91。
+
+### 2-3 エネルギー不足の内訳
+- 該当 9 件。札のコスト中央値 1.0、そのときの手札時エネルギー中央値 0.0。
+
+### 2-4 Strength系の打ち漏らし（全10件）
+| seed | ターン | 札 | コスト | 手札時エネルギー | 終了時残 | 代わりに打った札 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 85A990F154 | 3 | RUPTURE | 1 | 4 | 0 | DEFEND_IRONCLAD×2、SWORD_BOOMERANG×1、TAUNT×1 |
+| 85A990F154 | 4 | RUPTURE | 1 | 1 | 0 | POMMEL_STRIKE×2、STRIKE_IRONCLAD×1 |
+| 85A990F154 | 8 | RUPTURE | 1 | 3 | 0 | HEADBUTT×2、COLOSSUS×1、TREMBLE×1 |
+| A37AF69710 | 4 | INFLAME | 1 | 3 | 1 | DEFEND_IRONCLAD×1、THUNDERCLAP×1 |
+| 0D459C3862 | 3 | INFLAME | 1 | 4 | 0 | POMMEL_STRIKE×1、STRIKE_IRONCLAD×1、IMPERVIOUS×1 |
+| 0D459C3862 | 5 | INFLAME | 1 | 3 | 0 | BASH×1、POMMEL_STRIKE×1 |
+| 37E263D80E | 4 | INFLAME | 2 | 5 | 2 | BASH×1、TRUE_GRIT×1 |
+| 4FDF910744 | 4 | DEMON_FORM | 3 | 4 | 1 | HEADBUTT×1、STRIKE_IRONCLAD×1、ANGER×1、DEFEND_IRONCLAD×1 |
+| 4FDF910744 | 8 | DEMON_FORM | 3 | 4 | 0 | IMPERVIOUS×1、IRON_WAVE×1、SHRUG_IT_OFF×1 |
+| 731E2B691C | 6 | RUPTURE | 1 | 4 | 0 | STRIKE_IRONCLAD×2、SECOND_WIND×1、POMMEL_STRIKE×1 |
+
+区別: 「打てたのに打たなかった」はそのターンのどこかでエネルギーがコスト以上あった場合。「エネルギー不足」は手札にあったすべての決定でコスト未満だった場合。同じカードを2枚持つターンはカードID単位でまとめているため、片方だけ打った場合も「打った」に寄る。
+

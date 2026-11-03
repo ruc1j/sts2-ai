@@ -273,6 +273,132 @@ def section_calib(fights):
     return "\n".join(lines)
 
 
+STRENGTH_CARDS = {
+    "CARD.DEMON_FORM", "CARD.INFLAME", "CARD.RUPTURE",
+    "CARD.LIMIT_BREAK", "CARD.FLEX", "CARD.SPOT_WEAKNESS",
+}
+
+
+def scaling_events(fights):
+    """Per (fight, turn, card) rows for every Power / Strength card in hand."""
+    events = []
+    for f in fights:
+        by_turn = defaultdict(list)
+        for row in f["combat"]:
+            by_turn[row.get("turn")].append(row)
+        for turn, rows in by_turn.items():
+            played = {r.get("card_id") for r in rows if r.get("card_id")}
+            seen = {}
+            for row in rows:
+                for card in row.get("hand") or []:
+                    cid = card.get("id")
+                    is_power = card.get("type") == "Power"
+                    if not (is_power or cid in STRENGTH_CARDS):
+                        continue
+                    info = seen.setdefault(cid, {
+                        "card": cid,
+                        "power": is_power,
+                        "strength": cid in STRENGTH_CARDS,
+                        "cost": card.get("cost"),
+                        "energies": [],
+                    })
+                    energy = (row.get("player") or {}).get("energy")
+                    if energy is not None:
+                        info["energies"].append(energy)
+            for cid, info in seen.items():
+                played_this_turn = cid in played
+                cost = info["cost"]
+                energies = info["energies"]
+                max_energy = max(energies) if energies else None
+                if played_this_turn:
+                    state = "played"
+                elif max_energy is None or cost is None:
+                    state = "unknown"
+                elif max_energy < cost:
+                    state = "energy_short"
+                else:
+                    state = "castable_not_played"
+                alternatives = Counter()
+                for row in rows:
+                    cid2 = row.get("card_id")
+                    if cid2 and cid2 != cid:
+                        alternatives[cid2] += 1
+                events.append({
+                    "seed": f["seed"], "tag": f["tag"], "turn": turn,
+                    "card": cid, "cost": cost, "max_energy": max_energy,
+                    "state": state, "played_any": played_this_turn,
+                    "alternatives": alternatives,
+                    "energy_left": (rows[-1].get("player") or {}).get("energy"),
+                })
+    return events
+
+
+def section_scaling(fights):
+    ev = scaling_events(fights)
+    lines = []
+    lines.append(f"対象: Queen戦 {len(fights)} 戦の全決定行。手札に現れた Power札とStrength系の札"
+                 f"（DEMON_FORM / INFLAME / RUPTURE / LIMIT_BREAK / FLEX / SPOT_WEAKNESS）を、"
+                 f"ターン×札の単位で数えた。")
+    lines.append("")
+    lines.append("### 2-1 札ごとの内訳")
+    lines.append("| カード | 手札にあったターン | 打った | 打てたのに打たない | エネルギー不足 |")
+    lines.append("| --- | --- | --- | --- | --- |")
+    by_card = defaultdict(Counter)
+    for e in ev:
+        by_card[e["card"]][e["state"]] += 1
+    order = sorted(by_card, key=lambda c: -sum(by_card[c].values()))
+    for cid in order:
+        c = by_card[cid]
+        total = sum(c.values())
+        lines.append(f"| {cid.replace('CARD.', '')} | {total} | {c['played']} | "
+                     f"{c['castable_not_played']} | {c['energy_short']} |")
+
+    lines.append("")
+    lines.append("### 2-2 打てたのに打たなかったときの手")
+    sk = [e for e in ev if e["state"] == "castable_not_played"]
+    alt_types = Counter()
+    no_play = 0
+    for e in sk:
+        if not e["alternatives"]:
+            no_play += 1
+        for cid in e["alternatives"]:
+            alt_types[cid] += 1
+    lines.append(f"- 該当 {len(sk)} 件のうち、同じターンに別の札を打っていた "
+                 f"{len(sk) - no_play} 件、何も打たずにターンを終えた {no_play} 件。")
+    lines.append(f"- 代わりに打った札の上位: "
+                 + "、".join(f"{k.replace('CARD.', '')} {v}"
+                             for k, v in alt_types.most_common(8)) + "。")
+    left = [e["energy_left"] for e in sk if e["energy_left"] is not None]
+    if left:
+        lines.append(f"- そのターン終了時の残りエネルギー: 中央値 {statistics.median(left):.0f}、"
+                     f"0のターン {sum(1 for x in left if x == 0)}/{len(left)}。")
+
+    lines.append("")
+    lines.append("### 2-3 エネルギー不足の内訳")
+    es = [e for e in ev if e["state"] == "energy_short"]
+    lines.append(f"- 該当 {len(es)} 件。札のコスト中央値 "
+                 f"{statistics.median([e['cost'] for e in es if e['cost'] is not None]):.1f}、"
+                 f"そのときの手札時エネルギー中央値 "
+                 f"{statistics.median([e['max_energy'] for e in es if e['max_energy'] is not None]):.1f}。")
+    lines.append("")
+    lines.append("### 2-4 Strength系の打ち漏らし（全10件）")
+    lines.append("| seed | ターン | 札 | コスト | 手札時エネルギー | 終了時残 | 代わりに打った札 |")
+    lines.append("| --- | --- | --- | --- | --- | --- | --- |")
+    for e in ev:
+        if e["card"] not in STRENGTH_CARDS or e["state"] != "castable_not_played":
+            continue
+        alts = "、".join(f"{k.replace('CARD.', '')}×{v}"
+                        for k, v in e["alternatives"].most_common(4))
+        lines.append(f"| {e['seed']} | {e['turn']} | {e['card'].replace('CARD.', '')} | "
+                     f"{e['cost']} | {e['max_energy']} | {e['energy_left']} | {alts} |")
+    lines.append("")
+    lines.append("区別: 「打てたのに打たなかった」はそのターンのどこかでエネルギーがコスト以上あった場合。"
+                 "「エネルギー不足」は手札にあったすべての決定でコスト未満だった場合。"
+                 "同じカードを2枚持つターンはカードID単位でまとめているため、片方だけ打った場合も"
+                 "「打った」に寄る。")
+    return "\n".join(lines)
+
+
 def _rho_text(xs, ys):
     pairs = [(x, y) for x, y in zip(xs, ys) if x is not None and y is not None]
     if len(pairs) < 3:
@@ -294,6 +420,8 @@ def main(argv=None):
     out = []
     if args.section in ("calib", "all"):
         out.append(section_calib(fights))
+    if args.section in ("scaling", "all"):
+        out.append(section_scaling(fights))
     print("\n\n".join(out))
     return 0
 
