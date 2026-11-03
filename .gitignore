@@ -55,3 +55,8 @@ data/replay_*.json
 
 # leftover artifact of a write-permission probe, not repo content
 *_write_test_*.txt
+
+# old run artifacts bundled by data/archive_old_runs.py, and the derived index
+# that maps every run to its files (and to the archive once it is bundled).
+data/_archive/
+data/runs_index.json

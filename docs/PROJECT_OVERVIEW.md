@@ -32,6 +32,8 @@ test_*.py                    unittest と成果物検証
 
 C# BridgeとPythonエージェントは observation.json と action.json をポーリングし、seq 検証とタイムアウト付きの合法フォールバックを適用する。
 
+`data/` には敵・マップ定義とrunの成果物が混在する。runごとの成果物は `data/runs_index.json` に一覧化してあり、`python3 data/build_runs_index.py` で作り直せる。2026-10-20より前の生ログ（trace・map・標準出力）は `data/_archive/<YYYY-MM>.tar.gz` に圧縮して退避し、原本は削除してある。退避は `python3 data/archive_old_runs.py` が行い、各ファイルのsha256とサイズは `data/_archive/INDEX.json` に残る。1本のログは `tar -xOf data/_archive/2026-10.tar.gz <ファイル名>` で、展開せずにそのまま読める。
+
 `official_mod/Sts2Ai.csproj` は `net9.0` を対象に、ゲームの `sts2.dll`、`0Harmony.dll`、`GodotSharp.dll` を参照する。manifestの最小ゲームバージョンは `v0.107.1` である。
 
 ## ビルドと実行
