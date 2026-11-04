@@ -1,0 +1,47 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 117,
+  "arm": "candidate",
+  "seed": "C3016FD107",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793763057,
+  "finished": 1793763278,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": false,
+    "act_1_complete": true,
+    "depth": [
+      2,
+      10
+    ],
+    "combat_wins": 10,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 266,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_C3016FD107_agent.jsonl": "864dcce11fccf2ed62f28babe1e0a6fe85af984a1cdf51ec0ca69b76e668fb8e",
+    "astra_clear5_c1_C3016FD107_map.json": "a2e37265d6b785e7508a922de018739cba59c035b32707d97194c3350d13c29a",
+    "astra_clear5_c1_C3016FD107_map_ACT.HIVE.json": "ba49c616389208c8e6f7ddb639e9ddd9575584be4f399b4816ba73183d6f6fc2",
+    "astra_clear5_c1_C3016FD107_mod.log": "27988d3311c99a4e6b1ac8383c49d6b6603d3b0e38e6f51e2a41c0cc6696a2fd",
+    "astra_clear5_c1_C3016FD107_runmeta.json": "59eaf066c3a044b19e3b247cc3bcbf26d3e31bc88d7dff14217796ad46895276",
+    "astra_clear5_c1_C3016FD107_stdout.log": "69c5d9082274dc10d90823c8cfaa56fd72a998b396e59b41eedabc7fdef68720"
+  }
+}
