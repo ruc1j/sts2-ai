@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c2",
+  "run_index": 45,
+  "arm": "candidate",
+  "seed": "DE5C7499B9",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793780196,
+  "finished": 1793780475,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      4
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 385,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c2_DE5C7499B9_agent.jsonl": "9899eb05dba4d29f670512e1571dd5b87ae1320b88ad11713c94a2585c0b6a8d",
+    "astra_clear5_c2_DE5C7499B9_map.json": "70d4be3b87d1122b45402522774c97e24ab2907bb2692bd19d72990510554b6d",
+    "astra_clear5_c2_DE5C7499B9_map_ACT.GLORY.json": "1c1a2323e11e39a960b210bcc98b724b0ffe1dee351d4f0b857ace8d466ee943",
+    "astra_clear5_c2_DE5C7499B9_map_ACT.HIVE.json": "8580fd28c40099ad88fdacf5ebae664f5261d544c1acb757d082669f679462e1",
+    "astra_clear5_c2_DE5C7499B9_mod.log": "7afa2af9928a72f32797e32e80a5068c3c8069df48bf727c8decb9009f8e44ee",
+    "astra_clear5_c2_DE5C7499B9_runmeta.json": "631460543301dc41444a54507d0cab0b67cfe3026bd65c17b89c4819616bd0b7",
+    "astra_clear5_c2_DE5C7499B9_stdout.log": "6dc18682b7fea70810d2ad76bcfb2173dba6604522c9a66026ce45de70e981df"
+  }
+}
