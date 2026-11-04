@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c2",
+  "run_index": 42,
+  "arm": "candidate",
+  "seed": "D4C5761E24",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793779376,
+  "finished": 1793779679,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      6
+    ],
+    "combat_wins": 13,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 379,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c2_D4C5761E24_agent.jsonl": "e50fec6dcf1b3e63efc601d24bae79938dd9b7ebf3894055dc602ec8f538ebcb",
+    "astra_clear5_c2_D4C5761E24_map.json": "6a8dd4087748ba57e062162509433b0753b0e51fe8ff97fb8f2a283445c30f11",
+    "astra_clear5_c2_D4C5761E24_map_ACT.GLORY.json": "c4e1314ade3ef0c65172a488f55073c2ae1ea96e4af4d7bb8d2b790c51b39b08",
+    "astra_clear5_c2_D4C5761E24_map_ACT.HIVE.json": "64f7381258b0a090c85300bde90d797be6f9223b5494a4ccbb0844cbe9d42640",
+    "astra_clear5_c2_D4C5761E24_mod.log": "f2791507c68596a2a783510559c269acc0b9599230d31bbf87c10c563202168a",
+    "astra_clear5_c2_D4C5761E24_runmeta.json": "22246b5e1f7a1e0d4d66c74200b6c7662882784d30ef0c3d47b228e88e7e0ec6",
+    "astra_clear5_c2_D4C5761E24_stdout.log": "c15f3c4f22233af6eb4336a942274de24a1e162aec0a462e726102330fb04585"
+  }
+}
