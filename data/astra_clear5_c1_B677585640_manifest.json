@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 75,
+  "arm": "candidate",
+  "seed": "B677585640",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793751082,
+  "finished": 1793751399,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      6
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 410,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_B677585640_agent.jsonl": "0ccb686f9e32e9bfdeadb6aca0f7d1a5b544e7cff49514acbe46b310bb34b96e",
+    "astra_clear5_c1_B677585640_map.json": "1bf28d770f8512afa819f854bc2a25110ef2e8ee9c40f11daba4c98207d5d63f",
+    "astra_clear5_c1_B677585640_map_ACT.GLORY.json": "22e0b1bb10e09104e955e2c9158f1604e934feb1a7b3babd4f420b1b55763f5c",
+    "astra_clear5_c1_B677585640_map_ACT.HIVE.json": "0fd352a18497b73647c2713d86c0fd36ca0857212a755132f50f13f7c1bf4c61",
+    "astra_clear5_c1_B677585640_mod.log": "98480b6ee72eed718ecdd454925f9b4e033465dad610d5c9015f7fa8e7bcea7c",
+    "astra_clear5_c1_B677585640_runmeta.json": "5627d74751a2dd60641991e42ad7b36ed6f1bdbe4a87f4f3f65f9a24f55922a5",
+    "astra_clear5_c1_B677585640_stdout.log": "a35dfb41b2966057d63195458320855a00a1fd437c4d9312c148a1d15057ace0"
+  }
+}
