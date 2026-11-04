@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c2",
+  "run_index": 81,
+  "arm": "candidate",
+  "seed": "98C2816F8B",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793792757,
+  "finished": 1793793163,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 473,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c2_98C2816F8B_agent.jsonl": "3a8235af1d02d104797cf3bab0611130639f20912fdf190ee8efd2672a24792d",
+    "astra_clear5_c2_98C2816F8B_map.json": "67416f87e7f1c97c31494132ac0d14a187a96509d8e9669d40bb01ccfaa1e0ff",
+    "astra_clear5_c2_98C2816F8B_map_ACT.GLORY.json": "ad94f4466576e9ebcf5ec59c0b943b7ba2b14e18647b0858c24c02ccc24a9eaf",
+    "astra_clear5_c2_98C2816F8B_map_ACT.HIVE.json": "51668f4099f299db0bb473f25212a4e85bfde0016df10eb1892bd3ca6e182c84",
+    "astra_clear5_c2_98C2816F8B_mod.log": "6114575d8c18d5add4a7f4913a2fbd93e8c0d65914aea77e58732833b4ef422e",
+    "astra_clear5_c2_98C2816F8B_runmeta.json": "4465a4f824c4732088a6a04e7435e31fbafb5d416921bf64e7e6587fe22f21d6",
+    "astra_clear5_c2_98C2816F8B_stdout.log": "726ca1de1ddd52c5c22930d73541710ccae334e6dcf250fcfe36f293e3a0bfdf"
+  }
+}
