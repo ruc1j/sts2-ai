@@ -196,8 +196,8 @@ def aggregate(runs):
     }
 
 
-def render(cand, control, paired):
-    lines = [f"# C1 vs 対照（完了 run {cand['n']} / {control['n']}、同一seed {len(paired)} 組）", ""]
+def render(cand, control, paired, panel="C1"):
+    lines = [f"# {panel} vs 対照（完了 run {cand['n']} / {control['n']}、同一seed {len(paired)} 組）", ""]
     lines.append("## 突破数")
     lines.append("| | Act 1 | Act 2 | Act 3 |")
     lines.append("| --- | ---: | ---: | ---: |")
@@ -290,11 +290,12 @@ def main(argv=None):
     for seed in sorted(cand):
         if seed in control:
             paired.append((seed, reach(cand[seed]["manifest"]), reach(control[seed]["manifest"])))
-    text = render(aggregate(cand), aggregate(control), paired)
+    short = args.cand.replace("astra_clear5_", "").upper() if args.cand != "astra_clear5_c1" else "C1"
+    text = render(aggregate(cand), aggregate(control), paired, args.cand).replace("C1", short)
     if args.out:
         with open(args.out, "w", encoding="utf-8") as f:
             f.write(text + "\n")
-        print(f"wrote {args.out} (C1 {len(cand)} runs, control {len(control)}, paired {len(paired)})")
+        print(f"wrote {args.out} ({args.cand} {len(cand)} runs, control {len(control)}, paired {len(paired)})")
     else:
         print(text)
     return 0
