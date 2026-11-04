@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 77,
+  "arm": "candidate",
+  "seed": "1AEE656BEB",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793751769,
+  "finished": 1793752145,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 431,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_1AEE656BEB_agent.jsonl": "9ceb5bc4c228eb39efcc97f62745ab347d10d188cd09d2e9eca0fe64a68852d3",
+    "astra_clear5_c1_1AEE656BEB_map.json": "29b9dc1ba26be34db283ba2b03fa16f336ac2432d3b3ac24d9cfeaa2890c5974",
+    "astra_clear5_c1_1AEE656BEB_map_ACT.GLORY.json": "b8cbfe6333d94fbd60b1fd97e0f95e7b0cfc4ca3bfa4438131410c6dafadacac",
+    "astra_clear5_c1_1AEE656BEB_map_ACT.HIVE.json": "88b5fe510ad2331b65ddef4f1852265ccd6d6cb5aa867e8b196f404547153ddc",
+    "astra_clear5_c1_1AEE656BEB_mod.log": "fce7fafe09a0eca6e0c7cff12deb837caa77089d4b6671e6a27b2360102d09ac",
+    "astra_clear5_c1_1AEE656BEB_runmeta.json": "1867e6f63300070a63b301f25b9c79825e5a27cf10d502870f8a2e948067f1ed",
+    "astra_clear5_c1_1AEE656BEB_stdout.log": "0c3c7cfced4cd6f4388e80e1dc87600a9b38b3ba9ce8292b38f3931769af5f17"
+  }
+}
