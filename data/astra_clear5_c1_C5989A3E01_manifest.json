@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 101,
+  "arm": "candidate",
+  "seed": "C5989A3E01",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793758847,
+  "finished": 1793759223,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      11
+    ],
+    "combat_wins": 16,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 501,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_C5989A3E01_agent.jsonl": "4116236776b35cfe2ee6a89e47362ed0be9c810facdd67e33f314128e25bf7a9",
+    "astra_clear5_c1_C5989A3E01_map.json": "531605cad5c09236f0f29f9de5cc0f314ae19dfed8013dd81f8407fa5162a6a2",
+    "astra_clear5_c1_C5989A3E01_map_ACT.GLORY.json": "42544f78d59cd462eb5a5b80c8cec50e745dc3467f05d0a21ec6da40eef48eca",
+    "astra_clear5_c1_C5989A3E01_map_ACT.HIVE.json": "930c34993be9d913e58d0ac756cf6e2cda3faf9376ce06b3fec4887c3b198cd4",
+    "astra_clear5_c1_C5989A3E01_mod.log": "79bbb2cfd6d2a3673a0f82e2c7ef8ab343c4bd99d328c16d276228d9249c0def",
+    "astra_clear5_c1_C5989A3E01_runmeta.json": "2422035448a0ed83150be84b885d7ac0e594d48ce9922ccaedf332e54ca4752f",
+    "astra_clear5_c1_C5989A3E01_stdout.log": "288a7a0218ca8e64136225b0635261194f6548f7690d78de99edce0a0a074819"
+  }
+}
