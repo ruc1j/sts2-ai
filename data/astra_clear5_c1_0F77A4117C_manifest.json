@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 105,
+  "arm": "candidate",
+  "seed": "0F77A4117C",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793760004,
+  "finished": 1793760423,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      9
+    ],
+    "combat_wins": 16,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 533,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_0F77A4117C_agent.jsonl": "4759316d3749ad2b8e1c6466f8169c9918434033a109cbc3861681c15766ef3e",
+    "astra_clear5_c1_0F77A4117C_map.json": "bf99611ad3a4a77be71cf2be9a1f015edd286655e5a059582ad3341bd71d7d00",
+    "astra_clear5_c1_0F77A4117C_map_ACT.GLORY.json": "3f6837124cf3a0d966d2d4bb82a43d5ebe4b4742d94fb92f26b157caa4336d58",
+    "astra_clear5_c1_0F77A4117C_map_ACT.HIVE.json": "21be163b56d47106157a6bc04e7f1a55ac92c3c37978e32fccf728a90ba4bf43",
+    "astra_clear5_c1_0F77A4117C_mod.log": "e1385d523f8ac3f31be4eb3c699cfb165a3d2155d480f2af38711f073f6e7231",
+    "astra_clear5_c1_0F77A4117C_runmeta.json": "398d51fc32fb30d8ae4c293681a04e98176457b54bedd4393122ec01b2c0d76f",
+    "astra_clear5_c1_0F77A4117C_stdout.log": "65efc9836d9744989de49f1b989dd38f781057a0ea5576b6071a3ee431b30248"
+  }
+}
