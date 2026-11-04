@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 112,
+  "arm": "candidate",
+  "seed": "F77D66853A",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793761799,
+  "finished": 1793762089,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      4
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 361,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_F77D66853A_agent.jsonl": "910b19ccf91d11d7fe880b369c1ffc038cc55845cff30057891f58ab23f7cd07",
+    "astra_clear5_c1_F77D66853A_map.json": "0d2e7444486f5d4d115aca3377f02a364f2a31b43d8970e0c893e5b535f00789",
+    "astra_clear5_c1_F77D66853A_map_ACT.GLORY.json": "8b6b0d376d4118b6f12d66cec693e53693b6d0ab7ef0f4945439144cac074935",
+    "astra_clear5_c1_F77D66853A_map_ACT.HIVE.json": "67e9a669261f75e6315b79f38ad06d79dc3b707aea62d99e33642a4a34ae5229",
+    "astra_clear5_c1_F77D66853A_mod.log": "ad3d3b0b45037f00141362166f1a525bb81d2827ff538c48f8dec9260a5bf5bf",
+    "astra_clear5_c1_F77D66853A_runmeta.json": "f8927d4c7eec311c0f954fbcc981b1832ccecaec2ac7ac699100e4e5ac13ab51",
+    "astra_clear5_c1_F77D66853A_stdout.log": "f154dc613331c96b172089ba11339fa5b4d25ce67663745146708c189f9ce644"
+  }
+}
