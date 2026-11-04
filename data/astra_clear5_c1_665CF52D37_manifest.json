@@ -1,0 +1,49 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 119,
+  "arm": "candidate",
+  "seed": "665CF52D37",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793763482,
+  "finished": 1793763821,
+  "wrapper_exit": 0,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "win",
+    "act_3_complete": true,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 0,
+    "terminal": {
+      "seq": 454,
+      "phase": "combat_end",
+      "won": true,
+      "hp": 20
+    },
+    "final_hp": 20
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_665CF52D37_agent.jsonl": "0c6e9e88c285287709aebe23cd1ecb82c0ec153d3cb438373ad807cb008e4a0f",
+    "astra_clear5_c1_665CF52D37_map.json": "41b17e11a7dc69bfe2b1747583329df9febef808b69cc69fcc9a401dc90ed51c",
+    "astra_clear5_c1_665CF52D37_map_ACT.GLORY.json": "657aafc0af7b0693c7608e3df7b53cdb1e89b9817d6403d1422abebcb52a6a59",
+    "astra_clear5_c1_665CF52D37_map_ACT.HIVE.json": "b01e1eaa14328c7e82cb50e50e9e9e88263d1498a630796d20473e8d96bc3674",
+    "astra_clear5_c1_665CF52D37_mod.log": "cb3a40f3d6e6cb829899cd651a3b94f9e16bab9f844c494446870f9085afb8a2",
+    "astra_clear5_c1_665CF52D37_result.json": "c8ec7b1488f48c0342e4f66abbc045699e1da48ec6f30555d23c60ee89bbc38d",
+    "astra_clear5_c1_665CF52D37_runmeta.json": "68527355380ae022abe25679d1f342b7e7bf3bdb0b583339d94d3a7fa24a1f4e",
+    "astra_clear5_c1_665CF52D37_stdout.log": "2e1d751ec2c0bdda3f208a664bde96d2b8bc9126615ebc6812c0a4f7e1730be4"
+  }
+}
