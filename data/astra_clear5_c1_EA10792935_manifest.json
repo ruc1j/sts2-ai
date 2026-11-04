@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 127,
+  "arm": "candidate",
+  "seed": "EA10792935",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793765583,
+  "finished": 1793765992,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 548,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_EA10792935_agent.jsonl": "9e92989877f499b11dc0569208a7d2a870786a9d16f69bc9e2cfaba3d40f69ef",
+    "astra_clear5_c1_EA10792935_map.json": "02cb84affd5576b776581f2c454ac61513242cbd0d72b7ece3bf05fde22cf883",
+    "astra_clear5_c1_EA10792935_map_ACT.GLORY.json": "983e78828143ada1f61c3943b0dd7134f83ef0b8ac1f1a9a21a6d4d81b65ed98",
+    "astra_clear5_c1_EA10792935_map_ACT.HIVE.json": "5a0c4be6fdd9036600808f408e04c3bf10421def6cd491efb574f9f9a6e59d27",
+    "astra_clear5_c1_EA10792935_mod.log": "edea54d2ca5bfe73f0969b88cd743d1157375c2b6d8a4b139b9e496eed092671",
+    "astra_clear5_c1_EA10792935_runmeta.json": "8b4903ee474ca23ca07f8631d73a19b26807cd31648c9512847a3a63b5d94c2e",
+    "astra_clear5_c1_EA10792935_stdout.log": "fba4e4d5bb8f14dba32737112299f1fadc8756b18e02478e397919825fd7814b"
+  }
+}
