@@ -108,6 +108,8 @@ def run_stats(rows):
             for card in list(row.get("hand") or ()) + list(row.get("draw_pile") or ()) + list(row.get("discard_pile") or ()):
                 if card.get("id"):
                     deck.add(card["id"])
+        if row.get("phase") == "shop" and row.get("action") == "buy_card" and row.get("card_id") in ENGINE:
+            stats["engine_shop_" + row["card_id"]] += 1
         source = str(row.get("decision_source") or "")
         if "exception" in source:
             stats[source] += 1
@@ -134,6 +136,7 @@ def run_stats(rows):
         "taken": taken,
         "demon_form_played_turns": played_turns,
         "demon_early": stats["demon_form_early_direct"],
+        "engine_shop": {k[len("engine_shop_"):]: v for k, v in stats.items() if k.startswith("engine_shop_")},
         "exceptions": {k: v for k, v in stats.items() if "exception" in k},
         "queen": queen,
         "never_played": sorted(deck - played),
@@ -150,6 +153,7 @@ def aggregate(runs):
     taken = collections.Counter()
     demon_turns = []
     demon_early = 0
+    engine_shop = collections.Counter()
     shaves, turns = [], []
     never = collections.Counter()
     exceptions = collections.Counter()
@@ -168,6 +172,7 @@ def aggregate(runs):
         taken.update(stats["taken"])
         demon_turns.append(stats["demon_form_played_turns"])
         demon_early += stats["demon_early"]
+        engine_shop.update(stats["engine_shop"])
         if stats["queen"]:
             shaves.append(stats["queen"].get("shave"))
             turns.append(stats["queen"].get("turns"))
@@ -183,6 +188,7 @@ def aggregate(runs):
         "taken": taken,
         "demon_turns": demon_turns,
         "demon_early": demon_early,
+        "engine_shop": engine_shop,
         "shaves": [s for s in shaves if s is not None],
         "queen_turns": [t for t in turns if t],
         "never": never,
@@ -224,6 +230,17 @@ def render(cand, control, paired):
         lines.append(f"| {card.replace('CARD.', '')} | {cand['runs_offered'][card]}/{cand['offers'][card]} | "
                      f"{cand['taken'][card]} | {control['runs_offered'][card]}/{control['offers'][card]} | "
                      f"{control['taken'][card]} |")
+
+    lines += ["", "## 部品別の発動数"]
+    lines.append("| 部品 | C1 | 対照 |")
+    lines.append("| --- | ---: | ---: |")
+    lines.append(f"| 報酬でengine採用（行数） | {sum(cand['taken'].values())} | {sum(control['taken'].values())} |")
+    lines.append(f"| ショップでengine購入 | {sum(cand['engine_shop'].values())} | {sum(control['engine_shop'].values())} |")
+    lines.append(f"| demon_form_early_direct 発動 | {cand['demon_early']} | {control['demon_early']} |")
+    lines.append(f"| DEMON_FORM 使用ターン合計 | {sum(cand['demon_turns'])} | {sum(control['demon_turns'])} |")
+    lines.append("")
+    lines.append("進捗の評価（部品1）は trace から発動数を数えられない（探索の内部で決まる）。"
+                 "同じ観測での再生が要る。")
 
     lines += ["", "## Demon Form と早期出し"]
     lines.append(f"- DEMON_FORM を打ったターン数（run平均）: C1 {statistics.mean(cand['demon_turns']) if cand['demon_turns'] else 0:.2f}、"
