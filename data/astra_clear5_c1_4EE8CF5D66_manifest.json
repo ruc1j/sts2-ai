@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 116,
+  "arm": "candidate",
+  "seed": "4EE8CF5D66",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793762804,
+  "finished": 1793763056,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      6
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 355,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_4EE8CF5D66_agent.jsonl": "4205b65322c19b26b222384b7099721f256f595014c4fdd15801590130889f2e",
+    "astra_clear5_c1_4EE8CF5D66_map.json": "76083f738d484896323a1172f3aa53d83dfc5d107e1df661818d3608a68cbc0b",
+    "astra_clear5_c1_4EE8CF5D66_map_ACT.GLORY.json": "e143e2ecc104237a36cde250081f7721178ff24040991c197fa3b881d8bfae94",
+    "astra_clear5_c1_4EE8CF5D66_map_ACT.HIVE.json": "b448b6843da77a9b31126638525703d832d0777766f4a90958f3c11ef0465575",
+    "astra_clear5_c1_4EE8CF5D66_mod.log": "5009a14cc989ece54d4298e92682d5750e786e153500e8016f97c7c3a0e88848",
+    "astra_clear5_c1_4EE8CF5D66_runmeta.json": "046e19878f45001794c050527aafbf636fe32b6ebdce191e23152fc5b1bfa491",
+    "astra_clear5_c1_4EE8CF5D66_stdout.log": "d55a87beda6933637ed693660d291bc05c9a2c57092a48a681cf30d62060ac76"
+  }
+}
