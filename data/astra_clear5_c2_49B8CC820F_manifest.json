@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c2",
+  "run_index": 23,
+  "arm": "candidate",
+  "seed": "49B8CC820F",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793774947,
+  "finished": 1793775273,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      12
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 373,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c2_49B8CC820F_agent.jsonl": "e9891ea2a79cde713d4f4c6e9178ef6c07df254db37ec5dd94e923ef14df9425",
+    "astra_clear5_c2_49B8CC820F_map.json": "2e1b0ef776013da1a42887de07945fc3a1e4086ee0742ff556eb64ef5eaf4db2",
+    "astra_clear5_c2_49B8CC820F_map_ACT.GLORY.json": "e1cbcb610bb2fbd6f090807c6276aef1af5d528f4d435acc5f6a666a5947930d",
+    "astra_clear5_c2_49B8CC820F_map_ACT.HIVE.json": "0a08f73b0b5751ce8890152c755d92b4c75a69aa7b0b53dd2f15396c82de3fba",
+    "astra_clear5_c2_49B8CC820F_mod.log": "6ee3a1ed6413a47f13c4ad3a09e41c96ca9d27c67d38cd187a6839e8a78f1a2d",
+    "astra_clear5_c2_49B8CC820F_runmeta.json": "a85f9cc25b7b37910bbcdaed8463004edd518645518bea21e8860b105220a6b6",
+    "astra_clear5_c2_49B8CC820F_stdout.log": "b33db8c7854d433d6b1b2c12196a1839dbcec169ee13cbcea3ca0e88f28f0ab2"
+  }
+}
