@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c1",
+  "run_index": 108,
+  "arm": "candidate",
+  "seed": "2C08EC12EA",
+  "source_commit": "8422e56f7691085ec5126a57f0a18e216d943c72",
+  "sha256": {
+    "official_agent.py": "1669d394af4351e6eaa47297871075247f9be2407432277e16b00300d88b84c2",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5c/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793761020,
+  "finished": 1793761377,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 475,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c1_2C08EC12EA_agent.jsonl": "ba86df4e03c0250b15997bf66443766f52a19b7fb194acde7991aa3bdab8dea6",
+    "astra_clear5_c1_2C08EC12EA_map.json": "4dc6f0f7b5d8ab9416575970a6a9fc6db119203ad5bca5afc7bdb85a7f5f20d4",
+    "astra_clear5_c1_2C08EC12EA_map_ACT.GLORY.json": "b3e8c82cd2e9ab44874703b972ccae775313d01fd2a71cdd77d496457653522f",
+    "astra_clear5_c1_2C08EC12EA_map_ACT.HIVE.json": "249925d9b4c341aed3606700d54201e0e1b4cc30ba51b846da263705fbcd2257",
+    "astra_clear5_c1_2C08EC12EA_mod.log": "19e8b406cc27c45f6af1288191bf74654c2470d27595262fc13f14f70fe1c2be",
+    "astra_clear5_c1_2C08EC12EA_runmeta.json": "21a0ab1e998b6ee51228eabef20a804ce582ecb804312fb23ce54c9ca5a6ef2a",
+    "astra_clear5_c1_2C08EC12EA_stdout.log": "d14f70bf13f7886dfd31923f06b659fbbca763da9b445b20d25052f39199bec3"
+  }
+}
