@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c2",
+  "run_index": 105,
+  "arm": "candidate",
+  "seed": "0F77A4117C",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793850676,
+  "finished": 1793851145,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      13
+    ],
+    "combat_wins": 19,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 573,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c2_0F77A4117C_agent.jsonl": "15eaaf63fa1e0279ef6f64632b5617198fe8ce2a832c8111fcc9b308dac44a28",
+    "astra_clear5_c2_0F77A4117C_map.json": "bf99611ad3a4a77be71cf2be9a1f015edd286655e5a059582ad3341bd71d7d00",
+    "astra_clear5_c2_0F77A4117C_map_ACT.GLORY.json": "3f6837124cf3a0d966d2d4bb82a43d5ebe4b4742d94fb92f26b157caa4336d58",
+    "astra_clear5_c2_0F77A4117C_map_ACT.HIVE.json": "21be163b56d47106157a6bc04e7f1a55ac92c3c37978e32fccf728a90ba4bf43",
+    "astra_clear5_c2_0F77A4117C_mod.log": "313993a34501dba3d6fe7d1ef9269e2e9d562708020c810bad4ae65a0768e699",
+    "astra_clear5_c2_0F77A4117C_runmeta.json": "f4f0f8efefb6544864b165a7482321c88ab9203cb3f9834799926bb864028b55",
+    "astra_clear5_c2_0F77A4117C_stdout.log": "0c3380972cf44dd166c3d773e95e2a398774fd8fe8a16efc47ac654b690afe28"
+  }
+}
