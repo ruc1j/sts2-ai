@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_c2",
+  "run_index": 10,
+  "arm": "candidate",
+  "seed": "ADECC1DF1C",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793864438,
+  "finished": 1793864823,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 20,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 493,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_c2_ADECC1DF1C_agent.jsonl": "b73593b12dcdf2760670149e393cbe7ac6b61ec759f3aa07c1fe12c4801cf78a",
+    "astra_clear5_confirm_c2_ADECC1DF1C_map.json": "c1f10b39e7f639cd4c34762a8dab15251dcd2859c8d5f9c6df748f8ec1f01299",
+    "astra_clear5_confirm_c2_ADECC1DF1C_map_ACT.GLORY.json": "b728db16f81832f9ac4e2fc5e7e8b0eb62fa4639250b789ed72c14c126825a89",
+    "astra_clear5_confirm_c2_ADECC1DF1C_map_ACT.HIVE.json": "3e4d07400c5d984e01ecac4b500fe3e63b0fcf91d39f67397483fedfae313f7f",
+    "astra_clear5_confirm_c2_ADECC1DF1C_mod.log": "d639267bb9ae0d14598981e195448877897e06b1170fa63900921b6a1819b17a",
+    "astra_clear5_confirm_c2_ADECC1DF1C_runmeta.json": "009c7c09294d6588fcc11123b11118c0798ca91ff912aad81d5acb950092e6fd",
+    "astra_clear5_confirm_c2_ADECC1DF1C_stdout.log": "15c10044cfb980224feb4d098dc3dd7bba2353820c9ccdecc501ac24d4c74141"
+  }
+}
