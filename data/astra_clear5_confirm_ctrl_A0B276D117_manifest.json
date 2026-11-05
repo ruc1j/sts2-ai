@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_ctrl",
+  "run_index": 9,
+  "arm": "control",
+  "seed": "A0B276D117",
+  "source_commit": "e4e3fcb1792a9106512f6145f4e5b8a5d849592e",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793863441,
+  "finished": 1793863722,
+  "wrapper_exit": 1,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 398,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_ctrl_A0B276D117_agent.jsonl": "d678cba42b8de245a9fe9c7c64c1781317e25f114be99fe34aeab0148923c5a5",
+    "astra_clear5_confirm_ctrl_A0B276D117_map.json": "ca11188987ee2c0f4bda15e860a0491fd71b09fd20e274217c3691f5d636ef64",
+    "astra_clear5_confirm_ctrl_A0B276D117_map_ACT.GLORY.json": "e9b221b001d3b800dd91de20415c13712506f9b575b6c6e2431ede9a85bb64de",
+    "astra_clear5_confirm_ctrl_A0B276D117_map_ACT.HIVE.json": "e0ebe47e87816f00764e79302176302f5e9853577af7e23a110e976ac54b3b30",
+    "astra_clear5_confirm_ctrl_A0B276D117_mod.log": "1cd5a8aa97ac9019196186c1592630bf93e60e096570b4a4fd949efea61e33e7",
+    "astra_clear5_confirm_ctrl_A0B276D117_runmeta.json": "68ee2a0c235fb9f5000c8f63e67d4479ad7f8f2e1fae9bd62937d597d7e9ad38",
+    "astra_clear5_confirm_ctrl_A0B276D117_stdout.log": "95dd86a785ef71c5930106f3d7bb5fb792213ce4065b476e176ca5da1e4ce79a"
+  }
+}
