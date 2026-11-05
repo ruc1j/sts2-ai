@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_c2",
+  "run_index": 9,
+  "arm": "candidate",
+  "seed": "A0B276D117",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793863722,
+  "finished": 1793864002,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 15,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 395,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_c2_A0B276D117_agent.jsonl": "f2a4a724abf7a8357b1630914ad86db2392d5a3e4af0859ee9b5676f3b1930ec",
+    "astra_clear5_confirm_c2_A0B276D117_map.json": "ca11188987ee2c0f4bda15e860a0491fd71b09fd20e274217c3691f5d636ef64",
+    "astra_clear5_confirm_c2_A0B276D117_map_ACT.GLORY.json": "e9b221b001d3b800dd91de20415c13712506f9b575b6c6e2431ede9a85bb64de",
+    "astra_clear5_confirm_c2_A0B276D117_map_ACT.HIVE.json": "e0ebe47e87816f00764e79302176302f5e9853577af7e23a110e976ac54b3b30",
+    "astra_clear5_confirm_c2_A0B276D117_mod.log": "87412e9907cbf12ff5669d9106fe6ff8882f49122a5ed75ad114ceabcbb5d12c",
+    "astra_clear5_confirm_c2_A0B276D117_runmeta.json": "b8510c0072b85f9f5be2826479bb89b1769d72ec74624370731f988780da4ede",
+    "astra_clear5_confirm_c2_A0B276D117_stdout.log": "664e58dccbf1a691e06ae99b624b6c2859b4a59aabebdf41184a9e4398487a43"
+  }
+}
