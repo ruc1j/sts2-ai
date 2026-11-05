@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_c2",
+  "run_index": 15,
+  "arm": "candidate",
+  "seed": "0C11EB2294",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793868850,
+  "finished": 1793869178,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 446,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_c2_0C11EB2294_agent.jsonl": "4d63ef04502d3c3918b8c77edbe3c3152630ac9ab326042641aa247af19b5832",
+    "astra_clear5_confirm_c2_0C11EB2294_map.json": "8cc485c517c390169ab0b773752262482d0ebad4ff9d06bceb0de23355564361",
+    "astra_clear5_confirm_c2_0C11EB2294_map_ACT.GLORY.json": "32876a5dcdf2bb76dc1bf73631dab49ae21cabc00dc21002db6be611601f2b17",
+    "astra_clear5_confirm_c2_0C11EB2294_map_ACT.HIVE.json": "0ecddc6b10e510e5bb9e234ecdc717734372eda4ae909dd1af620bcb8d7bc29a",
+    "astra_clear5_confirm_c2_0C11EB2294_mod.log": "66617e410f7bc1535ffe5b8afa3f722919919bf5e5ce95524dba6c6ff7dfd3d4",
+    "astra_clear5_confirm_c2_0C11EB2294_runmeta.json": "b6d082119648d05dfa78bfd8bfa666d748cab5645dd679692b3b0e909a314b86",
+    "astra_clear5_confirm_c2_0C11EB2294_stdout.log": "40b276f1a65e822c4de0f0e9c6fcc6227fdaef0055f2c563d5193e8ca2bc222f"
+  }
+}
