@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_c2",
+  "run_index": 130,
+  "arm": "candidate",
+  "seed": "0FCAAC1F8A",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793857640,
+  "finished": 1793858022,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      4
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 512,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_c2_0FCAAC1F8A_agent.jsonl": "32ee34aaef06017830fa243a5363b8f72c933902872ab4f9fbe24d3b00580e6a",
+    "astra_clear5_c2_0FCAAC1F8A_map.json": "e686d1f76bdb4b4847f56fe6cd7ffd3545df775b681e10c08edaffb2e8241ceb",
+    "astra_clear5_c2_0FCAAC1F8A_map_ACT.GLORY.json": "b06ab10fbbd5d5ed770fd5e1729efaf2f3dd78a483aa4a3988c58170fb0ad9d2",
+    "astra_clear5_c2_0FCAAC1F8A_map_ACT.HIVE.json": "b22f77e3f5b5d3ebf92154cdfc59dfdafd26a837cd448481081f0d06e6593bd5",
+    "astra_clear5_c2_0FCAAC1F8A_mod.log": "489f8316b2904b26aa6d0bcb7809461bcd6a69c32f8b56f8150a6ea3706d6708",
+    "astra_clear5_c2_0FCAAC1F8A_runmeta.json": "00154720d9afdd7a66443252d07722717b904dca1bd8505a5672c9f8487e7197",
+    "astra_clear5_c2_0FCAAC1F8A_stdout.log": "14a0473fffa7aaf577939c7cdedd48d55d3e4e9642183f982392e4bcefa99401"
+  }
+}
