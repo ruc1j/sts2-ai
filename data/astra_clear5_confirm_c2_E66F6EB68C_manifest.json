@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_c2",
+  "run_index": 17,
+  "arm": "candidate",
+  "seed": "E66F6EB68C",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793870188,
+  "finished": 1793870512,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 451,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_c2_E66F6EB68C_agent.jsonl": "82160f5a9caeb13f8b988666a159ee61ba26587258d881c9bee94de37a327816",
+    "astra_clear5_confirm_c2_E66F6EB68C_map.json": "540097c3fc3f774bddabb3d4192f11d45f94c44cf7b3d3553d3dfadb63c5667b",
+    "astra_clear5_confirm_c2_E66F6EB68C_map_ACT.GLORY.json": "7c2c3e5cab613d404a957fe742d7778a1f2e9065f11c56b2b974a29009268aa2",
+    "astra_clear5_confirm_c2_E66F6EB68C_map_ACT.HIVE.json": "ae79ed4570b0868cfe05fbf3ae38ac444ba100f45a59a0b848c9e57d9d12ba54",
+    "astra_clear5_confirm_c2_E66F6EB68C_mod.log": "7fa78197e7db7d8edbe8ef6f23be6695ebbc5eaa6af816f85275beaf6c42e917",
+    "astra_clear5_confirm_c2_E66F6EB68C_runmeta.json": "3e9a0860f8d365a0bbc80e7ba7772cef85808fde2355fdbb1e578e242131de19",
+    "astra_clear5_confirm_c2_E66F6EB68C_stdout.log": "dc9dcda7c4e4f5e9905323fee1fc786bf8a3f5bbdb940244c86021a99f8b1cdb"
+  }
+}
