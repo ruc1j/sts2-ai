@@ -34,6 +34,6 @@ print(
 )
 if o["act_3_complete"]:
     print(f"CLEAR {seed} a3={a3}/{n}")
-if n == 68 and a3 == 0:
+if n == 68 and a3 == 0 and not os.environ.get("NO_GATE"):
     print("GATE 68 runs with zero clears")
     sys.exit(2)

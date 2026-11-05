@@ -39,7 +39,7 @@ Fisher検定（両側α=0.05）で新規136 runと1/271を比べると、有意�
 | 候補 | commit | 方針ハッシュ | 開発用の結果 | 判定 |
 | --- | --- | --- | --- | --- |
 | C1 engine-pack | `8422e56`（`cand/engine-pack`、base `43f0e09`） | `official_agent.py` 1669d394af4351e6、`combat.py` 932d286163b6071c、DLL 592dc5411a6efda5（対照と同じ） | 踏破3/135 | 開発用を通過せず |
-| C2 engine-pack3 | `c64851e`（`cand/engine-pack3`、base C1 `8422e56`） | `official_agent.py` 1f64c0f0fa9fad0c、`combat.py` 932d286163b6071c、DLL 592dc5411a6efda5 | 走行中 | |
+| C2 engine-pack3 | `c64851e`（`cand/engine-pack3`、base C1 `8422e56`） | `official_agent.py` 1f64c0f0fa9fad0c、`combat.py` 932d286163b6071c、DLL 592dc5411a6efda5 | 踏破4/135 | 開発用を通過、確認用へ |
 
 ## 候補選びの経緯（実機なし、採否には使っていない）
 
@@ -93,3 +93,19 @@ C1に対する変更は1点で、報酬のRUPTURE優先に燃料条件を戻す�
 先生の指示で、97 seed目の`65A711FB05`の走行中（1分19秒時点）に止めた。これは未完了で、判定には使わない。部分的な成果物は候補worktreeの`data/aborted1_astra_clear5_c2_65A711FB05_*`に残した。再開は`data/run_clear5.sh`を同じtagと`B75D80AE64`を除いたseed表で起動する。完了済みのseedは飛ばされ、`65A711FB05`から走る。
 
 中断時点（再実行の結果を含む確定run）: 96 seed中、Act 3踏破2、Act 1突破81、Act 2突破31。ログの`TOTAL`は`B75D80AE64`の停止した試行と再実行の両方を数えるので97と表示される。最終集計で置き換える。
+
+## C2の開発用の結果と確認用の開始（2026-11-05）
+
+```text
+計画数／完了数／不明数／外部障害／候補由来の障害: 135／135／0／1（B75D80AE64の停止、別tagで再実行）／0。Python側の例外は0件。中断と再開が1回ずつ（先生の指示）。
+全体比較（C2／C1／対照）: Act 3踏破 4／3／0、Act 2突破 44／38／38、Act 1突破 114／115／112。
+到達点: 対照に対して改善37、悪化31、同値67。C1に対して改善14、悪化4、同値117。C1と到達点・勝利数・結果が同じseedは116。
+踏破: 895C061BBB、4FDF910744、665CF52D37（C1と同じseed）、C5989A3E01（C2で新しい）。resultのact_3_completeで確認した。
+判定: 開発用の通過条件（4本以上）を満たす。確認用へ進む。
+```
+
+留意点: 開発用はC1の結果を見てC2を作った集合で、4本のうち3本はC1と同じseedの踏破である。通過は確認用へ進む条件にすぎず、踏破率の改善の証拠ではない。
+
+確認用の実行: `data/run_clear5_confirm.sh`。未使用の136 seed（`data/act3clear5_confirm_seeds.txt`）を同じ順で、seedごとに対照→C2の順に走らせる。tagは `astra_clear5_confirm_ctrl`（mainの方針コード、方針ハッシュ61e780f8、DLL 592dc541）と `astra_clear5_confirm_c2`（`c64851e`、方針ハッシュ1f64c0f0、DLLは同じ）。判定は事前登録のとおり、C2の踏破が4本以上で対照を上回れば採用、それ以外は `docs/EVALUATION.md` に従う。確認用に68本の打ち切りは適用しない。外部要因の停止は別tagで再実行する。予定は272 run、約21時間。候補を調整しない。
+
+C3（`cand/engine-pack5`、`e68f830`）は実装済みで、走らせていない。確認用の結果を見てから扱いを決める。
