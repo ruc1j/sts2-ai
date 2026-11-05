@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_c2",
+  "run_index": 3,
+  "arm": "candidate",
+  "seed": "D53AB99AEF",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793860747,
+  "finished": 1793861130,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      13
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 469,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_c2_D53AB99AEF_agent.jsonl": "b08ad9b5cbe0e6a71cdbfaed84aa5f04d08a706969cfb59d37a048b79e895f3d",
+    "astra_clear5_confirm_c2_D53AB99AEF_map.json": "e14bd7f2ef959e39ead7a1520b8337d2175467ba2e0d9600ab4eb3d50c95af34",
+    "astra_clear5_confirm_c2_D53AB99AEF_map_ACT.GLORY.json": "bbe4ae759672dc13fd9b75ab4847bc0065f38e868efef245dbc2f4bb55dde410",
+    "astra_clear5_confirm_c2_D53AB99AEF_map_ACT.HIVE.json": "30ae9725cc08b3d74691dc3e4bbe892e53286165665405fd5ecba8cbb8069ca8",
+    "astra_clear5_confirm_c2_D53AB99AEF_mod.log": "9bd24d8cf72ea129b690a315055567ba1935e53ed98b168c1125588fa6d02572",
+    "astra_clear5_confirm_c2_D53AB99AEF_runmeta.json": "2551434efb63e3444ce6cff9304b932f960c890f0aca4434a007c0b232938d73",
+    "astra_clear5_confirm_c2_D53AB99AEF_stdout.log": "b1b29fa0b774f78b2c77461f29807bb0f706b0ad0bd439a48287657c35c2522f"
+  }
+}
