@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_ctrl",
+  "run_index": 17,
+  "arm": "control",
+  "seed": "E66F6EB68C",
+  "source_commit": "e4e3fcb1792a9106512f6145f4e5b8a5d849592e",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793869864,
+  "finished": 1793870188,
+  "wrapper_exit": 1,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      15
+    ],
+    "combat_wins": 17,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 425,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_ctrl_E66F6EB68C_agent.jsonl": "61c236355755a3ce75775e885b5d7f388ce325a7791e5a13467a2eb7383e5fac",
+    "astra_clear5_confirm_ctrl_E66F6EB68C_map.json": "540097c3fc3f774bddabb3d4192f11d45f94c44cf7b3d3553d3dfadb63c5667b",
+    "astra_clear5_confirm_ctrl_E66F6EB68C_map_ACT.GLORY.json": "7c2c3e5cab613d404a957fe742d7778a1f2e9065f11c56b2b974a29009268aa2",
+    "astra_clear5_confirm_ctrl_E66F6EB68C_map_ACT.HIVE.json": "ae79ed4570b0868cfe05fbf3ae38ac444ba100f45a59a0b848c9e57d9d12ba54",
+    "astra_clear5_confirm_ctrl_E66F6EB68C_mod.log": "93e309d45286db9c81f5f4135b06f4211a577172a39664c0322849325bbdfd88",
+    "astra_clear5_confirm_ctrl_E66F6EB68C_runmeta.json": "2758126c4d722a1049cd66117894f1947356e82244ec3a553845372bfb95c839",
+    "astra_clear5_confirm_ctrl_E66F6EB68C_stdout.log": "60c7e1ba51a62142426406d86cf6b6347ac09a31370f0d88a4db6b81066ac824"
+  }
+}
