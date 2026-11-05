@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_ctrl",
+  "run_index": 16,
+  "arm": "control",
+  "seed": "10B60F79C4",
+  "source_commit": "e4e3fcb1792a9106512f6145f4e5b8a5d849592e",
+  "sha256": {
+    "official_agent.py": "61e780f81fb8a7168e2a013031b601e5f0c4169bb8b5fce902fd6b70bfeaf65c",
+    "combat.py": "4701614578b7bb7ae60b4224b466f67e7f3eba5db671c191210df7aee134a33b",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793869179,
+  "finished": 1793869580,
+  "wrapper_exit": 1,
+  "source_unchanged": true,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      12
+    ],
+    "combat_wins": 18,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 502,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_ctrl_10B60F79C4_agent.jsonl": "0b7a43b824d1f0f270445cb195c5e52722b6d211a9fb686ff866dbf9635964ed",
+    "astra_clear5_confirm_ctrl_10B60F79C4_map.json": "f49210a226b67473d783309312a4230694fbed787fb387b4456978bbf2aa2e4c",
+    "astra_clear5_confirm_ctrl_10B60F79C4_map_ACT.GLORY.json": "bebe8a4941698958900798dafa0aa1930430785322cf6da1455a5a72709127ba",
+    "astra_clear5_confirm_ctrl_10B60F79C4_map_ACT.HIVE.json": "e2f4e7f186a814c36b31d22d6d7f89a6a0e97b5b21268097f3997a9af874d8da",
+    "astra_clear5_confirm_ctrl_10B60F79C4_mod.log": "379876ac71f0ed408f3d478423098050c44f0b8631d2aecc7dcce834cc918c2e",
+    "astra_clear5_confirm_ctrl_10B60F79C4_runmeta.json": "bea621d105afa50a747e564f544a6990869b27e0a1f1d9af3fb79fe38c741d91",
+    "astra_clear5_confirm_ctrl_10B60F79C4_stdout.log": "53b0134eef8faf4128a28a0cc9255a33b007fa71f612d2abcc13ba291ccdcd32"
+  }
+}
