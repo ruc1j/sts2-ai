@@ -1,0 +1,48 @@
+{
+  "panel": "astra_clear5_confirm_c2",
+  "run_index": 2,
+  "arm": "candidate",
+  "seed": "A8F0E916AC",
+  "source_commit": "c64851e136da9dc503222e73b9caf1b3bf1d5a44",
+  "sha256": {
+    "official_agent.py": "1f64c0f0fa9fad0c39440cc23f7eadff8890e31699d4e56320a25104192c1030",
+    "combat.py": "932d286163b6071c1f1f13f6ec38db16cc9aaa5a1ae5ada09319753437f884f1",
+    "official_mod/CombatBridge.cs": "c71e25b3e8561d1ee7167d37acb6ad634ff9cb91765af0fecf631d66f61da321",
+    "/Users/mao/.sts2/wt-clear5e/official_mod/bin/Release/net9.0/Sts2Ai.dll": "592dc5411a6efda58ef6bb47dd2d22f7429310aae24d6b2ec8667363fd82aede"
+  },
+  "plan_sha256": null,
+  "runner_sha256": "009c1128d087fda0d1744a1095f9eee4aafb1119c17d831d10755126ececed7c",
+  "simulations": 100,
+  "started": 1793860117,
+  "finished": 1793860358,
+  "wrapper_exit": 1,
+  "source_unchanged": false,
+  "outcome": {
+    "status": "death",
+    "act_3_complete": false,
+    "act_2_complete": true,
+    "act_1_complete": true,
+    "depth": [
+      3,
+      5
+    ],
+    "combat_wins": 14,
+    "combat_losses": 1,
+    "terminal": {
+      "seq": 335,
+      "phase": "combat_end",
+      "won": false,
+      "hp": 0
+    },
+    "final_hp": null
+  },
+  "artifacts_sha256": {
+    "astra_clear5_confirm_c2_A8F0E916AC_agent.jsonl": "667b6accd116a80cfedc7b4a1ec353278fae46d019b47903f5e82fbbdcf7f985",
+    "astra_clear5_confirm_c2_A8F0E916AC_map.json": "00f402dcd66730e150d9c88c33ca26ff8f62214600abeae9e432404fe7633acc",
+    "astra_clear5_confirm_c2_A8F0E916AC_map_ACT.GLORY.json": "ee703d509b792399c8422635a63f10efa3b192636f43f803a0ce25b05b0deb41",
+    "astra_clear5_confirm_c2_A8F0E916AC_map_ACT.HIVE.json": "42b85bd1afef1479f2b934b4b95a1130211a17d0af6782abee8a50037f449e51",
+    "astra_clear5_confirm_c2_A8F0E916AC_mod.log": "2c44ecf820ae6fd478991d319af772ee4c23c55a4d5afbdb81a63ccc5d104d00",
+    "astra_clear5_confirm_c2_A8F0E916AC_runmeta.json": "8ccbb46cac1af7fc1fb8df7d0f62a378510ab27b6f037867b43b6e0a7815df63",
+    "astra_clear5_confirm_c2_A8F0E916AC_stdout.log": "3aa34986b361b4c173e26c2729684f96954476c6e83b68118208a112f0d5eeb4"
+  }
+}
